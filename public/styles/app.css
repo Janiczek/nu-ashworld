@@ -50,6 +50,7 @@ button {
   z-index: 1;
   border-style: solid;
   border-width: 128px;
+  border-color: transparent;
   border-image: url('../images/border-image.png') 50% repeat;
   box-sizing: border-box;
   pointer-events: none;
