@@ -1,0 +1,160 @@
+:root {
+  --bg01: #111810;
+  --bg02: #10240C;
+
+  --fg03: #007C00;
+  --fg02: #00C000;
+  --fg01: #3CF800;
+
+  --fg-highlight: #FCFD7D;
+}
+
+@font-face {
+  font-family: BQN386;
+  src: url('../fonts/BQN386.ttf'); /* Taken from https://dzaima.github.io/BQN386/BQN386.ttf */
+}
+
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  font-family: BQN386;
+  font-size: 18px;
+  color: var(--fg02);
+}
+
+button {
+  font-family: BQN386;
+}
+
+#app {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  background-color: var(--bg01);
+  position: relative;
+}
+
+#app:after {
+  position: absolute;
+  content: '';
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  border-style: solid;
+  border-width: 128px;
+  border-image: url('../images/border-image.png') 50% repeat;
+  box-sizing: border-box;
+}
+
+#left-nav {
+  background-color: var(--bg02);
+  min-width: 285px;
+  width: 285px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
+
+#logo {
+  width: 190px;
+  height: 36px;
+  margin-top: 26px;
+
+  /* target color: #00C000 */
+  filter: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+}
+
+#app.logged-in #logo {
+  /* target color: #3CF800 */
+  filter: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%);
+  animation: flicker 2s linear 1;
+}
+
+@keyframes flicker {
+  0%, 19%, 26%, 46%, 65%, 82%, 86%, 87%, 90%, 95% {
+    /* darker, #00C000 */
+    filter: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+  }
+  20%, 25%, 47%, 64%, 83%, 85%, 88%, 89%, 96%, 100% {
+    /* lighter, #3CF800 */
+    filter: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%);
+  }
+}
+
+#login-form {
+  margin-top: 40px;
+}
+
+#logged-out-links,
+#logged-in-links {
+  margin-top: 40px;
+}
+
+#common-links {
+  margin-top: 1em;
+}
+
+.link {
+  cursor: pointer;
+}
+
+.link-label {
+  text-transform: uppercase;
+  color: var(--fg01);
+  width: 9ch;
+  min-width: 9ch;
+  display: inline-block;
+  margin: 0 1ch;
+}
+
+.link.active .link-label,
+.link:hover,
+.link:hover .link-label {
+  color: var(--fg-highlight);
+}
+
+#user-info {
+  margin-top: 40px;
+}
+
+#user-name {
+  color: var(--fg01);
+  text-align: center;
+}
+
+#user-stats {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: min-content min-content;
+  grid-auto-rows: auto;
+}
+
+.user-stat-label {
+  grid-column: 1;
+  text-align: right;
+  color: var(--fg03);
+  margin-right: 1ch;
+}
+
+.user-stat-value {
+  grid-column: 2;
+  color: var(--fg02);
+}
+
+.deemphasized {
+  color: var(--fg03);
+}
+
+#content {
+  padding: 40px;
+}

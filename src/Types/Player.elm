@@ -20,6 +20,10 @@ type alias CPlayer =
     , name : String
     , special : Special
     , availableSpecial : Int
+    , cash : Int
+    , ap : Int
+    , wins : Int
+    , losses : Int
     }
 
 
@@ -27,6 +31,8 @@ type alias COtherPlayer =
     { hp : Int
     , level : Level
     , name : String
+    , wins : Int
+    , losses : Int
     }
 
 
@@ -37,6 +43,10 @@ type alias SPlayer =
     , name : String
     , special : Special
     , availableSpecial : Int
+    , cash : Int
+    , ap : Int
+    , wins : Int
+    , losses : Int
     }
 
 
@@ -48,6 +58,10 @@ serverToClient p =
     , name = p.name
     , special = p.special
     , availableSpecial = p.availableSpecial
+    , cash = p.cash
+    , ap = p.ap
+    , wins = p.wins
+    , losses = p.losses
     }
 
 
@@ -56,6 +70,8 @@ serverToClientOther p =
     { hp = p.hp
     , level = Xp.xpToLevel p.xp
     , name = p.name
+    , wins = p.wins
+    , losses = p.losses
     }
 
 
@@ -71,6 +87,10 @@ generator =
                     |> Random.Extra.andMap nameGenerator
                     |> Random.Extra.andMap specialGenerator
                     |> Random.Extra.andMap (Random.int 0 15)
+                    |> Random.Extra.andMap (Random.int 1 9999)
+                    |> Random.Extra.andMap (Random.int 1 20)
+                    |> Random.Extra.andMap (Random.int 0 300)
+                    |> Random.Extra.andMap (Random.int 0 300)
             )
 
 

@@ -1,4 +1,4 @@
-module Types.Xp exposing (Level, Xp, xpToLevel, xpToNextLevel)
+module Types.Xp exposing (Level, Xp, nextLevelXp, xpToLevel, xpUntilNextLevel)
 
 import List.Extra
 
@@ -37,8 +37,16 @@ xpToLevel xp =
         |> Maybe.withDefault levelCap
 
 
-xpToNextLevel : Xp -> Xp
-xpToNextLevel currentXp =
+nextLevelXp : Xp -> Xp
+nextLevelXp currentXp =
+    currentXp
+        |> xpToLevel
+        |> (+) 1
+        |> xpForLevel
+
+
+xpUntilNextLevel : Xp -> Xp
+xpUntilNextLevel currentXp =
     let
         currentLevel =
             xpToLevel currentXp

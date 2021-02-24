@@ -25,6 +25,7 @@ type FrontendMsg
     | UrlChanged Url
     | Logout
     | Login
+    | NoOp
 
 
 type ToBackend

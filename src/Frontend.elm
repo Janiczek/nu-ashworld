@@ -2,9 +2,9 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Html exposing (Html)
-import Html.Attributes as Attrs
-import Html.Events as Events
+import Html as H exposing (Html)
+import Html.Attributes as HA
+import Html.Events as HE
 import Lamdera
 import Types exposing (..)
 import Types.Player exposing (COtherPlayer, CPlayer)
@@ -41,6 +41,9 @@ init url key =
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
@@ -74,81 +77,193 @@ view : Model -> Browser.Document FrontendMsg
 view model =
     { title = ""
     , body =
-        [ Html.div
-            [ Attrs.style "padding-top" "16px"
-            ]
-            [ case model.world of
-                Nothing ->
-                    viewLoggedOut
+        [ stylesLinkView
+        , case model.world of
+            Nothing ->
+                loggedOutView
 
-                Just world ->
-                    viewLoggedIn world
-            ]
+            Just world ->
+                loggedInView world
         ]
     }
 
 
-viewLoggedOut : Html FrontendMsg
-viewLoggedOut =
-    Html.div []
-        [ Html.button
-            [ Events.onClick Login ]
-            [ Html.text "Login and fetch the world state!" ]
+appView :
+    { leftNav : List (Html FrontendMsg)
+    , content : List (Html FrontendMsg)
+    , isLoggedIn : Bool
+    }
+    -> Html FrontendMsg
+appView { leftNav, content, isLoggedIn } =
+    H.div
+        [ HA.id "app"
+        , HA.classList [ ( "logged-in", isLoggedIn ) ]
+        ]
+        [ H.div [ HA.id "left-nav" ] (logoView :: leftNav)
+        , H.div [ HA.id "content" ] content
         ]
 
 
-viewLoggedIn : CWorld -> Html FrontendMsg
-viewLoggedIn world =
-    Html.div []
-        [ Html.button
-            [ Events.onClick Logout ]
-            [ Html.text "Logout" ]
-        , Html.div []
-            [ Html.h2 [] [ Html.text "You" ]
-            , Html.ul [ Attrs.style "text-align" "left" ]
-                [ Html.li []
-                    [ Html.strong [] [ Html.text "Name: " ]
-                    , Html.text world.player.name
-                    ]
-                , Html.li []
-                    [ Html.strong [] [ Html.text "HP: " ]
-                    , Html.text <|
-                        String.fromInt world.player.hp
-                            ++ " / "
-                            ++ String.fromInt world.player.maxHp
-                    ]
-                , Html.li []
-                    [ Html.strong [] [ Html.text "Level: " ]
-                    , Html.text <|
-                        String.fromInt (Xp.xpToLevel world.player.xp)
-                            ++ " (current XP: "
-                            ++ String.fromInt world.player.xp
-                            ++ ", remainder till next level: "
-                            ++ String.fromInt (Xp.xpToNextLevel world.player.xp)
-                            ++ ")"
-                    ]
-                , Html.li []
-                    [ Html.strong [] [ Html.text "SPECIAL: " ]
-                    , Html.ul []
-                        [ Html.li [] [ Html.text <| "Strength: " ++ String.fromInt world.player.special.strength ]
-                        , Html.li [] [ Html.text <| "Perception: " ++ String.fromInt world.player.special.perception ]
-                        , Html.li [] [ Html.text <| "Endurance: " ++ String.fromInt world.player.special.endurance ]
-                        , Html.li [] [ Html.text <| "Charisma: " ++ String.fromInt world.player.special.charisma ]
-                        , Html.li [] [ Html.text <| "Intelligence: " ++ String.fromInt world.player.special.intelligence ]
-                        , Html.li [] [ Html.text <| "Agility: " ++ String.fromInt world.player.special.agility ]
-                        , Html.li [] [ Html.text <| "Luck: " ++ String.fromInt world.player.special.luck ]
-                        ]
-                    ]
-                , Html.li []
-                    [ Html.strong [] [ Html.text "Available SPECIAL points: " ]
-                    , Html.text <| String.fromInt world.player.availableSpecial
-                    ]
+loggedOutView : Html FrontendMsg
+loggedOutView =
+    appView
+        { isLoggedIn = False
+        , leftNav =
+            [ loginFormView
+            , loggedOutLinksView
+            , commonLinksView
+            ]
+        , content = [ H.text "TODO content" ]
+        }
+
+
+loggedInView : CWorld -> Html FrontendMsg
+loggedInView world =
+    appView
+        { isLoggedIn = True
+        , leftNav =
+            [ userInfoView world
+            , loggedInLinksView
+            , commonLinksView
+            ]
+        , content = [ H.text "TODO content" ]
+        }
+
+
+loginFormView : Html FrontendMsg
+loginFormView =
+    H.div
+        [ HA.id "login-form"
+        , HE.onClick Login
+        ]
+        [ H.text "[ (TODO) LOGIN ]"
+        ]
+
+
+linkView : ( String, FrontendMsg ) -> Html FrontendMsg
+linkView ( label, msg ) =
+    let
+        isActive =
+            label == "Ladder"
+    in
+    H.div
+        [ HA.class "link"
+        , HA.classList [ ( "active", isActive ) ]
+        , HE.onClick msg
+        ]
+        [ H.span
+            [ HA.class "link-left-bracket" ]
+            [ H.text "[" ]
+        , H.span
+            [ HA.class "link-label" ]
+            [ H.text label ]
+        , H.span
+            [ HA.class "link-right-bracket" ]
+            [ H.text "]" ]
+        ]
+
+
+loggedInLinksView : Html FrontendMsg
+loggedInLinksView =
+    H.div
+        [ HA.id "logged-in-links"
+        , HA.class "links"
+        ]
+        ([ ( "Character", NoOp )
+         , ( "Map", NoOp )
+         , ( "Ladder", NoOp )
+         , ( "Town", NoOp )
+         , ( "Settings", NoOp )
+         , ( "Logout", Logout )
+         ]
+            |> List.map linkView
+        )
+
+
+loggedOutLinksView : Html FrontendMsg
+loggedOutLinksView =
+    H.div
+        [ HA.id "logged-out-links"
+        , HA.class "links"
+        ]
+        ([ ( "Ladder", NoOp ) ]
+            |> List.map linkView
+        )
+
+
+commonLinksView : Html FrontendMsg
+commonLinksView =
+    H.div
+        [ HA.id "common-links"
+        , HA.class "links"
+        ]
+        ([ ( "FAQ", NoOp )
+         , ( "Reddit", NoOp )
+         , ( "Donate", NoOp )
+         ]
+            |> List.map linkView
+        )
+
+
+userInfoView : CWorld -> Html msg
+userInfoView world =
+    H.div [ HA.id "user-info" ]
+        [ H.div [ HA.id "user-name" ] [ H.text world.player.name ]
+        , H.div [ HA.id "user-stats" ]
+            [ H.div
+                [ HA.class "user-stat-label"
+                , HA.title "Hitpoints"
                 ]
-            ]
-        , Html.div []
-            [ Html.h2 [] [ Html.text "Others" ]
-            , world.otherPlayers
-                |> List.map (\player -> Html.li [] [ Html.text <| Debug.toString player ])
-                |> Html.ul []
+                [ H.text "HP:" ]
+            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.hp ++ "/" ++ String.fromInt world.player.maxHp ]
+            , H.div
+                [ HA.class "user-stat-label"
+                , HA.title "Experience points"
+                ]
+                [ H.text "XP:" ]
+            , H.div [ HA.class "user-stat-value" ]
+                [ H.span [] [ H.text <| String.fromInt world.player.xp ]
+                , H.span
+                    [ HA.class "deemphasized" ]
+                    [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp world.player.xp) ]
+                ]
+            , H.div [ HA.class "user-stat-label" ] [ H.text "Level:" ]
+            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel world.player.xp ]
+            , H.div
+                [ HA.class "user-stat-label"
+                , HA.title "Wins/Losses"
+                ]
+                [ H.text "W/L:" ]
+            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.wins ++ "/" ++ String.fromInt world.player.losses ]
+            , H.div [ HA.class "user-stat-label" ] [ H.text "Cash:" ]
+            , H.div [ HA.class "user-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.cash ]
+            , H.div
+                [ HA.class "user-stat-label"
+                , HA.title "Action points"
+                ]
+                [ H.text "AP:" ]
+            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.ap ]
             ]
         ]
+
+
+stylesLinkView : Html msg
+stylesLinkView =
+    H.node "link"
+        [ HA.rel "stylesheet"
+        , HA.href "styles/app.css"
+        ]
+        []
+
+
+logoView : Html msg
+logoView =
+    H.img
+        [ HA.src "images/logo-black-small.png"
+        , HA.alt "NuAshworld Logo"
+        , HA.title "NuAshworld - go to homepage"
+        , HA.id "logo"
+        , HA.width 190
+        , HA.height 36
+        ]
+        []
