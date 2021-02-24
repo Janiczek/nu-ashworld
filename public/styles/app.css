@@ -52,6 +52,7 @@ button {
   border-width: 128px;
   border-image: url('../images/border-image.png') 50% repeat;
   box-sizing: border-box;
+  pointer-events: none;
 }
 
 #left-nav {
