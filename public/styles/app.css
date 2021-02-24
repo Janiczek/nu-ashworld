@@ -108,11 +108,13 @@ button {
 
 .link {
   cursor: pointer;
+  color: var(--fg01);
+  text-decoration: none;
+  display: block;
 }
 
 .link-label {
   text-transform: uppercase;
-  color: var(--fg01);
   width: 9ch;
   min-width: 9ch;
   display: inline-block;

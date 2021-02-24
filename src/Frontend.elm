@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
@@ -32,6 +33,7 @@ app =
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
+      , route = Route.LoggedOutHomepage
       , world = Nothing
       }
     , Cmd.none
@@ -43,6 +45,11 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        GoToRoute route ->
+            ( { model | route = route }
+            , Cmd.none
+            )
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -60,10 +67,14 @@ update msg model =
             ( model, Cmd.none )
 
         Logout ->
-            ( { model | world = Nothing }, Cmd.none )
+            ( { model | world = Nothing }
+            , Cmd.none
+            )
 
         Login ->
-            ( model, Lamdera.sendToBackend LogMeIn )
+            ( model
+            , Lamdera.sendToBackend LogMeIn
+            )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -140,17 +151,42 @@ loginFormView =
         ]
 
 
-linkView : ( String, FrontendMsg ) -> Html FrontendMsg
-linkView ( label, msg ) =
+type Link
+    = LinkOut String
+    | LinkIn Route
+    | LinkMsg FrontendMsg
+
+
+linkView : ( String, Link ) -> Html FrontendMsg
+linkView ( label, link ) =
     let
         isActive =
             label == "Ladder"
+
+        ( tag, linkAttrs ) =
+            case link of
+                LinkOut http ->
+                    ( H.a
+                    , [ HA.href http
+                      , HA.target "_blank"
+                      ]
+                    )
+
+                LinkIn route ->
+                    ( H.div
+                    , [ HE.onClick <| GoToRoute route ]
+                    )
+
+                LinkMsg msg ->
+                    ( H.div
+                    , [ HE.onClick msg ]
+                    )
     in
-    H.div
-        [ HA.class "link"
-        , HA.classList [ ( "active", isActive ) ]
-        , HE.onClick msg
-        ]
+    tag
+        (HA.class "link"
+            :: HA.classList [ ( "active", isActive ) ]
+            :: linkAttrs
+        )
         [ H.span
             [ HA.class "link-left-bracket" ]
             [ H.text "[" ]
@@ -169,12 +205,12 @@ loggedInLinksView =
         [ HA.id "logged-in-links"
         , HA.class "links"
         ]
-        ([ ( "Character", NoOp )
-         , ( "Map", NoOp )
-         , ( "Ladder", NoOp )
-         , ( "Town", NoOp )
-         , ( "Settings", NoOp )
-         , ( "Logout", Logout )
+        ([ ( "Character", LinkIn Route.Character )
+         , ( "Map", LinkIn Route.Map )
+         , ( "Ladder", LinkIn Route.Ladder )
+         , ( "Town", LinkIn Route.Town )
+         , ( "Settings", LinkIn Route.Settings )
+         , ( "Logout", LinkMsg Logout )
          ]
             |> List.map linkView
         )
@@ -186,7 +222,7 @@ loggedOutLinksView =
         [ HA.id "logged-out-links"
         , HA.class "links"
         ]
-        ([ ( "Ladder", NoOp ) ]
+        ([ ( "Ladder", LinkIn Route.Ladder ) ]
             |> List.map linkView
         )
 
@@ -197,9 +233,9 @@ commonLinksView =
         [ HA.id "common-links"
         , HA.class "links"
         ]
-        ([ ( "FAQ", NoOp )
-         , ( "Reddit", NoOp )
-         , ( "Donate", NoOp )
+        ([ ( "FAQ", LinkIn Route.FAQ )
+         , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/" )
+         , ( "Donate →", LinkOut "https://patreon.com/janiczek" )
          ]
             |> List.map linkView
         )
