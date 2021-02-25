@@ -33,6 +33,7 @@ type FrontendMsg
 
 type ToBackend
     = LogMeIn
+    | GiveMeCurrentWorld
 
 
 type BackendMsg
@@ -41,4 +42,4 @@ type BackendMsg
 
 
 type ToFrontend
-    = YoureLoggedIn CWorld
+    = YourCurrentWorld CWorld

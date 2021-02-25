@@ -92,7 +92,7 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        YoureLoggedIn world ->
+        YourCurrentWorld world ->
             ( { model
                 | world = Just world
                 , route = Route.Ladder

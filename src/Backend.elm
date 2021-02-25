@@ -5,7 +5,7 @@ import Html
 import Lamdera exposing (ClientId, SessionId)
 import Random
 import Types exposing (..)
-import Types.Player as Player
+import Types.Player as Player exposing (SPlayer)
 import Types.World exposing (CWorld)
 
 
@@ -49,37 +49,52 @@ update msg model =
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
-    case msg of
-        LogMeIn ->
+    let
+        withPlayer :
+            (SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg ))
+            -> ( Model, Cmd BackendMsg )
+        withPlayer fn =
             case Dict.get sessionId model.players of
                 Nothing ->
-                    let
-                        _ =
-                            Debug.log "We didn't generate a player for this session ID??" ( sessionId, model.players )
-                    in
                     ( model, Cmd.none )
 
                 Just sPlayer ->
-                    let
-                        cWorld : CWorld
-                        cWorld =
-                            { player = Player.serverToClient sPlayer
-                            , otherPlayers =
-                                model.players
-                                    |> Dict.toList
-                                    |> List.filterMap
-                                        (\( sId, player ) ->
-                                            if sId == sessionId then
-                                                Nothing
+                    fn sessionId clientId sPlayer model
+    in
+    case msg of
+        LogMeIn ->
+            -- TODO check password
+            withPlayer updateTicksAndSendClientWorld
 
-                                            else
-                                                Just <| Player.serverToClientOther player
-                                        )
-                            }
-                    in
-                    ( model
-                    , Lamdera.sendToFrontend clientId <| YoureLoggedIn cWorld
-                    )
+        GiveMeCurrentWorld ->
+            withPlayer updateTicksAndSendClientWorld
+
+
+updateTicksAndSendClientWorld : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+updateTicksAndSendClientWorld sessionId clientId sPlayer model =
+    let
+        _ =
+            Debug.log "TODO check elapsed ticks"
+
+        cWorld : CWorld
+        cWorld =
+            { player = Player.serverToClient sPlayer
+            , otherPlayers =
+                model.players
+                    |> Dict.toList
+                    |> List.filterMap
+                        (\( sId, player ) ->
+                            if sId == sessionId then
+                                Nothing
+
+                            else
+                                Just <| Player.serverToClientOther player
+                        )
+            }
+    in
+    ( model
+    , Lamdera.sendToFrontend clientId <| YourCurrentWorld cWorld
+    )
 
 
 subscriptions : Model -> Sub BackendMsg
