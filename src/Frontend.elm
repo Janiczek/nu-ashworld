@@ -33,7 +33,7 @@ app =
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
-      , route = Route.LoggedOutHomepage
+      , route = Route.About
       , world = Nothing
       }
     , Cmd.none
@@ -75,7 +75,7 @@ update msg model =
                 | world = Nothing
                 , route =
                     if Route.needsLogin model.route then
-                        Route.LoggedOutHomepage
+                        Route.About
 
                     else
                         model.route
@@ -95,13 +95,7 @@ updateFromBackend msg model =
         YoureLoggedIn world ->
             ( { model
                 | world = Just world
-                , route =
-                    case model.route of
-                        Route.LoggedOutHomepage ->
-                            Route.Ladder
-
-                        _ ->
-                            model.route
+                , route = Route.Ladder
               }
             , Cmd.none
             )
@@ -261,7 +255,8 @@ commonLinksView =
         [ HA.id "common-links"
         , HA.class "links"
         ]
-        ([ ( "FAQ", LinkIn Route.FAQ )
+        ([ ( "About", LinkIn Route.About )
+         , ( "FAQ", LinkIn Route.FAQ )
          , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/" )
          , ( "Donate →", LinkOut "https://patreon.com/janiczek" )
          ]

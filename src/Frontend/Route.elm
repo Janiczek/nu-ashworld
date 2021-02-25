@@ -1,12 +1,19 @@
 module Frontend.Route exposing (Route(..), needsLogin)
 
 
+type Route
+    = Character
+    | Map
+    | Ladder
+    | Town
+    | Settings
+    | FAQ
+    | About
+
+
 needsLogin : Route -> Bool
 needsLogin route =
     case route of
-        LoggedOutHomepage ->
-            False
-
         Character ->
             True
 
@@ -25,12 +32,5 @@ needsLogin route =
         FAQ ->
             False
 
-
-type Route
-    = LoggedOutHomepage
-    | Character
-    | Map
-    | Ladder
-    | Town
-    | Settings
-    | FAQ
+        About ->
+            False
