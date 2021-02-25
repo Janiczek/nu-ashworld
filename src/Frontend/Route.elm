@@ -1,4 +1,4 @@
-module Frontend.Route exposing (Route(..), needsLogin)
+module Frontend.Route exposing (Route(..), label, needsLogin)
 
 
 type Route
@@ -34,3 +34,28 @@ needsLogin route =
 
         About ->
             False
+
+
+label : Route -> String
+label route =
+    case route of
+        Character ->
+            "Character"
+
+        Map ->
+            "Map"
+
+        Ladder ->
+            "Label"
+
+        Town ->
+            "Town"
+
+        Settings ->
+            "Settings"
+
+        FAQ ->
+            "FAQ"
+
+        About ->
+            "About"

@@ -73,9 +73,7 @@ updateFromFrontend sessionId clientId msg model =
 updateTicksAndSendClientWorld : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 updateTicksAndSendClientWorld sessionId clientId sPlayer model =
     let
-        _ =
-            Debug.log "TODO check elapsed ticks"
-
+        -- TODO check elapsed ticks
         cWorld : CWorld
         cWorld =
             { player = Player.serverToClient sPlayer

@@ -146,7 +146,7 @@ loggedOutView currentRoute =
             , loggedOutLinksView currentRoute
             , commonLinksView currentRoute
             ]
-        , content = [ H.text <| Debug.toString currentRoute ]
+        , content = [ H.text <| Route.label currentRoute ]
         }
 
 
@@ -159,7 +159,7 @@ loggedInView currentRoute world =
             , loggedInLinksView currentRoute
             , commonLinksView currentRoute
             ]
-        , content = [ H.text <| Debug.toString currentRoute ]
+        , content = [ H.text <| Route.label currentRoute ]
         }
 
 
