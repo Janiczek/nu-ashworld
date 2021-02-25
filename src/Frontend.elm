@@ -138,28 +138,28 @@ appView ({ leftNav, content } as r) =
 
 
 loggedOutView : Route -> Html FrontendMsg
-loggedOutView route =
+loggedOutView currentRoute =
     appView
         { isLoggedIn = False
         , leftNav =
             [ loginFormView
-            , loggedOutLinksView
-            , commonLinksView
+            , loggedOutLinksView currentRoute
+            , commonLinksView currentRoute
             ]
-        , content = [ H.text <| Debug.toString route ]
+        , content = [ H.text <| Debug.toString currentRoute ]
         }
 
 
 loggedInView : Route -> CWorld -> Html FrontendMsg
-loggedInView route world =
+loggedInView currentRoute world =
     appView
         { isLoggedIn = True
         , leftNav =
             [ userInfoView world
-            , loggedInLinksView
-            , commonLinksView
+            , loggedInLinksView currentRoute
+            , commonLinksView currentRoute
             ]
-        , content = [ H.text <| Debug.toString route ]
+        , content = [ H.text <| Debug.toString currentRoute ]
         }
 
 
@@ -179,30 +179,33 @@ type Link
     | LinkMsg FrontendMsg
 
 
-linkView : ( String, Link ) -> Html FrontendMsg
-linkView ( label, link ) =
+linkView : Route -> ( String, Link ) -> Html FrontendMsg
+linkView currentRoute ( label, link ) =
     let
-        isActive =
-            label == "Ladder"
-
-        ( tag, linkAttrs ) =
+        ( tag, linkAttrs, maybeRoute ) =
             case link of
                 LinkOut http ->
                     ( H.a
                     , [ HA.href http
                       , HA.target "_blank"
                       ]
+                    , Nothing
                     )
 
                 LinkIn route ->
                     ( H.div
                     , [ HE.onClick <| GoToRoute route ]
+                    , Just route
                     )
 
                 LinkMsg msg ->
                     ( H.div
                     , [ HE.onClick msg ]
+                    , Nothing
                     )
+
+        isActive =
+            maybeRoute == Just currentRoute
     in
     tag
         (HA.class "link"
@@ -221,8 +224,8 @@ linkView ( label, link ) =
         ]
 
 
-loggedInLinksView : Html FrontendMsg
-loggedInLinksView =
+loggedInLinksView : Route -> Html FrontendMsg
+loggedInLinksView currentRoute =
     H.div
         [ HA.id "logged-in-links"
         , HA.class "links"
@@ -234,23 +237,23 @@ loggedInLinksView =
          , ( "Settings", LinkIn Route.Settings )
          , ( "Logout", LinkMsg Logout )
          ]
-            |> List.map linkView
+            |> List.map (linkView currentRoute)
         )
 
 
-loggedOutLinksView : Html FrontendMsg
-loggedOutLinksView =
+loggedOutLinksView : Route -> Html FrontendMsg
+loggedOutLinksView currentRoute =
     H.div
         [ HA.id "logged-out-links"
         , HA.class "links"
         ]
         ([ ( "Ladder", LinkIn Route.Ladder ) ]
-            |> List.map linkView
+            |> List.map (linkView currentRoute)
         )
 
 
-commonLinksView : Html FrontendMsg
-commonLinksView =
+commonLinksView : Route -> Html FrontendMsg
+commonLinksView currentRoute =
     H.div
         [ HA.id "common-links"
         , HA.class "links"
@@ -260,7 +263,7 @@ commonLinksView =
          , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/" )
          , ( "Donate →", LinkOut "https://patreon.com/janiczek" )
          ]
-            |> List.map linkView
+            |> List.map (linkView currentRoute)
         )
 
 
