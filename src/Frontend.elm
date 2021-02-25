@@ -47,7 +47,11 @@ update msg model =
             ( model, Cmd.none )
 
         GoToRoute route ->
-            ( { model | route = route }
+            ( if Route.needsLogin route && not (isLoggedIn model) then
+                model
+
+              else
+                { model | route = route }
             , Cmd.none
             )
 
@@ -67,7 +71,15 @@ update msg model =
             ( model, Cmd.none )
 
         Logout ->
-            ( { model | world = Nothing }
+            ( { model
+                | world = Nothing
+                , route =
+                    if Route.needsLogin model.route then
+                        Route.LoggedOutHomepage
+
+                    else
+                        model.route
+              }
             , Cmd.none
             )
 
@@ -81,7 +93,23 @@ updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         YoureLoggedIn world ->
-            ( { model | world = Just world }, Cmd.none )
+            ( { model
+                | world = Just world
+                , route =
+                    case model.route of
+                        Route.LoggedOutHomepage ->
+                            Route.Ladder
+
+                        _ ->
+                            model.route
+              }
+            , Cmd.none
+            )
+
+
+isLoggedIn : Model -> Bool
+isLoggedIn model =
+    Nothing /= model.world
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -91,10 +119,10 @@ view model =
         [ stylesLinkView
         , case model.world of
             Nothing ->
-                loggedOutView
+                loggedOutView model.route
 
             Just world ->
-                loggedInView world
+                loggedInView model.route world
         ]
     }
 
@@ -105,18 +133,18 @@ appView :
     , isLoggedIn : Bool
     }
     -> Html FrontendMsg
-appView { leftNav, content, isLoggedIn } =
+appView ({ leftNav, content } as r) =
     H.div
         [ HA.id "app"
-        , HA.classList [ ( "logged-in", isLoggedIn ) ]
+        , HA.classList [ ( "logged-in", r.isLoggedIn ) ]
         ]
         [ H.div [ HA.id "left-nav" ] (logoView :: leftNav)
         , H.div [ HA.id "content" ] content
         ]
 
 
-loggedOutView : Html FrontendMsg
-loggedOutView =
+loggedOutView : Route -> Html FrontendMsg
+loggedOutView route =
     appView
         { isLoggedIn = False
         , leftNav =
@@ -124,12 +152,12 @@ loggedOutView =
             , loggedOutLinksView
             , commonLinksView
             ]
-        , content = [ H.text "TODO content" ]
+        , content = [ H.text <| Debug.toString route ]
         }
 
 
-loggedInView : CWorld -> Html FrontendMsg
-loggedInView world =
+loggedInView : Route -> CWorld -> Html FrontendMsg
+loggedInView route world =
     appView
         { isLoggedIn = True
         , leftNav =
@@ -137,7 +165,7 @@ loggedInView world =
             , loggedInLinksView
             , commonLinksView
             ]
-        , content = [ H.text "TODO content" ]
+        , content = [ H.text <| Debug.toString route ]
         }
 
 
