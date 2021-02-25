@@ -2,5 +2,14 @@
 
 ## TODO
 
+### Important: mechanics, fun
+- [ ] show a ladder with other players
+- [ ] allow fighting other players
+- [ ] chat with other players
+
+### Less important?
 - [ ] auth system (logging in via passwords etc.)
 - [ ] ticks system (on LogMeIn and GiveMeCurrentWorld, after auth, check current user's "entitlement" for ticks, and give them some time-based resources (APs?))
+
+### Later
+- [ ] clans?
