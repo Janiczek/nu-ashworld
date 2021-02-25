@@ -7,6 +7,10 @@
   --fg01: #3CF800;
 
   --fg-highlight: #FCFD7D;
+
+  /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
+  --filter-fg02: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+  --filter-fg01: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%) drop-shadow(0px 0px 8px var(--fg03));
 }
 
 @font-face {
@@ -65,31 +69,24 @@ button {
   align-items: center;
 }
 
-/* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
-
 #logo {
   width: 190px;
   height: 36px;
   margin-top: 26px;
-
-  /* target color: #00C000 */
-  filter: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+  filter: var(--filter-fg02);
 }
 
 #app.logged-in #logo {
-  /* target color: #3CF800 */
-  filter: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%);
+  filter: var(--filter-fg01);
   animation: flicker 2s linear 1;
 }
 
 @keyframes flicker {
   0%, 19%, 26%, 46%, 65%, 82%, 86%, 87%, 90%, 95% {
-    /* darker, #00C000 */
-    filter: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+    filter: var(--filter-fg02);
   }
   20%, 25%, 47%, 64%, 83%, 85%, 88%, 89%, 96%, 100% {
-    /* lighter, #3CF800 */
-    filter: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%);
+    filter: var(--filter-fg01);
   }
 }
 
