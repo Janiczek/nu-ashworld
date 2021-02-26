@@ -46,7 +46,7 @@ label route =
             "Map"
 
         Ladder ->
-            "Label"
+            "Ladder"
 
         Town ->
             "Town"
