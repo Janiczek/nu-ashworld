@@ -228,3 +228,11 @@ button {
 #ladder-table tbody tr.is-player {
   color: var(--fg01);
 }
+
+#ladder-table tbody tr.is-player td {
+  background: var(--bg02);
+}
+
+#ladder-table tbody tr:hover td {
+  background: var(--bg02);
+}
