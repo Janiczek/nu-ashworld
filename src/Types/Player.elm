@@ -2,14 +2,15 @@ module Types.Player exposing
     ( COtherPlayer
     , CPlayer
     , SPlayer
+    , clientToClientOther
     , generator
     , serverToClient
     , serverToClientOther
-    , clientToClientOther
     )
 
 import Random exposing (Generator)
 import Random.Extra
+import Set exposing (Set)
 import Types.Special exposing (Special)
 import Types.Xp as Xp exposing (Level, Xp)
 
@@ -75,6 +76,7 @@ serverToClientOther p =
     , losses = p.losses
     }
 
+
 clientToClientOther : CPlayer -> COtherPlayer
 clientToClientOther p =
     { hp = p.hp
@@ -84,8 +86,9 @@ clientToClientOther p =
     , losses = p.losses
     }
 
-generator : Generator SPlayer
-generator =
+
+generator : Set String -> Generator SPlayer
+generator existingNames =
     Random.int 10 100
         |> Random.andThen
             (\maxHp ->
@@ -93,7 +96,7 @@ generator =
                     |> Random.Extra.andMap (Random.int 0 maxHp)
                     |> Random.Extra.andMap (Random.constant maxHp)
                     |> Random.Extra.andMap (Random.int 0 10000)
-                    |> Random.Extra.andMap nameGenerator
+                    |> Random.Extra.andMap (nameGenerator existingNames)
                     |> Random.Extra.andMap specialGenerator
                     |> Random.Extra.andMap (Random.int 0 15)
                     |> Random.Extra.andMap (Random.int 1 9999)
@@ -103,18 +106,36 @@ generator =
             )
 
 
-nameGenerator : Generator String
-nameGenerator =
-    Random.uniform
-        "Killian95"
-        [ "Falloutma111"
-        , "DJetelina"
-        , "M Janiczek"
-        , "Zzzzzzzaros"
-        , "Willdy Mage"
-        , "WildRanger"
-        , "iScr3Am"
-        ]
+nameGenerator : Set String -> Generator String
+nameGenerator existingNames =
+    let
+        initial =
+            Random.uniform
+                "Killian95"
+                [ "Falloutma111"
+                , "DJetelina"
+                , "M Janiczek"
+                , "Zzzzzzzaros"
+                , "Willdy Mage"
+                , "WildRanger"
+                , "iScr3Am"
+                ]
+
+        enforceUnique : String -> Generator String
+        enforceUnique name =
+            if Set.member name existingNames then
+                Random.int 0 9
+                    |> Random.map
+                        (\n ->
+                            name ++ String.fromInt n
+                        )
+                    |> Random.andThen enforceUnique
+
+            else
+                Random.constant name
+    in
+    initial
+        |> Random.andThen enforceUnique
 
 
 specialGenerator : Generator Special

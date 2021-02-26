@@ -45,7 +45,16 @@ update msg model =
                         Cmd.none
 
                     else
-                        Random.generate (GeneratedPlayer sessionId) Player.generator
+                        let
+                            existingNames =
+                                model.players
+                                    |> Dict.values
+                                    |> List.map .name
+                                    |> Set.fromList
+                        in
+                        Random.generate
+                            (GeneratedPlayer sessionId)
+                            (Player.generator existingNames)
 
                 world : WorldLoggedOutData
                 world =
