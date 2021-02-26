@@ -276,7 +276,7 @@ ladderTableView { isPlayer, players } =
             ]
         , H.tbody []
             (players
-                |> List.sortBy {- TODO score? -} .name
+                |> List.sortBy (.name >> String.toLower)
                 |> List.indexedMap
                     (\i player ->
                         H.tr [ HA.classList [ ( "is-player", isPlayer player ) ] ]
