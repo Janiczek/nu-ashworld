@@ -7,6 +7,7 @@
   --fg01: #3CF800;
 
   --fg-highlight: #FCFD7D;
+  --fg-highlight-transparent: rgba(252,253,125,0.25);
   --table-border: rgba(0,124,0,0.5); /* fg03 with opacity 0.5 */
 
   /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
@@ -235,4 +236,49 @@ button {
 
 #ladder-table tbody tr:hover td {
   background: var(--bg02);
+}
+
+.news-item {
+  margin-top: 60px;
+}
+
+.news-item:first-child {
+  margin-top: 40px;
+}
+
+
+.news-item-title {
+  margin: 0;
+  color: var(--fg01);
+}
+
+.news-item-date {
+  font-size: 14px;
+  color: var(--fg03);
+}
+
+.news-item-text {
+  max-width: 60ch;
+}
+
+.news-item-text a {
+  color: var(--fg-highlight);
+  position: relative;
+  text-decoration: none;
+}
+
+.news-item-text a:after {
+  position: absolute;
+  content: '';
+  background: var(--fg-highlight-transparent);
+  left: -3px;
+  right: -3px;
+  bottom: -2px;
+  height: 4px;
+  transition: bottom 0.25s ease, height 0.25s ease;
+}
+
+.news-item-text a:hover:after {
+  bottom: 0px;
+  height: 100%;
 }

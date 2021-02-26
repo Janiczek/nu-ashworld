@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
+import Time
 import Types.Player exposing (SPlayer)
 import Types.World
     exposing
@@ -18,6 +19,7 @@ import Url exposing (Url)
 
 type alias FrontendModel =
     { key : Key
+    , zone : Time.Zone
     , route : Route
     , world : World
     }
@@ -35,6 +37,7 @@ type FrontendMsg
     | Logout
     | Login
     | NoOp
+    | GetZone Time.Zone
 
 
 type ToBackend

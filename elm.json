@@ -16,8 +16,10 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.2.4",
             "elm-community/random-extra": "3.1.0",
+            "elm-explorations/markdown": "1.0.0",
             "lamdera/codecs": "1.0.0",
-            "lamdera/core": "1.0.0"
+            "lamdera/core": "1.0.0",
+            "ryannhg/date-format": "2.3.0"
         },
         "indirect": {
             "elm/bytes": "1.0.8",

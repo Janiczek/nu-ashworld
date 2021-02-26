@@ -3,11 +3,15 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Common
+import DateFormat
 import Frontend.Route as Route exposing (Route(..))
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
 import Lamdera
+import News exposing (Item)
+import Task
+import Time exposing (Posix)
 import Types exposing (..)
 import Types.Player exposing (COtherPlayer, CPlayer)
 import Types.World as World
@@ -41,8 +45,9 @@ init url key =
     ( { key = key
       , route = Route.News
       , world = WorldNotInitialized
+      , zone = Time.utc
       }
-    , Cmd.none
+    , Task.perform GetZone Time.here
     )
 
 
@@ -92,6 +97,11 @@ update msg model =
         Login ->
             ( model
             , Lamdera.sendToBackend LogMeIn
+            )
+
+        GetZone zone ->
+            ( { model | zone = zone }
+            , Cmd.none
             )
 
 
@@ -183,22 +193,53 @@ contentView model =
                 [ H.text "TODO About page" ]
 
             ( News, _ ) ->
-                [ H.text "TODO News page" ]
+                newsView model.zone
         )
+
+
+pageTitleView : String -> Html FrontendMsg
+pageTitleView title =
+    H.h2
+        [ HA.id "page-title" ]
+        [ H.text title ]
+
+
+newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
+newsItemView zone { date, title, text } =
+    H.div
+        [ HA.class "news-item" ]
+        [ H.h3
+            [ HA.class "news-item-title" ]
+            [ H.text title ]
+        , H.time
+            [ HA.class "news-item-date" ]
+            [ date
+                |> News.formatDate zone
+                |> H.text
+            ]
+        , News.formatText "news-item-text" text
+        ]
+
+
+newsView : Time.Zone -> List (Html FrontendMsg)
+newsView zone =
+    pageTitleView "News"
+        :: List.map (newsItemView zone) News.items
 
 
 ladderView : Model -> List (Html FrontendMsg)
 ladderView model =
     case model.world of
         WorldNotInitialized ->
-            [ H.text "Ladder is loading..."
-            , H.span [ HA.class "loading-cursor" ] []
+            [ pageTitleView "Ladder"
+            , H.div []
+                [ H.text "Ladder is loading..."
+                , H.span [ HA.class "loading-cursor" ] []
+                ]
             ]
 
         WorldLoggedOut { players } ->
-            [ H.h2
-                [ HA.id "page-title" ]
-                [ H.text "Ladder" ]
+            [ pageTitleView "Ladder"
             , ladderTableView
                 { isPlayer = \_ -> False
                 , players = players
@@ -206,9 +247,7 @@ ladderView model =
             ]
 
         WorldLoggedIn data ->
-            [ H.h2
-                [ HA.id "page-title" ]
-                [ H.text "Ladder" ]
+            [ pageTitleView "Ladder"
             , ladderTableView
                 { isPlayer = \otherPlayer -> data.player.name == otherPlayer.name
                 , players = World.allPlayers data
@@ -450,7 +489,7 @@ stylesLinkView : Html msg
 stylesLinkView =
     H.node "link"
         [ HA.rel "stylesheet"
-        , HA.href "styles/app.css"
+        , HA.href <| "styles/app.css?v=" ++ Common.version
         ]
         []
 
