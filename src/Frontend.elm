@@ -10,7 +10,12 @@ import Html.Events as HE
 import Lamdera
 import Types exposing (..)
 import Types.Player exposing (COtherPlayer, CPlayer)
-import Types.World exposing (CWorld)
+import Types.World as World
+    exposing
+        ( World(..)
+        , WorldLoggedInData
+        , WorldLoggedOutData
+        )
 import Types.Xp as Xp
 import Url
 
@@ -35,7 +40,7 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
       , route = Route.About
-      , world = Nothing
+      , world = WorldNotInitialized
       }
     , Cmd.none
     )
@@ -48,7 +53,7 @@ update msg model =
             ( model, Cmd.none )
 
         GoToRoute route ->
-            ( if Route.needsLogin route && not (isLoggedIn model) then
+            ( if Route.needsLogin route && not (World.isLoggedIn model.world) then
                 model
 
               else
@@ -73,7 +78,7 @@ update msg model =
 
         Logout ->
             ( { model
-                | world = Nothing
+                | world = World.toLoggedOut model.world
                 , route =
                     if Route.needsLogin model.route then
                         Route.About
@@ -95,16 +100,16 @@ updateFromBackend msg model =
     case msg of
         YourCurrentWorld world ->
             ( { model
-                | world = Just world
+                | world = WorldLoggedIn world
                 , route = Route.Ladder
               }
             , Cmd.none
             )
 
-
-isLoggedIn : Model -> Bool
-isLoggedIn model =
-    Nothing /= model.world
+        CurrentWorld world ->
+            ( { model | world = WorldLoggedOut world }
+            , Cmd.none
+            )
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -113,11 +118,14 @@ view model =
     , body =
         [ stylesLinkView
         , case model.world of
-            Nothing ->
+            WorldNotInitialized ->
+                notInitializedView model
+
+            WorldLoggedOut _ ->
                 loggedOutView model
 
-            Just world ->
-                loggedInView world model
+            WorldLoggedIn data ->
+                loggedInView data model
         ]
     }
 
@@ -129,7 +137,7 @@ appView :
 appView ({ leftNav } as r) model =
     H.div
         [ HA.id "app"
-        , HA.classList [ ( "logged-in", isLoggedIn model ) ]
+        , HA.classList [ ( "logged-in", World.isLoggedIn model.world ) ]
         ]
         [ H.div [ HA.id "left-nav" ]
             (logoView
@@ -144,10 +152,10 @@ contentView : Model -> Html FrontendMsg
 contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
-            ( Character, Just world ) ->
+            ( Character, WorldLoggedIn world ) ->
                 [ H.text "TODO Character page" ]
 
-            ( Character, Nothing ) ->
+            ( Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Map, _ ) ->
@@ -156,16 +164,16 @@ contentView model =
             ( Ladder, _ ) ->
                 ladderView model
 
-            ( Town, Just world ) ->
+            ( Town, WorldLoggedIn world ) ->
                 [ H.text "TODO Town page" ]
 
-            ( Town, Nothing ) ->
+            ( Town, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Settings, Just world ) ->
+            ( Settings, WorldLoggedIn world ) ->
                 [ H.text "TODO Settings page" ]
 
-            ( Settings, Nothing ) ->
+            ( Settings, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( FAQ, _ ) ->
@@ -181,12 +189,42 @@ contentView model =
 
 ladderView : Model -> List (Html FrontendMsg)
 ladderView model =
-    [ H.text "TODO ladder" ]
+    case model.world of
+        WorldNotInitialized ->
+            [ H.text "Ladder is loading..."
+            , H.span [ HA.class "loading-cursor" ] []
+            ]
+
+        WorldLoggedOut data ->
+            [ H.text "TODO ladder - logged out" ]
+
+        WorldLoggedIn data ->
+            [ H.text "TODO ladder - logged in" ]
 
 
 contentUnavailableToLoggedOutView : List (Html FrontendMsg)
 contentUnavailableToLoggedOutView =
     [ H.text "Content unavailable (you're not logged in). (Bug? We should have redirected you someplace else. Could you report this to the developers please?)" ]
+
+
+notInitializedView : Model -> Html FrontendMsg
+notInitializedView model =
+    appView
+        { leftNav =
+            [ loginFormView
+            , loadingNavView
+            ]
+        }
+        model
+
+
+loadingNavView : Html FrontendMsg
+loadingNavView =
+    H.div
+        [ HA.id "loading-nav" ]
+        [ H.text "Loading..."
+        , H.span [ HA.class "loading-cursor" ] []
+        ]
 
 
 loggedOutView : Model -> Html FrontendMsg
@@ -200,7 +238,7 @@ loggedOutView model =
         model
 
 
-loggedInView : CWorld -> Model -> Html FrontendMsg
+loggedInView : WorldLoggedInData -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
         { leftNav =
@@ -316,7 +354,7 @@ commonLinksView currentRoute =
         )
 
 
-playerInfoView : CWorld -> Html msg
+playerInfoView : WorldLoggedInData -> Html msg
 playerInfoView world =
     H.div [ HA.id "player-info" ]
         [ H.div [ HA.id "player-name" ] [ H.text world.player.name ]

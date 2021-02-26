@@ -7,7 +7,12 @@ import Random
 import Set
 import Types exposing (..)
 import Types.Player as Player exposing (SPlayer)
-import Types.World exposing (CWorld)
+import Types.World
+    exposing
+        ( World
+        , WorldLoggedInData
+        , WorldLoggedOutData
+        )
 
 
 type alias Model =
@@ -33,7 +38,7 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
-        Connected sessionId _ ->
+        Connected sessionId clientId ->
             let
                 generatePlayerCmd =
                     if Dict.member sessionId model.players then
@@ -41,9 +46,20 @@ update msg model =
 
                     else
                         Random.generate (GeneratedPlayer sessionId) Player.generator
+
+                world : WorldLoggedOutData
+                world =
+                    { players =
+                        model.players
+                            |> Dict.values
+                            |> List.map Player.serverToClientOther
+                    }
             in
             ( model
-            , generatePlayerCmd
+            , Cmd.batch
+                [ generatePlayerCmd
+                , Lamdera.sendToFrontend clientId <| CurrentWorld world
+                ]
             )
 
         GeneratedPlayer sessionId player ->
@@ -79,8 +95,8 @@ updateTicksAndSendClientWorld : SessionId -> ClientId -> SPlayer -> Model -> ( M
 updateTicksAndSendClientWorld sessionId clientId sPlayer model =
     let
         -- TODO check elapsed ticks
-        cWorld : CWorld
-        cWorld =
+        world : WorldLoggedInData
+        world =
             { player = Player.serverToClient sPlayer
             , otherPlayers =
                 model.players
@@ -96,7 +112,7 @@ updateTicksAndSendClientWorld sessionId clientId sPlayer model =
             }
     in
     ( model
-    , Lamdera.sendToFrontend clientId <| YourCurrentWorld cWorld
+    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
     )
 
 

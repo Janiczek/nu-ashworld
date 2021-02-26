@@ -5,6 +5,7 @@ module Types.Player exposing
     , generator
     , serverToClient
     , serverToClientOther
+    , clientToClientOther
     )
 
 import Random exposing (Generator)
@@ -74,6 +75,14 @@ serverToClientOther p =
     , losses = p.losses
     }
 
+clientToClientOther : CPlayer -> COtherPlayer
+clientToClientOther p =
+    { hp = p.hp
+    , level = Xp.xpToLevel p.xp
+    , name = p.name
+    , wins = p.wins
+    , losses = p.losses
+    }
 
 generator : Generator SPlayer
 generator =

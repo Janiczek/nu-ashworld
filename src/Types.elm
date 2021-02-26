@@ -7,14 +7,19 @@ import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
 import Types.Player exposing (SPlayer)
-import Types.World exposing (CWorld)
+import Types.World
+    exposing
+        ( World
+        , WorldLoggedInData
+        , WorldLoggedOutData
+        )
 import Url exposing (Url)
 
 
 type alias FrontendModel =
     { key : Key
     , route : Route
-    , world : Maybe CWorld
+    , world : World
     }
 
 
@@ -43,4 +48,5 @@ type BackendMsg
 
 
 type ToFrontend
-    = YourCurrentWorld CWorld
+    = YourCurrentWorld WorldLoggedInData
+    | CurrentWorld WorldLoggedOutData

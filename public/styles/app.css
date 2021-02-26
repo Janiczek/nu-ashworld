@@ -168,6 +168,28 @@ button {
   color: var(--fg03);
 }
 
+#loading-nav {
+  margin-top: 40px;
+}
+
+.loading-cursor {
+  display: inline-block;
+  animation: cursor-blink 1.5s linear infinite;
+  width: 1ch;
+  height: 1em;
+  margin-bottom: -2px;
+  margin-left: 2px;
+}
+
+@keyframes cursor-blink {
+  0%, 10%, 90%, 100% {
+    background: var(--fg02);
+  }
+  30%, 70% {
+    background: transparent;
+  }
+}
+
 #content {
   padding: 40px;
 }
