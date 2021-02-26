@@ -70,11 +70,22 @@ button {
   align-items: center;
 }
 
+#logo-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 26px;
+}
+
 #logo {
   width: 190px;
   height: 36px;
-  margin-top: 26px;
   filter: var(--filter-fg02);
+}
+
+#version {
+  font-size: 14px;
+  color: var(--fg03);
 }
 
 #app.logged-in #logo {

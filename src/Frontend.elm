@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Common
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Html)
 import Html.Attributes as HA
@@ -108,7 +109,7 @@ isLoggedIn model =
 
 view : Model -> Browser.Document FrontendMsg
 view model =
-    { title = ""
+    { title = "NuAshworld " ++ Common.version
     , body =
         [ stylesLinkView
         , case model.world of
@@ -320,12 +321,17 @@ stylesLinkView =
 
 logoView : Html msg
 logoView =
-    H.img
-        [ HA.src "images/logo-black-small.png"
-        , HA.alt "NuAshworld Logo"
-        , HA.title "NuAshworld - go to homepage"
-        , HA.id "logo"
-        , HA.width 190
-        , HA.height 36
+    H.div [ HA.id "logo-wrapper" ]
+        [ H.img
+            [ HA.src "images/logo-black-small.png"
+            , HA.alt "NuAshworld Logo"
+            , HA.title "NuAshworld - go to homepage"
+            , HA.id "logo"
+            , HA.width 190
+            , HA.height 36
+            ]
+            []
+        , H.div
+            [ HA.id "version" ]
+            [ H.text Common.version ]
         ]
-        []
