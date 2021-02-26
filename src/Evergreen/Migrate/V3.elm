@@ -58,25 +58,28 @@ backendModel old =
 
 frontendMsg : Old.FrontendMsg -> MsgMigration New.FrontendMsg New.FrontendMsg
 frontendMsg old =
-    case old of
-        Old.GoToRoute route ->
-            New.GoToRoute <| migrateRoute route
+    MsgMigrated <|
+        ( case old of
+            Old.GoToRoute route ->
+                New.GoToRoute <| migrateRoute route
 
-        -- rest is copypaste
-        Old.UrlClicked url ->
-            New.UrlClicked url
+            -- rest is copypaste
+            Old.UrlClicked url ->
+                New.UrlClicked url
 
-        Old.UrlChanged url ->
-            New.UrlChanged url
+            Old.UrlChanged url ->
+                New.UrlChanged url
 
-        Old.Logout ->
-            New.Logout
+            Old.Logout ->
+                New.Logout
 
-        Old.Login ->
-            New.Login
+            Old.Login ->
+                New.Login
 
-        Old.NoOp ->
-            New.NoOp
+            Old.NoOp ->
+                New.NoOp
+        , Cmd.none
+        )
 
 
 toBackend : Old.ToBackend -> MsgMigration New.ToBackend New.BackendMsg
@@ -91,6 +94,9 @@ backendMsg old =
 
 toFrontend : Old.ToFrontend -> MsgMigration New.ToFrontend New.FrontendMsg
 toFrontend old =
-    case old of
-        Old.YourCurrentWorld world ->
-            New.YourCurrentWorld world
+    MsgMigrated
+        ( case old of
+            Old.YourCurrentWorld world ->
+                New.YourCurrentWorld world
+        , Cmd.none
+        )
