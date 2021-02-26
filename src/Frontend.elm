@@ -39,7 +39,7 @@ app =
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
-      , route = Route.About
+      , route = Route.News
       , world = WorldNotInitialized
       }
     , Cmd.none
@@ -81,7 +81,7 @@ update msg model =
                 | world = World.toLoggedOut model.world
                 , route =
                     if Route.needsLogin model.route then
-                        Route.About
+                        Route.News
 
                     else
                         model.route
@@ -195,11 +195,61 @@ ladderView model =
             , H.span [ HA.class "loading-cursor" ] []
             ]
 
-        WorldLoggedOut data ->
-            [ H.text "TODO ladder - logged out" ]
+        WorldLoggedOut { players } ->
+            [ H.h2
+                [ HA.id "page-title" ]
+                [ H.text "Ladder" ]
+            , ladderTableView
+                { isPlayer = \_ -> False
+                , players = players
+                }
+            ]
 
         WorldLoggedIn data ->
-            [ H.text "TODO ladder - logged in" ]
+            [ H.h2
+                [ HA.id "page-title" ]
+                [ H.text "Ladder" ]
+            , ladderTableView
+                { isPlayer = \otherPlayer -> data.player.name == otherPlayer.name
+                , players = World.allPlayers data
+                }
+            ]
+
+
+ladderTableView :
+    { isPlayer : COtherPlayer -> Bool
+    , players : List COtherPlayer
+    }
+    -> Html FrontendMsg
+ladderTableView { isPlayer, players } =
+    H.table [ HA.id "ladder-table" ]
+        [ H.thead []
+            [ H.tr []
+                [ H.th [] [ H.text "#" ]
+                , H.th [] [ H.text "Username" ]
+                , H.th [] [ H.text "Lvl" ]
+
+                --, H.th [] [ H.text "City" ] -- city
+                --, H.th [] [ H.text "" ] -- flag
+                , H.th [] [ H.text "W" ]
+                , H.th [] [ H.text "L" ]
+                ]
+            ]
+        , H.tbody []
+            (players
+                |> List.sortBy {- TODO score? -} .name
+                |> List.indexedMap
+                    (\i player ->
+                        H.tr [ HA.classList [ ( "is-player", isPlayer player ) ] ]
+                            [ H.td [] [ H.text <| String.fromInt <| i + 1 ]
+                            , H.td [] [ H.text player.name ]
+                            , H.td [] [ H.text <| String.fromInt player.level ]
+                            , H.td [] [ H.text <| String.fromInt player.wins ]
+                            , H.td [] [ H.text <| String.fromInt player.losses ]
+                            ]
+                    )
+            )
+        ]
 
 
 contentUnavailableToLoggedOutView : List (Html FrontendMsg)

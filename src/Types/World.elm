@@ -2,6 +2,7 @@ module Types.World exposing
     ( World(..)
     , WorldLoggedInData
     , WorldLoggedOutData
+    , allPlayers
     , isLoggedIn
     , toLoggedOut
     )

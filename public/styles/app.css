@@ -7,6 +7,7 @@
   --fg01: #3CF800;
 
   --fg-highlight: #FCFD7D;
+  --table-border: rgba(0,124,0,0.5); /* fg03 with opacity 0.5 */
 
   /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
   --filter-fg02: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
@@ -191,5 +192,39 @@ button {
 }
 
 #content {
-  padding: 40px;
+  padding: 32px 40px 40px;
+}
+
+#page-title {
+  margin: 0;
+}
+
+#ladder-table {
+  text-align: left;
+  margin-top: 40px;
+  border-collapse: collapse;
+}
+
+#ladder-table tbody td {
+  border-left: 1px solid var(--table-border);
+  padding: 4px 8px;
+}
+
+#ladder-table thead {
+  color: var(--fg03);
+  border-bottom: 3px solid var(--table-border);
+}
+
+#ladder-table thead th {
+  border-left: 3px solid var(--table-border);
+  padding: 4px 8px;
+}
+
+#ladder-table tbody td:first-child,
+#ladder-table thead th:first-child {
+  border-left: none;
+}
+
+#ladder-table tbody tr.is-player {
+  color: var(--fg01);
 }
