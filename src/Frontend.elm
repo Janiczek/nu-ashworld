@@ -3,7 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Common
-import Frontend.Route as Route exposing (Route)
+import Frontend.Route as Route exposing (Route(..))
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
@@ -124,12 +124,11 @@ view model =
 
 appView :
     { leftNav : List (Html FrontendMsg)
-    , content : List (Html FrontendMsg)
     , isLoggedIn : Bool
     }
     -> Model
     -> Html FrontendMsg
-appView ({ leftNav, content } as r) model =
+appView ({ leftNav } as r) model =
     H.div
         [ HA.id "app"
         , HA.classList [ ( "logged-in", r.isLoggedIn ) ]
@@ -139,8 +138,35 @@ appView ({ leftNav, content } as r) model =
                 :: leftNav
                 ++ [ commonLinksView model.route ]
             )
-        , H.div [ HA.id "content" ] content
+        , contentView model
         ]
+
+
+contentView : Model -> Html FrontendMsg
+contentView model =
+    H.div [ HA.id "content" ]
+        (case model.route of
+            Character ->
+                [ H.text "TODO Character page" ]
+
+            Map ->
+                [ H.text "TODO Map page" ]
+
+            Ladder ->
+                [ H.text "TODO Ladder page" ]
+
+            Town ->
+                [ H.text "TODO Town page" ]
+
+            Settings ->
+                [ H.text "TODO Settings page" ]
+
+            FAQ ->
+                [ H.text "TODO FAQ page" ]
+
+            About ->
+                [ H.text "TODO About page" ]
+        )
 
 
 loggedOutView : Model -> Html FrontendMsg
@@ -151,7 +177,6 @@ loggedOutView model =
             [ loginFormView
             , loggedOutLinksView model.route
             ]
-        , content = [ H.text <| Route.label model.route ]
         }
         model
 
@@ -164,7 +189,6 @@ loggedInView world model =
             [ playerInfoView world
             , loggedInLinksView model.route
             ]
-        , content = [ H.text <| Route.label model.route ]
         }
         model
 
