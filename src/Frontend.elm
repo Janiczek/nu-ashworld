@@ -305,7 +305,7 @@ loginFormView =
         [ HA.id "login-form"
         , HE.onClick Login
         ]
-        [ H.text "[ (TODO) LOGIN ]"
+        [ H.text "[ LOGIN ]"
         ]
 
 
