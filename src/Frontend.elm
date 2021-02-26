@@ -123,15 +123,13 @@ view model =
 
 
 appView :
-    { leftNav : List (Html FrontendMsg)
-    , isLoggedIn : Bool
-    }
+    { leftNav : List (Html FrontendMsg) }
     -> Model
     -> Html FrontendMsg
 appView ({ leftNav } as r) model =
     H.div
         [ HA.id "app"
-        , HA.classList [ ( "logged-in", r.isLoggedIn ) ]
+        , HA.classList [ ( "logged-in", isLoggedIn model ) ]
         ]
         [ H.div [ HA.id "left-nav" ]
             (logoView
@@ -145,35 +143,56 @@ appView ({ leftNav } as r) model =
 contentView : Model -> Html FrontendMsg
 contentView model =
     H.div [ HA.id "content" ]
-        (case model.route of
-            Character ->
+        (case ( model.route, model.world ) of
+            ( Character, Just world ) ->
                 [ H.text "TODO Character page" ]
 
-            Map ->
+            ( Character, Nothing ) ->
+                contentUnavailableToLoggedOutView
+
+            ( Map, _ ) ->
                 [ H.text "TODO Map page" ]
 
-            Ladder ->
-                [ H.text "TODO Ladder page" ]
+            ( Ladder, _ ) ->
+                ladderView model
 
-            Town ->
+            ( Town, Just world ) ->
                 [ H.text "TODO Town page" ]
 
-            Settings ->
+            ( Town, Nothing ) ->
+                contentUnavailableToLoggedOutView
+
+            ( Settings, Just world ) ->
                 [ H.text "TODO Settings page" ]
 
-            FAQ ->
+            ( Settings, Nothing ) ->
+                contentUnavailableToLoggedOutView
+
+            ( FAQ, _ ) ->
                 [ H.text "TODO FAQ page" ]
 
-            About ->
+            ( About, _ ) ->
                 [ H.text "TODO About page" ]
+
+            ( News, _ ) ->
+                [ H.text "TODO News page" ]
         )
+
+
+ladderView : Model -> List (Html FrontendMsg)
+ladderView model =
+    [ H.text "TODO ladder" ]
+
+
+contentUnavailableToLoggedOutView : List (Html FrontendMsg)
+contentUnavailableToLoggedOutView =
+    [ H.text "Content unavailable (you're not logged in). (Bug? We should have redirected you someplace else. Could you report this to the developers please?)" ]
 
 
 loggedOutView : Model -> Html FrontendMsg
 loggedOutView model =
     appView
-        { isLoggedIn = False
-        , leftNav =
+        { leftNav =
             [ loginFormView
             , loggedOutLinksView model.route
             ]
@@ -184,8 +203,7 @@ loggedOutView model =
 loggedInView : CWorld -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
-        { isLoggedIn = True
-        , leftNav =
+        { leftNav =
             [ playerInfoView world
             , loggedInLinksView model.route
             ]
@@ -288,7 +306,8 @@ commonLinksView currentRoute =
         [ HA.id "common-links"
         , HA.class "links"
         ]
-        ([ ( "About", LinkIn Route.About )
+        ([ ( "News", LinkIn Route.News )
+         , ( "About", LinkIn Route.About )
          , ( "FAQ", LinkIn Route.FAQ )
          , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/" )
          , ( "Donate →", LinkOut "https://patreon.com/janiczek" )

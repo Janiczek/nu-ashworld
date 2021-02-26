@@ -9,6 +9,7 @@ type Route
     | Settings
     | FAQ
     | About
+    | News
 
 
 needsLogin : Route -> Bool
@@ -33,4 +34,7 @@ needsLogin route =
             False
 
         About ->
+            False
+
+        News ->
             False
