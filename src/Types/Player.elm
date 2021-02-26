@@ -118,7 +118,7 @@ nameGenerator existingNames =
                 , "Zzzzzzzaros"
                 , "Willdy Mage"
                 , "WildRanger"
-                , "iScr3Am"
+                , "iScrE4m"
                 ]
 
         enforceUnique : String -> Generator String
