@@ -36,6 +36,7 @@ init url key =
     ( { key = key
       , route = Route.About
       , world = Nothing
+      , onlinePlayersCount = 1
       }
     , Cmd.none
     )
@@ -101,6 +102,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        OnlinePlayersCountChanged newCount ->
+            ( { model | onlinePlayersCount = newCount }
+            , Cmd.none
+            )
+
 
 isLoggedIn : Model -> Bool
 isLoggedIn model =
@@ -114,10 +120,10 @@ view model =
         [ stylesLinkView
         , case model.world of
             Nothing ->
-                loggedOutView model.route
+                loggedOutView model
 
             Just world ->
-                loggedInView model.route world
+                loggedInView world model
         ]
     }
 
@@ -127,41 +133,59 @@ appView :
     , content : List (Html FrontendMsg)
     , isLoggedIn : Bool
     }
+    -> Model
     -> Html FrontendMsg
-appView ({ leftNav, content } as r) =
+appView ({ leftNav, content } as r) model =
     H.div
         [ HA.id "app"
         , HA.classList [ ( "logged-in", r.isLoggedIn ) ]
         ]
-        [ H.div [ HA.id "left-nav" ] (logoView :: leftNav)
+        [ H.div [ HA.id "left-nav" ]
+            (logoView
+                :: leftNav
+                ++ [ commonLinksView model.route
+                   , onlinePlayersCountView model.onlinePlayersCount
+                   ]
+            )
         , H.div [ HA.id "content" ] content
         ]
 
 
-loggedOutView : Route -> Html FrontendMsg
-loggedOutView currentRoute =
+onlinePlayersCountView : Int -> Html msg
+onlinePlayersCountView count =
+    H.div
+        [ HA.id "online-players-count" ]
+        [ H.text <| String.fromInt count
+        , H.span
+            [ HA.class "deemphasized" ]
+            [ H.text " players online" ]
+        ]
+
+
+loggedOutView : Model -> Html FrontendMsg
+loggedOutView model =
     appView
         { isLoggedIn = False
         , leftNav =
             [ loginFormView
-            , loggedOutLinksView currentRoute
-            , commonLinksView currentRoute
+            , loggedOutLinksView model.route
             ]
-        , content = [ H.text <| Route.label currentRoute ]
+        , content = [ H.text <| Route.label model.route ]
         }
+        model
 
 
-loggedInView : Route -> CWorld -> Html FrontendMsg
-loggedInView currentRoute world =
+loggedInView : CWorld -> Model -> Html FrontendMsg
+loggedInView world model =
     appView
         { isLoggedIn = True
         , leftNav =
-            [ userInfoView world
-            , loggedInLinksView currentRoute
-            , commonLinksView currentRoute
+            [ playerInfoView world
+            , loggedInLinksView model.route
             ]
-        , content = [ H.text <| Route.label currentRoute ]
+        , content = [ H.text <| Route.label model.route ]
         }
+        model
 
 
 loginFormView : Html FrontendMsg
@@ -268,44 +292,44 @@ commonLinksView currentRoute =
         )
 
 
-userInfoView : CWorld -> Html msg
-userInfoView world =
-    H.div [ HA.id "user-info" ]
-        [ H.div [ HA.id "user-name" ] [ H.text world.player.name ]
-        , H.div [ HA.id "user-stats" ]
+playerInfoView : CWorld -> Html msg
+playerInfoView world =
+    H.div [ HA.id "player-info" ]
+        [ H.div [ HA.id "player-name" ] [ H.text world.player.name ]
+        , H.div [ HA.id "player-stats" ]
             [ H.div
-                [ HA.class "user-stat-label"
+                [ HA.class "player-stat-label"
                 , HA.title "Hitpoints"
                 ]
                 [ H.text "HP:" ]
-            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.hp ++ "/" ++ String.fromInt world.player.maxHp ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.hp ++ "/" ++ String.fromInt world.player.maxHp ]
             , H.div
-                [ HA.class "user-stat-label"
+                [ HA.class "player-stat-label"
                 , HA.title "Experience points"
                 ]
                 [ H.text "XP:" ]
-            , H.div [ HA.class "user-stat-value" ]
+            , H.div [ HA.class "player-stat-value" ]
                 [ H.span [] [ H.text <| String.fromInt world.player.xp ]
                 , H.span
                     [ HA.class "deemphasized" ]
                     [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp world.player.xp) ]
                 ]
-            , H.div [ HA.class "user-stat-label" ] [ H.text "Level:" ]
-            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel world.player.xp ]
+            , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel world.player.xp ]
             , H.div
-                [ HA.class "user-stat-label"
+                [ HA.class "player-stat-label"
                 , HA.title "Wins/Losses"
                 ]
                 [ H.text "W/L:" ]
-            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.wins ++ "/" ++ String.fromInt world.player.losses ]
-            , H.div [ HA.class "user-stat-label" ] [ H.text "Cash:" ]
-            , H.div [ HA.class "user-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.cash ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.wins ++ "/" ++ String.fromInt world.player.losses ]
+            , H.div [ HA.class "player-stat-label" ] [ H.text "Cash:" ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.cash ]
             , H.div
-                [ HA.class "user-stat-label"
+                [ HA.class "player-stat-label"
                 , HA.title "Action points"
                 ]
                 [ H.text "AP:" ]
-            , H.div [ HA.class "user-stat-value" ] [ H.text <| String.fromInt world.player.ap ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.ap ]
             ]
         ]
 

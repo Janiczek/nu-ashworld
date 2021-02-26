@@ -136,36 +136,41 @@ button {
   color: var(--fg-highlight);
 }
 
-#user-info {
+#player-info {
   margin-top: 40px;
 }
 
-#user-name {
+#player-name {
   color: var(--fg01);
   text-align: center;
 }
 
-#user-stats {
+#player-stats {
   margin-top: 40px;
   display: grid;
   grid-template-columns: min-content min-content;
   grid-auto-rows: auto;
 }
 
-.user-stat-label {
+.player-stat-label {
   grid-column: 1;
   text-align: right;
   color: var(--fg03);
   margin-right: 1ch;
 }
 
-.user-stat-value {
+.player-stat-value {
   grid-column: 2;
   color: var(--fg02);
 }
 
 .deemphasized {
   color: var(--fg03);
+}
+
+#online-players-count {
+  color: var(--fg02);
+  margin-top: 40px;
 }
 
 #content {
