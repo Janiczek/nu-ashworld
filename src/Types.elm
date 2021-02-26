@@ -15,13 +15,11 @@ type alias FrontendModel =
     { key : Key
     , route : Route
     , world : Maybe CWorld
-    , onlinePlayersCount : Int
     }
 
 
 type alias BackendModel =
     { players : Dict SessionId SPlayer
-    , onlinePlayers : Set SessionId
     }
 
 
@@ -41,10 +39,8 @@ type ToBackend
 
 type BackendMsg
     = Connected SessionId ClientId
-    | Disconnected SessionId ClientId
     | GeneratedPlayer ClientId SPlayer
 
 
 type ToFrontend
     = YourCurrentWorld CWorld
-    | OnlinePlayersCountChanged Int

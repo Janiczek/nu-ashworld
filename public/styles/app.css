@@ -168,11 +168,6 @@ button {
   color: var(--fg03);
 }
 
-#online-players-count {
-  color: var(--fg02);
-  margin-top: 40px;
-}
-
 #content {
   padding: 40px;
 }

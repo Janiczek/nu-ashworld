@@ -25,9 +25,7 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { players = Dict.empty
-      , onlinePlayers = Set.empty
-      }
+    ( { players = Dict.empty }
     , Cmd.none
     )
 
@@ -36,7 +34,6 @@ update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
         Connected sessionId _ ->
-            -- TODO later do this counting based on username instead of session ID?
             let
                 generatePlayerCmd =
                     if Dict.member sessionId model.players then
@@ -44,33 +41,9 @@ update msg model =
 
                     else
                         Random.generate (GeneratedPlayer sessionId) Player.generator
-
-                broadcastOnlinePlayersCountCmd =
-                    if Set.member sessionId model.onlinePlayers then
-                        Cmd.none
-
-                    else
-                        Lamdera.broadcast (OnlinePlayersCountChanged (Set.size model.onlinePlayers + 1))
             in
-            ( { model | onlinePlayers = Set.insert sessionId model.onlinePlayers }
-            , Cmd.batch
-                [ generatePlayerCmd
-                , broadcastOnlinePlayersCountCmd
-                ]
-            )
-
-        Disconnected sessionId _ ->
-            -- TODO later do this counting based on username instead of session ID?
-            let
-                broadcastOnlinePlayersCountCmd =
-                    if Set.member sessionId model.onlinePlayers then
-                        Lamdera.broadcast (OnlinePlayersCountChanged (Set.size model.onlinePlayers - 1))
-
-                    else
-                        Cmd.none
-            in
-            ( { model | onlinePlayers = Set.remove sessionId model.onlinePlayers }
-            , broadcastOnlinePlayersCountCmd
+            ( model
+            , generatePlayerCmd
             )
 
         GeneratedPlayer sessionId player ->
@@ -129,7 +102,4 @@ updateTicksAndSendClientWorld sessionId clientId sPlayer model =
 
 subscriptions : Model -> Sub BackendMsg
 subscriptions model =
-    Sub.batch
-        [ Lamdera.onConnect Connected
-        , Lamdera.onDisconnect Disconnected
-        ]
+    Lamdera.onConnect Connected

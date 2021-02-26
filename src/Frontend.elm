@@ -36,7 +36,6 @@ init url key =
     ( { key = key
       , route = Route.About
       , world = Nothing
-      , onlinePlayersCount = 1
       }
     , Cmd.none
     )
@@ -102,11 +101,6 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        OnlinePlayersCountChanged newCount ->
-            ( { model | onlinePlayersCount = newCount }
-            , Cmd.none
-            )
-
 
 isLoggedIn : Model -> Bool
 isLoggedIn model =
@@ -143,22 +137,9 @@ appView ({ leftNav, content } as r) model =
         [ H.div [ HA.id "left-nav" ]
             (logoView
                 :: leftNav
-                ++ [ commonLinksView model.route
-                   , onlinePlayersCountView model.onlinePlayersCount
-                   ]
+                ++ [ commonLinksView model.route ]
             )
         , H.div [ HA.id "content" ] content
-        ]
-
-
-onlinePlayersCountView : Int -> Html msg
-onlinePlayersCountView count =
-    H.div
-        [ HA.id "online-players-count" ]
-        [ H.text <| String.fromInt count
-        , H.span
-            [ HA.class "deemphasized" ]
-            [ H.text " players online" ]
         ]
 
 
