@@ -326,12 +326,19 @@ ladderTableView { loggedInPlayer, players } =
                             , loggedInPlayer
                                 |> H.viewMaybe
                                     (\loggedInPlayer_ ->
-                                        H.viewIf (loggedInPlayer_.name /= player.name) <|
+                                        if loggedInPlayer_.name /= player.name then
                                             H.td
                                                 [ HA.class "ladder-fight"
                                                 , HE.onClick <| AskToFight player.name
                                                 ]
                                                 [ H.text "Fight" ]
+
+                                        else
+                                            H.td
+                                                [ HA.class "ladder-fight"
+                                                , HA.title "Can't fight yourself!"
+                                                ]
+                                                [ H.text "-" ]
                                     )
                             , H.td
                                 [ HA.class "ladder-name"

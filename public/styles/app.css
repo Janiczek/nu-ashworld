@@ -247,7 +247,15 @@ button {
 
 #ladder-table tbody .ladder-fight {
   background: var(--bg02);
-  color: var(--fg02);
+  color: var(--fg01);
+}
+
+#ladder-table tbody .ladder-fight:hover {
+  color: var(--fg-highlight);
+}
+
+#ladder-table tbody tr.is-player .ladder-fight {
+  color: var(--fg03);
 }
 
 .news-item {
