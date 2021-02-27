@@ -378,7 +378,7 @@ ladderTableView { loggedInPlayer, players } =
                                                 ]
                                                 [ H.text "-" ]
 
-                                        else if player.healthStatus == Dead then
+                                        else if player.healthStatus == HealthStatus.Dead then
                                             H.td
                                                 [ HA.class "ladder-fight"
                                                 , HA.title "Can't fight this person: they're dead!"

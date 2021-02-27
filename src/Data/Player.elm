@@ -36,8 +36,7 @@ type alias CPlayer =
 
 
 type alias COtherPlayer =
-    { hp : Int -- TODO later remove this! replaced with health status
-    , level : Level
+    { level : Level
     , name : PlayerName
     , wins : Int
     , losses : Int
@@ -76,8 +75,7 @@ serverToClient p =
 
 serverToClientOther : { perception : Int } -> SPlayer -> COtherPlayer
 serverToClientOther { perception } p =
-    { hp = p.hp
-    , level = Xp.xpToLevel p.xp
+    { level = Xp.xpToLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
@@ -87,8 +85,7 @@ serverToClientOther { perception } p =
 
 clientToClientOther : CPlayer -> COtherPlayer
 clientToClientOther p =
-    { hp = p.hp
-    , level = Xp.xpToLevel p.xp
+    { level = Xp.xpToLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
