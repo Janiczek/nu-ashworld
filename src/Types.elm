@@ -3,7 +3,7 @@ module Types exposing (..)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Fight exposing (FightInfo)
-import Data.Player exposing (PlayerName, SPlayer)
+import Data.Player exposing (PlayerKey, PlayerName, SPlayer)
 import Data.World
     exposing
         ( World
@@ -27,8 +27,7 @@ type alias FrontendModel =
 
 
 type alias BackendModel =
-    -- TODO PlayerName should be the key; names always unique
-    { players : Dict SessionId SPlayer
+    { players : Dict PlayerKey SPlayer
     }
 
 

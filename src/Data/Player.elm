@@ -1,6 +1,7 @@
 module Data.Player exposing
     ( COtherPlayer
     , CPlayer
+    , PlayerKey
     , PlayerName
     , SPlayer
     , clientToClientOther
@@ -12,6 +13,7 @@ module Data.Player exposing
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
+import Lamdera exposing (SessionId)
 import Random exposing (Generator)
 import Random.Extra as Random
 import Set exposing (Set)
@@ -19,6 +21,11 @@ import Set exposing (Set)
 
 type alias PlayerName =
     String
+
+
+type alias PlayerKey =
+    -- TODO make player name the player key, after we have real login!
+    SessionId
 
 
 type alias CPlayer =

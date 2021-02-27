@@ -50,7 +50,11 @@ getWorldLoggedOut model =
     { players =
         model.players
             |> Dict.values
-            |> List.map (Player.serverToClientOther { perception = 1 })
+            |> List.map
+                (Player.serverToClientOther
+                    -- no info about alive/dead!
+                    { perception = 1 }
+                )
     }
 
 
@@ -72,7 +76,10 @@ getWorldLoggedIn_ sPlayer model =
                         Nothing
 
                     else
-                        Just <| Player.serverToClientOther { perception = sPlayer.special.perception } otherPlayer
+                        Just <|
+                            Player.serverToClientOther
+                                { perception = sPlayer.special.perception }
+                                otherPlayer
                 )
     }
 
@@ -105,13 +112,16 @@ update msg model =
             let
                 newModel =
                     persistFight sessionId fightInfo model
-
-                world =
-                    getWorldLoggedIn_ sPlayer newModel
             in
-            ( newModel
-            , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
-            )
+            getWorldLoggedIn sessionId newModel
+                |> Maybe.map
+                    (\world ->
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
+                        )
+                    )
+                -- Shouldn't happen but we don't have a good way of getting rid of the Maybe
+                |> Maybe.withDefault ( newModel, Cmd.none )
 
 
 persistFight : SessionId -> FightInfo -> Model -> Model
