@@ -36,7 +36,7 @@ type alias CPlayer =
 
 
 type alias COtherPlayer =
-    { hp : Int
+    { hp : Int -- TODO later remove this! replaced with health status
     , level : Level
     , name : PlayerName
     , wins : Int
