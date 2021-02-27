@@ -326,7 +326,7 @@ ladderTableView { loggedInPlayer, players } =
                     ]
                     [ H.text "#" ]
                 , H.viewIf (loggedInPlayer /= Nothing) <|
-                    H.th [ HA.class "ladder-fight" ] []
+                    H.th [ HA.class "ladder-fight" ] [ H.text "Fight" ]
                 , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
                 , H.viewIf (loggedInPlayer /= Nothing) <|
                     H.th
