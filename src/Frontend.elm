@@ -2,10 +2,10 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Common
 import Data.Fight exposing (FightInfo)
 import Data.HealthStatus as HealthStatus
 import Data.Player exposing (COtherPlayer, CPlayer)
+import Data.Version as Version
 import Data.World as World
     exposing
         ( World(..)
@@ -141,7 +141,7 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document FrontendMsg
 view model =
-    { title = "NuAshworld " ++ Common.version
+    { title = "NuAshworld " ++ Version.version
     , body =
         [ stylesLinkView
         , case model.world of
@@ -623,7 +623,7 @@ stylesLinkView : Html msg
 stylesLinkView =
     H.node "link"
         [ HA.rel "stylesheet"
-        , HA.href <| "styles/app.css?v=" ++ Common.version
+        , HA.href <| "styles/app.css?v=" ++ Version.version
         ]
         []
 
@@ -642,5 +642,5 @@ logoView =
             []
         , H.div
             [ HA.id "version" ]
-            [ H.text Common.version ]
+            [ H.text Version.version ]
         ]
