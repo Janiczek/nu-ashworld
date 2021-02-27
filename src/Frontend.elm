@@ -129,8 +129,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        YourFightResult fightInfo ->
-            ( { model | route = Route.Fight fightInfo }
+        YourFightResult ( fightInfo, world ) ->
+            ( { model
+                | route = Route.Fight fightInfo
+                , world = WorldLoggedIn world
+              }
             , Cmd.none
             )
 

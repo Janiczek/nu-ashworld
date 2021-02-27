@@ -57,4 +57,4 @@ type BackendMsg
 type ToFrontend
     = YourCurrentWorld WorldLoggedInData
     | CurrentWorld WorldLoggedOutData
-    | YourFightResult FightInfo
+    | YourFightResult ( FightInfo, WorldLoggedInData )

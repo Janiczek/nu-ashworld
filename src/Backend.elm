@@ -45,18 +45,36 @@ init =
     )
 
 
+getWorldLoggedOut : Model -> WorldLoggedOutData
+getWorldLoggedOut model =
+    { players =
+        model.players
+            |> Dict.values
+            |> List.map Player.serverToClientOther
+    }
+
+
+getWorldLoggedIn : SessionId -> Model -> Maybe WorldLoggedInData
+getWorldLoggedIn sessionId model =
+    Dict.get sessionId model.players
+        |> Maybe.map
+            (\player ->
+                { player = Player.serverToClient player
+                , otherPlayers =
+                    model.players
+                        |> Dict.toList
+                        |> List.map (Tuple.second >> Player.serverToClientOther)
+                }
+            )
+
+
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
         Connected sessionId clientId ->
             let
-                world : WorldLoggedOutData
                 world =
-                    { players =
-                        model.players
-                            |> Dict.values
-                            |> List.map Player.serverToClientOther
-                    }
+                    getWorldLoggedOut model
             in
             ( model
             , Lamdera.sendToFrontend clientId <| CurrentWorld world
@@ -64,23 +82,33 @@ update msg model =
 
         GeneratedPlayerLogHimIn sessionId clientId player ->
             let
-                world : WorldLoggedInData
-                world =
-                    { player = Player.serverToClient player
-                    , otherPlayers =
-                        model.players
-                            |> Dict.toList
-                            |> List.map (Tuple.second >> Player.serverToClientOther)
-                    }
+                newModel =
+                    { model | players = Dict.insert sessionId player model.players }
             in
-            ( { model | players = Dict.insert sessionId player model.players }
-            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-            )
+            getWorldLoggedIn sessionId newModel
+                |> Maybe.map
+                    (\world ->
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                        )
+                    )
+                -- this REALLY shouldn't happen:
+                |> Maybe.withDefault ( newModel, Cmd.none )
 
         GeneratedFight sessionId clientId fightInfo ->
-            ( persistFight sessionId fightInfo model
-            , Lamdera.sendToFrontend clientId <| YourFightResult fightInfo
-            )
+            let
+                newModel =
+                    persistFight sessionId fightInfo model
+            in
+            getWorldLoggedIn sessionId newModel
+                |> Maybe.map
+                    (\world ->
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
+                        )
+                    )
+                -- this REALLY shouldn't happen:
+                |> Maybe.withDefault ( newModel, Cmd.none )
 
 
 persistFight : SessionId -> FightInfo -> Model -> Model
