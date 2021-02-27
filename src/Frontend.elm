@@ -8,6 +8,7 @@ import Frontend.News as News exposing (Item)
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Html)
 import Html.Attributes as HA
+import Html.Attributes.Extra as HA
 import Html.Events as HE
 import Lamdera
 import Task
@@ -281,14 +282,26 @@ ladderTableView { isPlayer, players } =
     H.table [ HA.id "ladder-table" ]
         [ H.thead []
             [ H.tr []
-                [ H.th [ HA.class "ladder-rank" ] [ H.text "#" ]
+                [ H.th
+                    [ HA.class "ladder-rank"
+                    , HA.title "Rank"
+                    ]
+                    [ H.text "#" ]
                 , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
                 , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
 
                 --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
                 --, H.th [HA.class "ladder-flag"] [ H.text "" ] -- flag
-                , H.th [ HA.class "ladder-wins" ] [ H.text "W" ]
-                , H.th [ HA.class "ladder-losses" ] [ H.text "L" ]
+                , H.th
+                    [ HA.class "ladder-wins"
+                    , HA.title "Wins"
+                    ]
+                    [ H.text "W" ]
+                , H.th
+                    [ HA.class "ladder-losses"
+                    , HA.title "Losses"
+                    ]
+                    [ H.text "L" ]
                 ]
             ]
         , H.tbody []
@@ -297,11 +310,31 @@ ladderTableView { isPlayer, players } =
                 |> List.indexedMap
                     (\i player ->
                         H.tr [ HA.classList [ ( "is-player", isPlayer player ) ] ]
-                            [ H.td [ HA.class "ladder-rank" ] [ H.text <| String.fromInt <| i + 1 ]
-                            , H.td [ HA.class "ladder-name" ] [ H.text player.name ]
-                            , H.td [ HA.class "ladder-lvl" ] [ H.text <| String.fromInt player.level ]
-                            , H.td [ HA.class "ladder-wins" ] [ H.text <| String.fromInt player.wins ]
-                            , H.td [ HA.class "ladder-losses" ] [ H.text <| String.fromInt player.losses ]
+                            [ H.td
+                                [ HA.class "ladder-rank"
+                                , HA.title "Rank"
+                                ]
+                                [ H.text <| String.fromInt <| i + 1 ]
+                            , H.td
+                                [ HA.class "ladder-name"
+                                , HA.title "Name"
+                                ]
+                                [ H.text player.name ]
+                            , H.td
+                                [ HA.class "ladder-lvl"
+                                , HA.title "Level"
+                                ]
+                                [ H.text <| String.fromInt player.level ]
+                            , H.td
+                                [ HA.class "ladder-wins"
+                                , HA.title "Wins"
+                                ]
+                                [ H.text <| String.fromInt player.wins ]
+                            , H.td
+                                [ HA.class "ladder-losses"
+                                , HA.title "Losses"
+                                ]
+                                [ H.text <| String.fromInt player.losses ]
                             ]
                     )
             )
@@ -371,8 +404,8 @@ type Link
     | LinkMsg FrontendMsg
 
 
-linkView : Route -> ( String, Link ) -> Html FrontendMsg
-linkView currentRoute ( label, link ) =
+linkView : Route -> ( String, Link, Maybe String ) -> Html FrontendMsg
+linkView currentRoute ( label, link, tooltip ) =
     let
         ( tag, linkAttrs, maybeRoute ) =
             case link of
@@ -380,19 +413,24 @@ linkView currentRoute ( label, link ) =
                     ( H.a
                     , [ HA.href http
                       , HA.target "_blank"
+                      , HA.attributeMaybe HA.title tooltip
                       ]
                     , Nothing
                     )
 
                 LinkIn route ->
                     ( H.div
-                    , [ HE.onClick <| GoToRoute route ]
+                    , [ HE.onClick <| GoToRoute route
+                      , HA.attributeMaybe HA.title tooltip
+                      ]
                     , Just route
                     )
 
                 LinkMsg msg ->
                     ( H.div
-                    , [ HE.onClick msg ]
+                    , [ HE.onClick msg
+                      , HA.attributeMaybe HA.title tooltip
+                      ]
                     , Nothing
                     )
 
@@ -422,12 +460,12 @@ loggedInLinksView currentRoute =
         [ HA.id "logged-in-links"
         , HA.class "links"
         ]
-        ([ ( "Character", LinkIn Route.Character )
-         , ( "Map", LinkIn Route.Map )
-         , ( "Ladder", LinkIn Route.Ladder )
-         , ( "Town", LinkIn Route.Town )
-         , ( "Settings", LinkIn Route.Settings )
-         , ( "Logout", LinkMsg Logout )
+        ([ ( "Character", LinkIn Route.Character, Nothing )
+         , ( "Map", LinkIn Route.Map, Nothing )
+         , ( "Ladder", LinkIn Route.Ladder, Nothing )
+         , ( "Town", LinkIn Route.Town, Nothing )
+         , ( "Settings", LinkIn Route.Settings, Nothing )
+         , ( "Logout", LinkMsg Logout, Nothing )
          ]
             |> List.map (linkView currentRoute)
         )
@@ -439,7 +477,7 @@ loggedOutLinksView currentRoute =
         [ HA.id "logged-out-links"
         , HA.class "links"
         ]
-        ([ ( "Ladder", LinkIn Route.Ladder ) ]
+        ([ ( "Ladder", LinkIn Route.Ladder, Nothing ) ]
             |> List.map (linkView currentRoute)
         )
 
@@ -450,11 +488,11 @@ commonLinksView currentRoute =
         [ HA.id "common-links"
         , HA.class "links"
         ]
-        ([ ( "News", LinkIn Route.News )
-         , ( "About", LinkIn Route.About )
-         , ( "FAQ", LinkIn Route.FAQ )
-         , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/" )
-         , ( "Donate →", LinkOut "https://patreon.com/janiczek" )
+        ([ ( "News", LinkIn Route.News, Nothing )
+         , ( "About", LinkIn Route.About, Nothing )
+         , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
+         , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
+         , ( "Donate →", LinkOut "https://patreon.com/janiczek", Nothing )
          ]
             |> List.map (linkView currentRoute)
         )
