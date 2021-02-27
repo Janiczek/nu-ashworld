@@ -40,6 +40,7 @@ type FrontendMsg
     | Login
     | NoOp
     | GetZone Time.Zone
+    | AskToFight PlayerName
 
 
 type ToBackend

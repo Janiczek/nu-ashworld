@@ -10,6 +10,7 @@ import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HA
 import Html.Events as HE
+import Html.Extra as H
 import Lamdera
 import Task
 import Time exposing (Posix)
@@ -104,6 +105,11 @@ update msg model =
         GetZone zone ->
             ( { model | zone = zone }
             , Cmd.none
+            )
+
+        AskToFight playerName ->
+            ( model
+            , Lamdera.sendToBackend <| Fight playerName
             )
 
 
@@ -259,7 +265,7 @@ ladderView model =
         WorldLoggedOut { players } ->
             [ pageTitleView "Ladder"
             , ladderTableView
-                { isPlayer = \_ -> False
+                { loggedInPlayer = Nothing
                 , players = players
                 }
             ]
@@ -267,18 +273,18 @@ ladderView model =
         WorldLoggedIn data ->
             [ pageTitleView "Ladder"
             , ladderTableView
-                { isPlayer = \otherPlayer -> data.player.name == otherPlayer.name
+                { loggedInPlayer = Just data.player
                 , players = World.allPlayers data
                 }
             ]
 
 
 ladderTableView :
-    { isPlayer : COtherPlayer -> Bool
+    { loggedInPlayer : Maybe CPlayer
     , players : List COtherPlayer
     }
     -> Html FrontendMsg
-ladderTableView { isPlayer, players } =
+ladderTableView { loggedInPlayer, players } =
     H.table [ HA.id "ladder-table" ]
         [ H.thead []
             [ H.tr []
@@ -287,11 +293,13 @@ ladderTableView { isPlayer, players } =
                     , HA.title "Rank"
                     ]
                     [ H.text "#" ]
+                , H.viewIf (loggedInPlayer /= Nothing) <|
+                    H.th [ HA.class "ladder-fight" ] []
                 , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
                 , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
 
                 --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
-                --, H.th [HA.class "ladder-flag"] [ H.text "" ] -- flag
+                --, H.th [HA.class "ladder-flag"] [] -- flag
                 , H.th
                     [ HA.class "ladder-wins"
                     , HA.title "Wins"
@@ -309,12 +317,22 @@ ladderTableView { isPlayer, players } =
                 |> List.sortBy (.name >> String.toLower)
                 |> List.indexedMap
                     (\i player ->
-                        H.tr [ HA.classList [ ( "is-player", isPlayer player ) ] ]
+                        H.tr [ HA.classList [ ( "is-player", Maybe.map .name loggedInPlayer == Just player.name ) ] ]
                             [ H.td
                                 [ HA.class "ladder-rank"
                                 , HA.title "Rank"
                                 ]
                                 [ H.text <| String.fromInt <| i + 1 ]
+                            , loggedInPlayer
+                                |> H.viewMaybe
+                                    (\loggedInPlayer_ ->
+                                        H.viewIf (loggedInPlayer_.name /= player.name) <|
+                                            H.td
+                                                [ HA.class "ladder-fight"
+                                                , HE.onClick <| AskToFight player.name
+                                                ]
+                                                [ H.text "Fight" ]
+                                    )
                             , H.td
                                 [ HA.class "ladder-name"
                                 , HA.title "Name"

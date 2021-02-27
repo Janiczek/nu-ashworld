@@ -245,6 +245,11 @@ button {
   text-align: right;
 }
 
+#ladder-table tbody .ladder-fight {
+  background: var(--bg02);
+  color: var(--fg02);
+}
+
 .news-item {
   margin-top: 60px;
 }
