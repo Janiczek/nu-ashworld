@@ -1,0 +1,55 @@
+- small guns
+  - 5 + 4 * AG
+- big guns
+  - 2 * AG
+- energy weapons
+  - 2 * AG
+- unarmed
+  - 30 + 2 * (AG + ST)
+- melee weapons
+  - 20 + 2 * (AG + ST)
+- throwing
+  - 4 * AG
+- first aid
+  - 2 * (PE + IN)
+- doctor
+  - 5 + PE + IN
+- sneak
+  - 5 + 3 * AG
+- lockpick
+  - 10 + PE + AG
+- steal
+  - 3 * AG
+- traps
+  - 10 + PE + AG
+- science
+  - 4 * IN
+- repair
+  - 3 * IN
+- speech
+  - 5 * CH
+- barter
+  - 4 * CH
+- gambling
+  - 5 * LK
+- outdoorsman
+  - 2 * (EN + IN)
+
+EASY: all non-combat skills have +20
+NORMAL: 0
+HARD: all non-combat skills have -10
+
+every level, you get (5 + 2 * IN) skill points to distribute
+
+  0-100%: 1% costs 1 skill point
+101-125%: 1% costs 2 skill points
+126-150%: 1% costs 3 skill points
+151-175%: 1% costs 4 skill points
+176-200%: 1% costs 5 skill points
+201-300%: 1% costs 6 skill points
+
+3 skills must be tagged on character creation as primary:
+  - adds permanent bonus of 20%
+  - doubles its improvement score
+
+at lvl 12 there is a perk allowing to tag one more primary skill

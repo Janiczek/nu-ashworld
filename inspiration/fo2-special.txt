@@ -1,0 +1,13 @@
+- Strength (ST)
+  - if you don't meet weapon's min. ST requirement, aim accuracy is penalized (-20% per missing ST point)
+- Perception (PE)
+  - additional dialogue options
+  - how far you're from enemies in random encounters
+- Endurance (EN)
+- Charisma (CH)
+  - num of companions (CH 2 => 1 companion, 4->2, 6->3, 8->4, 10-> 5)
+- Intelligence (IN)
+- Agility (AG)
+- Luck (LK)
+
+At beginning: all skills start at 5, you have extra 5 free points to distribute, you can set stuff in between 1-10.

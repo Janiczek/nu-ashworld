@@ -1,0 +1,262 @@
+- awareness
+  - see detailed information (current HP, weapon, if crippled or not)
+  - req: 5 perception, level 3
+- bonus HtH attacks
+  - -1 AP for HtH and melee attacks
+  - req: 6 agil, level 6
+- bonus HtH damage
+  - +2 melee damage per rank (3)
+  - req: 6 agil, 6 strength, level 3
+- bonus move
+  - +2 AP only used for movement per rank (2)
+  - req: 5 agil, level 6
+- bonus ranged damage
+  - +2 ranged damage per rank (2)
+  - req: 6 agil, 6 luck, level 6
+- bonus rate of fire
+  - -1 AP for ranged weapons
+  - req: 6 agil, 6 int, 6 perc, level 15
+- earlier sequence
+  - +2 sequence per rank (3)
+  - req: 6 perc, level 3
+- faster healing
+  - +2 healing rate per rank (3)
+  - req: 6 end, levle 3
+- more criticals
+  - +5% critical chance per rank (3)
+  - req: 6 luck, level 6
+- night vision
+  - reduces darkness level?
+  - req: 6 perc, level 3
+- presence
+  - improves NPC reactions (by 10% per rank?)
+  - req: 6 charisma, level 3
+- rad resistance
+  - +15% radiation resistance per rank (2)
+  - req: 6 endu, 4 int, level 6
+- toughness
+  - +10% to normal damage resistance per rank (3)
+  - req: 6 end, 6 luck, level 3
+- strong back
+  - +50 carry weight per rank (3)
+  - req: 6 str, 6 end, level 3
+- sharpshooter
+  - +2 PE when determining chance to hit?
+  - req: 7 perc, 6 int, level 6
+- silent running
+  - can run while sneaking
+  - req: 6 agil, 50% sneak, level 6
+- survivalist
+  - +25 to outdoorsman skill per rank (3)
+  - req: 6 end, 6 int, 40% outdoorsman, level 3
+- master trader
+  - improves barter modifiers?
+  - req: 7 charisma, 60% barter, level 9
+- educated
+  - +2 skill points per level per rank (3)
+  - req: 6 int, level 6
+- healer
+  - first aid and doctor heal 4-10 more HP per rank (2)
+  - req: 7 perc, 6 agil, 5 int, 40% first aid, level 3
+- fortune finder
+  - more money found in random encounters?
+  - req: 8 luck, level 6
+- better criticals
+  - +20 to critical hit table rolls
+  - req: 6 perception, 6 luck, 4 agility, level 9
+- empathy
+  - see npc reactions to dialogue options
+  - req: 7 perc, 5 int, level 6
+- slayer
+  - melee and unarmed attacks are critical hits if luck check is passed
+  - 1d10 <= luck: critical hit
+  - req: 8 str, 8 perc, 80% unarmed, level 24
+- sniper
+  - ranged attacks are critical hits if luck check is passed
+  - 1d10 <= luck: critical hit
+  - req: 8 perc, 8 agil, 80% small guns, level 24
+- silent death
+  - cause double damage if you hit a critter in the back while sneaking
+  - req: 10 agil, 80% sneak, level 18
+- action boy
+  - +1 AP per rank (2)
+  - req: 5 agil, level 12
+- lifegiver
+  - +4 additional HP per level per rank (2)
+  - req: 4 end, level 12
+- dodger
+  - +5 AC
+  - req: 4 agil, level 9
+- snakeeater
+  - +25% poison resistance per rank (2)
+  - req: 3 end, level 6
+- mr. fixit
+  - +10 to repair and science skills
+  - req: level 12
+- medic
+  - +10 to first aid and doctor skills
+  - req: level 12
+- master thief
+  - +15 to lockpick and steal skills
+  - req: level 12
+- speaker
+  - +20 to speech skill
+  - req: level 12
+- heave ho!
+  - +2 ST for determining throwing range per rank (3)
+  - req: level 6
+- pickpocket
+  - removes item size and critter facing penalties when stealing
+  - req: 8 agil, 80% steal, level 9
+- ghost
+  - +20 to sneak skill in dark areas
+  - req: 60% sneak, level 6
+- cult of personality
+  - karma modifiers always positive
+  - req: 10 charisma, level 12
+- explorer
+  - more special encounters?
+  - req: level 9
+- pathfinder
+  - travelling on the world make takes 25% less time per rank (2)
+  - req: 6 endurance, 40% outdoorsman, level 6
+- scout
+  - worldmap visibility range increased from 1 surrounding square to 2 surrounding squares
+  - higher chance to run into special encounters (by ?)
+  - req: 8 perc, level 3
+- mysterious stranger
+  - an ally sometimes appears in random encounters
+  - req: 4 luck, level 9
+- ranger
+  - +15 to outdoorsman
+  - req: 6 perc, level 6
+- quick pockets
+  - -2 AP to open inventory
+  - req: 5 agil, level 3
+- smooth talker
+  - +1 IN for determining dialogue options per rank (3)
+  - req: 4 int, level 3
+- swift learner
+  - +5% more experience points per rank (3)
+  - req: 4 intel, level 3
+- tag!
+  - choose a fourth tag skill
+  - req: level 12
+- mutate
+  - remove a trait and choose another to take its place
+  - if you only had one trait, you will have to remove it, you can't add a second one
+  - req: level 9
+- gecko skinning
+  - can skin dead geckos
+- dermal impact armor
+  - +5% to normal and explosive DR
+- dermal impact assault enhancements
+  - +10% to normal and explosive DR
+  - -1 CH
+- phoenix armor implants
+  - +5% to laser, fire and plasma DR
+- phoenix assault enhancements
+  - +10% to laser, fire and plasma DR
+  - -1 DR
+- vault city inoculations
+  - +10% to poison and radiation resistance
+- adrenaline rush
+  - +1 ST if below 50% HP
+  - req: 1-9 str, level 6
+- cautious nature
+  - +3 PE for determining random encounter placement
+- comprehension
+  - +50% more skill points gained from reading books
+  - req: 6 intel, level 3
+- demolition expert
+  - dynamites and plastic explosives always go off on time
+  - dynamites and plastic explosives cause +10 damage
+  - req: 4 agil, 90% traps, level 9
+- gambler
+  - +20 to gambling
+  - req: 50% gambling, level 6
+- gain strength
+  - +1 ST
+  - req: 1-9 str, level 9
+- gain perception
+  - +1 PE
+  - req: 1-9 pe, level 9
+- gain endurance
+  - +1 EN
+  - req: 1-9 en, level 9
+- gain charisma
+  - +1 CH
+  - req: 1-9 ch, level 9
+- gain intelligence
+  - +1 IN
+  - req: 1-9 in, level 9
+- gain agility
+  - +1 AG
+  - req: 1-9 ag, level 9
+- gain luck
+  - +1 LK
+  - req: 1-9 lk, level 9
+- harmless
+  - +20 to steal skill
+  - req: 50% steal, 49+ karma points, level 6
+- here and now
+  - gain another level immediately
+  - req: level 9
+- HtH evade
+  - if both item slots are empty or contain unarmed-class weapons (spiked knuckles, power fists, etc.),
+    at the end of a combat round AC increases by 2 per unused AP, plus 1/12 your Unarmed skill
+    Slots containing non-weapon items or grenades are treated as empty
+- Kama Sutra master
+  - better sex rating
+  - req: 5 endurance, 5 agil, level 6
+- Karma Beacon
+  - improves karma modifiers
+  - req: 6 charisma, level 6
+- Light Step
+  - reduces chance to set off traps
+- Living Anatomy
+  - +10 to Doctor skill
+  - +5 damage to living critters (all types except robots and aliens)
+  - req: 60% doc, level 12
+- magnetic personality
+  - can have one more NPC (max of 5)
+- negotiator
+  - +10 to speech and barter skills
+  - req: 50% speech, 50% barter, level 6
+- pack rat
+  - +50 to carry weight
+- pyromaniac
+  - +5 damage with fire weapons
+  - req: 75% big guns, level 9
+- quick recovery
+  - only takes 1 AP to stand up
+- salesman
+  - +20 to barter skill
+- stonewall
+  - less likely to be knocked down
+- thief
+  - +10 to sneak, lockpick, steal, traps
+  - req: level 3
+- weapon handling
+  - +3 ST when determining if a weapon can be used properly
+  - req: 5 agil, level 12
+- vault city training
+  - +5 to Doctor and First Aid skills
+- alcohol raised hit points
+  - +2 max HP
+- alcohol raised hit points II
+  - +4 max HP
+- alcohol lowered hit points
+  - -2 max HP
+- alcohol lowered hit points II
+  - -4 max HP
+- autodoc raised hit points
+  - +2 max HP
+- autodoc raised hit points II
+  - +4 max HP
+- autodoc lowered hit points
+  - -2 max HP
+- autodoc lowered hit points II
+  - -4 max HP
+- expert excrement expeditor
+  - +5 to speech skill

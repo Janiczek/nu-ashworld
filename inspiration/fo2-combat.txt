@@ -1,0 +1,7 @@
+- character starting combat gets a free "surprise turn" at the beginning
+- defender then gets a turn to defend themselves
+
+- after that:
+  - all participants get a turn based on their `sequence` stat
+  - characters with higher `sequence` act earlier than those with lower `sequence`
+  - but everybody has a turn before anyone goes again

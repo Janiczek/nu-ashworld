@@ -1,0 +1,81 @@
+ND = net damage
+RD = random damage produced from weapons hit damage range
+RB = ranged bonus (RB=0 unless player has bonus ranged damage perk)
+X = ammo damage multiplier
+Y = ammo damage divisor
+CM = critical hit damage multiplier (if no critical hit then CM=2, otherwise assigned value from critical hit table)
+CD = combat difficulty multiplier (easy = 75, normal = 100, hard = 125)
+AI = 1 if critical hit which ignores armor, otherwise 0
+ADT = armor damage threshold value
+ADR = armor damage resistance value
+RM = ammo resistance modifier (only value allowed to be negative or positive in this equation)
+
+ND = ((RD+RB) * (X/Y) * (CM/2) * (CD/100) - ADT/max(5*AI, 1)) * (100 - max((ADR/max(5*AI, 1) + RM),0) / 100)
+rounded to nearest whole number
+
+if using HtH attack:
+  - bonus from "Bonus HtH Damage" perk is added to Melee Damage statistic
+  - any damage bonuses from Special Unarmed Attacks (like `Hammer Punch`) is adde to the initially rolled damage figure (RD in the above formula)
+
+
+
+
+
+damage:
+  - damage really done = hit damage - damage threshold - floor((hit damage - damage threshold) * damage resistance %)
+  -                      42         - 8                - floor((42 - 8) * 60%)
+  -                      34                            - floor(34 * 60%)
+  -                      34                            - floor(20.4)
+  -                      34                            - 20
+  -                    = 14
+
+ammo:
+- JHP is superior
+- FMP is second best
+- forget AP ammo
+
+burst:
+- armor will absorb damage from each bullet and then add up the unabsorbed damage to give total damage dealt
+  (as opposed to total damage being calculated and then being reduced)
+- burst shots are uneffective against heavily armoured targets because of this
+
+cripple:
+  - legs: harder time alking around
+  - 1 arm: unable to use 2h weapons
+  - 2 arms: unable to use 1h weapons (only unarmed left as an option)
+  - eyes: reduced Perception levels
+
+male hit in grion -> fall down
+
+ammo or weapon vs armor is very important
+* lightly armored: you can attack unarmed or with melee weapon that doesn't consume ammo
+* normally: regular shots, targeted and/or burst shots if possible and effective
+* armoured enemies: use weapons tha thave good penetration PPK12/M72, G11(e), Vindicator, Plasma Rifles, YK42B)
+
+* AP ammo seems better for armoured targets, but there are negative modifiers to damage with AP ammo
+* AP ammo penetrates better than JHP ammo, but JPH is superior
+* AP and Explosive rockets seem to deal the same amount of damage
+
+- hunting rifle is an early encountered sniping weapon, but outgunned later
+- FN-FAL with night sight = decent mid-range
+- Assault Rifle (extended magazine) = mid-range
+- Sniper Rifle = long-range
+- M72 = endgame <3
+
+- burst shotguns for short distance sniping
+  - great for mid armored targets
+- Pancor Jackhammer
+- Combat Shotgun
+- H&K CAWS
+
+- Plasma rifle - no armor can withstand it except Tesla?, 4 AP per shot
+- Pulse rifle - unstoppable by any armor
+
+- aimed shots > normal shots (if you can hit at all ofc)
+
+- long-range weapons have a negative modifier for close range (keep this?)
+
+
+
+- sledgehammer or rippers: against unarmed
+- aim for legs, after crippling score aimed shots at head/eyes

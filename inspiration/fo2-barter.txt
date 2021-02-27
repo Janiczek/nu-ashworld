@@ -1,0 +1,22 @@
+Master_Trader = 0.0;
+if (player_has_master_trader) Master_Trader = 25.0;
+
+barter_mod = script_modifier + reaction_modifier; // reaction_modifier is -15/0/25 for good/neutral/bad.
+barter_percent = (barter_mod + 100.0 - Master_Trader) * 0.01;
+
+if (barter_percent < 0.0) barter_percent = 0.0099999998;
+
+barter_ratio = [(trader_barter_skill + 160.0) / (highest_barter_skill_in_party + 160.0)] * 2.0;
+
+total_price = caps_total + item_total_cost_without_caps * barter_ratio * barter_percent;
+
+-----
+
+
+example:
+Eldridge has Barter 115%. The player has Barter 200% and Master Trader perk.
+If the player becomes a Made Man for any family, the barter_mod will be -20.
+Now buying a 10mm SMG (1000 caps) from him will be:
+barter_percent = (-20 + 100 - 25) * 0.01 = 0.55
+barter_ratio = [(115 + 160) / (200 + 160)] * 2 = 1.52778
+price_on_table = 1000 * 1.52778 * 0.55 = 840 

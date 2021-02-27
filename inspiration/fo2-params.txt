@@ -1,0 +1,57 @@
+- hitpoints
+  - 15 + 2 * EN + ST
+  - every new level this increases by 2 + EN/2
+
+- armour class
+  - AG
+
+- action points
+  - 5 + AG/2
+
+- carry weight
+  - 25 + 25 * ST
+  - or 25 + 15 * ST if "small frame" trait
+
+- melee damage
+  - ST - 5
+  - minimum value 1
+  - this is added to "maximum possible damage"... doesn't mean the actual damage but the max from which you roll randomly
+  - ex. crowbar has damage 3-10; melee damage=4 then crowbar causes 3-14 damage.
+
+- damage threshold
+  - how much damage your armor can withstand when you're hit
+  - 0 + armor
+
+- damage resistance
+  - 0% + armor
+
+- poison resistance
+  - 5 * EN
+
+- radiation resistance
+  - 2 * EN + armor resistance
+
+- sequence
+  - 2 * PE
+  - kamikaze perk: +5
+  - earlier sequence perk: +2 per rank
+
+- healing rate
+  - how much HP you heal in 3 hours of rest
+  - EN/3
+  - minimum value 1
+
+- critical chance
+  - LK %
+  - increases up to 4 times with a targeted hit to the eyes?
+
+
+
+------------------
+
+
+poison measured in units: <25?
+radiation:
+  - rem count 5+ = symptoms of nausea
+  - rem count 75+ = quite serious
+  - rem count 300+ = fatal

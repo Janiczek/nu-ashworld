@@ -1,0 +1,49 @@
+- player can choose 0-2 traits
+
+- fast metabolism
+  - healing rate +2
+  - radiation and poison resistance = 0
+- bruiser
+  - ST +2
+  - action points -2
+- small frame
+  - AG +1
+  - carry weight = 25 + ST * 15
+- one hander
+  - one-handed chance to hit +20%
+  - two-handed chance to hit -40%
+- finesse
+  - critical chance +10%
+  - damage resistance +30% to all attack (still ignored by armor-bypassing criticals)
+- kamikaze
+  - sequence +5
+  - armor class = 0
+- heavy handed
+  - melee damage +4
+  - critical hit table rolls: -30 penalty
+- fast shot
+  - firing requires 1 less action point
+  - aimed shots disabled
+- bloody mess
+  - people die with the bloodiest death animations
+- jinxed
+  - all misses have 50% chance to be "upgraded" to critical failure (also applies to others in the fight)
+- good natured
+  - +15 first aid, doctor, speech, barter
+  - -10 small guns, big guns, energy weapons, unarmed, melee weapons, throwing
+- chem reliant
+  - addiction time -50%
+  - addiction chance increased (?)
+- chem resistant
+  - chem affect duration -50%
+  - addiction chance -50%
+- sex appeal
+  - sex appeal value raised for NPCs of opposite gender, reduced for the same gender
+  - used in NPC script checks
+- skilled
+  - +5 skill points per level
+  - perk gain every 4 levels
+- gifted
+  - +1 all stats
+  - -10 all skills
+  - -5 skill points gain every level

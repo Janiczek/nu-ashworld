@@ -1,0 +1,35 @@
+- weapon long range
+  - chance to hit increased by (PE-2)*8
+- weapon accurate
+  - chance to hit +20%
+- weapon penetrate
+  - reduce DT of armor by 80%
+- weapon knockback
+  - knocks target back for 1 hex for each 5 points of dealt damage
+- weapon scope range
+  - chance to hit increased by (PE-2)*12
+- weapon fast reload
+  - reloading only takes 1 AP (instead of 2)
+- weapon night sight
+  - removes penalties to chance to hit from the darkness
+- weapon flameboy
+  - more likely to show the most violent death animation for critters killed by fire (reduced to 15 points of damage)
+- weapon enhanced knockout
+  - all critical hits cause knockout in addition to their regular effects
+  - characters with 9 ST have 1% chance of causing knockout on a regular hit
+  - characters with 10 ST have 2% chance of causing knockout on a regular hit
+  - (not used by any weapons in the unmodded game)
+- powered armor
+  - +3 ST
+  - +30 radiation resistance
+- combat armor
+  - +20 radiation resistance
+- armor advanced I
+  - +4 ST
+  - +60 radiation resistance
+- armor advanced II
+  - +4 ST
+  - +75 radiation resistance
+- armor charisma
+  - +2 CH
+  - (not used by any armor)
