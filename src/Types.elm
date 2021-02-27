@@ -42,7 +42,7 @@ type FrontendMsg
 
 type ToBackend
     = LogMeIn
-    | GiveMeCurrentWorld
+    | GiveMeCurrentWorld -- TODO unused
 
 
 type BackendMsg
