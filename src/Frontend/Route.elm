@@ -1,6 +1,6 @@
 module Frontend.Route exposing (Route(..), needsLogin)
 
-import Types.Fight exposing (FightInfo)
+import Data.Fight exposing (FightInfo)
 
 
 type Route

@@ -1,5 +1,21 @@
 module Backend exposing (..)
 
+import Data.Fight as Fight
+    exposing
+        ( FightInfo
+        , FightResult(..)
+        )
+import Data.Player as Player
+    exposing
+        ( PlayerName
+        , SPlayer
+        )
+import Data.World
+    exposing
+        ( World
+        , WorldLoggedInData
+        , WorldLoggedOutData
+        )
 import Dict
 import Dict.Extra as Dict
 import Html
@@ -7,22 +23,6 @@ import Lamdera exposing (ClientId, SessionId)
 import Random
 import Set
 import Types exposing (..)
-import Types.Fight as Fight
-    exposing
-        ( FightInfo
-        , FightResult(..)
-        )
-import Types.Player as Player
-    exposing
-        ( PlayerName
-        , SPlayer
-        )
-import Types.World
-    exposing
-        ( World
-        , WorldLoggedInData
-        , WorldLoggedOutData
-        )
 
 
 type alias Model =
@@ -50,22 +50,31 @@ getWorldLoggedOut model =
     { players =
         model.players
             |> Dict.values
-            |> List.map Player.serverToClientOther
+            |> List.map (Player.serverToClientOther { perception = 1 })
     }
 
 
 getWorldLoggedIn : SessionId -> Model -> Maybe WorldLoggedInData
 getWorldLoggedIn sessionId model =
     Dict.get sessionId model.players
-        |> Maybe.map
-            (\player ->
-                { player = Player.serverToClient player
-                , otherPlayers =
-                    model.players
-                        |> Dict.toList
-                        |> List.map (Tuple.second >> Player.serverToClientOther)
-                }
-            )
+        |> Maybe.map (\sPlayer -> getWorldLoggedIn_ sPlayer model)
+
+
+getWorldLoggedIn_ : SPlayer -> Model -> WorldLoggedInData
+getWorldLoggedIn_ sPlayer model =
+    { player = Player.serverToClient sPlayer
+    , otherPlayers =
+        model.players
+            |> Dict.values
+            |> List.filterMap
+                (\otherPlayer ->
+                    if otherPlayer.name == sPlayer.name then
+                        Nothing
+
+                    else
+                        Just <| Player.serverToClientOther { perception = sPlayer.special.perception } otherPlayer
+                )
+    }
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -84,31 +93,25 @@ update msg model =
             let
                 newModel =
                     { model | players = Dict.insert sessionId player model.players }
-            in
-            getWorldLoggedIn sessionId newModel
-                |> Maybe.map
-                    (\world ->
-                        ( newModel
-                        , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                        )
-                    )
-                -- this REALLY shouldn't happen:
-                |> Maybe.withDefault ( newModel, Cmd.none )
 
-        GeneratedFight sessionId clientId fightInfo ->
+                world =
+                    getWorldLoggedIn_ player newModel
+            in
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+            )
+
+        GeneratedFight sessionId clientId sPlayer fightInfo ->
             let
                 newModel =
                     persistFight sessionId fightInfo model
+
+                world =
+                    getWorldLoggedIn_ sPlayer newModel
             in
-            getWorldLoggedIn sessionId newModel
-                |> Maybe.map
-                    (\world ->
-                        ( newModel
-                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
-                        )
-                    )
-                -- this REALLY shouldn't happen:
-                |> Maybe.withDefault ( newModel, Cmd.none )
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
+            )
 
 
 persistFight : SessionId -> FightInfo -> Model -> Model
@@ -120,16 +123,23 @@ persistFight attacker fightInfo model =
                     AttackerWon ->
                         model
                             -- TODO set HP of the attacker (dmg done to him?)
-                            |> setHp target 0
-                            |> addXp attacker fightInfo.winnerXpGained
-                            |> addCaps attacker fightInfo.winnerCapsGained
+                            |> setHp 0 target
+                            |> addXp fightInfo.winnerXpGained attacker
+                            |> addCaps fightInfo.winnerCapsGained attacker
+                            |> incWins attacker
+                            |> incLosses target
 
                     TargetWon ->
                         model
                             -- TODO set HP of the target (dmg done to him?)
-                            |> setHp attacker 0
-                            |> addXp target fightInfo.winnerXpGained
-                            |> addCaps target fightInfo.winnerCapsGained
+                            |> setHp 0 attacker
+                            |> addXp fightInfo.winnerXpGained target
+                            |> addCaps fightInfo.winnerCapsGained target
+                            |> incWins target
+                            |> incLosses attacker
+
+                    TargetAlreadyDead ->
+                        model
             )
         |> Maybe.withDefault model
 
@@ -193,19 +203,7 @@ logPlayerIn sessionId clientId sPlayer model =
     let
         world : WorldLoggedInData
         world =
-            { player = Player.serverToClient sPlayer
-            , otherPlayers =
-                model.players
-                    |> Dict.toList
-                    |> List.filterMap
-                        (\( sId, player ) ->
-                            if sId == sessionId then
-                                Nothing
-
-                            else
-                                Just <| Player.serverToClientOther player
-                        )
-            }
+            getWorldLoggedIn_ sPlayer model
     in
     ( model
     , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
@@ -214,15 +212,40 @@ logPlayerIn sessionId clientId sPlayer model =
 
 fight : PlayerName -> SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 fight otherPlayerName sessionId clientId sPlayer model =
-    ( model
-    , Random.generate
-        (GeneratedFight sessionId clientId)
-        (Fight.generator
-            { attacker = sPlayer.name
-            , target = otherPlayerName
-            }
-        )
-    )
+    if sPlayer.hp == 0 then
+        ( model, Cmd.none )
+
+    else
+        -- TODO consume an AP
+        findSessionIdForName otherPlayerName model
+            |> Maybe.andThen (\targetSessionId -> Dict.get targetSessionId model.players)
+            |> Maybe.map
+                (\target ->
+                    if target.hp == 0 then
+                        update
+                            (GeneratedFight sessionId
+                                clientId
+                                sPlayer
+                                (Fight.targetAlreadyDead
+                                    { attacker = sPlayer.name
+                                    , target = otherPlayerName
+                                    }
+                                )
+                            )
+                            model
+
+                    else
+                        ( model
+                        , Random.generate
+                            (GeneratedFight sessionId clientId sPlayer)
+                            (Fight.generator
+                                { attacker = sPlayer.name
+                                , target = otherPlayerName
+                                }
+                            )
+                        )
+                )
+            |> Maybe.withDefault ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub BackendMsg
@@ -230,28 +253,31 @@ subscriptions model =
     Lamdera.onConnect Connected
 
 
-setHp : SessionId -> Int -> Model -> Model
-setHp sessionId newHp model =
-    { model
-        | players =
-            model.players
-                |> Dict.update sessionId (Maybe.map (\player -> { player | hp = newHp }))
-    }
+updatePlayer : (SPlayer -> SPlayer) -> SessionId -> Model -> Model
+updatePlayer fn sessionId model =
+    { model | players = Dict.update sessionId (Maybe.map fn) model.players }
 
 
-addXp : SessionId -> Int -> Model -> Model
-addXp sessionId addedXp model =
-    { model
-        | players =
-            model.players
-                |> Dict.update sessionId (Maybe.map (\player -> { player | xp = player.xp + addedXp }))
-    }
+setHp : Int -> SessionId -> Model -> Model
+setHp newHp =
+    updatePlayer (\player -> { player | hp = newHp })
 
 
-addCaps : SessionId -> Int -> Model -> Model
-addCaps sessionId addedCaps model =
-    { model
-        | players =
-            model.players
-                |> Dict.update sessionId (Maybe.map (\player -> { player | caps = player.caps + addedCaps }))
-    }
+addXp : Int -> SessionId -> Model -> Model
+addXp addedXp =
+    updatePlayer (\player -> { player | xp = player.xp + addedXp })
+
+
+addCaps : Int -> SessionId -> Model -> Model
+addCaps addedCaps =
+    updatePlayer (\player -> { player | caps = player.caps + addedCaps })
+
+
+incWins : SessionId -> Model -> Model
+incWins =
+    updatePlayer (\player -> { player | wins = player.wins + 1 })
+
+
+incLosses : SessionId -> Model -> Model
+incLosses =
+    updatePlayer (\player -> { player | losses = player.losses + 1 })

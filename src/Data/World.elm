@@ -1,4 +1,4 @@
-module Types.World exposing
+module Data.World exposing
     ( World(..)
     , WorldLoggedInData
     , WorldLoggedOutData
@@ -7,7 +7,7 @@ module Types.World exposing
     , toLoggedOut
     )
 
-import Types.Player as Player exposing (COtherPlayer, CPlayer)
+import Data.Player as Player exposing (COtherPlayer, CPlayer)
 
 
 type World

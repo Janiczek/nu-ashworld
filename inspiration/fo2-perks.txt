@@ -1,5 +1,5 @@
 - awareness
-  - see detailed information (current HP, weapon, if crippled or not)
+  - see detailed information (current HP, weapon, ammo type, how much ammo is loaded; if crippled or not)
   - req: 5 perception, level 3
 - bonus HtH attacks
   - -1 AP for HtH and melee attacks

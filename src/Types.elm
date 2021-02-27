@@ -2,19 +2,19 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Dict exposing (Dict)
-import Frontend.Route exposing (Route)
-import Lamdera exposing (ClientId, SessionId)
-import Set exposing (Set)
-import Time
-import Types.Fight exposing (FightInfo)
-import Types.Player exposing (PlayerName, SPlayer)
-import Types.World
+import Data.Fight exposing (FightInfo)
+import Data.Player exposing (PlayerName, SPlayer)
+import Data.World
     exposing
         ( World
         , WorldLoggedInData
         , WorldLoggedOutData
         )
+import Dict exposing (Dict)
+import Frontend.Route exposing (Route)
+import Lamdera exposing (ClientId, SessionId)
+import Set exposing (Set)
+import Time
 import Url exposing (Url)
 
 
@@ -51,7 +51,7 @@ type ToBackend
 type BackendMsg
     = Connected SessionId ClientId
     | GeneratedPlayerLogHimIn SessionId ClientId SPlayer
-    | GeneratedFight SessionId ClientId FightInfo
+    | GeneratedFight SessionId ClientId SPlayer FightInfo
 
 
 type ToFrontend

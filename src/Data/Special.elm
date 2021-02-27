@@ -1,4 +1,4 @@
-module Types.Special exposing (Special)
+module Data.Special exposing (Special)
 
 
 type alias Special =

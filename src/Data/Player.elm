@@ -1,4 +1,4 @@
-module Types.Player exposing
+module Data.Player exposing
     ( COtherPlayer
     , CPlayer
     , PlayerName
@@ -9,11 +9,12 @@ module Types.Player exposing
     , serverToClientOther
     )
 
+import Data.HealthStatus as HealthStatus exposing (HealthStatus)
+import Data.Special exposing (Special)
+import Data.Xp as Xp exposing (Level, Xp)
 import Random exposing (Generator)
 import Random.Extra as Random
 import Set exposing (Set)
-import Types.Special exposing (Special)
-import Types.Xp as Xp exposing (Level, Xp)
 
 
 type alias PlayerName =
@@ -40,6 +41,7 @@ type alias COtherPlayer =
     , name : PlayerName
     , wins : Int
     , losses : Int
+    , healthStatus : HealthStatus
     }
 
 
@@ -72,13 +74,14 @@ serverToClient p =
     }
 
 
-serverToClientOther : SPlayer -> COtherPlayer
-serverToClientOther p =
+serverToClientOther : { perception : Int } -> SPlayer -> COtherPlayer
+serverToClientOther { perception } p =
     { hp = p.hp
     , level = Xp.xpToLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
+    , healthStatus = HealthStatus.check perception p
     }
 
 
@@ -89,6 +92,11 @@ clientToClientOther p =
     , name = p.name
     , wins = p.wins
     , losses = p.losses
+    , healthStatus =
+        HealthStatus.ExactHp
+            { current = p.hp
+            , max = p.maxHp
+            }
     }
 
 

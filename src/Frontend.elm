@@ -3,6 +3,16 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Common
+import Data.Fight exposing (FightInfo)
+import Data.HealthStatus as HealthStatus
+import Data.Player exposing (COtherPlayer, CPlayer)
+import Data.World as World
+    exposing
+        ( World(..)
+        , WorldLoggedInData
+        , WorldLoggedOutData
+        )
+import Data.Xp as Xp
 import DateFormat
 import Frontend.News as News exposing (Item)
 import Frontend.Route as Route exposing (Route)
@@ -15,15 +25,6 @@ import Lamdera
 import Task
 import Time exposing (Posix)
 import Types exposing (..)
-import Types.Fight exposing (FightInfo)
-import Types.Player exposing (COtherPlayer, CPlayer)
-import Types.World as World
-    exposing
-        ( World(..)
-        , WorldLoggedInData
-        , WorldLoggedOutData
-        )
-import Types.Xp as Xp
 import Url
 
 
@@ -179,7 +180,7 @@ contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                [ H.text "TODO Character page" ]
+                characterView world.player
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -224,6 +225,34 @@ pageTitleView title =
     H.h2
         [ HA.id "page-title" ]
         [ H.text title ]
+
+
+characterView : CPlayer -> List (Html FrontendMsg)
+characterView player =
+    let
+        itemView ( label, value ) =
+            H.li [] [ H.text <| label ++ ": " ++ value ]
+    in
+    [ pageTitleView "Character"
+    , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp )
+      , ( "XP", String.fromInt player.xp )
+      , ( "Name", player.name )
+      , ( "SPECIAL: Strength", String.fromInt player.special.strength )
+      , ( "SPECIAL: Perception", String.fromInt player.special.perception )
+      , ( "SPECIAL: Endurance", String.fromInt player.special.endurance )
+      , ( "SPECIAL: Charisma", String.fromInt player.special.charisma )
+      , ( "SPECIAL: Intelligence", String.fromInt player.special.intelligence )
+      , ( "SPECIAL: Agility", String.fromInt player.special.agility )
+      , ( "SPECIAL: Luck", String.fromInt player.special.luck )
+      , ( "Available SPECIAL points", String.fromInt player.availableSpecial )
+      , ( "Caps", String.fromInt player.caps )
+      , ( "AP", String.fromInt player.ap )
+      , ( "Wins", String.fromInt player.wins )
+      , ( "Losses", String.fromInt player.losses )
+      ]
+        |> List.map itemView
+        |> H.ul []
+    ]
 
 
 newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
@@ -299,6 +328,12 @@ ladderTableView { loggedInPlayer, players } =
                 , H.viewIf (loggedInPlayer /= Nothing) <|
                     H.th [ HA.class "ladder-fight" ] []
                 , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
+                , H.viewIf (loggedInPlayer /= Nothing) <|
+                    H.th
+                        [ HA.class "ladder-status"
+                        , HA.title "Health status"
+                        ]
+                        [ H.text "Status" ]
                 , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
 
                 --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
@@ -355,6 +390,15 @@ ladderTableView { loggedInPlayer, players } =
                                 , HA.title "Name"
                                 ]
                                 [ H.text player.name ]
+                            , loggedInPlayer
+                                |> H.viewMaybe
+                                    (\loggedInPlayer_ ->
+                                        H.td
+                                            [ HA.class "ladder-status"
+                                            , HA.title "Health status"
+                                            ]
+                                            [ H.text <| HealthStatus.label player.healthStatus ]
+                                    )
                             , H.td
                                 [ HA.class "ladder-lvl"
                                 , HA.title "Level"

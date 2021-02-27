@@ -1,4 +1,4 @@
-module Types.Xp exposing (Level, Xp, nextLevelXp, xpToLevel, xpUntilNextLevel)
+module Data.Xp exposing (Level, Xp, nextLevelXp, xpToLevel, xpUntilNextLevel)
 
 import List.Extra
 

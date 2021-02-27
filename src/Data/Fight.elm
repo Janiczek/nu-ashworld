@@ -1,12 +1,13 @@
-module Types.Fight exposing
+module Data.Fight exposing
     ( FightInfo
     , FightResult(..)
     , generator
+    , targetAlreadyDead
     )
 
+import Data.Player exposing (PlayerName)
 import Random exposing (Generator)
 import Random.Extra as Random
-import Types.Player exposing (PlayerName)
 
 
 type alias FightInfo =
@@ -21,6 +22,7 @@ type alias FightInfo =
 type FightResult
     = AttackerWon
     | TargetWon
+    | TargetAlreadyDead
 
 
 generator :
@@ -34,3 +36,17 @@ generator { attacker, target } =
         |> Random.andMap (Random.uniform AttackerWon [ TargetWon ])
         |> Random.andMap (Random.int 1 100)
         |> Random.andMap (Random.int 1 100)
+
+
+targetAlreadyDead :
+    { attacker : PlayerName
+    , target : PlayerName
+    }
+    -> FightInfo
+targetAlreadyDead { attacker, target } =
+    { attacker = attacker
+    , target = target
+    , result = TargetAlreadyDead
+    , winnerXpGained = 0
+    , winnerCapsGained = 0
+    }
