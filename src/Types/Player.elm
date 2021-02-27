@@ -1,6 +1,7 @@
 module Types.Player exposing
     ( COtherPlayer
     , CPlayer
+    , PlayerName
     , SPlayer
     , clientToClientOther
     , generator
@@ -9,20 +10,24 @@ module Types.Player exposing
     )
 
 import Random exposing (Generator)
-import Random.Extra
+import Random.Extra as Random
 import Set exposing (Set)
 import Types.Special exposing (Special)
 import Types.Xp as Xp exposing (Level, Xp)
+
+
+type alias PlayerName =
+    String
 
 
 type alias CPlayer =
     { hp : Int
     , maxHp : Int
     , xp : Xp
-    , name : String
+    , name : PlayerName
     , special : Special
     , availableSpecial : Int
-    , cash : Int
+    , caps : Int
     , ap : Int
     , wins : Int
     , losses : Int
@@ -32,7 +37,7 @@ type alias CPlayer =
 type alias COtherPlayer =
     { hp : Int
     , level : Level
-    , name : String
+    , name : PlayerName
     , wins : Int
     , losses : Int
     }
@@ -42,10 +47,10 @@ type alias SPlayer =
     { hp : Int
     , maxHp : Int
     , xp : Int
-    , name : String
+    , name : PlayerName
     , special : Special
     , availableSpecial : Int
-    , cash : Int
+    , caps : Int
     , ap : Int
     , wins : Int
     , losses : Int
@@ -60,7 +65,7 @@ serverToClient p =
     , name = p.name
     , special = p.special
     , availableSpecial = p.availableSpecial
-    , cash = p.cash
+    , caps = p.caps
     , ap = p.ap
     , wins = p.wins
     , losses = p.losses
@@ -87,26 +92,26 @@ clientToClientOther p =
     }
 
 
-generator : Set String -> Generator SPlayer
+generator : Set PlayerName -> Generator SPlayer
 generator existingNames =
     Random.int 10 100
         |> Random.andThen
             (\maxHp ->
                 Random.constant SPlayer
-                    |> Random.Extra.andMap (Random.int 0 maxHp)
-                    |> Random.Extra.andMap (Random.constant maxHp)
-                    |> Random.Extra.andMap (Random.int 0 10000)
-                    |> Random.Extra.andMap (nameGenerator existingNames)
-                    |> Random.Extra.andMap specialGenerator
-                    |> Random.Extra.andMap (Random.int 0 15)
-                    |> Random.Extra.andMap (Random.int 1 9999)
-                    |> Random.Extra.andMap (Random.int 1 20)
-                    |> Random.Extra.andMap (Random.int 0 300)
-                    |> Random.Extra.andMap (Random.int 0 300)
+                    |> Random.andMap (Random.int 0 maxHp)
+                    |> Random.andMap (Random.constant maxHp)
+                    |> Random.andMap (Random.int 0 10000)
+                    |> Random.andMap (nameGenerator existingNames)
+                    |> Random.andMap specialGenerator
+                    |> Random.andMap (Random.int 0 15)
+                    |> Random.andMap (Random.int 1 9999)
+                    |> Random.andMap (Random.int 1 20)
+                    |> Random.andMap (Random.int 0 300)
+                    |> Random.andMap (Random.int 0 300)
             )
 
 
-nameGenerator : Set String -> Generator String
+nameGenerator : Set PlayerName -> Generator PlayerName
 nameGenerator existingNames =
     let
         initial =
@@ -121,7 +126,7 @@ nameGenerator existingNames =
                 , "iScrE4m"
                 ]
 
-        enforceUnique : String -> Generator String
+        enforceUnique : PlayerName -> Generator PlayerName
         enforceUnique name =
             if Set.member name existingNames then
                 Random.int 0 9
@@ -141,10 +146,10 @@ nameGenerator existingNames =
 specialGenerator : Generator Special
 specialGenerator =
     Random.constant Special
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
-        |> Random.Extra.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)
+        |> Random.andMap (Random.int 1 10)

@@ -7,7 +7,8 @@ import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
 import Time
-import Types.Player exposing (SPlayer)
+import Types.Fight exposing (FightInfo)
+import Types.Player exposing (PlayerName, SPlayer)
 import Types.World
     exposing
         ( World
@@ -26,6 +27,7 @@ type alias FrontendModel =
 
 
 type alias BackendModel =
+    -- TODO PlayerName should be the key; names always unique
     { players : Dict SessionId SPlayer
     }
 
@@ -42,14 +44,16 @@ type FrontendMsg
 
 type ToBackend
     = LogMeIn
-    | GiveMeCurrentWorld -- TODO unused
+    | Fight PlayerName
 
 
 type BackendMsg
     = Connected SessionId ClientId
-    | GeneratedPlayer ClientId SPlayer
+    | GeneratedPlayerLogHimIn SessionId ClientId SPlayer
+    | GeneratedFight SessionId ClientId FightInfo
 
 
 type ToFrontend
     = YourCurrentWorld WorldLoggedInData
     | CurrentWorld WorldLoggedOutData
+    | YourFightResult FightInfo

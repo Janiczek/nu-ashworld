@@ -1,5 +1,7 @@
 module Frontend.Route exposing (Route(..), needsLogin)
 
+import Types.Fight exposing (FightInfo)
+
 
 type Route
     = Character
@@ -10,6 +12,7 @@ type Route
     | FAQ
     | About
     | News
+    | Fight FightInfo
 
 
 needsLogin : Route -> Bool
@@ -38,3 +41,6 @@ needsLogin route =
 
         News ->
             False
+
+        Fight _ ->
+            True

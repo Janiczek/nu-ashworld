@@ -1,4 +1,4 @@
-module News exposing (Item, formatDate, formatText, items)
+module Frontend.News exposing (Item, formatDate, formatText, items)
 
 import DateFormat
 import Html exposing (Html)

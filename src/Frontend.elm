@@ -4,15 +4,16 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Common
 import DateFormat
-import Frontend.Route as Route exposing (Route(..))
+import Frontend.News as News exposing (Item)
+import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
 import Lamdera
-import News exposing (Item)
 import Task
 import Time exposing (Posix)
 import Types exposing (..)
+import Types.Fight exposing (FightInfo)
 import Types.Player exposing (COtherPlayer, CPlayer)
 import Types.World as World
     exposing
@@ -121,6 +122,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        YourFightResult fightInfo ->
+            ( { model | route = Route.Fight fightInfo }
+            , Cmd.none
+            )
+
 
 view : Model -> Browser.Document FrontendMsg
 view model =
@@ -162,38 +168,44 @@ contentView : Model -> Html FrontendMsg
 contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
-            ( Character, WorldLoggedIn world ) ->
+            ( Route.Character, WorldLoggedIn world ) ->
                 [ H.text "TODO Character page" ]
 
-            ( Character, _ ) ->
+            ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Map, _ ) ->
+            ( Route.Map, _ ) ->
                 [ H.text "TODO Map page" ]
 
-            ( Ladder, _ ) ->
+            ( Route.Ladder, _ ) ->
                 ladderView model
 
-            ( Town, WorldLoggedIn world ) ->
+            ( Route.Town, WorldLoggedIn world ) ->
                 [ H.text "TODO Town page" ]
 
-            ( Town, _ ) ->
+            ( Route.Town, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Settings, WorldLoggedIn world ) ->
+            ( Route.Settings, WorldLoggedIn world ) ->
                 [ H.text "TODO Settings page" ]
 
-            ( Settings, _ ) ->
+            ( Route.Settings, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( FAQ, _ ) ->
+            ( Route.FAQ, _ ) ->
                 [ H.text "TODO FAQ page" ]
 
-            ( About, _ ) ->
+            ( Route.About, _ ) ->
                 [ H.text "TODO About page" ]
 
-            ( News, _ ) ->
+            ( Route.News, _ ) ->
                 newsView model.zone
+
+            ( Route.Fight fightInfo, WorldLoggedIn world ) ->
+                fightView fightInfo
+
+            ( Route.Fight _, _ ) ->
+                contentUnavailableToLoggedOutView
         )
 
 
@@ -225,6 +237,11 @@ newsView : Time.Zone -> List (Html FrontendMsg)
 newsView zone =
     pageTitleView "News"
         :: List.map (newsItemView zone) News.items
+
+
+fightView : FightInfo -> List (Html FrontendMsg)
+fightView fightInfo =
+    [ H.text "TODO fight" ]
 
 
 ladderView : Model -> List (Html FrontendMsg)
@@ -473,8 +490,8 @@ playerInfoView world =
                 ]
                 [ H.text "W/L:" ]
             , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.wins ++ "/" ++ String.fromInt world.player.losses ]
-            , H.div [ HA.class "player-stat-label" ] [ H.text "Cash:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.cash ]
+            , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.caps ]
             , H.div
                 [ HA.class "player-stat-label"
                 , HA.title "Action points"
