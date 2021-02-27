@@ -238,6 +238,13 @@ button {
   background: var(--bg02);
 }
 
+#ladder-table tbody .ladder-rank,
+#ladder-table tbody .ladder-lvl,
+#ladder-table tbody .ladder-wins,
+#ladder-table tbody .ladder-losses {
+  text-align: right;
+}
+
 .news-item {
   margin-top: 60px;
 }

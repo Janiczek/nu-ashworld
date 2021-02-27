@@ -281,14 +281,14 @@ ladderTableView { isPlayer, players } =
     H.table [ HA.id "ladder-table" ]
         [ H.thead []
             [ H.tr []
-                [ H.th [] [ H.text "#" ]
-                , H.th [] [ H.text "Username" ]
-                , H.th [] [ H.text "Lvl" ]
+                [ H.th [ HA.class "ladder-rank" ] [ H.text "#" ]
+                , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
+                , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
 
-                --, H.th [] [ H.text "City" ] -- city
-                --, H.th [] [ H.text "" ] -- flag
-                , H.th [] [ H.text "W" ]
-                , H.th [] [ H.text "L" ]
+                --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
+                --, H.th [HA.class "ladder-flag"] [ H.text "" ] -- flag
+                , H.th [ HA.class "ladder-wins" ] [ H.text "W" ]
+                , H.th [ HA.class "ladder-losses" ] [ H.text "L" ]
                 ]
             ]
         , H.tbody []
@@ -297,11 +297,11 @@ ladderTableView { isPlayer, players } =
                 |> List.indexedMap
                     (\i player ->
                         H.tr [ HA.classList [ ( "is-player", isPlayer player ) ] ]
-                            [ H.td [] [ H.text <| String.fromInt <| i + 1 ]
-                            , H.td [] [ H.text player.name ]
-                            , H.td [] [ H.text <| String.fromInt player.level ]
-                            , H.td [] [ H.text <| String.fromInt player.wins ]
-                            , H.td [] [ H.text <| String.fromInt player.losses ]
+                            [ H.td [ HA.class "ladder-rank" ] [ H.text <| String.fromInt <| i + 1 ]
+                            , H.td [ HA.class "ladder-name" ] [ H.text player.name ]
+                            , H.td [ HA.class "ladder-lvl" ] [ H.text <| String.fromInt player.level ]
+                            , H.td [ HA.class "ladder-wins" ] [ H.text <| String.fromInt player.wins ]
+                            , H.td [ HA.class "ladder-losses" ] [ H.text <| String.fromInt player.losses ]
                             ]
                     )
             )
