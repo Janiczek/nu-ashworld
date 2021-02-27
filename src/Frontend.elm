@@ -367,14 +367,21 @@ ladderTableView { loggedInPlayer, players } =
                                         if loggedInPlayer_.name == player.name then
                                             H.td
                                                 [ HA.class "ladder-fight"
-                                                , HA.title "Can't fight yourself!"
+                                                , HA.title "Hey, that's you!"
                                                 ]
                                                 [ H.text "-" ]
 
                                         else if loggedInPlayer_.hp == 0 then
                                             H.td
                                                 [ HA.class "ladder-fight"
-                                                , HA.title "Can't fight this person: your HP is 0!"
+                                                , HA.title "Can't fight: you're dead!"
+                                                ]
+                                                [ H.text "-" ]
+
+                                        else if player.healthStatus == Dead then
+                                            H.td
+                                                [ HA.class "ladder-fight"
+                                                , HA.title "Can't fight this person: they're dead!"
                                                 ]
                                                 [ H.text "-" ]
 
