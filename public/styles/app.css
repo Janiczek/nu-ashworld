@@ -246,6 +246,7 @@ button {
 }
 
 #ladder-table tbody .ladder-fight {
+  cursor: pointer;
   background: var(--bg02);
   color: var(--fg01);
 }
