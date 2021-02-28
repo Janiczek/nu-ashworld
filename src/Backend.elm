@@ -1,13 +1,20 @@
 module Backend exposing (..)
 
+import Data.Auth as Auth
+    exposing
+        ( Auth
+        , Verified
+        )
 import Data.Fight as Fight
     exposing
         ( FightInfo
         , FightResult(..)
         )
+import Data.NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
-        ( PlayerName
+        ( Player(..)
+        , PlayerName
         , SPlayer
         )
 import Data.Special as Special exposing (SpecialType)
@@ -30,6 +37,11 @@ type alias Model =
     BackendModel
 
 
+
+--
+-- TODO it would be nice if we didn't have to send the hashed password back to the user
+
+
 app =
     Lamdera.backend
         { init = init
@@ -41,7 +53,9 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { players = Dict.empty }
+    ( { players = Dict.empty
+      , loggedInPlayers = Dict.empty
+      }
     , Cmd.none
     )
 
@@ -51,35 +65,48 @@ getWorldLoggedOut model =
     { players =
         model.players
             |> Dict.values
-            |> List.map
-                (Player.serverToClientOther
-                    -- no info about alive/dead!
-                    { perception = 1 }
+            |> List.filterMap
+                (Player.getPlayerData
+                    >> Maybe.map
+                        (Player.serverToClientOther
+                            -- no info about alive/dead!
+                            { perception = 1 }
+                        )
                 )
     }
 
 
-getWorldLoggedIn : SessionId -> Model -> Maybe WorldLoggedInData
-getWorldLoggedIn sessionId model =
-    Dict.get sessionId model.players
-        |> Maybe.map (\sPlayer -> getWorldLoggedIn_ sPlayer model)
+getWorldLoggedIn : PlayerName -> Model -> Maybe WorldLoggedInData
+getWorldLoggedIn playerName model =
+    Dict.get playerName model.players
+        |> Maybe.map (\player -> getWorldLoggedIn_ player model)
 
 
-getWorldLoggedIn_ : SPlayer -> Model -> WorldLoggedInData
-getWorldLoggedIn_ sPlayer model =
-    { player = Player.serverToClient sPlayer
+getWorldLoggedIn_ : Player SPlayer -> Model -> WorldLoggedInData
+getWorldLoggedIn_ player model =
+    let
+        auth =
+            Player.getAuth player
+
+        perception =
+            Player.getPlayerData player
+                |> Maybe.map (.special >> .perception)
+                |> Maybe.withDefault 1
+    in
+    { player = Player.map Player.serverToClient player
     , otherPlayers =
         model.players
             |> Dict.values
+            |> List.filterMap Player.getPlayerData
             |> List.filterMap
                 (\otherPlayer ->
-                    if otherPlayer.name == sPlayer.name then
+                    if otherPlayer.name == auth.name then
                         Nothing
 
                     else
                         Just <|
                             Player.serverToClientOther
-                                { perception = sPlayer.special.perception }
+                                { perception = perception }
                                 otherPlayer
                 )
     }
@@ -97,24 +124,12 @@ update msg model =
             , Lamdera.sendToFrontend clientId <| CurrentWorld world
             )
 
-        GeneratedPlayerLogHimIn sessionId clientId player ->
+        GeneratedFight clientId sPlayer fightInfo ->
             let
                 newModel =
-                    { model | players = Dict.insert sessionId player model.players }
-
-                world =
-                    getWorldLoggedIn_ player newModel
+                    persistFight fightInfo model
             in
-            ( newModel
-            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-            )
-
-        GeneratedFight sessionId clientId sPlayer fightInfo ->
-            let
-                newModel =
-                    persistFight sessionId fightInfo model
-            in
-            getWorldLoggedIn sessionId newModel
+            getWorldLoggedIn sPlayer.name newModel
                 |> Maybe.map
                     (\world ->
                         ( newModel
@@ -125,89 +140,187 @@ update msg model =
                 |> Maybe.withDefault ( newModel, Cmd.none )
 
 
-persistFight : SessionId -> FightInfo -> Model -> Model
-persistFight attacker fightInfo model =
-    findSessionIdForName fightInfo.target model
-        |> Maybe.map
-            (\target ->
-                case fightInfo.result of
-                    AttackerWon ->
-                        model
-                            -- TODO set HP of the attacker (dmg done to him?)
-                            |> setHp 0 target
-                            |> addXp fightInfo.winnerXpGained attacker
-                            |> addCaps fightInfo.winnerCapsGained attacker
-                            |> incWins attacker
-                            |> incLosses target
+persistFight : FightInfo -> Model -> Model
+persistFight ({ attacker, target } as fightInfo) model =
+    case fightInfo.result of
+        AttackerWon ->
+            model
+                -- TODO set HP of the attacker (dmg done to him?)
+                |> setHp 0 target
+                |> addXp fightInfo.winnerXpGained attacker
+                |> addCaps fightInfo.winnerCapsGained attacker
+                |> incWins attacker
+                |> incLosses target
 
-                    TargetWon ->
-                        model
-                            -- TODO set HP of the target (dmg done to him?)
-                            |> setHp 0 attacker
-                            |> addXp fightInfo.winnerXpGained target
-                            |> addCaps fightInfo.winnerCapsGained target
-                            |> incWins target
-                            |> incLosses attacker
+        TargetWon ->
+            model
+                -- TODO set HP of the target (dmg done to him?)
+                |> setHp 0 attacker
+                |> addXp fightInfo.winnerXpGained target
+                |> addCaps fightInfo.winnerCapsGained target
+                |> incWins target
+                |> incLosses attacker
 
-                    TargetAlreadyDead ->
-                        model
-            )
-        |> Maybe.withDefault model
-
-
-{-| TODO remove this once we have model.players have the key : PlayerName
--}
-findSessionIdForName : PlayerName -> Model -> Maybe SessionId
-findSessionIdForName playerName model =
-    model.players
-        |> Dict.find (\_ v -> v.name == playerName)
-        |> Maybe.map Tuple.first
+        TargetAlreadyDead ->
+            model
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
-        withPlayer :
-            (SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg ))
-            -> ( Model, Cmd BackendMsg )
-        withPlayer fn =
-            case Dict.get sessionId model.players of
-                Nothing ->
-                    ( model, Cmd.none )
+        withLoggedInPlayer : (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withLoggedInPlayer fn =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.andThen (\name -> Dict.get name model.players)
+                |> Maybe.map (\player -> fn clientId player model)
+                |> Maybe.withDefault ( model, Cmd.none )
 
-                Just sPlayer ->
-                    fn sessionId clientId sPlayer model
+        withLoggedInCreatedPlayer : (ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withLoggedInCreatedPlayer fn =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.andThen (\name -> Dict.get name model.players)
+                |> Maybe.andThen Player.getPlayerData
+                |> Maybe.map (\player -> fn clientId player model)
+                |> Maybe.withDefault ( model, Cmd.none )
     in
     case msg of
-        LogMeIn ->
-            case Dict.get sessionId model.players of
+        LogMeIn auth ->
+            case Dict.get auth.name model.players of
                 Nothing ->
-                    generatePlayerAndLogHimIn sessionId clientId model
+                    -- TODO send the player a message that it failed? (user doesn't exist but they don't have to know)
+                    ( model, Cmd.none )
 
-                Just sPlayer ->
-                    logPlayerIn sessionId clientId sPlayer model
+                Just player ->
+                    let
+                        playerAuth : Auth Verified
+                        playerAuth =
+                            Player.getAuth player
+                    in
+                    if Auth.verify auth playerAuth then
+                        getWorldLoggedIn auth.name model
+                            |> Maybe.map
+                                (\world ->
+                                    ( { model | loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers }
+                                    , Lamdera.sendToFrontend clientId <| YoureLoggedIn world
+                                    )
+                                )
+                            -- weird?
+                            |> Maybe.withDefault ( model, Cmd.none )
+
+                    else
+                        -- TODO send the player a message that it failed? (password wrong but they don't have to know)
+                        ( model, Cmd.none )
+
+        RegisterMe auth ->
+            case Dict.get auth.name model.players of
+                Just _ ->
+                    -- TODO send the player a message that it failed? (username already exists)
+                    ( model, Cmd.none )
+
+                Nothing ->
+                    let
+                        player =
+                            NeedsCharCreated <| Auth.promote auth
+
+                        newModel =
+                            { model
+                                | players = Dict.insert auth.name player model.players
+                                , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
+                            }
+
+                        world =
+                            getWorldLoggedIn_ player model
+                    in
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YoureRegistered world
+                    )
+
+        LogMeOut ->
+            -- TODO perhaps also log them out on disconnect? to clean the dict...
+            let
+                newModel =
+                    { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
+
+                world =
+                    getWorldLoggedOut newModel
+            in
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YoureLoggedOut world
+            )
 
         Fight otherPlayerName ->
-            withPlayer (fight otherPlayerName)
+            withLoggedInCreatedPlayer (fight otherPlayerName)
 
         RefreshPlease ->
-            withPlayer refresh
+            let
+                loggedOut () =
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| CurrentWorld <| getWorldLoggedOut model
+                    )
+            in
+            case Dict.get clientId model.loggedInPlayers of
+                Nothing ->
+                    loggedOut ()
+
+                Just playerName ->
+                    getWorldLoggedIn playerName model
+                        |> Maybe.map
+                            (\world ->
+                                ( model
+                                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                )
+                            )
+                        |> Maybe.withDefault (loggedOut ())
 
         IncSpecial type_ ->
-            withPlayer (incrementSpecial type_)
+            withLoggedInCreatedPlayer (incrementSpecial type_)
+
+        CreateNewChar newChar ->
+            withLoggedInPlayer (createNewChar newChar)
 
 
-incrementSpecial : SpecialType -> SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-incrementSpecial type_ sessionId clientId sPlayer model =
-    if Special.canIncrement sPlayer.availableSpecial type_ sPlayer.special then
+createNewChar : NewChar -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
+createNewChar newChar clientId player model =
+    case player of
+        Player _ ->
+            -- TODO send the player a message? "already created"
+            ( model, Cmd.none )
+
+        NeedsCharCreated auth ->
+            let
+                sPlayer : SPlayer
+                sPlayer =
+                    Player.fromNewChar auth newChar
+
+                newPlayer : Player SPlayer
+                newPlayer =
+                    Player sPlayer
+
+                newModel : Model
+                newModel =
+                    { model | players = Dict.insert auth.name newPlayer model.players }
+
+                world : WorldLoggedInData
+                world =
+                    getWorldLoggedIn_ newPlayer newModel
+            in
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar world
+            )
+
+
+incrementSpecial : SpecialType -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+incrementSpecial type_ clientId player model =
+    if Special.canIncrement player.availableSpecial type_ player.special then
         let
             newModel : Model
             newModel =
+                -- TODO FIX recalculate HP and max HP
                 model
-                    |> incSpecial type_ sessionId
-                    |> decAvailableSpecial sessionId
+                    |> incSpecial type_ player.name
+                    |> decAvailableSpecial player.name
         in
-        getWorldLoggedIn sessionId newModel
+        getWorldLoggedIn player.name newModel
             |> Maybe.map
                 (\world ->
                     ( newModel
@@ -221,64 +334,20 @@ incrementSpecial type_ sessionId clientId sPlayer model =
         ( model, Cmd.none )
 
 
-refresh : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-refresh sessionId clientId sPlayer model =
-    -- TODO check the user is logged in before giving them the logged-in world!
-    let
-        world : WorldLoggedInData
-        world =
-            getWorldLoggedIn_ sPlayer model
-    in
-    ( model
-    , -- TODO refresh all the user's clients at once?
-      Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-    )
-
-
-generatePlayerAndLogHimIn : SessionId -> ClientId -> Model -> ( Model, Cmd BackendMsg )
-generatePlayerAndLogHimIn sessionId clientId model =
-    let
-        generatePlayerCmd =
-            let
-                existingNames =
-                    model.players
-                        |> Dict.values
-                        |> List.map .name
-                        |> Set.fromList
-            in
-            Random.generate
-                (GeneratedPlayerLogHimIn sessionId clientId)
-                (Player.generator existingNames)
-    in
-    ( model, generatePlayerCmd )
-
-
-logPlayerIn : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-logPlayerIn sessionId clientId sPlayer model =
-    let
-        world : WorldLoggedInData
-        world =
-            getWorldLoggedIn_ sPlayer model
-    in
-    ( model
-    , Lamdera.sendToFrontend clientId <| YoureLoggedInNow world
-    )
-
-
-fight : PlayerName -> SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-fight otherPlayerName sessionId clientId sPlayer model =
+fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+fight otherPlayerName clientId sPlayer model =
     if sPlayer.hp == 0 then
         ( model, Cmd.none )
 
     else
         -- TODO consume an AP
-        findSessionIdForName otherPlayerName model
-            |> Maybe.andThen (\targetSessionId -> Dict.get targetSessionId model.players)
+        Dict.get otherPlayerName model.players
+            |> Maybe.andThen Player.getPlayerData
             |> Maybe.map
                 (\target ->
                     if target.hp == 0 then
                         update
-                            (GeneratedFight sessionId
+                            (GeneratedFight
                                 clientId
                                 sPlayer
                                 (Fight.targetAlreadyDead
@@ -292,7 +361,7 @@ fight otherPlayerName sessionId clientId sPlayer model =
                     else
                         ( model
                         , Random.generate
-                            (GeneratedFight sessionId clientId sPlayer)
+                            (GeneratedFight clientId sPlayer)
                             (Fight.generator
                                 { attacker = sPlayer.name
                                 , target = otherPlayerName
@@ -308,41 +377,41 @@ subscriptions model =
     Lamdera.onConnect Connected
 
 
-updatePlayer : (SPlayer -> SPlayer) -> SessionId -> Model -> Model
-updatePlayer fn sessionId model =
-    { model | players = Dict.update sessionId (Maybe.map fn) model.players }
+updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model
+updatePlayer fn playerName model =
+    { model | players = Dict.update playerName (Maybe.map (Player.map fn)) model.players }
 
 
-setHp : Int -> SessionId -> Model -> Model
+setHp : Int -> PlayerName -> Model -> Model
 setHp newHp =
     updatePlayer (\player -> { player | hp = newHp })
 
 
-addXp : Int -> SessionId -> Model -> Model
+addXp : Int -> PlayerName -> Model -> Model
 addXp addedXp =
     updatePlayer (\player -> { player | xp = player.xp + addedXp })
 
 
-addCaps : Int -> SessionId -> Model -> Model
+addCaps : Int -> PlayerName -> Model -> Model
 addCaps addedCaps =
     updatePlayer (\player -> { player | caps = player.caps + addedCaps })
 
 
-incWins : SessionId -> Model -> Model
+incWins : PlayerName -> Model -> Model
 incWins =
     updatePlayer (\player -> { player | wins = player.wins + 1 })
 
 
-incLosses : SessionId -> Model -> Model
+incLosses : PlayerName -> Model -> Model
 incLosses =
     updatePlayer (\player -> { player | losses = player.losses + 1 })
 
 
-incSpecial : SpecialType -> SessionId -> Model -> Model
+incSpecial : SpecialType -> PlayerName -> Model -> Model
 incSpecial type_ =
     updatePlayer (\player -> { player | special = Special.increment type_ player.special })
 
 
-decAvailableSpecial : SessionId -> Model -> Model
+decAvailableSpecial : PlayerName -> Model -> Model
 decAvailableSpecial =
     updatePlayer (\player -> { player | availableSpecial = player.availableSpecial - 1 })

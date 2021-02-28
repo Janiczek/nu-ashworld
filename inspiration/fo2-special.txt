@@ -10,4 +10,6 @@
 - Agility (AG)
 - Luck (LK)
 
+===== DONE
 At beginning: all skills start at 5, you have extra 5 free points to distribute, you can set stuff in between 1-10.
+=== ^ DONE

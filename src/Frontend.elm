@@ -2,9 +2,16 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Data.Auth as Auth exposing (Password)
 import Data.Fight exposing (FightInfo)
 import Data.HealthStatus as HealthStatus
-import Data.Player exposing (COtherPlayer, CPlayer)
+import Data.NewChar as NewChar exposing (NewChar)
+import Data.Player as Player
+    exposing
+        ( COtherPlayer
+        , CPlayer
+        , Player(..)
+        )
 import Data.Special as Special
 import Data.Version as Version
 import Data.World as World
@@ -21,7 +28,9 @@ import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HA
 import Html.Events as HE
+import Html.Events.Extra as HE
 import Html.Extra as H
+import Json.Decode as Decode
 import Lamdera
 import Task
 import Time exposing (Posix)
@@ -49,8 +58,9 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
       , route = Route.News
-      , world = WorldNotInitialized
+      , world = WorldNotInitialized Auth.init
       , zone = Time.utc
+      , newChar = NewChar.init
       }
     , Task.perform GetZone Time.here
     )
@@ -92,22 +102,31 @@ update msg model =
             ( model, Cmd.none )
 
         Logout ->
-            ( { model
-                | world = World.toLoggedOut model.world
-                , route =
-                    if Route.needsLogin model.route then
-                        Route.News
-
-                    else
-                        model.route
-              }
-            , Cmd.none
+            ( model
+            , Lamdera.sendToBackend LogMeOut
             )
 
         Login ->
-            ( model
-            , Lamdera.sendToBackend LogMeIn
-            )
+            World.getAuth model.world
+                |> Maybe.map Auth.hash
+                |> Maybe.map
+                    (\auth ->
+                        ( model
+                        , Lamdera.sendToBackend <| LogMeIn auth
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
+
+        Register ->
+            World.getAuth model.world
+                |> Maybe.map Auth.hash
+                |> Maybe.map
+                    (\auth ->
+                        ( model
+                        , Lamdera.sendToBackend <| RegisterMe auth
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
 
         GetZone zone ->
             ( { model | zone = zone }
@@ -129,14 +148,63 @@ update msg model =
             , Lamdera.sendToBackend <| IncSpecial type_
             )
 
+        SetAuthName newName ->
+            ( { model
+                | world =
+                    World.mapAuth
+                        (\auth -> { auth | name = newName })
+                        model.world
+              }
+            , Cmd.none
+            )
+
+        SetAuthPassword newPassword ->
+            ( { model
+                | world =
+                    World.mapAuth
+                        (Auth.setPlaintextPassword newPassword)
+                        model.world
+              }
+            , Cmd.none
+            )
+
+        CreateChar ->
+            ( model
+            , Lamdera.sendToBackend <| CreateNewChar model.newChar
+            )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        YoureLoggedInNow world ->
+        YoureLoggedIn world ->
             ( { model
                 | world = WorldLoggedIn world
                 , route = Route.Ladder
+              }
+            , Cmd.none
+            )
+
+        YoureRegistered world ->
+            ( { model
+                | world = WorldLoggedIn world
+                , route = Route.CharCreation
+              }
+            , Cmd.none
+            )
+
+        YouHaveCreatedChar world ->
+            ( { model
+                | world = WorldLoggedIn world
+                , route = Route.Ladder
+              }
+            , Cmd.none
+            )
+
+        YoureLoggedOut world ->
+            ( { model
+                | world = WorldLoggedOut Auth.init world
+                , route = Route.loggedOut model.route
               }
             , Cmd.none
             )
@@ -147,7 +215,16 @@ updateFromBackend msg model =
             )
 
         CurrentWorld world ->
-            ( { model | world = WorldLoggedOut world }
+            let
+                auth =
+                    model.world
+                        |> World.getAuth
+                        |> Maybe.withDefault Auth.init
+            in
+            ( { model
+                | world = WorldLoggedOut auth world
+                , route = Route.loggedOut model.route
+              }
             , Cmd.none
             )
 
@@ -166,10 +243,10 @@ view model =
     , body =
         [ stylesLinkView
         , case model.world of
-            WorldNotInitialized ->
+            WorldNotInitialized _ ->
                 notInitializedView model
 
-            WorldLoggedOut _ ->
+            WorldLoggedOut _ _ ->
                 loggedOutView model
 
             WorldLoggedIn data ->
@@ -201,7 +278,12 @@ contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                characterView world.player
+                case world.player of
+                    NeedsCharCreated _ ->
+                        contentUnavailableToNonCreatedView
+
+                    Player cPlayer ->
+                        characterView cPlayer
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -209,8 +291,25 @@ contentView model =
             ( Route.Map, _ ) ->
                 [ H.text "TODO Map page" ]
 
-            ( Route.Ladder, _ ) ->
-                ladderView model
+            ( Route.Ladder, WorldLoggedIn world ) ->
+                case world.player of
+                    NeedsCharCreated _ ->
+                        contentUnavailableToNonCreatedView
+
+                    Player cPlayer ->
+                        ladderView
+                            { loggedInPlayer = Just cPlayer
+                            , players = World.allPlayers world
+                            }
+
+            ( Route.Ladder, WorldLoggedOut _ world ) ->
+                ladderView
+                    { loggedInPlayer = Nothing
+                    , players = world.players
+                    }
+
+            ( Route.Ladder, WorldNotInitialized _ ) ->
+                ladderLoadingView
 
             ( Route.Town, WorldLoggedIn world ) ->
                 [ H.text "TODO Town page" ]
@@ -238,6 +337,12 @@ contentView model =
 
             ( Route.Fight _, _ ) ->
                 contentUnavailableToLoggedOutView
+
+            ( Route.CharCreation, WorldLoggedIn world ) ->
+                charCreationView model.newChar
+
+            ( Route.CharCreation, _ ) ->
+                contentUnavailableToLoggedOutView
         )
 
 
@@ -246,6 +351,16 @@ pageTitleView title =
     H.h2
         [ HA.id "page-title" ]
         [ H.text title ]
+
+
+charCreationView : NewChar -> List (Html FrontendMsg)
+charCreationView newChar =
+    [ pageTitleView "New Character"
+    , H.text "TODO char creation view"
+    , H.button
+        [ HE.onClick CreateChar ]
+        [ H.text "Skip this for now, just give me 5 in all stats already" ]
+    ]
 
 
 characterView : CPlayer -> List (Html FrontendMsg)
@@ -343,32 +458,25 @@ fightView fightInfo =
     [ H.text "TODO fight" ]
 
 
-ladderView : Model -> List (Html FrontendMsg)
-ladderView model =
-    case model.world of
-        WorldNotInitialized ->
-            [ pageTitleView "Ladder"
-            , H.div []
-                [ H.text "Ladder is loading..."
-                , H.span [ HA.class "loading-cursor" ] []
-                ]
-            ]
+ladderLoadingView : List (Html FrontendMsg)
+ladderLoadingView =
+    [ pageTitleView "Ladder"
+    , H.div []
+        [ H.text "Ladder is loading..."
+        , H.span [ HA.class "loading-cursor" ] []
+        ]
+    ]
 
-        WorldLoggedOut { players } ->
-            [ pageTitleView "Ladder"
-            , ladderTableView
-                { loggedInPlayer = Nothing
-                , players = players
-                }
-            ]
 
-        WorldLoggedIn data ->
-            [ pageTitleView "Ladder"
-            , ladderTableView
-                { loggedInPlayer = Just data.player
-                , players = World.allPlayers data
-                }
-            ]
+ladderView :
+    { loggedInPlayer : Maybe CPlayer
+    , players : List COtherPlayer
+    }
+    -> List (Html FrontendMsg)
+ladderView data =
+    [ pageTitleView "Ladder"
+    , ladderTableView data
+    ]
 
 
 ladderTableView :
@@ -494,14 +602,28 @@ ladderTableView { loggedInPlayer, players } =
 
 contentUnavailableToLoggedOutView : List (Html FrontendMsg)
 contentUnavailableToLoggedOutView =
-    [ H.text "Content unavailable (you're not logged in). (Bug? We should have redirected you someplace else. Could you report this to the developers please?)" ]
+    contentUnavailableView "you're not logged in"
+
+
+contentUnavailableToNonCreatedView : List (Html FrontendMsg)
+contentUnavailableToNonCreatedView =
+    contentUnavailableView "you haven't craeted your character yet"
+
+
+contentUnavailableView : String -> List (Html FrontendMsg)
+contentUnavailableView reason =
+    [ H.text <|
+        "Content unavailable ("
+            ++ reason
+            ++ "). This is most likely a bug. We should have redirected you someplace else. Could you report this to the developers please?"
+    ]
 
 
 notInitializedView : Model -> Html FrontendMsg
 notInitializedView model =
     appView
         { leftNav =
-            [ loginFormView
+            [ loginFormView model.world
             , loadingNavView
             ]
         }
@@ -521,7 +643,7 @@ loggedOutView : Model -> Html FrontendMsg
 loggedOutView model =
     appView
         { leftNav =
-            [ loginFormView
+            [ loginFormView model.world
             , loggedOutLinksView model.route
             ]
         }
@@ -532,22 +654,56 @@ loggedInView : WorldLoggedInData -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
         { leftNav =
-            [ playerInfoView world
-            , loggedInLinksView model.route
+            [ playerInfoView world.player
+            , loggedInLinksView world.player model.route
             ]
         }
         model
 
 
-loginFormView : Html FrontendMsg
-loginFormView =
-    -- TODO button instead?
-    H.div
-        [ HA.id "login-form"
-        , HE.onClick Login
-        ]
-        [ H.text "[ LOGIN ]"
-        ]
+loginFormView : World -> Html FrontendMsg
+loginFormView world =
+    World.getAuth world
+        |> H.viewMaybe
+            (\auth ->
+                let
+                    formId =
+                        "login-form"
+                in
+                H.form
+                    [ HA.id formId
+                    , HE.onSubmit Login
+                    ]
+                    [ H.input
+                        [ HA.id "login-name-input"
+                        , HA.value auth.name
+                        , HA.placeholder "Username__________"
+                        , HE.onChange SetAuthName
+                        ]
+                        []
+                    , H.input
+                        [ HA.id "login-password-input"
+                        , HA.type_ "password"
+                        , HA.value <| Auth.unwrap auth.password
+                        , HA.placeholder "Password__________"
+                        , HE.onChange SetAuthPassword
+                        ]
+                        []
+                    , H.div
+                        [ HA.id "login-form-buttons" ]
+                        [ H.button
+                            [ HA.id "login-button"
+                            , HE.onClickPreventDefault Login
+                            ]
+                            [ H.text "[Login]" ]
+                        , H.button
+                            [ HA.id "register-button"
+                            , HE.onClickPreventDefault Register
+                            ]
+                            [ H.text "[Register]" ]
+                        ]
+                    ]
+            )
 
 
 type Link
@@ -608,22 +764,29 @@ linkView currentRoute ( label, link, tooltip ) =
         ]
 
 
-loggedInLinksView : Route -> Html FrontendMsg
-loggedInLinksView currentRoute =
+loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
+loggedInLinksView player currentRoute =
+    let
+        links =
+            case player of
+                NeedsCharCreated _ ->
+                    [ ( "New Char", LinkIn Route.CharCreation, Nothing ) ]
+
+                Player _ ->
+                    [ ( "Refresh", LinkMsg Refresh, Nothing )
+                    , ( "Character", LinkIn Route.Character, Nothing )
+                    , ( "Map", LinkIn Route.Map, Nothing )
+                    , ( "Ladder", LinkIn Route.Ladder, Nothing )
+                    , ( "Town", LinkIn Route.Town, Nothing )
+                    , ( "Settings", LinkIn Route.Settings, Nothing )
+                    , ( "Logout", LinkMsg Logout, Nothing )
+                    ]
+    in
     H.div
         [ HA.id "logged-in-links"
         , HA.class "links"
         ]
-        ([ ( "Refresh", LinkMsg Refresh, Nothing )
-         , ( "Character", LinkIn Route.Character, Nothing )
-         , ( "Map", LinkIn Route.Map, Nothing )
-         , ( "Ladder", LinkIn Route.Ladder, Nothing )
-         , ( "Town", LinkIn Route.Town, Nothing )
-         , ( "Settings", LinkIn Route.Settings, Nothing )
-         , ( "Logout", LinkMsg Logout, Nothing )
-         ]
-            |> List.map (linkView currentRoute)
-        )
+        (List.map (linkView currentRoute) links)
 
 
 loggedOutLinksView : Route -> Html FrontendMsg
@@ -632,7 +795,9 @@ loggedOutLinksView currentRoute =
         [ HA.id "logged-out-links"
         , HA.class "links"
         ]
-        ([ ( "Ladder", LinkIn Route.Ladder, Nothing ) ]
+        ([ ( "Refresh", LinkMsg Refresh, Nothing )
+         , ( "Ladder", LinkIn Route.Ladder, Nothing )
+         ]
             |> List.map (linkView currentRoute)
         )
 
@@ -646,51 +811,59 @@ commonLinksView currentRoute =
         ([ ( "News", LinkIn Route.News, Nothing )
          , ( "About", LinkIn Route.About, Nothing )
          , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
-         , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
-         , ( "Donate →", LinkOut "https://patreon.com/janiczek", Nothing )
+         , ( "Discord →", LinkOut "https://discord.gg/HUmwvnv4xV", Nothing )
+         , ( "Reddit  →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
+         , ( "Donate  →", LinkOut "https://patreon.com/janiczek", Nothing )
          ]
             |> List.map (linkView currentRoute)
         )
 
 
-playerInfoView : WorldLoggedInData -> Html msg
-playerInfoView world =
+playerInfoView : Player CPlayer -> Html FrontendMsg
+playerInfoView player =
+    player
+        |> Player.getPlayerData
+        |> H.viewMaybe createdPlayerInfoView
+
+
+createdPlayerInfoView : CPlayer -> Html msg
+createdPlayerInfoView player =
     H.div [ HA.id "player-info" ]
-        [ H.div [ HA.id "player-name" ] [ H.text world.player.name ]
+        [ H.div [ HA.id "player-name" ] [ H.text player.name ]
         , H.div [ HA.id "player-stats" ]
             [ H.div
                 [ HA.class "player-stat-label"
                 , HA.title "Hitpoints"
                 ]
                 [ H.text "HP:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.hp ++ "/" ++ String.fromInt world.player.maxHp ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp ]
             , H.div
                 [ HA.class "player-stat-label"
                 , HA.title "Experience points"
                 ]
                 [ H.text "XP:" ]
             , H.div [ HA.class "player-stat-value" ]
-                [ H.span [] [ H.text <| String.fromInt world.player.xp ]
+                [ H.span [] [ H.text <| String.fromInt player.xp ]
                 , H.span
                     [ HA.class "deemphasized" ]
-                    [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp world.player.xp) ]
+                    [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
                 ]
             , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel world.player.xp ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel player.xp ]
             , H.div
                 [ HA.class "player-stat-label"
                 , HA.title "Wins/Losses"
                 ]
                 [ H.text "W/L:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.wins ++ "/" ++ String.fromInt world.player.losses ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.wins ++ "/" ++ String.fromInt player.losses ]
             , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt world.player.caps ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
             , H.div
                 [ HA.class "player-stat-label"
                 , HA.title "Action points"
                 ]
                 [ H.text "AP:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt world.player.ap ]
+            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ap ]
             ]
         ]
 

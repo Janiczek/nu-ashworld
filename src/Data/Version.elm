@@ -3,4 +3,4 @@ module Data.Version exposing (version)
 
 version : String
 version =
-    "v0.0-dev2"
+    "v0.0-dev3"

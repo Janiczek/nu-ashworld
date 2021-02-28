@@ -3,16 +3,23 @@ module Data.World exposing
     , WorldLoggedInData
     , WorldLoggedOutData
     , allPlayers
+    , getAuth
     , isLoggedIn
-    , toLoggedOut
+    , mapAuth
     )
 
-import Data.Player as Player exposing (COtherPlayer, CPlayer)
+import Data.Auth as Auth exposing (Auth, Plaintext)
+import Data.Player as Player
+    exposing
+        ( COtherPlayer
+        , CPlayer
+        , Player(..)
+        )
 
 
 type World
-    = WorldNotInitialized
-    | WorldLoggedOut WorldLoggedOutData
+    = WorldNotInitialized (Auth Plaintext)
+    | WorldLoggedOut (Auth Plaintext) WorldLoggedOutData
     | WorldLoggedIn WorldLoggedInData
 
 
@@ -22,38 +29,56 @@ type alias WorldLoggedOutData =
 
 
 type alias WorldLoggedInData =
-    { player : CPlayer
+    { player : Player CPlayer
     , otherPlayers : List COtherPlayer
     }
 
 
 allPlayers : WorldLoggedInData -> List COtherPlayer
-allPlayers { player, otherPlayers } =
-    Player.clientToClientOther player
-        :: otherPlayers
+allPlayers world =
+    case world.player of
+        NeedsCharCreated _ ->
+            world.otherPlayers
 
-
-toLoggedOut : World -> World
-toLoggedOut world =
-    case world of
-        WorldNotInitialized ->
-            WorldNotInitialized
-
-        WorldLoggedOut data ->
-            WorldLoggedOut data
-
-        WorldLoggedIn data ->
-            WorldLoggedOut { players = allPlayers data }
+        Player cPlayer ->
+            Player.clientToClientOther cPlayer
+                :: world.otherPlayers
 
 
 isLoggedIn : World -> Bool
 isLoggedIn world =
     case world of
-        WorldNotInitialized ->
+        WorldNotInitialized _ ->
             False
 
-        WorldLoggedOut _ ->
+        WorldLoggedOut _ _ ->
             False
 
         WorldLoggedIn _ ->
             True
+
+
+getAuth : World -> Maybe (Auth Plaintext)
+getAuth world =
+    case world of
+        WorldNotInitialized auth ->
+            Just auth
+
+        WorldLoggedOut auth _ ->
+            Just auth
+
+        WorldLoggedIn _ ->
+            Nothing
+
+
+mapAuth : (Auth Plaintext -> Auth Plaintext) -> World -> World
+mapAuth fn world =
+    case world of
+        WorldNotInitialized auth ->
+            WorldNotInitialized <| fn auth
+
+        WorldLoggedOut auth data ->
+            WorldLoggedOut (fn auth) data
+
+        WorldLoggedIn data ->
+            WorldLoggedIn data

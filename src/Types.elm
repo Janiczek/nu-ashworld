@@ -2,8 +2,15 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Data.Auth exposing (Auth, Hashed)
 import Data.Fight exposing (FightInfo)
-import Data.Player exposing (PlayerKey, PlayerName, SPlayer)
+import Data.NewChar exposing (NewChar)
+import Data.Player
+    exposing
+        ( Player
+        , PlayerName
+        , SPlayer
+        )
 import Data.Special exposing (SpecialType)
 import Data.World
     exposing
@@ -24,11 +31,13 @@ type alias FrontendModel =
     , zone : Time.Zone
     , route : Route
     , world : World
+    , newChar : NewChar
     }
 
 
 type alias BackendModel =
-    { players : Dict PlayerKey SPlayer
+    { players : Dict PlayerName (Player SPlayer)
+    , loggedInPlayers : Dict ClientId PlayerName
     }
 
 
@@ -38,15 +47,22 @@ type FrontendMsg
     | GoToRoute Route
     | Logout
     | Login
+    | Register
     | NoOp
     | GetZone Time.Zone
     | AskToFight PlayerName
     | Refresh
     | AskToIncSpecial SpecialType
+    | SetAuthName String
+    | SetAuthPassword String
+    | CreateChar
 
 
 type ToBackend
-    = LogMeIn
+    = LogMeIn (Auth Hashed)
+    | RegisterMe (Auth Hashed)
+    | CreateNewChar NewChar
+    | LogMeOut
     | Fight PlayerName
     | RefreshPlease
     | IncSpecial SpecialType
@@ -54,12 +70,14 @@ type ToBackend
 
 type BackendMsg
     = Connected SessionId ClientId
-    | GeneratedPlayerLogHimIn SessionId ClientId SPlayer
-    | GeneratedFight SessionId ClientId SPlayer FightInfo
+    | GeneratedFight ClientId SPlayer FightInfo
 
 
 type ToFrontend
     = YourCurrentWorld WorldLoggedInData
     | CurrentWorld WorldLoggedOutData
     | YourFightResult ( FightInfo, WorldLoggedInData )
-    | YoureLoggedInNow WorldLoggedInData
+    | YoureLoggedIn WorldLoggedInData
+    | YoureRegistered WorldLoggedInData
+    | YouHaveCreatedChar WorldLoggedInData
+    | YoureLoggedOut WorldLoggedOutData

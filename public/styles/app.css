@@ -51,8 +51,16 @@ body:after {
   pointer-events: none;
 }
 
-button {
+button, input {
   font-family: BQN386;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  color: var(--fg02);
+}
+
+::placeholder {
+  color: var(--fg03);
 }
 
 #app {
@@ -106,7 +114,39 @@ button {
 
 #login-form {
   margin-top: 40px;
+  width: 18ch;
 }
+
+#login-form input {
+  color: var(--fg01);
+  width: 18ch;
+  margin: 0;
+  padding: 0;
+}
+
+#login-form input:focus {
+  outline: none;
+  background-color: var(--bg01);
+}
+
+#login-form-buttons {
+  margin-top: 1em;
+  display: flex;
+  justify-content: space-between;
+}
+
+#login-form button {
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0;
+}
+
+#login-form button:hover,
+#login-form button:active {
+  color: var(--fg01);
+  outline-color: var(--fg01);
+}
+
 
 #logged-out-links,
 #logged-in-links {
@@ -118,18 +158,20 @@ button {
 }
 
 .link {
+  color: var(--fg03);
   cursor: pointer;
-  color: var(--fg01);
   text-decoration: none;
   display: block;
 }
 
 .link-label {
+  color: var(--fg01);
   text-transform: uppercase;
   width: 9ch;
   min-width: 9ch;
   display: inline-block;
   margin: 0 1ch;
+  white-space: pre;
 }
 
 .link.active .link-label,

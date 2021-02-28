@@ -16,7 +16,15 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1614377234
+    [ { date = 1614543901
+      , title = "Discord"
+      , text = """
+Development is chugging along; I've also created a [Discord](https://discord.gg/HUmwvnv4xV) server for NuAshworld. Looking forward to seeing you there!
+
+~janiczek
+"""
+      }
+    , { date = 1614377234
       , title = "New beginnings!"
       , text =
             """
@@ -25,6 +33,8 @@ Hello everybody! I just want to announce that I'm starting to work on this game 
 You can watch the development plans on NuAshworld's [Trello](https://trello.com/b/WevjfFrt/nuashworld) and the game development itself on [GitHub](https://github.com/Janiczek/nu-ashworld-lamdera).
 
 I want to stay close to finding the fun in the game -- closing in on the mechanics, not getting stuck on unimportant things. We'll see how that goes :)
+
+~janiczek
 """
       }
     ]

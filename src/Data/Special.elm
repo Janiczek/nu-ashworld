@@ -5,6 +5,7 @@ module Data.Special exposing
     , canIncrement
     , get
     , increment
+    , init
     , label
     )
 
@@ -120,3 +121,8 @@ increment type_ special =
 
         Luck ->
             { special | luck = special.luck + 1 }
+
+
+init : Special
+init =
+    Special 5 5 5 5 5 5 5

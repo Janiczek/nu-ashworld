@@ -1,21 +1,25 @@
 module Data.Player exposing
     ( COtherPlayer
     , CPlayer
-    , PlayerKey
+    , Player(..)
     , PlayerName
     , SPlayer
     , clientToClientOther
-    , generator
+    , fromNewChar
+    , getAuth
+    , getPlayerData
+    , map
     , serverToClient
     , serverToClientOther
     )
 
+import Data.Auth exposing (Auth, HasAuth, Password, Verified)
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
+import Data.NewChar exposing (NewChar)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
 import Lamdera exposing (SessionId)
-import Random exposing (Generator)
-import Random.Extra as Random
+import Logic
 import Set exposing (Set)
 
 
@@ -23,9 +27,9 @@ type alias PlayerName =
     String
 
 
-type alias PlayerKey =
-    -- TODO make player name the player key, after we have real login!
-    SessionId
+type Player a
+    = NeedsCharCreated (Auth Verified)
+    | Player a
 
 
 type alias CPlayer =
@@ -52,10 +56,11 @@ type alias COtherPlayer =
 
 
 type alias SPlayer =
-    { hp : Int
+    { name : PlayerName
+    , password : Password Verified
+    , hp : Int
     , maxHp : Int
     , xp : Int
-    , name : PlayerName
     , special : Special
     , availableSpecial : Int
     , caps : Int
@@ -104,64 +109,56 @@ clientToClientOther p =
     }
 
 
-generator : Set PlayerName -> Generator SPlayer
-generator existingNames =
-    Random.int 10 100
-        |> Random.andThen
-            (\maxHp ->
-                Random.constant SPlayer
-                    |> Random.andMap (Random.int 0 maxHp)
-                    |> Random.andMap (Random.constant maxHp)
-                    |> Random.andMap (Random.int 0 10000)
-                    |> Random.andMap (nameGenerator existingNames)
-                    |> Random.andMap specialGenerator
-                    |> Random.andMap (Random.int 0 15)
-                    |> Random.andMap (Random.int 1 9999)
-                    |> Random.andMap (Random.int 1 20)
-                    |> Random.andMap (Random.int 0 300)
-                    |> Random.andMap (Random.int 0 300)
-            )
+map : (a -> b) -> Player a -> Player b
+map fn player =
+    case player of
+        NeedsCharCreated auth ->
+            NeedsCharCreated auth
+
+        Player a ->
+            Player <| fn a
 
 
-nameGenerator : Set PlayerName -> Generator PlayerName
-nameGenerator existingNames =
+getPlayerData : Player a -> Maybe a
+getPlayerData player =
+    case player of
+        NeedsCharCreated _ ->
+            Nothing
+
+        Player data ->
+            Just data
+
+
+getAuth : Player (HasAuth a) -> Auth Verified
+getAuth player =
+    case player of
+        NeedsCharCreated auth ->
+            auth
+
+        Player data ->
+            { name = data.name
+            , password = data.password
+            }
+
+
+fromNewChar : Auth Verified -> NewChar -> SPlayer
+fromNewChar auth newChar =
     let
-        initial =
-            Random.uniform
-                "Killian95"
-                [ "Falloutma111"
-                , "DJetelina"
-                , "M Janiczek"
-                , "Zzzzzzzaros"
-                , "Willdy Mage"
-                , "WildRanger"
-                , "iScrE4m"
-                ]
-
-        enforceUnique : PlayerName -> Generator PlayerName
-        enforceUnique name =
-            if Set.member name existingNames then
-                Random.int 0 9
-                    |> Random.map
-                        (\n ->
-                            name ++ String.fromInt n
-                        )
-                    |> Random.andThen enforceUnique
-
-            else
-                Random.constant name
+        hp =
+            Logic.hitpoints
+                { level = 1
+                , special = newChar.special
+                }
     in
-    initial
-        |> Random.andThen enforceUnique
-
-
-specialGenerator : Generator Special
-specialGenerator =
-    Random.constant Special
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
-        |> Random.andMap (Random.int 1 10)
+    { name = auth.name
+    , password = auth.password
+    , hp = hp
+    , maxHp = hp
+    , xp = 0
+    , special = newChar.special
+    , availableSpecial = newChar.availableSpecial
+    , caps = 15
+    , ap = 10
+    , wins = 0
+    , losses = 0
+    }
