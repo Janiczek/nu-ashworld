@@ -117,10 +117,6 @@ button {
   margin-top: 1em;
 }
 
-#refresh-link {
-  margin-top: 1em;
-}
-
 .link {
   cursor: pointer;
   color: var(--fg01);

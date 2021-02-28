@@ -184,9 +184,7 @@ appView ({ leftNav } as r) model =
         [ H.div [ HA.id "left-nav" ]
             (logoView
                 :: leftNav
-                ++ [ commonLinksView model.route
-                   , refreshLinkView model.route
-                   ]
+                ++ [ commonLinksView model.route ]
             )
         , contentView model
         ]
@@ -563,7 +561,8 @@ loggedInLinksView currentRoute =
         [ HA.id "logged-in-links"
         , HA.class "links"
         ]
-        ([ ( "Character", LinkIn Route.Character, Nothing )
+        ([ ( "Refresh", LinkMsg Refresh, Nothing )
+         , ( "Character", LinkIn Route.Character, Nothing )
          , ( "Map", LinkIn Route.Map, Nothing )
          , ( "Ladder", LinkIn Route.Ladder, Nothing )
          , ( "Town", LinkIn Route.Town, Nothing )
@@ -596,18 +595,6 @@ commonLinksView currentRoute =
          , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
          , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
          , ( "Donate →", LinkOut "https://patreon.com/janiczek", Nothing )
-         ]
-            |> List.map (linkView currentRoute)
-        )
-
-
-refreshLinkView : Route -> Html FrontendMsg
-refreshLinkView currentRoute =
-    H.div
-        [ HA.id "refresh-link"
-        , HA.class "links"
-        ]
-        ([ ( "Refresh", LinkMsg Refresh, Nothing )
          ]
             |> List.map (linkView currentRoute)
         )

@@ -195,6 +195,7 @@ updateFromFrontend sessionId clientId msg model =
 
 refresh : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 refresh sessionId clientId sPlayer model =
+    -- TODO check the user is logged in before giving them the logged-in world!
     let
         world : WorldLoggedInData
         world =
