@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Fight exposing (FightInfo)
 import Data.Player exposing (PlayerKey, PlayerName, SPlayer)
+import Data.Special exposing (SpecialType)
 import Data.World
     exposing
         ( World
@@ -41,12 +42,14 @@ type FrontendMsg
     | GetZone Time.Zone
     | AskToFight PlayerName
     | Refresh
+    | AskToIncSpecial SpecialType
 
 
 type ToBackend
     = LogMeIn
     | Fight PlayerName
     | RefreshPlease
+    | IncSpecial SpecialType
 
 
 type BackendMsg

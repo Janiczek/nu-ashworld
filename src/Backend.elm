@@ -10,6 +10,7 @@ import Data.Player as Player
         ( PlayerName
         , SPlayer
         )
+import Data.Special as Special exposing (SpecialType)
 import Data.World
     exposing
         ( World
@@ -192,6 +193,33 @@ updateFromFrontend sessionId clientId msg model =
         RefreshPlease ->
             withPlayer refresh
 
+        IncSpecial type_ ->
+            withPlayer (incrementSpecial type_)
+
+
+incrementSpecial : SpecialType -> SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+incrementSpecial type_ sessionId clientId sPlayer model =
+    if Special.canIncrement sPlayer.availableSpecial type_ sPlayer.special then
+        let
+            newModel : Model
+            newModel =
+                model
+                    |> incSpecial type_ sessionId
+                    |> decAvailableSpecial sessionId
+        in
+        getWorldLoggedIn sessionId newModel
+            |> Maybe.map
+                (\world ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                    )
+                )
+            |> Maybe.withDefault ( model, Cmd.none )
+
+    else
+        -- TODO notify the user?
+        ( model, Cmd.none )
+
 
 refresh : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 refresh sessionId clientId sPlayer model =
@@ -308,3 +336,13 @@ incWins =
 incLosses : SessionId -> Model -> Model
 incLosses =
     updatePlayer (\player -> { player | losses = player.losses + 1 })
+
+
+incSpecial : SpecialType -> SessionId -> Model -> Model
+incSpecial type_ =
+    updatePlayer (\player -> { player | special = Special.increment type_ player.special })
+
+
+decAvailableSpecial : SessionId -> Model -> Model
+decAvailableSpecial =
+    updatePlayer (\player -> { player | availableSpecial = player.availableSpecial - 1 })

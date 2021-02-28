@@ -5,6 +5,7 @@ import Browser.Navigation as Nav
 import Data.Fight exposing (FightInfo)
 import Data.HealthStatus as HealthStatus
 import Data.Player exposing (COtherPlayer, CPlayer)
+import Data.Special as Special
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -121,6 +122,11 @@ update msg model =
         Refresh ->
             ( model
             , Lamdera.sendToBackend RefreshPlease
+            )
+
+        AskToIncSpecial type_ ->
+            ( model
+            , Lamdera.sendToBackend <| IncSpecial type_
             )
 
 
@@ -245,21 +251,60 @@ pageTitleView title =
 characterView : CPlayer -> List (Html FrontendMsg)
 characterView player =
     let
+        specialItemView type_ =
+            let
+                value =
+                    Special.get type_ player.special
+            in
+            H.tr
+                [ HA.class "character-special-item" ]
+                [ H.td
+                    [ HA.class "character-special-item-label" ]
+                    [ H.text <| Special.label type_ ]
+                , H.td
+                    [ HA.class "character-special-item-value" ]
+                    [ H.text <| String.fromInt value ]
+                , H.td
+                    [ HA.class "character-special-item-inc" ]
+                    [ H.button
+                        [ HE.onClick <| AskToIncSpecial type_
+                        , HA.disabled <|
+                            not <|
+                                Special.canIncrement
+                                    player.availableSpecial
+                                    type_
+                                    player.special
+                        ]
+                        [ H.text "[+]" ]
+                    ]
+                ]
+
         itemView ( label, value ) =
             H.li [] [ H.text <| label ++ ": " ++ value ]
     in
     [ pageTitleView "Character"
+    , H.div
+        [ HA.id "character-special" ]
+        (H.h3
+            [ HA.id "character-special-title" ]
+            [ H.text "SPECIAL" ]
+            :: [ H.table
+                    [ HA.id "character-special-table" ]
+                    (List.map specialItemView Special.all)
+               , H.div
+                    [ HA.class "character-special-available" ]
+                    [ H.span
+                        [ HA.class "character-special-available-label" ]
+                        [ H.text "Available SPECIAL points: " ]
+                    , H.span
+                        [ HA.class "character-special-available-number" ]
+                        [ H.text <| String.fromInt player.availableSpecial ]
+                    ]
+               ]
+        )
     , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp )
       , ( "XP", String.fromInt player.xp )
       , ( "Name", player.name )
-      , ( "SPECIAL: Strength", String.fromInt player.special.strength )
-      , ( "SPECIAL: Perception", String.fromInt player.special.perception )
-      , ( "SPECIAL: Endurance", String.fromInt player.special.endurance )
-      , ( "SPECIAL: Charisma", String.fromInt player.special.charisma )
-      , ( "SPECIAL: Intelligence", String.fromInt player.special.intelligence )
-      , ( "SPECIAL: Agility", String.fromInt player.special.agility )
-      , ( "SPECIAL: Luck", String.fromInt player.special.luck )
-      , ( "Available SPECIAL points", String.fromInt player.availableSpecial )
       , ( "Caps", String.fromInt player.caps )
       , ( "AP", String.fromInt player.ap )
       , ( "Wins", String.fromInt player.wins )
@@ -417,7 +462,12 @@ ladderTableView { loggedInPlayer, players } =
                                     (\loggedInPlayer_ ->
                                         H.td
                                             [ HA.class "ladder-status"
-                                            , HA.title "Health status"
+                                            , HA.title <|
+                                                if loggedInPlayer_.special.perception <= 1 then
+                                                    "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
+
+                                                else
+                                                    "Health status"
                                             ]
                                             [ H.text <| HealthStatus.label player.healthStatus ]
                                     )
@@ -491,6 +541,7 @@ loggedInView world model =
 
 loginFormView : Html FrontendMsg
 loginFormView =
+    -- TODO button instead?
     H.div
         [ HA.id "login-form"
         , HE.onClick Login
@@ -520,6 +571,7 @@ linkView currentRoute ( label, link, tooltip ) =
                     )
 
                 LinkIn route ->
+                    -- TODO button?
                     ( H.div
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
@@ -528,6 +580,7 @@ linkView currentRoute ( label, link, tooltip ) =
                     )
 
                 LinkMsg msg ->
+                    -- TODO button?
                     ( H.div
                     , [ HE.onClick msg
                       , HA.attributeMaybe HA.title tooltip

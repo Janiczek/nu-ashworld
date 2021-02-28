@@ -303,3 +303,23 @@ button {
   bottom: 0px;
   height: 100%;
 }
+
+.character-special-item-value {
+  padding-left: 20px;
+}
+
+.character-special-item-inc button {
+  border: none;
+  background: transparent;
+  color: var(--fg01);
+  font-size: 18px;
+}
+
+.character-special-item-inc button:disabled {
+  color: var(--fg03);
+}
+
+.character-special-item-inc button:not(:disabled):hover {
+  color: var(--fg-highlight);
+  background: var(--bg02);
+}
