@@ -39,7 +39,7 @@ app =
         , onUrlChange = UrlChanged
         , update = update
         , updateFromBackend = updateFromBackend
-        , subscriptions = \m -> Sub.none
+        , subscriptions = subscriptions
         , view = view
         }
 
@@ -53,6 +53,11 @@ init url key =
       }
     , Task.perform GetZone Time.here
     )
+
+
+subscriptions : Model -> Sub FrontendMsg
+subscriptions model =
+    Sub.none
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
@@ -113,15 +118,25 @@ update msg model =
             , Lamdera.sendToBackend <| Fight playerName
             )
 
+        Refresh ->
+            ( model
+            , Lamdera.sendToBackend RefreshPlease
+            )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        YourCurrentWorld world ->
+        YoureLoggedInNow world ->
             ( { model
                 | world = WorldLoggedIn world
                 , route = Route.Ladder
               }
+            , Cmd.none
+            )
+
+        YourCurrentWorld world ->
+            ( { model | world = WorldLoggedIn world }
             , Cmd.none
             )
 
@@ -169,7 +184,9 @@ appView ({ leftNav } as r) model =
         [ H.div [ HA.id "left-nav" ]
             (logoView
                 :: leftNav
-                ++ [ commonLinksView model.route ]
+                ++ [ commonLinksView model.route
+                   , refreshLinkView model.route
+                   ]
             )
         , contentView model
         ]
@@ -579,6 +596,18 @@ commonLinksView currentRoute =
          , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
          , ( "Reddit →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
          , ( "Donate →", LinkOut "https://patreon.com/janiczek", Nothing )
+         ]
+            |> List.map (linkView currentRoute)
+        )
+
+
+refreshLinkView : Route -> Html FrontendMsg
+refreshLinkView currentRoute =
+    H.div
+        [ HA.id "refresh-link"
+        , HA.class "links"
+        ]
+        ([ ( "Refresh", LinkMsg Refresh, Nothing )
          ]
             |> List.map (linkView currentRoute)
         )

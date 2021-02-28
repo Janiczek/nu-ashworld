@@ -189,6 +189,22 @@ updateFromFrontend sessionId clientId msg model =
         Fight otherPlayerName ->
             withPlayer (fight otherPlayerName)
 
+        RefreshPlease ->
+            withPlayer refresh
+
+
+refresh : SessionId -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+refresh sessionId clientId sPlayer model =
+    let
+        world : WorldLoggedInData
+        world =
+            getWorldLoggedIn_ sPlayer model
+    in
+    ( model
+    , -- TODO refresh all the user's clients at once?
+      Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+    )
+
 
 generatePlayerAndLogHimIn : SessionId -> ClientId -> Model -> ( Model, Cmd BackendMsg )
 generatePlayerAndLogHimIn sessionId clientId model =
@@ -216,7 +232,7 @@ logPlayerIn sessionId clientId sPlayer model =
             getWorldLoggedIn_ sPlayer model
     in
     ( model
-    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+    , Lamdera.sendToFrontend clientId <| YoureLoggedInNow world
     )
 
 

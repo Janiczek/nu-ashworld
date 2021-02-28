@@ -40,11 +40,13 @@ type FrontendMsg
     | NoOp
     | GetZone Time.Zone
     | AskToFight PlayerName
+    | Refresh
 
 
 type ToBackend
     = LogMeIn
     | Fight PlayerName
+    | RefreshPlease
 
 
 type BackendMsg
@@ -57,3 +59,4 @@ type ToFrontend
     = YourCurrentWorld WorldLoggedInData
     | CurrentWorld WorldLoggedOutData
     | YourFightResult ( FightInfo, WorldLoggedInData )
+    | YoureLoggedInNow WorldLoggedInData
