@@ -32,6 +32,7 @@ type alias FrontendModel =
     , route : Route
     , world : World
     , newChar : NewChar
+    , authError : Maybe String
     }
 
 
@@ -82,3 +83,4 @@ type ToFrontend
     | YoureRegistered WorldLoggedInData
     | YouHaveCreatedChar WorldLoggedInData
     | YoureLoggedOut WorldLoggedOutData
+    | AuthError String

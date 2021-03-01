@@ -192,8 +192,9 @@ updateFromFrontend sessionId clientId msg model =
         LogMeIn auth ->
             case Dict.get auth.name model.players of
                 Nothing ->
-                    -- TODO send the player a message that it failed? (user doesn't exist but they don't have to know)
-                    ( model, Cmd.none )
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+                    )
 
                 Just player ->
                     let
@@ -225,19 +226,22 @@ updateFromFrontend sessionId clientId msg model =
                             |> Maybe.withDefault ( model, Cmd.none )
 
                     else
-                        -- TODO send the player a message that it failed? (password wrong but they don't have to know)
-                        ( model, Cmd.none )
+                        ( model
+                        , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+                        )
 
         RegisterMe auth ->
             case Dict.get auth.name model.players of
                 Just _ ->
-                    -- TODO send the player a message that it failed? (username already exists)
-                    ( model, Cmd.none )
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| AuthError "Username exists"
+                    )
 
                 Nothing ->
                     if Auth.isEmpty auth.password then
-                        -- TODO send the player a message that it failed? (password is empty)
-                        ( model, Cmd.none )
+                        ( model
+                        , Lamdera.sendToFrontend clientId <| AuthError "Password is empty"
+                        )
 
                     else
                         let

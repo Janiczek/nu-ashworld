@@ -148,6 +148,11 @@ button:active {
   justify-content: space-between;
 }
 
+#auth-error {
+  margin-top: 1em;
+  color: var(--fg-highlight);
+}
+
 #logged-out-links,
 #logged-in-links {
   margin-top: 40px;

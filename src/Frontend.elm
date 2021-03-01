@@ -61,6 +61,7 @@ init url key =
       , world = WorldNotInitialized Auth.init
       , zone = Time.utc
       , newChar = NewChar.init
+      , authError = Nothing
       }
     , Task.perform GetZone Time.here
     )
@@ -154,6 +155,7 @@ update msg model =
                     World.mapAuth
                         (\auth -> { auth | name = newName })
                         model.world
+                , authError = Nothing
               }
             , Cmd.none
             )
@@ -164,6 +166,7 @@ update msg model =
                     World.mapAuth
                         (Auth.setPlaintextPassword newPassword)
                         model.world
+                , authError = Nothing
               }
             , Cmd.none
             )
@@ -239,6 +242,11 @@ updateFromBackend msg model =
                 | route = Route.Fight fightInfo
                 , world = WorldLoggedIn world
               }
+            , Cmd.none
+            )
+
+        AuthError error ->
+            ( { model | authError = Just error }
             , Cmd.none
             )
 
@@ -698,7 +706,7 @@ notInitializedView : Model -> Html FrontendMsg
 notInitializedView model =
     appView
         { leftNav =
-            [ loginFormView model.world
+            [ loginFormView model.authError model.world
             , loadingNavView
             ]
         }
@@ -718,7 +726,7 @@ loggedOutView : Model -> Html FrontendMsg
 loggedOutView model =
     appView
         { leftNav =
-            [ loginFormView model.world
+            [ loginFormView model.authError model.world
             , loggedOutLinksView model.route
             ]
         }
@@ -736,8 +744,8 @@ loggedInView world model =
         model
 
 
-loginFormView : World -> Html FrontendMsg
-loginFormView world =
+loginFormView : Maybe String -> World -> Html FrontendMsg
+loginFormView authError world =
     World.getAuth world
         |> H.viewMaybe
             (\auth ->
@@ -753,7 +761,7 @@ loginFormView world =
                         [ HA.id "login-name-input"
                         , HA.value auth.name
                         , HA.placeholder "Username__________"
-                        , HE.onChange SetAuthName
+                        , HE.onInput SetAuthName
                         ]
                         []
                     , H.input
@@ -761,7 +769,7 @@ loginFormView world =
                         , HA.type_ "password"
                         , HA.value <| Auth.unwrap auth.password
                         , HA.placeholder "Password__________"
-                        , HE.onChange SetAuthPassword
+                        , HE.onInput SetAuthPassword
                         ]
                         []
                     , H.div
@@ -777,6 +785,13 @@ loginFormView world =
                             ]
                             [ H.text "[Register]" ]
                         ]
+                    , authError
+                        |> H.viewMaybe
+                            (\error ->
+                                H.div
+                                    [ HA.id "auth-error" ]
+                                    [ H.text error ]
+                            )
                     ]
             )
 
