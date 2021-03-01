@@ -70,6 +70,7 @@ type ToBackend
 
 type BackendMsg
     = Connected SessionId ClientId
+    | Disconnected SessionId ClientId
     | GeneratedFight ClientId SPlayer FightInfo
 
 

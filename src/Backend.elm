@@ -37,11 +37,6 @@ type alias Model =
     BackendModel
 
 
-
---
--- TODO it would be nice if we didn't have to send the hashed password back to the user
-
-
 app =
     Lamdera.backend
         { init = init
@@ -122,6 +117,11 @@ update msg model =
             in
             ( model
             , Lamdera.sendToFrontend clientId <| CurrentWorld world
+            )
+
+        Disconnected sessionId clientId ->
+            ( { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
+            , Cmd.none
             )
 
         GeneratedFight clientId sPlayer fightInfo ->
@@ -241,7 +241,6 @@ updateFromFrontend sessionId clientId msg model =
                     )
 
         LogMeOut ->
-            -- TODO perhaps also log them out on disconnect? to clean the dict...
             let
                 newModel =
                     { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
@@ -379,7 +378,10 @@ fight otherPlayerName clientId sPlayer model =
 
 subscriptions : Model -> Sub BackendMsg
 subscriptions model =
-    Lamdera.onConnect Connected
+    Sub.batch
+        [ Lamdera.onConnect Connected
+        , Lamdera.onDisconnect Disconnected
+        ]
 
 
 updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model

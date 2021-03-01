@@ -17,6 +17,8 @@ import Data.Player as Player
         )
 
 
+{-| TODO it would be nice if we didn't have to send the hashed password back to the user
+-}
 type World
     = WorldNotInitialized (Auth Plaintext)
     | WorldLoggedOut (Auth Plaintext) WorldLoggedOutData
