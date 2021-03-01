@@ -28,8 +28,13 @@ import Dict
 import Dict.Extra as Dict
 import Html
 import Lamdera exposing (ClientId, SessionId)
+import Logic
+import Process
 import Random
 import Set
+import Task
+import Time exposing (Posix)
+import Time.Extra as Time
 import Types exposing (..)
 
 
@@ -50,6 +55,7 @@ init : ( Model, Cmd BackendMsg )
 init =
     ( { players = Dict.empty
       , loggedInPlayers = Dict.empty
+      , nextWantedTick = Nothing
       }
     , Cmd.none
     )
@@ -107,6 +113,26 @@ getWorldLoggedIn_ player model =
     }
 
 
+tickFrequency : Time.Interval
+tickFrequency =
+    Time.Hour
+
+
+tickHealingRateMultiplier : Int
+tickHealingRateMultiplier =
+    2
+
+
+acPerTick : Int
+acPerTick =
+    2
+
+
+maxAc : Int
+maxAc =
+    20
+
+
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
@@ -124,6 +150,46 @@ update msg model =
             , Cmd.none
             )
 
+        Tick currentTime ->
+            case model.nextWantedTick of
+                Nothing ->
+                    let
+                        nextWantedTick : Posix
+                        nextWantedTick =
+                            Time.ceiling tickFrequency Time.utc currentTime
+
+                        diffMs : Int
+                        diffMs =
+                            Time.diff Time.Millisecond Time.utc currentTime nextWantedTick
+                    in
+                    ( { model | nextWantedTick = Just nextWantedTick }
+                    , tickAfterMs diffMs
+                    )
+
+                Just nextWantedTick ->
+                    if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
+                        let
+                            newNextWantedTick : Posix
+                            newNextWantedTick =
+                                Time.add tickFrequency 1 Time.utc nextWantedTick
+
+                            diffMs : Int
+                            diffMs =
+                                Time.diff Time.Millisecond Time.utc currentTime newNextWantedTick
+                        in
+                        ( { model | nextWantedTick = Just newNextWantedTick }
+                            |> processTick
+                        , tickAfterMs diffMs
+                        )
+
+                    else
+                        let
+                            diffMs : Int
+                            diffMs =
+                                Time.diff Time.Millisecond Time.utc currentTime nextWantedTick
+                        in
+                        ( model, tickAfterMs diffMs )
+
         GeneratedFight clientId sPlayer fightInfo ->
             let
                 newModel =
@@ -140,6 +206,28 @@ update msg model =
                 |> Maybe.withDefault ( newModel, Cmd.none )
 
 
+processTick : Model -> Model
+processTick model =
+    -- TODO refresh the affected users that are logged-in
+    { model
+        | players =
+            model.players
+                |> Dict.map
+                    (\name player ->
+                        player
+                            |> tickHeal
+                            |> tickAddAp
+                    )
+    }
+
+
+tickAfterMs : Int -> Cmd BackendMsg
+tickAfterMs ms =
+    Process.sleep (toFloat ms)
+        |> Task.andThen (\_ -> Time.now)
+        |> Task.perform Tick
+
+
 persistFight : FightInfo -> Model -> Model
 persistFight ({ attacker, target } as fightInfo) model =
     case fightInfo.result of
@@ -152,7 +240,7 @@ persistFight ({ attacker, target } as fightInfo) model =
                 |> subtractCaps fightInfo.winnerCapsGained target
                 |> incWins attacker
                 |> incLosses target
-                |> decAP attacker
+                |> decAp attacker
 
         TargetWon ->
             model
@@ -163,11 +251,11 @@ persistFight ({ attacker, target } as fightInfo) model =
                 |> subtractCaps fightInfo.winnerCapsGained attacker
                 |> incWins target
                 |> incLosses attacker
-                |> decAP attacker
+                |> decAp attacker
 
         TargetAlreadyDead ->
             model
-                |> decAP attacker
+                |> decAp attacker
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -402,6 +490,11 @@ subscriptions model =
     Sub.batch
         [ Lamdera.onConnect Connected
         , Lamdera.onDisconnect Disconnected
+        , if model.nextWantedTick == Nothing then
+            Time.every 1000 Tick
+
+          else
+            Sub.none
         ]
 
 
@@ -450,6 +543,27 @@ decAvailableSpecial =
     updatePlayer (\player -> { player | availableSpecial = player.availableSpecial - 1 })
 
 
-decAP : PlayerName -> Model -> Model
-decAP =
+decAp : PlayerName -> Model -> Model
+decAp =
     updatePlayer (\player -> { player | ap = max 0 (player.ap - 1) })
+
+
+tickAddAp : Player SPlayer -> Player SPlayer
+tickAddAp =
+    Player.map (\player -> { player | ap = min maxAc (player.ap + acPerTick) })
+
+
+tickHeal : Player SPlayer -> Player SPlayer
+tickHeal =
+    Player.map
+        (\player ->
+            if player.hp < player.maxHp then
+                { player
+                    | hp =
+                        (player.hp + (Logic.healingRate player.special * tickHealingRateMultiplier))
+                            |> min player.maxHp
+                }
+
+            else
+                player
+        )

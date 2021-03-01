@@ -38,10 +38,12 @@
   - kamikaze perk: +5
   - earlier sequence perk: +2 per rank
 
+===== DONE
 - healing rate
   - how much HP you heal in 3 hours of rest
   - EN/3
   - minimum value 1
+===== ^ DONE
 
 - critical chance
   - LK %

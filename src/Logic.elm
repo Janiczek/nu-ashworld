@@ -1,4 +1,4 @@
-module Logic exposing (hitpoints)
+module Logic exposing (healingRate, hitpoints)
 
 import Data.Special exposing (Special)
 
@@ -17,3 +17,8 @@ hitpoints { level, special } =
         + (2 * endurance)
         + strength
         + (level * (2 + endurance // 2))
+
+
+healingRate : Special -> Int
+healingRate { endurance } =
+    max 1 (endurance // 3)

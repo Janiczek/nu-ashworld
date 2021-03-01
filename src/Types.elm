@@ -22,7 +22,7 @@ import Dict exposing (Dict)
 import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
-import Time
+import Time exposing (Posix)
 import Url exposing (Url)
 
 
@@ -39,6 +39,7 @@ type alias FrontendModel =
 type alias BackendModel =
     { players : Dict PlayerName (Player SPlayer)
     , loggedInPlayers : Dict ClientId PlayerName
+    , nextWantedTick : Maybe Posix
     }
 
 
@@ -73,6 +74,7 @@ type BackendMsg
     = Connected SessionId ClientId
     | Disconnected SessionId ClientId
     | GeneratedFight ClientId SPlayer FightInfo
+    | Tick Posix
 
 
 type ToFrontend
