@@ -235,22 +235,27 @@ updateFromFrontend sessionId clientId msg model =
                     ( model, Cmd.none )
 
                 Nothing ->
-                    let
-                        player =
-                            NeedsCharCreated <| Auth.promote auth
+                    if Auth.isEmpty auth.password then
+                        -- TODO send the player a message that it failed? (password is empty)
+                        ( model, Cmd.none )
 
-                        newModel =
-                            { model
-                                | players = Dict.insert auth.name player model.players
-                                , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
-                            }
+                    else
+                        let
+                            player =
+                                NeedsCharCreated <| Auth.promote auth
 
-                        world =
-                            getWorldLoggedIn_ player model
-                    in
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YoureRegistered world
-                    )
+                            newModel =
+                                { model
+                                    | players = Dict.insert auth.name player model.players
+                                    , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
+                                }
+
+                            world =
+                                getWorldLoggedIn_ player model
+                        in
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <| YoureRegistered world
+                        )
 
         LogMeOut ->
             let

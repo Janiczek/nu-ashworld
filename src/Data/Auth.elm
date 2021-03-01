@@ -7,6 +7,7 @@ module Data.Auth exposing
     , Verified
     , hash
     , init
+    , isEmpty
     , promote
     , setPlaintextPassword
     , unwrap
@@ -101,3 +102,13 @@ promote auth =
 unwrap : Password a -> String
 unwrap (Password password) =
     password
+
+
+isEmpty : Password Hashed -> Bool
+isEmpty (Password password) =
+    password == emptyHashedPassword
+
+
+emptyHashedPassword : String
+emptyHashedPassword =
+    Sha256.sha256 ""
