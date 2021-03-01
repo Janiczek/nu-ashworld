@@ -16,7 +16,33 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1614543901
+    [ { date = 1614637525
+      , title = "Plans before alpha"
+      , text = """
+I've just added a tick system (one tick at the start of every hour) which should heal you and give you Action Points. Let's hope it's not too broken :)
+
+I want to talk about my plans a bit. Some of my immediate plans are:
+
+* [NEW CHAR] finish the screen
+* [FIGHT] dice-rolling instead of 50/50 win chance
+* [ECONOMY] source of caps and items: random encounters / quests (simplified)
+
+More broadly, I'd like the game to have these mechanics:
+
+* when you lose, the other player gets all the caps you currently have with you
+* thus, there is the need for having a stash / vault (hehe) to hide your caps
+* I'm thinking that there might be some NPC in every town that will hold on to stuff for you, for a fee (per day?)
+* these wouldn't be connected: if you keep 500 caps in Den and go to Redding, you won't be able to pick up the 500 caps there
+* thus, there will (probably) be a period of danger where you need to move caps from one town to another
+* perhaps even hidden stashes (anywhere on the map, or in locations given by random encounters?)
+* these would have a chance to be found out by other players / NPC raiders / whoever
+
+But I need to somehow trim that down to a small prototype to test the idea out.
+
+~janiczek
+"""
+      }
+    , { date = 1614543901
       , title = "Discord"
       , text = """
 Development is chugging along; I've also created a [Discord](https://discord.gg/HUmwvnv4xV) server for NuAshworld. Looking forward to seeing you there!
