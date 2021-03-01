@@ -65,13 +65,12 @@ getWorldLoggedOut model =
     { players =
         model.players
             |> Dict.values
-            |> List.filterMap
-                (Player.getPlayerData
-                    >> Maybe.map
-                        (Player.serverToClientOther
-                            -- no info about alive/dead!
-                            { perception = 1 }
-                        )
+            |> List.filterMap Player.getPlayerData
+            |> List.sortBy (negate << .xp)
+            |> List.map
+                (Player.serverToClientOther
+                    -- no info about alive/dead!
+                    { perception = 1 }
                 )
     }
 
@@ -98,6 +97,7 @@ getWorldLoggedIn_ player model =
         model.players
             |> Dict.values
             |> List.filterMap Player.getPlayerData
+            |> List.sortBy (negate << .xp)
             |> List.filterMap
                 (\otherPlayer ->
                     if otherPlayer.name == auth.name then
@@ -149,8 +149,10 @@ persistFight ({ attacker, target } as fightInfo) model =
                 |> setHp 0 target
                 |> addXp fightInfo.winnerXpGained attacker
                 |> addCaps fightInfo.winnerCapsGained attacker
+                |> subtractCaps fightInfo.winnerCapsGained target
                 |> incWins attacker
                 |> incLosses target
+                |> decAP attacker
 
         TargetWon ->
             model
@@ -158,11 +160,14 @@ persistFight ({ attacker, target } as fightInfo) model =
                 |> setHp 0 attacker
                 |> addXp fightInfo.winnerXpGained target
                 |> addCaps fightInfo.winnerCapsGained target
+                |> subtractCaps fightInfo.winnerCapsGained attacker
                 |> incWins target
                 |> incLosses attacker
+                |> decAP attacker
 
         TargetAlreadyDead ->
             model
+                |> decAP attacker
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -363,8 +368,8 @@ fight otherPlayerName clientId sPlayer model =
                         , Random.generate
                             (GeneratedFight clientId sPlayer)
                             (Fight.generator
-                                { attacker = sPlayer.name
-                                , target = otherPlayerName
+                                { attacker = sPlayer
+                                , target = target
                                 }
                             )
                         )
@@ -397,6 +402,11 @@ addCaps addedCaps =
     updatePlayer (\player -> { player | caps = player.caps + addedCaps })
 
 
+subtractCaps : Int -> PlayerName -> Model -> Model
+subtractCaps addedCaps =
+    updatePlayer (\player -> { player | caps = max 0 <| player.caps - addedCaps })
+
+
 incWins : PlayerName -> Model -> Model
 incWins =
     updatePlayer (\player -> { player | wins = player.wins + 1 })
@@ -415,3 +425,8 @@ incSpecial type_ =
 decAvailableSpecial : PlayerName -> Model -> Model
 decAvailableSpecial =
     updatePlayer (\player -> { player | availableSpecial = player.availableSpecial - 1 })
+
+
+decAP : PlayerName -> Model -> Model
+decAP =
+    updatePlayer (\player -> { player | ap = max 0 (player.ap - 1) })

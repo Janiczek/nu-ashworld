@@ -5,7 +5,7 @@ module Data.Fight exposing
     , targetAlreadyDead
     )
 
-import Data.Player exposing (PlayerName)
+import Data.Player exposing (PlayerName, SPlayer)
 import Random exposing (Generator)
 import Random.Extra as Random
 
@@ -15,7 +15,7 @@ type alias FightInfo =
     , target : PlayerName
     , result : FightResult
     , winnerXpGained : Int
-    , winnerCapsGained : Int -- TODO do we want to keep this?
+    , winnerCapsGained : Int
     }
 
 
@@ -26,16 +26,31 @@ type FightResult
 
 
 generator :
-    { attacker : PlayerName
-    , target : PlayerName
+    { attacker : SPlayer
+    , target : SPlayer
     }
     -> Generator FightInfo
 generator { attacker, target } =
-    -- TODO this is veeeery simple and stupid
-    Random.constant (FightInfo attacker target)
-        |> Random.andMap (Random.uniform AttackerWon [ TargetWon ])
-        |> Random.andMap (Random.int 1 100)
-        |> Random.andMap (Random.int 1 100)
+    -- TODO this is veeeery simple and stupid, 50:50 chance
+    Random.bool
+        |> Random.map
+            (\attackerWon ->
+                if attackerWon then
+                    { attacker = attacker.name
+                    , target = target.name
+                    , result = AttackerWon
+                    , winnerXpGained = target.hp
+                    , winnerCapsGained = target.caps
+                    }
+
+                else
+                    { attacker = attacker.name
+                    , target = target.name
+                    , result = TargetWon
+                    , winnerXpGained = attacker.hp
+                    , winnerCapsGained = attacker.caps
+                    }
+            )
 
 
 targetAlreadyDead :

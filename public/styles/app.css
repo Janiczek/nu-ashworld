@@ -57,6 +57,19 @@ button, input {
   background: transparent;
   font-size: 18px;
   color: var(--fg02);
+  padding: 0;
+  margin: 0;
+}
+
+button {
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+button:hover,
+button:active {
+  color: var(--fg01);
+  outline-color: var(--fg01);
 }
 
 ::placeholder {
@@ -135,19 +148,6 @@ button, input {
   justify-content: space-between;
 }
 
-#login-form button {
-  text-transform: uppercase;
-  margin: 0;
-  padding: 0;
-}
-
-#login-form button:hover,
-#login-form button:active {
-  color: var(--fg01);
-  outline-color: var(--fg01);
-}
-
-
 #logged-out-links,
 #logged-in-links {
   margin-top: 40px;
@@ -182,15 +182,6 @@ button, input {
 
 #player-info {
   margin-top: 40px;
-}
-
-#player-name {
-  color: var(--fg01);
-  text-align: center;
-}
-
-#player-stats {
-  margin-top: 40px;
   display: grid;
   grid-template-columns: min-content min-content;
   grid-auto-rows: auto;
@@ -206,6 +197,10 @@ button, input {
 .player-stat-value {
   grid-column: 2;
   color: var(--fg02);
+}
+
+.emphasized {
+  color: var(--fg01);
 }
 
 .deemphasized {
@@ -239,12 +234,11 @@ button, input {
 }
 
 #page-title {
-  margin: 0;
+  margin: 0 0 40px;
 }
 
 #ladder-table {
   text-align: left;
-  margin-top: 40px;
   border-collapse: collapse;
 }
 
@@ -301,12 +295,8 @@ button, input {
   color: var(--fg03);
 }
 
-.news-item {
+.news-item:not(:first-of-type) {
   margin-top: 60px;
-}
-
-.news-item:first-child {
-  margin-top: 40px;
 }
 
 
@@ -364,4 +354,8 @@ button, input {
 .character-special-item-inc button:not(:disabled):hover {
   color: var(--fg-highlight);
   background: var(--bg02);
+}
+
+#fight-back-button {
+  margin-top: 40px;
 }

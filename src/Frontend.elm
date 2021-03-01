@@ -3,7 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth exposing (Password)
-import Data.Fight exposing (FightInfo)
+import Data.Fight exposing (FightInfo, FightResult(..))
 import Data.HealthStatus as HealthStatus
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
@@ -180,7 +180,13 @@ updateFromBackend msg model =
         YoureLoggedIn world ->
             ( { model
                 | world = WorldLoggedIn world
-                , route = Route.Ladder
+                , route =
+                    case world.player of
+                        NeedsCharCreated _ ->
+                            Route.CharCreation
+
+                        Player _ ->
+                            Route.Ladder
               }
             , Cmd.none
             )
@@ -289,12 +295,15 @@ contentView model =
                 contentUnavailableToLoggedOutView
 
             ( Route.Map, _ ) ->
-                [ H.text "TODO Map page" ]
+                mapView
 
             ( Route.Ladder, WorldLoggedIn world ) ->
                 case world.player of
                     NeedsCharCreated _ ->
-                        contentUnavailableToNonCreatedView
+                        ladderView
+                            { loggedInPlayer = Nothing
+                            , players = World.allPlayers world
+                            }
 
                     Player cPlayer ->
                         ladderView
@@ -312,22 +321,22 @@ contentView model =
                 ladderLoadingView
 
             ( Route.Town, WorldLoggedIn world ) ->
-                [ H.text "TODO Town page" ]
+                townView
 
             ( Route.Town, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.Settings, WorldLoggedIn world ) ->
-                [ H.text "TODO Settings page" ]
+                settingsView
 
             ( Route.Settings, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.FAQ, _ ) ->
-                [ H.text "TODO FAQ page" ]
+                faqView
 
             ( Route.About, _ ) ->
-                [ H.text "TODO About page" ]
+                aboutView
 
             ( Route.News, _ ) ->
                 newsView model.zone
@@ -353,13 +362,50 @@ pageTitleView title =
         [ H.text title ]
 
 
+aboutView : List (Html FrontendMsg)
+aboutView =
+    [ pageTitleView "About"
+    , H.text "TODO"
+    ]
+
+
+faqView : List (Html FrontendMsg)
+faqView =
+    [ pageTitleView "FAQ"
+    , H.text "TODO"
+    ]
+
+
+mapView : List (Html FrontendMsg)
+mapView =
+    [ pageTitleView "Map"
+    , H.text "TODO"
+    ]
+
+
+townView : List (Html FrontendMsg)
+townView =
+    [ pageTitleView "Town"
+    , H.text "TODO"
+    ]
+
+
+settingsView : List (Html FrontendMsg)
+settingsView =
+    [ pageTitleView "Settings"
+    , H.text "TODO"
+    ]
+
+
 charCreationView : NewChar -> List (Html FrontendMsg)
 charCreationView newChar =
     [ pageTitleView "New Character"
     , H.text "TODO char creation view"
-    , H.button
-        [ HE.onClick CreateChar ]
-        [ H.text "Skip this for now, just give me 5 in all stats already" ]
+    , H.div []
+        [ H.button
+            [ HE.onClick CreateChar ]
+            [ H.text "Skip this for now, just give me 5 in all stats already" ]
+        ]
     ]
 
 
@@ -454,8 +500,38 @@ newsView zone =
 
 
 fightView : FightInfo -> List (Html FrontendMsg)
-fightView fightInfo =
-    [ H.text "TODO fight" ]
+fightView fight =
+    [ pageTitleView "Fight"
+    , H.div [] [ H.text <| "Attacker: " ++ fight.attacker ]
+    , H.div [] [ H.text <| "Target: " ++ fight.target ]
+    , H.div []
+        [ H.text <|
+            "Result: "
+                ++ (case fight.result of
+                        AttackerWon ->
+                            "You won! You gained "
+                                ++ String.fromInt fight.winnerXpGained
+                                ++ " XP and looted "
+                                ++ String.fromInt fight.winnerCapsGained
+                                ++ " caps."
+
+                        TargetWon ->
+                            "You lost! Your target gained "
+                                ++ String.fromInt fight.winnerXpGained
+                                ++ " XP and looted "
+                                ++ String.fromInt fight.winnerCapsGained
+                                ++ " caps."
+
+                        TargetAlreadyDead ->
+                            "You wanted to fight them but then realized they're already dead. You feel slightly dumb."
+                   )
+        ]
+    , H.button
+        [ HE.onClick <| GoToRoute Route.Ladder
+        , HA.id "fight-back-button"
+        ]
+        [ H.text "[Back]" ]
+    ]
 
 
 ladderLoadingView : List (Html FrontendMsg)
@@ -520,7 +596,6 @@ ladderTableView { loggedInPlayer, players } =
             ]
         , H.tbody []
             (players
-                |> List.sortBy (.name >> String.toLower)
                 |> List.indexedMap
                     (\i player ->
                         H.tr [ HA.classList [ ( "is-player", Maybe.map .name loggedInPlayer == Just player.name ) ] ]
@@ -607,7 +682,7 @@ contentUnavailableToLoggedOutView =
 
 contentUnavailableToNonCreatedView : List (Html FrontendMsg)
 contentUnavailableToNonCreatedView =
-    contentUnavailableView "you haven't craeted your character yet"
+    contentUnavailableView "you haven't created your character yet"
 
 
 contentUnavailableView : String -> List (Html FrontendMsg)
@@ -770,7 +845,10 @@ loggedInLinksView player currentRoute =
         links =
             case player of
                 NeedsCharCreated _ ->
-                    [ ( "New Char", LinkIn Route.CharCreation, Nothing ) ]
+                    [ ( "New Char", LinkIn Route.CharCreation, Nothing )
+                    , ( "Ladder", LinkIn Route.Ladder, Nothing )
+                    , ( "Logout", LinkMsg Logout, Nothing )
+                    ]
 
                 Player _ ->
                     [ ( "Refresh", LinkMsg Refresh, Nothing )
@@ -828,43 +906,49 @@ playerInfoView player =
 
 createdPlayerInfoView : CPlayer -> Html msg
 createdPlayerInfoView player =
-    H.div [ HA.id "player-info" ]
-        [ H.div [ HA.id "player-name" ] [ H.text player.name ]
-        , H.div [ HA.id "player-stats" ]
-            [ H.div
-                [ HA.class "player-stat-label"
-                , HA.title "Hitpoints"
+    H.div
+        [ HA.id "player-info" ]
+        [ H.div [ HA.class "player-stat-label" ] [ H.text "Name:" ]
+        , H.div
+            [ HA.classList
+                [ ( "player-stat-value", True )
+                , ( "emphasized", True )
                 ]
-                [ H.text "HP:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp ]
-            , H.div
-                [ HA.class "player-stat-label"
-                , HA.title "Experience points"
-                ]
-                [ H.text "XP:" ]
-            , H.div [ HA.class "player-stat-value" ]
-                [ H.span [] [ H.text <| String.fromInt player.xp ]
-                , H.span
-                    [ HA.class "deemphasized" ]
-                    [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
-                ]
-            , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel player.xp ]
-            , H.div
-                [ HA.class "player-stat-label"
-                , HA.title "Wins/Losses"
-                ]
-                [ H.text "W/L:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.wins ++ "/" ++ String.fromInt player.losses ]
-            , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
-            , H.div
-                [ HA.class "player-stat-label"
-                , HA.title "Action points"
-                ]
-                [ H.text "AP:" ]
-            , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ap ]
             ]
+            [ H.text player.name ]
+        , H.div
+            [ HA.class "player-stat-label"
+            , HA.title "Hitpoints"
+            ]
+            [ H.text "HP:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp ]
+        , H.div
+            [ HA.class "player-stat-label"
+            , HA.title "Experience points"
+            ]
+            [ H.text "XP:" ]
+        , H.div [ HA.class "player-stat-value" ]
+            [ H.span [] [ H.text <| String.fromInt player.xp ]
+            , H.span
+                [ HA.class "deemphasized" ]
+                [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
+            ]
+        , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel player.xp ]
+        , H.div
+            [ HA.class "player-stat-label"
+            , HA.title "Wins/Losses"
+            ]
+            [ H.text "W/L:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.wins ++ "/" ++ String.fromInt player.losses ]
+        , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
+        , H.div
+            [ HA.class "player-stat-label"
+            , HA.title "Action points"
+            ]
+            [ H.text "AP:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ap ]
         ]
 
 
