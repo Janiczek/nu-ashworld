@@ -205,8 +205,20 @@ updateFromFrontend sessionId clientId msg model =
                         getWorldLoggedIn auth.name model
                             |> Maybe.map
                                 (\world ->
-                                    ( { model | loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers }
-                                    , Lamdera.sendToFrontend clientId <| YoureLoggedIn world
+                                    let
+                                        ( loggedOutPlayers, otherPlayers ) =
+                                            Dict.partition (\_ name -> name == auth.name) model.loggedInPlayers
+
+                                        worldLoggedOut =
+                                            getWorldLoggedOut model
+                                    in
+                                    ( { model | loggedInPlayers = Dict.insert clientId auth.name otherPlayers }
+                                    , Cmd.batch <|
+                                        (Lamdera.sendToFrontend clientId <| YoureLoggedIn world)
+                                            :: (loggedOutPlayers
+                                                    |> Dict.keys
+                                                    |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut worldLoggedOut)
+                                               )
                                     )
                                 )
                             -- weird?
