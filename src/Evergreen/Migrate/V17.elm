@@ -2,10 +2,10 @@ module Evergreen.Migrate.V17 exposing (..)
 
 import Dict
 import Evergreen.V16.Types as Old
-import Evergreen.V17.Data.Auth as ANew
-import Evergreen.V17.Data.NewChar as NNew
-import Evergreen.V17.Data.World as WNew
-import Evergreen.V17.Frontend.Route as RNew
+import Evergreen.V17.Data.Auth as Auth
+import Evergreen.V17.Data.NewChar as NewChar
+import Evergreen.V17.Data.World as World
+import Evergreen.V17.Frontend.Route as Route
 import Evergreen.V17.Types as New
 import Lamdera
 import Lamdera.Migrations exposing (..)
@@ -15,12 +15,12 @@ frontendModel : Old.FrontendModel -> ModelMigration New.FrontendModel New.Fronte
 frontendModel old =
     ModelMigrated
         ( { key = old.key
-          , route = RNew.News
-          , world = WNew.WorldNotInitialized ANew.init
+          , route = Route.News
+          , world = World.WorldNotInitialized Auth.init
           , zone = old.zone
-          , newChar = NNew.init
+          , newChar = NewChar.init
           }
-        , Lamdera.sendToBackend New.RefreshPlease
+        , Cmd.none
         )
 
 
