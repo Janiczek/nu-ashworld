@@ -18,7 +18,7 @@ import Lamdera.Migrations exposing (..)
 
 migratePassword : AOld.Password AOld.Verified -> ANew.Password ANew.Verified
 migratePassword old =
-    ANew.password <| AOld.unwrap old
+    ANew.Password <| AOld.unwrap old
 
 
 migrateWorld : WOld.World -> WNew.World

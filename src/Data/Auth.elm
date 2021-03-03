@@ -2,7 +2,7 @@ module Data.Auth exposing
     ( Auth
     , HasAuth
     , Hashed
-    , Password
+    , Password(..)
     , Plaintext
     , Verified
     , hash
