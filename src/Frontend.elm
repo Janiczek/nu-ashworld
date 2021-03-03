@@ -183,7 +183,7 @@ update msg model =
             )
 
         CreateChar ->
-            ( model
+            ( { model | newChar = NewChar.init }
             , Lamdera.sendToBackend <| CreateNewChar model.newChar
             )
 
