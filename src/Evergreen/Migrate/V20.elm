@@ -20,7 +20,7 @@ import Time
 
 migratePassword : AOld.Password AOld.Verified -> ANew.Password ANew.Verified
 migratePassword old =
-    ANew.password <| AOld.unwrap old
+    ANew.Password <| AOld.unwrap old
 
 
 migrateOtherPlayer : POld.COtherPlayer -> PNew.COtherPlayer
