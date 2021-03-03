@@ -1,6 +1,7 @@
 module Data.HealthStatus exposing
     ( HealthStatus(..)
     , check
+    , isDead
     , label
     )
 
@@ -147,3 +148,34 @@ badPerceptionCheck player =
 
     else
         Dead
+
+
+isDead : HealthStatus -> Bool
+isDead status =
+    case status of
+        ExactHp { current } ->
+            current <= 0
+
+        Unhurt ->
+            False
+
+        SlightlyWounded ->
+            False
+
+        Wounded ->
+            False
+
+        SeverelyWounded ->
+            False
+
+        AlmostDead ->
+            False
+
+        Dead ->
+            True
+
+        Alive ->
+            False
+
+        Unknown ->
+            False

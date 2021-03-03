@@ -697,6 +697,15 @@ ladderTableView :
     }
     -> Html FrontendMsg
 ladderTableView { loggedInPlayer, players } =
+    let
+        cantFight : String -> Html FrontendMsg
+        cantFight message =
+            H.td
+                [ HA.class "ladder-fight"
+                , HA.title message
+                ]
+                [ H.text "-" ]
+    in
     H.table [ HA.id "ladder-table" ]
         [ H.thead []
             [ H.tr []
@@ -744,25 +753,13 @@ ladderTableView { loggedInPlayer, players } =
                                 |> H.viewMaybe
                                     (\loggedInPlayer_ ->
                                         if loggedInPlayer_.name == player.name then
-                                            H.td
-                                                [ HA.class "ladder-fight"
-                                                , HA.title "Hey, that's you!"
-                                                ]
-                                                [ H.text "-" ]
+                                            cantFight "Hey, that's you!"
 
                                         else if loggedInPlayer_.hp == 0 then
-                                            H.td
-                                                [ HA.class "ladder-fight"
-                                                , HA.title "Can't fight: you're dead!"
-                                                ]
-                                                [ H.text "-" ]
+                                            cantFight "Can't fight: you're dead!"
 
-                                        else if player.healthStatus == HealthStatus.Dead then
-                                            H.td
-                                                [ HA.class "ladder-fight"
-                                                , HA.title "Can't fight this person: they're dead!"
-                                                ]
-                                                [ H.text "-" ]
+                                        else if HealthStatus.isDead player.healthStatus then
+                                            cantFight "Can't fight this person: they're dead!"
 
                                         else
                                             H.td
