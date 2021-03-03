@@ -33,6 +33,7 @@ import Html.Events.Extra as HE
 import Html.Extra as H
 import Json.Decode as Decode
 import Lamdera
+import Logic
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -523,6 +524,9 @@ charCreationView newChar =
                         [ H.text "[+]" ]
                     ]
                 ]
+
+        itemView ( label, value ) =
+            H.li [] [ H.text <| label ++ ": " ++ value ]
     in
     [ pageTitleView "New Character"
     , H.table
@@ -537,7 +541,17 @@ charCreationView newChar =
             [ HA.class "character-special-available-number" ]
             [ H.text <| String.fromInt newChar.availableSpecial ]
         ]
-    , H.div []
+    , [ ( "HP"
+        , String.fromInt <|
+            Logic.hitpoints
+                { level = 1
+                , special = newChar.special
+                }
+        )
+      ]
+        |> List.map itemView
+        |> H.ul [ HA.id "character-stats-list" ]
+    , H.div [ HA.id "create-char-button" ]
         [ H.button
             [ HE.onClick CreateChar ]
             [ H.text "[Create]" ]
@@ -608,7 +622,7 @@ characterView player =
       , ( "Losses", String.fromInt player.losses )
       ]
         |> List.map itemView
-        |> H.ul []
+        |> H.ul [ HA.id "character-stats-list" ]
     ]
 
 

@@ -76,6 +76,10 @@ button:active {
   color: var(--fg03);
 }
 
+ul {
+  margin: 0;
+}
+
 #app {
   display: flex;
   flex: 1;
@@ -368,7 +372,27 @@ button:active {
   background: var(--bg02);
 }
 
+.character-special-item-dec {
+  padding-right: 20px;
+}
+
+.character-special-item-inc {
+  padding-left: 20px;
+}
+
+.character-special-available {
+  margin-top: 20px;
+}
+
+#character-stats-list {
+  margin-top: 40px;
+}
+
 #fight-back-button {
+  margin-top: 40px;
+}
+
+#create-char-button {
   margin-top: 40px;
 }
 
