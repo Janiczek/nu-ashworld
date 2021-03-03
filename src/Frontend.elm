@@ -13,6 +13,7 @@ import Data.Player as Player
         , Player(..)
         )
 import Data.Special as Special
+import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Version as Version
 import Data.World as World
@@ -525,8 +526,13 @@ charCreationView newChar =
                     ]
                 ]
 
+        itemView : ( String, String ) -> Html FrontendMsg
         itemView ( label, value ) =
             H.li [] [ H.text <| label ++ ": " ++ value ]
+
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
+            Perception.level newChar.special.perception
     in
     [ pageTitleView "New Character"
     , H.table
@@ -547,6 +553,11 @@ charCreationView newChar =
                 { level = 1
                 , special = newChar.special
                 }
+        )
+      , ( "Perception Level"
+        , Perception.label perceptionLevel
+            ++ ". "
+            ++ Perception.tooltip perceptionLevel
         )
       ]
         |> List.map itemView
@@ -590,8 +601,27 @@ characterView player =
                     ]
                 ]
 
-        itemView ( label, value ) =
-            H.li [] [ H.text <| label ++ ": " ++ value ]
+        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
+        itemView ( label, value, tooltip ) =
+            let
+                ( liAttrs, valueAttrs ) =
+                    case tooltip of
+                        Just tooltip_ ->
+                            ( [ HA.title tooltip_ ]
+                            , [ HA.class "has-tooltip" ]
+                            )
+
+                        Nothing ->
+                            ( [], [] )
+            in
+            H.li liAttrs
+                [ H.text <| label ++ ": "
+                , H.span valueAttrs [ H.text value ]
+                ]
+
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
+            Perception.level player.special.perception
     in
     [ pageTitleView "Character"
     , H.div
@@ -613,13 +643,20 @@ characterView player =
                     ]
                ]
         )
-    , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp )
-      , ( "XP", String.fromInt player.xp )
-      , ( "Name", player.name )
-      , ( "Caps", String.fromInt player.caps )
-      , ( "AP", String.fromInt player.ap )
-      , ( "Wins", String.fromInt player.wins )
-      , ( "Losses", String.fromInt player.losses )
+    , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp, Nothing )
+      , ( "XP", String.fromInt player.xp, Nothing )
+      , ( "Name", player.name, Nothing )
+      , ( "Caps", String.fromInt player.caps, Nothing )
+      , ( "AP"
+        , String.fromInt player.ap
+        , Just "Action Points"
+        )
+      , ( "Wins", String.fromInt player.wins, Nothing )
+      , ( "Losses", String.fromInt player.losses, Nothing )
+      , ( "Perception Level"
+        , Perception.label perceptionLevel
+        , Just <| Perception.tooltip perceptionLevel
+        )
       ]
         |> List.map itemView
         |> H.ul [ HA.id "character-stats-list" ]

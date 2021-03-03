@@ -5,6 +5,8 @@ module Data.HealthStatus exposing
     , label
     )
 
+import Data.Special.Perception as Perception exposing (PerceptionLevel(..))
+
 
 type HealthStatus
     = ExactHp { current : Int, max : Int }
@@ -53,23 +55,24 @@ label status =
 
 check : Int -> { a | hp : Int, maxHp : Int } -> HealthStatus
 check perception player =
-    if perception >= 10 then
-        ExactHp
-            { current = player.hp
-            , max = player.maxHp
-            }
+    case Perception.level perception of
+        Perfect ->
+            ExactHp
+                { current = player.hp
+                , max = player.maxHp
+                }
 
-    else if perception >= 7 then
-        greatPerceptionCheck player
+        Great ->
+            greatPerceptionCheck player
 
-    else if perception >= 5 then
-        goodPerceptionCheck player
+        Good ->
+            goodPerceptionCheck player
 
-    else if perception >= 2 then
-        badPerceptionCheck player
+        Bad ->
+            badPerceptionCheck player
 
-    else
-        Unknown
+        Atrocious ->
+            Unknown
 
 
 {-| 0-100

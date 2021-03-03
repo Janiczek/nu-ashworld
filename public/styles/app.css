@@ -66,6 +66,12 @@ button {
   cursor: pointer;
 }
 
+.has-tooltip {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: var(--fg03);
+}
+
 button:hover,
 button:active {
   color: var(--fg01);
