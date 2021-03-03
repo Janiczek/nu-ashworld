@@ -8,6 +8,7 @@ module Data.Auth exposing
     , hash
     , init
     , isEmpty
+    , password
     , promote
     , setPlaintextPassword
     , unwrap
@@ -57,20 +58,20 @@ type alias HasAuth a =
 
 
 setPlaintextPassword : String -> Auth a -> Auth Plaintext
-setPlaintextPassword password auth =
+setPlaintextPassword password_ auth =
     { name = auth.name
-    , password = Password password
+    , password = Password password_
     }
 
 
 hash : Auth Plaintext -> Auth Hashed
 hash auth =
     let
-        (Password password) =
+        (Password password_) =
             auth.password
     in
     { name = auth.name
-    , password = Password <| Sha256.sha256 password
+    , password = Password <| Sha256.sha256 password_
     }
 
 
@@ -91,24 +92,29 @@ changing a password, etc.
 promote : Auth Hashed -> Auth Verified
 promote auth =
     let
-        (Password password) =
+        (Password password_) =
             auth.password
     in
     { name = auth.name
-    , password = Password password
+    , password = Password password_
     }
 
 
 unwrap : Password a -> String
-unwrap (Password password) =
-    password
+unwrap (Password password_) =
+    password_
 
 
 isEmpty : Password Hashed -> Bool
-isEmpty (Password password) =
-    password == emptyHashedPassword
+isEmpty (Password password_) =
+    password_ == emptyHashedPassword
 
 
 emptyHashedPassword : String
 emptyHashedPassword =
     Sha256.sha256 ""
+
+
+password : String -> Password a
+password =
+    Password
