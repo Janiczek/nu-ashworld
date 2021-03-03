@@ -18,6 +18,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Special as Special exposing (SpecialType)
+import Data.Tick as Tick
 import Data.World
     exposing
         ( World
@@ -113,21 +114,6 @@ getWorldLoggedIn_ player model =
     }
 
 
-tickFrequency : Time.Interval
-tickFrequency =
-    Time.Hour
-
-
-tickHealingRateMultiplier : Int
-tickHealingRateMultiplier =
-    2
-
-
-acPerTick : Int
-acPerTick =
-    2
-
-
 maxAc : Int
 maxAc =
     20
@@ -154,32 +140,22 @@ update msg model =
             case model.nextWantedTick of
                 Nothing ->
                     let
-                        nextWantedTick : Posix
-                        nextWantedTick =
-                            Time.ceiling tickFrequency Time.utc currentTime
-
-                        diffMs : Int
-                        diffMs =
-                            Time.diff Time.Millisecond Time.utc currentTime nextWantedTick
+                        { nextTick, millisTillNextTick } =
+                            Tick.nextTick currentTime
                     in
-                    ( { model | nextWantedTick = Just nextWantedTick }
-                    , tickAfterMs diffMs
+                    ( { model | nextWantedTick = Just nextTick }
+                    , tickAfterMs millisTillNextTick
                     )
 
                 Just nextWantedTick ->
                     if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
                         let
-                            newNextWantedTick : Posix
-                            newNextWantedTick =
-                                Time.add tickFrequency 1 Time.utc nextWantedTick
-
-                            diffMs : Int
-                            diffMs =
-                                Time.diff Time.Millisecond Time.utc currentTime newNextWantedTick
+                            { nextTick, millisTillNextTick } =
+                                Tick.nextTick currentTime
                         in
-                        ( { model | nextWantedTick = Just newNextWantedTick }
+                        ( { model | nextWantedTick = Just nextTick }
                             |> processTick
-                        , tickAfterMs diffMs
+                        , tickAfterMs millisTillNextTick
                         )
 
                     else
@@ -223,7 +199,7 @@ processTick model =
 
 tickAfterMs : Int -> Cmd BackendMsg
 tickAfterMs ms =
-    Process.sleep (toFloat ms)
+    Process.sleep (max 250 (toFloat ms))
         |> Task.andThen (\_ -> Time.now)
         |> Task.perform Tick
 
@@ -550,7 +526,7 @@ decAp =
 
 tickAddAp : Player SPlayer -> Player SPlayer
 tickAddAp =
-    Player.map (\player -> { player | ap = min maxAc (player.ap + acPerTick) })
+    Player.map (\player -> { player | ap = min maxAc (player.ap + Tick.acPerTick) })
 
 
 tickHeal : Player SPlayer -> Player SPlayer
@@ -560,7 +536,7 @@ tickHeal =
             if player.hp < player.maxHp then
                 { player
                     | hp =
-                        (player.hp + (Logic.healingRate player.special * tickHealingRateMultiplier))
+                        (player.hp + (Logic.healingRate player.special * Tick.tickHealingRateMultiplier))
                             |> min player.maxHp
                 }
 

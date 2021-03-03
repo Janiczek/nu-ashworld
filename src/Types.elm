@@ -28,6 +28,7 @@ import Url exposing (Url)
 
 type alias FrontendModel =
     { key : Key
+    , time : Time.Posix
     , zone : Time.Zone
     , route : Route
     , world : World
@@ -51,7 +52,8 @@ type FrontendMsg
     | Login
     | Register
     | NoOp
-    | GetZone Time.Zone
+    | GotZone Time.Zone
+    | GotTime Time.Posix
     | AskToFight PlayerName
     | Refresh
     | AskToIncSpecial SpecialType

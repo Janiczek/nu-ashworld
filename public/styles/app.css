@@ -364,3 +364,10 @@ button:active {
 #fight-back-button {
   margin-top: 40px;
 }
+
+#next-tick {
+  font-size: 14px;
+  color: var(--fg03);
+  margin-top: 20px;
+  height: 1em;
+}

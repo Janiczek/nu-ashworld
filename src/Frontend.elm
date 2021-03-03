@@ -13,6 +13,7 @@ import Data.Player as Player
         , Player(..)
         )
 import Data.Special as Special
+import Data.Tick as Tick
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -34,6 +35,7 @@ import Json.Decode as Decode
 import Lamdera
 import Task
 import Time exposing (Posix)
+import Time.Extra as Time
 import Types exposing (..)
 import Url
 
@@ -59,17 +61,21 @@ init url key =
     ( { key = key
       , route = Route.News
       , world = WorldNotInitialized Auth.init
+      , time = Time.millisToPosix 0
       , zone = Time.utc
       , newChar = NewChar.init
       , authError = Nothing
       }
-    , Task.perform GetZone Time.here
+    , Cmd.batch
+        [ Task.perform GotZone Time.here
+        , Task.perform GotTime Time.now
+        ]
     )
 
 
 subscriptions : Model -> Sub FrontendMsg
 subscriptions model =
-    Sub.none
+    Time.every 1000 GotTime
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
@@ -129,7 +135,12 @@ update msg model =
                     )
                 |> Maybe.withDefault ( model, Cmd.none )
 
-        GetZone zone ->
+        GotTime time ->
+            ( { model | time = time }
+            , Cmd.none
+            )
+
+        GotZone zone ->
             ( { model | zone = zone }
             , Cmd.none
             )
@@ -280,11 +291,64 @@ appView ({ leftNav } as r) model =
         ]
         [ H.div [ HA.id "left-nav" ]
             (logoView
+                :: nextTickView model.zone model.time
                 :: leftNav
                 ++ [ commonLinksView model.route ]
             )
         , contentView model
         ]
+
+
+nextTickView : Time.Zone -> Posix -> Html FrontendMsg
+nextTickView zone time =
+    let
+        millis =
+            Time.posixToMillis time
+    in
+    H.div [ HA.id "next-tick" ] <|
+        if millis == 0 then
+            []
+
+        else
+            let
+                { nextTick, millisTillNextTick } =
+                    Tick.nextTick time
+
+                nextHour =
+                    DateFormat.format
+                        [ DateFormat.hourMilitaryFixed
+                        , DateFormat.text ":"
+                        , DateFormat.minuteFixed
+                        ]
+                        zone
+                        nextTick
+
+                remainingMinutes =
+                    Time.diff Time.Minute zone time nextTick
+
+                remainingSeconds =
+                    Time.diff Time.Second zone time nextTick
+                        |> remainderBy 60
+
+                pad =
+                    String.fromInt
+                        >> String.padLeft 2 '0'
+
+                remaining =
+                    pad remainingMinutes
+                        ++ ":"
+                        ++ pad remainingSeconds
+            in
+            [ H.text "Next tick: "
+            , H.span
+                [ HA.class "highlighted" ]
+                [ H.text nextHour ]
+            , H.text " (in "
+            , H.span
+                [ HA.class "highlighted" ]
+                [ H.text remaining ]
+            , H.text ")"
+            ]
 
 
 contentView : Model -> Html FrontendMsg
