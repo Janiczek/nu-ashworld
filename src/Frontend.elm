@@ -341,11 +341,11 @@ nextTickView zone time =
             in
             [ H.text "Next tick: "
             , H.span
-                [ HA.class "highlighted" ]
+                [ HA.class "slightly-emphasized" ]
                 [ H.text nextHour ]
             , H.text " (in "
             , H.span
-                [ HA.class "highlighted" ]
+                [ HA.class "slightly-emphasized" ]
                 [ H.text remaining ]
             , H.text ")"
             ]

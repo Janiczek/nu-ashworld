@@ -208,6 +208,10 @@ button:active {
   color: var(--fg01);
 }
 
+.slightly-emphasized {
+  color: var(--fg02);
+}
+
 .deemphasized {
   color: var(--fg03);
 }
