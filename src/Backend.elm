@@ -143,9 +143,10 @@ update msg model =
                     let
                         { nextTick, millisTillNextTick } =
                             Tick.nextTick currentTime
+                                |> Debug.log "next tick 1"
                     in
                     ( { model | nextWantedTick = Just nextTick }
-                    , tickAfterMs millisTillNextTick
+                    , Cmd.none
                     )
 
                 Just nextWantedTick ->
@@ -153,19 +154,15 @@ update msg model =
                         let
                             { nextTick, millisTillNextTick } =
                                 Tick.nextTick currentTime
+                                    |> Debug.log "next tick 2"
                         in
                         ( { model | nextWantedTick = Just nextTick }
                             |> processTick
-                        , tickAfterMs millisTillNextTick
+                        , Cmd.none
                         )
 
                     else
-                        let
-                            diffMs : Int
-                            diffMs =
-                                Time.diff Time.Millisecond Time.utc currentTime nextWantedTick
-                        in
-                        ( model, tickAfterMs diffMs )
+                        ( model, Cmd.none )
 
         GeneratedFight clientId sPlayer fightInfo ->
             let
@@ -196,13 +193,6 @@ processTick model =
                             |> tickAddAp
                     )
     }
-
-
-tickAfterMs : Int -> Cmd BackendMsg
-tickAfterMs ms =
-    Process.sleep (max 250 (toFloat ms))
-        |> Task.andThen (\_ -> Time.now)
-        |> Task.perform Tick
 
 
 persistFight : FightInfo -> Model -> Model
@@ -474,6 +464,7 @@ subscriptions model =
     Sub.batch
         [ Lamdera.onConnect Connected
         , Lamdera.onDisconnect Disconnected
+        , Time.every 10000 Tick
         ]
 
 

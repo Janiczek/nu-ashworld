@@ -77,7 +77,7 @@ init url key =
 
 subscriptions : Model -> Sub FrontendMsg
 subscriptions model =
-    Time.every 1000 GotTime
+    Time.every 10000 GotTime
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
@@ -328,7 +328,7 @@ nextTickView zone time =
                 { nextTick, millisTillNextTick } =
                     Tick.nextTick time
 
-                nextHour =
+                nextTickString =
                     DateFormat.format
                         [ DateFormat.hourMilitaryFixed
                         , DateFormat.text ":"
@@ -336,32 +336,11 @@ nextTickView zone time =
                         ]
                         zone
                         nextTick
-
-                remainingMinutes =
-                    Time.diff Time.Minute zone time nextTick
-
-                remainingSeconds =
-                    Time.diff Time.Second zone time nextTick
-                        |> remainderBy 60
-
-                pad =
-                    String.fromInt
-                        >> String.padLeft 2 '0'
-
-                remaining =
-                    pad remainingMinutes
-                        ++ ":"
-                        ++ pad remainingSeconds
             in
             [ H.text "Next tick: "
             , H.span
                 [ HA.class "slightly-emphasized" ]
-                [ H.text nextHour ]
-            , H.text " (in "
-            , H.span
-                [ HA.class "slightly-emphasized" ]
-                [ H.text remaining ]
-            , H.text ")"
+                [ H.text nextTickString ]
             ]
 
 
