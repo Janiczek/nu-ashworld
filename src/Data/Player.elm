@@ -87,7 +87,7 @@ serverToClient p =
 
 serverToClientOther : { perception : Int } -> SPlayer -> COtherPlayer
 serverToClientOther { perception } p =
-    { level = Xp.xpToLevel p.xp
+    { level = Xp.currentLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
@@ -97,7 +97,7 @@ serverToClientOther { perception } p =
 
 clientToClientOther : CPlayer -> COtherPlayer
 clientToClientOther p =
-    { level = Xp.xpToLevel p.xp
+    { level = Xp.currentLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses

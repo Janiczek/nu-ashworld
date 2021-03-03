@@ -1,4 +1,10 @@
-module Data.Xp exposing (Level, Xp, nextLevelXp, xpToLevel, xpUntilNextLevel)
+module Data.Xp exposing
+    ( Level
+    , Xp
+    , currentLevel
+    , nextLevelXp
+    , xpUntilNextLevel
+    )
 
 import List.Extra
 
@@ -27,8 +33,8 @@ xpTable =
         |> List.map (\lvl -> ( lvl, xpForLevel lvl ))
 
 
-xpToLevel : Xp -> Level
-xpToLevel xp =
+currentLevel : Xp -> Level
+currentLevel xp =
     -- it's easiest to find just one level above the current one and subtract one
     xpTable
         |> List.Extra.dropWhile (\( lvl, xp_ ) -> xp_ <= xp)
@@ -40,7 +46,7 @@ xpToLevel xp =
 nextLevelXp : Xp -> Xp
 nextLevelXp currentXp =
     currentXp
-        |> xpToLevel
+        |> currentLevel
         |> (+) 1
         |> xpForLevel
 
@@ -48,11 +54,11 @@ nextLevelXp currentXp =
 xpUntilNextLevel : Xp -> Xp
 xpUntilNextLevel currentXp =
     let
-        currentLevel =
-            xpToLevel currentXp
+        currentLevel_ =
+            currentLevel currentXp
 
         nextLevel =
-            currentLevel + 1
+            currentLevel_ + 1
 
         nextXp =
             xpForLevel nextLevel

@@ -25,6 +25,7 @@ import Data.World
         , WorldLoggedInData
         , WorldLoggedOutData
         )
+import Data.Xp as Xp
 import Dict
 import Dict.Extra as Dict
 import Html
@@ -402,12 +403,19 @@ incrementSpecial : SpecialType -> ClientId -> SPlayer -> Model -> ( Model, Cmd B
 incrementSpecial type_ clientId player model =
     if Special.canIncrement player.availableSpecial type_ player.special then
         let
+            maybeRecalculateHp =
+                if Logic.affectsHitpoints type_ then
+                    recalculateHp player.name
+
+                else
+                    identity
+
             newModel : Model
             newModel =
-                -- TODO FIX recalculate HP and max HP
                 model
                     |> incSpecial type_ player.name
                     |> decAvailableSpecial player.name
+                    |> maybeRecalculateHp
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -537,4 +545,34 @@ tickHeal =
 
             else
                 player
+        )
+
+
+recalculateHp : PlayerName -> Model -> Model
+recalculateHp =
+    updatePlayer
+        (\player ->
+            let
+                newMaxHp =
+                    Logic.hitpoints
+                        { level = Xp.currentLevel player.xp
+                        , special = player.special
+                        }
+
+                diff =
+                    newMaxHp - player.maxHp
+
+                newHp =
+                    -- adding maxHp: add hp too
+                    -- lowering maxHp: try to keep hp the same
+                    if diff > 0 then
+                        player.hp + diff
+
+                    else
+                        min player.hp newMaxHp
+            in
+            { player
+                | hp = newHp
+                , maxHp = newMaxHp
+            }
         )

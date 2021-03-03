@@ -1,6 +1,19 @@
-module Logic exposing (healingRate, hitpoints)
+module Logic exposing (affectsHitpoints, healingRate, hitpoints)
 
-import Data.Special exposing (Special)
+import Data.Special exposing (Special, SpecialType(..))
+
+
+affectsHitpoints : SpecialType -> Bool
+affectsHitpoints type_ =
+    case type_ of
+        Strength ->
+            True
+
+        Endurance ->
+            True
+
+        _ ->
+            False
 
 
 hitpoints :

@@ -1074,7 +1074,7 @@ createdPlayerInfoView player =
                 [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
             ]
         , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.xpToLevel player.xp ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
         , H.div
             [ HA.class "player-stat-label"
             , HA.title "Wins/Losses"
