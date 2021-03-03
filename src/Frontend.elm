@@ -267,6 +267,8 @@ view model =
     { title = "NuAshworld " ++ Version.version
     , body =
         [ stylesLinkView
+        , favicon16View
+        , favicon32View
         , case model.world of
             WorldNotInitialized _ ->
                 notInitializedView model
@@ -1038,6 +1040,16 @@ stylesLinkView =
         , HA.href <| "styles/app.css?v=" ++ Version.version
         ]
         []
+
+
+favicon16View : Html msg
+favicon16View =
+    H.node "link" [ HA.rel "icon", HA.href "images/favicon-16.png" ] []
+
+
+favicon32View : Html msg
+favicon32View =
+    H.node "link" [ HA.rel "icon", HA.href "images/favicon-32.png" ] []
 
 
 logoView : Html msg
