@@ -187,6 +187,16 @@ update msg model =
             , Lamdera.sendToBackend <| CreateNewChar model.newChar
             )
 
+        NewCharIncSpecial type_ ->
+            ( { model | newChar = NewChar.incSpecial type_ model.newChar }
+            , Cmd.none
+            )
+
+        NewCharDecSpecial type_ ->
+            ( { model | newChar = NewChar.decSpecial type_ model.newChar }
+            , Cmd.none
+            )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -473,12 +483,64 @@ settingsView =
 
 charCreationView : NewChar -> List (Html FrontendMsg)
 charCreationView newChar =
+    let
+        specialItemView type_ =
+            let
+                value =
+                    Special.get type_ newChar.special
+            in
+            H.tr
+                [ HA.class "character-special-item" ]
+                [ H.td
+                    [ HA.class "character-special-item-dec" ]
+                    [ H.button
+                        [ HE.onClick <| NewCharDecSpecial type_
+                        , HA.disabled <|
+                            not <|
+                                Special.canDecrement
+                                    type_
+                                    newChar.special
+                        ]
+                        [ H.text "[-]" ]
+                    ]
+                , H.td
+                    [ HA.class "character-special-item-label" ]
+                    [ H.text <| Special.label type_ ]
+                , H.td
+                    [ HA.class "character-special-item-value" ]
+                    [ H.text <| String.fromInt value ]
+                , H.td
+                    [ HA.class "character-special-item-inc" ]
+                    [ H.button
+                        [ HE.onClick <| NewCharIncSpecial type_
+                        , HA.disabled <|
+                            not <|
+                                Special.canIncrement
+                                    newChar.availableSpecial
+                                    type_
+                                    newChar.special
+                        ]
+                        [ H.text "[+]" ]
+                    ]
+                ]
+    in
     [ pageTitleView "New Character"
-    , H.text "TODO char creation view"
+    , H.table
+        [ HA.id "character-special-table" ]
+        (List.map specialItemView Special.all)
+    , H.div
+        [ HA.class "character-special-available" ]
+        [ H.span
+            [ HA.class "character-special-available-label" ]
+            [ H.text "Available SPECIAL points: " ]
+        , H.span
+            [ HA.class "character-special-available-number" ]
+            [ H.text <| String.fromInt newChar.availableSpecial ]
+        ]
     , H.div []
         [ H.button
             [ HE.onClick CreateChar ]
-            [ H.text "Skip this for now, just give me 5 in all stats already" ]
+            [ H.text "[Create]" ]
         ]
     ]
 

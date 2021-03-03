@@ -60,6 +60,8 @@ type FrontendMsg
     | SetAuthName String
     | SetAuthPassword String
     | CreateChar
+    | NewCharIncSpecial SpecialType
+    | NewCharDecSpecial SpecialType
 
 
 type ToBackend

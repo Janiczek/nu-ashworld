@@ -349,6 +349,7 @@ button:active {
   padding-left: 20px;
 }
 
+.character-special-item-dec button,
 .character-special-item-inc button {
   border: none;
   background: transparent;
@@ -356,10 +357,12 @@ button:active {
   font-size: 18px;
 }
 
+.character-special-item-dec button:disabled,
 .character-special-item-inc button:disabled {
   color: var(--fg03);
 }
 
+.character-special-item-dec button:not(:disabled):hover,
 .character-special-item-inc button:not(:disabled):hover {
   color: var(--fg-highlight);
   background: var(--bg02);

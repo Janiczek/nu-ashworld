@@ -2,7 +2,9 @@ module Data.Special exposing
     ( Special
     , SpecialType(..)
     , all
+    , canDecrement
     , canIncrement
+    , decrement
     , get
     , increment
     , init
@@ -98,29 +100,44 @@ canIncrement availablePoints type_ special =
     availablePoints > 0 && get type_ special < 10
 
 
+canDecrement : SpecialType -> Special -> Bool
+canDecrement type_ special =
+    get type_ special > 1
+
+
 increment : SpecialType -> Special -> Special
-increment type_ special =
+increment =
+    map (\x -> x + 1)
+
+
+decrement : SpecialType -> Special -> Special
+decrement =
+    map (\x -> x - 1)
+
+
+map : (Int -> Int) -> SpecialType -> Special -> Special
+map fn type_ special =
     case type_ of
         Strength ->
-            { special | strength = special.strength + 1 }
+            { special | strength = fn special.strength }
 
         Perception ->
-            { special | perception = special.perception + 1 }
+            { special | perception = fn special.perception }
 
         Endurance ->
-            { special | endurance = special.endurance + 1 }
+            { special | endurance = fn special.endurance }
 
         Charisma ->
-            { special | charisma = special.charisma + 1 }
+            { special | charisma = fn special.charisma }
 
         Intelligence ->
-            { special | intelligence = special.intelligence + 1 }
+            { special | intelligence = fn special.intelligence }
 
         Agility ->
-            { special | agility = special.agility + 1 }
+            { special | agility = fn special.agility }
 
         Luck ->
-            { special | luck = special.luck + 1 }
+            { special | luck = fn special.luck }
 
 
 init : Special
