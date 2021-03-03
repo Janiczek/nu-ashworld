@@ -659,7 +659,7 @@ fightView fight =
                                 ++ " caps."
 
                         TargetAlreadyDead ->
-                            "You wanted to fight them but then realized they're already dead. You feel slightly dumb."
+                            "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
                    )
         ]
     , H.button
