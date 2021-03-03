@@ -143,7 +143,6 @@ update msg model =
                     let
                         { nextTick, millisTillNextTick } =
                             Tick.nextTick currentTime
-                                |> Debug.log "next tick 1"
                     in
                     ( { model | nextWantedTick = Just nextTick }
                     , Cmd.none
@@ -154,7 +153,6 @@ update msg model =
                         let
                             { nextTick, millisTillNextTick } =
                                 Tick.nextTick currentTime
-                                    |> Debug.log "next tick 2"
                         in
                         ( { model | nextWantedTick = Just nextTick }
                             |> processTick
