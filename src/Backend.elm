@@ -58,7 +58,7 @@ init =
       , loggedInPlayers = Dict.empty
       , nextWantedTick = Nothing
       }
-    , Cmd.none
+    , Task.perform Tick Time.now
     )
 
 
@@ -466,11 +466,6 @@ subscriptions model =
     Sub.batch
         [ Lamdera.onConnect Connected
         , Lamdera.onDisconnect Disconnected
-        , if model.nextWantedTick == Nothing then
-            Time.every 1000 Tick
-
-          else
-            Sub.none
         ]
 
 
