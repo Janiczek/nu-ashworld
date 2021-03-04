@@ -469,9 +469,6 @@ mapView :
     -> List (Html FrontendMsg)
 mapView { tileVisibility, playerCoords } =
     let
-        ( x, y ) =
-            playerCoords
-
         imgTileView :
             { distant : Bool
             , seeCity : Bool
@@ -479,6 +476,10 @@ mapView { tileVisibility, playerCoords } =
             -> TileNum
             -> Html FrontendMsg
         imgTileView { distant, seeCity } tileNum =
+            let
+                ( x, y ) =
+                    Map.toCoords tileNum
+            in
             -- TODO use seeCity
             H.img
                 [ HA.width Map.tileWidth
@@ -487,6 +488,10 @@ mapView { tileVisibility, playerCoords } =
                 , HA.classList
                     [ ( "tile", True )
                     , ( "distant", distant )
+                    ]
+                , cssVars
+                    [ ( "--tile-coord-x", String.fromInt x )
+                    , ( "--tile-coord-y", String.fromInt y )
                     ]
                 ]
                 []
@@ -515,7 +520,7 @@ mapView { tileVisibility, playerCoords } =
     in
     [ pageTitleView "Map"
     , H.div
-        [ HA.id "map-wrapper"
+        [ HA.id "map"
         , cssVars
             [ ( "--map-columns", String.fromInt Map.columns )
             , ( "--map-rows", String.fromInt Map.rows )
@@ -523,33 +528,38 @@ mapView { tileVisibility, playerCoords } =
             , ( "--map-cell-height", String.fromInt Map.tileHeight ++ "px" )
             ]
         ]
-        [ List.range 0 (Map.tilesCount - 1)
-            |> List.map
-                (\tileNum ->
-                    case tileVisibility tileNum of
-                        Known ->
-                            knownTileView tileNum
+        (mapMarkerView playerCoords
+            :: (List.range 0 (Map.tilesCount - 1)
+                    |> List.filterMap
+                        (\tileNum ->
+                            case tileVisibility tileNum of
+                                Known ->
+                                    Just <| knownTileView tileNum
 
-                        Distant ->
-                            distantTileView tileNum
+                                Distant ->
+                                    Just <| distantTileView tileNum
 
-                        Unknown ->
-                            unknownTileView tileNum
-                )
-            |> H.div [ HA.id "map" ]
-        , H.img
-            [ HA.id "map-marker"
-            , cssVars
-                [ ( "--player-coord-x", String.fromInt x )
-                , ( "--player-coord-y", String.fromInt y )
-                ]
-            , HA.src "images/map_marker.png"
-            , HA.width 25
-            , HA.height 13
-            ]
-            []
-        ]
+                                Unknown ->
+                                    Nothing
+                        )
+               )
+        )
     ]
+
+
+mapMarkerView : Coords -> Html FrontendMsg
+mapMarkerView ( x, y ) =
+    H.img
+        [ HA.id "map-marker"
+        , cssVars
+            [ ( "--player-coord-x", String.fromInt x )
+            , ( "--player-coord-y", String.fromInt y )
+            ]
+        , HA.src "images/map_marker.png"
+        , HA.width 25
+        , HA.height 13
+        ]
+        []
 
 
 cssVars : List ( String, String ) -> Attribute FrontendMsg
