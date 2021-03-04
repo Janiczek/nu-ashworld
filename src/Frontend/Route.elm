@@ -5,7 +5,6 @@ module Frontend.Route exposing
     )
 
 import Data.Fight exposing (FightInfo)
-import Data.NewChar exposing (NewChar)
 
 
 type Route

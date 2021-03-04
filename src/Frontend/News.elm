@@ -4,7 +4,7 @@ import DateFormat
 import Html exposing (Html)
 import Html.Attributes as HA
 import Markdown
-import Time exposing (Posix)
+import Time
 
 
 type alias Item =

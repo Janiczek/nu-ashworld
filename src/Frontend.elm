@@ -66,7 +66,7 @@ app =
 
 
 init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
-init url key =
+init _ key =
     ( { key = key
       , route = Route.News
       , world = WorldNotInitialized Auth.init
@@ -83,7 +83,7 @@ init url key =
 
 
 subscriptions : Model -> Sub FrontendMsg
-subscriptions model =
+subscriptions _ =
     Time.every 10000 GotTime
 
 
@@ -305,7 +305,7 @@ appView :
     { leftNav : List (Html FrontendMsg) }
     -> Model
     -> Html FrontendMsg
-appView ({ leftNav } as r) model =
+appView { leftNav } model =
     H.div
         [ HA.id "app"
         , HA.classList [ ( "logged-in", World.isLoggedIn model.world ) ]
@@ -332,7 +332,7 @@ nextTickView zone time =
 
         else
             let
-                { nextTick, millisTillNextTick } =
+                { nextTick } =
                     Tick.nextTick time
 
                 nextTickString =
@@ -475,7 +475,7 @@ mapView { tileVisibility, playerCoords } =
             }
             -> TileNum
             -> Html FrontendMsg
-        imgTileView { distant, seeCity } tileNum =
+        imgTileView { distant } tileNum =
             let
                 ( x, y ) =
                     Map.toCoords tileNum
@@ -509,14 +509,6 @@ mapView { tileVisibility, playerCoords } =
                 { distant = True
                 , seeCity = True
                 }
-
-        unknownTileView : TileNum -> Html FrontendMsg
-        unknownTileView tileNum =
-            H.div
-                [ HA.class "tile"
-                , HA.class "unknown"
-                ]
-                []
     in
     [ pageTitleView "Map"
     , H.div

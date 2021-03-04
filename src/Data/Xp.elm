@@ -3,7 +3,6 @@ module Data.Xp exposing
     , Xp
     , currentLevel
     , nextLevelXp
-    , xpUntilNextLevel
     )
 
 import List.Extra
@@ -37,7 +36,7 @@ currentLevel : Xp -> Level
 currentLevel xp =
     -- it's easiest to find just one level above the current one and subtract one
     xpTable
-        |> List.Extra.dropWhile (\( lvl, xp_ ) -> xp_ <= xp)
+        |> List.Extra.dropWhile (\( _, xp_ ) -> xp_ <= xp)
         |> List.head
         |> Maybe.map (Tuple.first >> (\lvl -> lvl - 1))
         |> Maybe.withDefault levelCap
@@ -49,18 +48,3 @@ nextLevelXp currentXp =
         |> currentLevel
         |> (+) 1
         |> xpForLevel
-
-
-xpUntilNextLevel : Xp -> Xp
-xpUntilNextLevel currentXp =
-    let
-        currentLevel_ =
-            currentLevel currentXp
-
-        nextLevel =
-            currentLevel_ + 1
-
-        nextXp =
-            xpForLevel nextLevel
-    in
-    nextXp - currentXp

@@ -51,7 +51,6 @@ type FrontendMsg
     | Logout
     | Login
     | Register
-    | NoOp
     | GotZone Time.Zone
     | GotTime Time.Posix
     | AskToFight PlayerName

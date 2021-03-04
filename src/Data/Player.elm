@@ -31,7 +31,6 @@ import Data.Map as Map
 import Data.NewChar exposing (NewChar)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
-import Lamdera exposing (SessionId)
 import Logic
 import Set exposing (Set)
 

@@ -8,7 +8,7 @@ module Data.World exposing
     , mapAuth
     )
 
-import Data.Auth as Auth exposing (Auth, Plaintext)
+import Data.Auth exposing (Auth, Plaintext)
 import Data.Player as Player
     exposing
         ( COtherPlayer

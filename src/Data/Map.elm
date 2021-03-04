@@ -11,7 +11,6 @@ module Data.Map exposing
     , tilesCount
     , toCoords
     , toTileNum
-    , updateVisibility
     )
 
 import Set exposing (Set)
@@ -29,25 +28,6 @@ type TileVisibility
     = Known
     | Distant
     | Unknown
-
-
-updateVisibility : TileVisibility -> TileVisibility -> TileVisibility
-updateVisibility t1 t2 =
-    case ( t1, t2 ) of
-        ( Known, _ ) ->
-            Known
-
-        ( _, Known ) ->
-            Known
-
-        ( Distant, _ ) ->
-            Distant
-
-        ( _, Distant ) ->
-            Distant
-
-        _ ->
-            Unknown
 
 
 tilesCount : Int

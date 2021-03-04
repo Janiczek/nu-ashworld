@@ -1,7 +1,6 @@
 module Data.Tick exposing
     ( acPerTick
     , nextTick
-    , tickFrequency
     )
 
 import Time exposing (Posix)

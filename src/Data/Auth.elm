@@ -8,7 +8,6 @@ module Data.Auth exposing
     , hash
     , init
     , isEmpty
-    , password
     , promote
     , setPlaintextPassword
     , unwrap
@@ -113,8 +112,3 @@ isEmpty (Password password_) =
 emptyHashedPassword : String
 emptyHashedPassword =
     Sha256.sha256 ""
-
-
-password : String -> Password a
-password =
-    Password

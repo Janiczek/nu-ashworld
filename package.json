@@ -1,0 +1,6 @@
+{
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "elm-review": "^2.4.2"
+  }
+}

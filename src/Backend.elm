@@ -123,7 +123,7 @@ maxAc =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
-        Connected sessionId clientId ->
+        Connected _ clientId ->
             let
                 world =
                     getWorldLoggedOut model
@@ -132,7 +132,7 @@ update msg model =
             , Lamdera.sendToFrontend clientId <| CurrentWorld world
             )
 
-        Disconnected sessionId clientId ->
+        Disconnected _ clientId ->
             ( { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
             , Cmd.none
             )
@@ -141,7 +141,7 @@ update msg model =
             case model.nextWantedTick of
                 Nothing ->
                     let
-                        { nextTick, millisTillNextTick } =
+                        { nextTick } =
                             Tick.nextTick currentTime
                     in
                     ( { model | nextWantedTick = Just nextTick }
@@ -151,7 +151,7 @@ update msg model =
                 Just nextWantedTick ->
                     if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
                         let
-                            { nextTick, millisTillNextTick } =
+                            { nextTick } =
                                 Tick.nextTick currentTime
                         in
                         ( { model | nextWantedTick = Just nextTick }
@@ -185,7 +185,7 @@ processTick model =
         | players =
             model.players
                 |> Dict.map
-                    (\name player ->
+                    (\_ player ->
                         player
                             |> tickHeal
                             |> tickAddAp
@@ -224,7 +224,7 @@ persistFight ({ attacker, target } as fightInfo) model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend sessionId clientId msg model =
+updateFromFrontend _ clientId msg model =
     let
         withLoggedInPlayer : (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
         withLoggedInPlayer fn =
@@ -458,7 +458,7 @@ fight otherPlayerName clientId sPlayer model =
 
 
 subscriptions : Model -> Sub BackendMsg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ Lamdera.onConnect Connected
         , Lamdera.onDisconnect Disconnected
