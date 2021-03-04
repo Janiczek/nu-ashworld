@@ -528,7 +528,8 @@ tickHeal =
             if player.hp < player.maxHp then
                 { player
                     | hp =
-                        (player.hp + (Logic.healingRate player.special * Tick.tickHealingRateMultiplier))
+                        -- Logic.healingRate already accounts for tick healing rate multiplier
+                        (player.hp + Logic.healingRate player.special)
                             |> min player.maxHp
                 }
 

@@ -2,7 +2,6 @@ module Data.Tick exposing
     ( acPerTick
     , nextTick
     , tickFrequency
-    , tickHealingRateMultiplier
     )
 
 import Time exposing (Posix)
@@ -23,11 +22,6 @@ nextTick time =
 tickFrequency : Time.Interval
 tickFrequency =
     Time.Hour
-
-
-tickHealingRateMultiplier : Int
-tickHealingRateMultiplier =
-    2
 
 
 acPerTick : Int

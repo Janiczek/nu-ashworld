@@ -34,4 +34,10 @@ hitpoints { level, special } =
 
 healingRate : Special -> Int
 healingRate { endurance } =
-    max 1 (endurance // 3)
+    tickHealingRateMultiplier
+        * max 1 (endurance // 3)
+
+
+tickHealingRateMultiplier : Int
+tickHealingRateMultiplier =
+    2

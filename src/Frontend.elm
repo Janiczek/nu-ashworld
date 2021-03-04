@@ -533,6 +533,10 @@ charCreationView newChar =
                 , special = newChar.special
                 }
         )
+      , ( "Healing rate"
+        , (String.fromInt <| Logic.healingRate newChar.special)
+            ++ " HP/tick"
+        )
       , ( "Perception Level"
         , Perception.label perceptionLevel
             ++ ". "
@@ -626,12 +630,14 @@ characterView player =
       , ( "XP", String.fromInt player.xp, Nothing )
       , ( "Name", player.name, Nothing )
       , ( "Caps", String.fromInt player.caps, Nothing )
-      , ( "AP"
-        , String.fromInt player.ap
-        , Just "Action Points"
-        )
+      , ( "AP", String.fromInt player.ap, Nothing )
       , ( "Wins", String.fromInt player.wins, Nothing )
       , ( "Losses", String.fromInt player.losses, Nothing )
+      , ( "Healing rate"
+        , (String.fromInt <| Logic.healingRate player.special)
+            ++ " HP/tick"
+        , Nothing
+        )
       , ( "Perception Level"
         , Perception.label perceptionLevel
         , Just <| Perception.tooltip perceptionLevel
