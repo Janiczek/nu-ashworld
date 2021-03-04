@@ -414,7 +414,18 @@ ul {
   width:  calc(var(--map-columns) * var(--map-cell-width));
   height: calc(var(--map-rows)    * var(--map-cell-height));
   background-color: black;
+  user-select: none;
 }
+
+#map-mouse-event-catcher {
+  z-index: 3;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+}
+
 .tile {
   position: absolute;
   left: 0;
@@ -426,9 +437,18 @@ ul {
     calc(var(--map-cell-height) * var(--tile-coord-y))
   );
 }
+
 .tile.distant {
   filter: brightness(50%);
 }
+
+#map-mouse-tile {
+  background: var(--bg02);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
 #map-marker {
   position: absolute;
   left: 0;
@@ -437,5 +457,5 @@ ul {
     calc(var(--map-cell-width)  * (0.5 + var(--player-coord-x)) - 50%),
     calc(var(--map-cell-height) * (0.5 + var(--player-coord-y)) - 50%)
   );
-  z-index: 1;
+  z-index: 2;
 }

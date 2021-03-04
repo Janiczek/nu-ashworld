@@ -39,7 +39,7 @@ import Html.Attributes.Extra as HA
 import Html.Events as HE
 import Html.Events.Extra as HE
 import Html.Extra as H
-import Json.Decode as Decode
+import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic
 import Task
@@ -74,6 +74,7 @@ init _ key =
       , zone = Time.utc
       , newChar = NewChar.init
       , authError = Nothing
+      , mapMouseCoords = Nothing
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -90,9 +91,6 @@ subscriptions _ =
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         GoToRoute route ->
             ( if Route.needsLogin route && not (World.isLoggedIn model.world) then
                 model
@@ -203,6 +201,16 @@ update msg model =
 
         NewCharDecSpecial type_ ->
             ( { model | newChar = NewChar.decSpecial type_ model.newChar }
+            , Cmd.none
+            )
+
+        MapMouseAtCoords coords ->
+            ( { model | mapMouseCoords = Just coords }
+            , Cmd.none
+            )
+
+        MapMouseOut ->
+            ( { model | mapMouseCoords = Nothing }
             , Cmd.none
             )
 
@@ -377,6 +385,7 @@ contentView model =
                         mapView
                             { tileVisibility = Player.tileVisibility player
                             , playerCoords = Map.toCoords player.location
+                            , mouseCoords = model.mapMouseCoords
                             }
                     )
 
@@ -465,9 +474,10 @@ faqView =
 mapView :
     { tileVisibility : TileNum -> TileVisibility
     , playerCoords : Coords
+    , mouseCoords : Maybe Coords
     }
     -> List (Html FrontendMsg)
-mapView { tileVisibility, playerCoords } =
+mapView { tileVisibility, playerCoords, mouseCoords } =
     let
         imgTileView :
             { distant : Bool
@@ -509,6 +519,34 @@ mapView { tileVisibility, playerCoords } =
                 { distant = True
                 , seeCity = True
                 }
+
+        mouseTileView : Coords -> Html FrontendMsg
+        mouseTileView ( x, y ) =
+            H.div
+                [ HA.id "map-mouse-tile"
+                , HA.class "tile"
+                , cssVars
+                    [ ( "--tile-coord-x", String.fromInt x )
+                    , ( "--tile-coord-y", String.fromInt y )
+                    ]
+                ]
+                []
+
+        mouseEventCatcherView : Html FrontendMsg
+        mouseEventCatcherView =
+            H.div
+                [ HA.id "map-mouse-event-catcher"
+                , HE.stopPropagationOn "mouseover"
+                    (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
+                        changedCoordsDecoder mouseCoords
+                    )
+                , HE.stopPropagationOn "mousemove"
+                    (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
+                        changedCoordsDecoder mouseCoords
+                    )
+                , HE.onMouseOut MapMouseOut
+                ]
+                []
     in
     [ pageTitleView "Map"
     , H.div
@@ -521,6 +559,8 @@ mapView { tileVisibility, playerCoords } =
             ]
         ]
         (mapMarkerView playerCoords
+            :: mouseEventCatcherView
+            :: H.viewMaybe mouseTileView mouseCoords
             :: (List.range 0 (Map.tilesCount - 1)
                     |> List.filterMap
                         (\tileNum ->
@@ -537,6 +577,32 @@ mapView { tileVisibility, playerCoords } =
                )
         )
     ]
+
+
+changedCoordsDecoder : Maybe Coords -> Decoder Coords
+changedCoordsDecoder mouseCoords =
+    JD.map2 Tuple.pair
+        (JD.field "offsetX" JD.int)
+        (JD.field "offsetY" JD.int)
+        |> JD.andThen
+            (\( x, y ) ->
+                let
+                    newCoords =
+                        ( x // Map.tileWidth
+                        , y // Map.tileHeight
+                        )
+                in
+                case mouseCoords of
+                    Nothing ->
+                        JD.succeed newCoords
+
+                    Just oldCoords ->
+                        if oldCoords == newCoords then
+                            JD.fail "no change"
+
+                        else
+                            JD.succeed newCoords
+            )
 
 
 mapMarkerView : Coords -> Html FrontendMsg

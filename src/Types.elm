@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Fight exposing (FightInfo)
+import Data.Map exposing (Coords)
 import Data.NewChar exposing (NewChar)
 import Data.Player
     exposing
@@ -34,6 +35,7 @@ type alias FrontendModel =
     , world : World
     , newChar : NewChar
     , authError : Maybe String
+    , mapMouseCoords : Maybe Coords
     }
 
 
@@ -61,6 +63,8 @@ type FrontendMsg
     | CreateChar
     | NewCharIncSpecial SpecialType
     | NewCharDecSpecial SpecialType
+    | MapMouseAtCoords Coords
+    | MapMouseOut
 
 
 type ToBackend
