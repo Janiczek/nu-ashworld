@@ -408,3 +408,32 @@ ul {
   margin-top: 20px;
   height: 1em;
 }
+
+#map-wrapper {
+  position: relative;
+}
+#map {
+  display: grid;
+  grid-template-columns: repeat(var(--map-columns), var(--map-cell-width));
+  grid-template-rows: repeat(var(--map-rows), var(--map-cell-height));
+  position: relative;
+}
+.tile {
+  width: var(--map-cell-width);
+  height: var(--map-cell-height);
+}
+.tile.distant {
+  filter: brightness(50%);
+}
+.tile.unknown {
+  background-color: black;
+}
+#map-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(
+    calc(var(--map-cell-width)  * (0.5 + var(--player-coord-x)) - 50%),
+    calc(var(--map-cell-height) * (0.5 + var(--player-coord-y)) - 50%)
+  );
+}

@@ -11,10 +11,23 @@ module Data.Player exposing
     , map
     , serverToClient
     , serverToClientOther
+    , tileVisibility
     )
 
-import Data.Auth exposing (Auth, HasAuth, Password, Verified)
+import Data.Auth
+    exposing
+        ( Auth
+        , HasAuth
+        , Password
+        , Verified
+        )
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
+import Data.Location as Location
+import Data.Map as Map
+    exposing
+        ( TileNum
+        , TileVisibility(..)
+        )
 import Data.NewChar exposing (NewChar)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
@@ -43,6 +56,9 @@ type alias CPlayer =
     , ap : Int
     , wins : Int
     , losses : Int
+    , location : TileNum
+    , knownMapTiles : Set TileNum
+    , distantMapTiles : Set TileNum
     }
 
 
@@ -67,6 +83,9 @@ type alias SPlayer =
     , ap : Int
     , wins : Int
     , losses : Int
+    , location : TileNum
+    , knownMapTiles : Set TileNum
+    , distantMapTiles : Set TileNum
     }
 
 
@@ -82,6 +101,9 @@ serverToClient p =
     , ap = p.ap
     , wins = p.wins
     , losses = p.losses
+    , location = p.location
+    , knownMapTiles = p.knownMapTiles
+    , distantMapTiles = p.distantMapTiles
     }
 
 
@@ -144,11 +166,18 @@ getAuth player =
 fromNewChar : Auth Verified -> NewChar -> SPlayer
 fromNewChar auth newChar =
     let
+        hp : Int
         hp =
             Logic.hitpoints
                 { level = 1
                 , special = newChar.special
                 }
+
+        startingTileNum : TileNum
+        startingTileNum =
+            Location.default
+                |> Location.coords
+                |> Map.toTileNum
     in
     { name = auth.name
     , password = auth.password
@@ -161,4 +190,19 @@ fromNewChar auth newChar =
     , ap = 10
     , wins = 0
     , losses = 0
+    , location = startingTileNum
+    , knownMapTiles = Set.singleton startingTileNum
+    , distantMapTiles = Map.neighbours startingTileNum
     }
+
+
+tileVisibility : CPlayer -> TileNum -> TileVisibility
+tileVisibility player tileNum =
+    if Set.member tileNum player.knownMapTiles then
+        Known
+
+    else if Set.member tileNum player.distantMapTiles then
+        Distant
+
+    else
+        Unknown

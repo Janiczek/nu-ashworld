@@ -5,6 +5,13 @@ import Browser.Navigation as Nav
 import Data.Auth as Auth exposing (Password)
 import Data.Fight exposing (FightInfo, FightResult(..))
 import Data.HealthStatus as HealthStatus
+import Data.Location
+import Data.Map as Map
+    exposing
+        ( Coords
+        , TileNum
+        , TileVisibility(..)
+        )
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -26,7 +33,7 @@ import Data.Xp as Xp
 import DateFormat
 import Frontend.News as News exposing (Item)
 import Frontend.Route as Route exposing (Route)
-import Html as H exposing (Html)
+import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HA
 import Html.Events as HE
@@ -346,21 +353,35 @@ nextTickView zone time =
 
 contentView : Model -> Html FrontendMsg
 contentView model =
+    let
+        withCreatedPlayer : Player CPlayer -> (CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
+        withCreatedPlayer player fn =
+            case player of
+                NeedsCharCreated _ ->
+                    contentUnavailableToNonCreatedView
+
+                Player cPlayer ->
+                    fn cPlayer
+    in
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                case world.player of
-                    NeedsCharCreated _ ->
-                        contentUnavailableToNonCreatedView
-
-                    Player cPlayer ->
-                        characterView cPlayer
+                withCreatedPlayer world.player characterView
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
+            ( Route.Map, WorldLoggedIn world ) ->
+                withCreatedPlayer world.player
+                    (\player ->
+                        mapView
+                            { tileVisibility = Player.tileVisibility player
+                            , playerCoords = Map.toCoords player.location
+                            }
+                    )
+
             ( Route.Map, _ ) ->
-                mapView
+                mapLoggedOutView
 
             ( Route.Ladder, WorldLoggedIn world ) ->
                 case world.player of
@@ -441,10 +462,114 @@ faqView =
     ]
 
 
-mapView : List (Html FrontendMsg)
-mapView =
+mapView :
+    { tileVisibility : TileNum -> TileVisibility
+    , playerCoords : Coords
+    }
+    -> List (Html FrontendMsg)
+mapView { tileVisibility, playerCoords } =
+    let
+        ( x, y ) =
+            playerCoords
+
+        imgTileView :
+            { distant : Bool
+            , seeCity : Bool
+            }
+            -> TileNum
+            -> Html FrontendMsg
+        imgTileView { distant, seeCity } tileNum =
+            -- TODO use seeCity
+            H.img
+                [ HA.width Map.tileWidth
+                , HA.height Map.tileHeight
+                , HA.src <| Map.tileSrc tileNum
+                , HA.classList
+                    [ ( "tile", True )
+                    , ( "distant", distant )
+                    ]
+                ]
+                []
+
+        knownTileView : TileNum -> Html FrontendMsg
+        knownTileView =
+            imgTileView
+                { distant = False
+                , seeCity = True
+                }
+
+        distantTileView : TileNum -> Html FrontendMsg
+        distantTileView =
+            imgTileView
+                { distant = True
+                , seeCity = True
+                }
+
+        unknownTileView : TileNum -> Html FrontendMsg
+        unknownTileView tileNum =
+            H.div
+                [ HA.class "tile"
+                , HA.class "unknown"
+                ]
+                []
+    in
     [ pageTitleView "Map"
-    , H.text "TODO"
+    , H.div
+        [ HA.id "map-wrapper"
+        , cssVars
+            [ ( "--map-columns", String.fromInt Map.columns )
+            , ( "--map-rows", String.fromInt Map.rows )
+            , ( "--map-cell-width", String.fromInt Map.tileWidth ++ "px" )
+            , ( "--map-cell-height", String.fromInt Map.tileHeight ++ "px" )
+            ]
+        ]
+        [ List.range 0 (Map.tilesCount - 1)
+            |> List.map
+                (\tileNum ->
+                    case tileVisibility tileNum of
+                        Known ->
+                            knownTileView tileNum
+
+                        Distant ->
+                            distantTileView tileNum
+
+                        Unknown ->
+                            unknownTileView tileNum
+                )
+            |> H.div [ HA.id "map" ]
+        , H.img
+            [ HA.id "map-marker"
+            , cssVars
+                [ ( "--player-coord-x", String.fromInt x )
+                , ( "--player-coord-y", String.fromInt y )
+                ]
+            , HA.src "images/map_marker.png"
+            , HA.width 25
+            , HA.height 13
+            ]
+            []
+        ]
+    ]
+
+
+cssVars : List ( String, String ) -> Attribute FrontendMsg
+cssVars vars =
+    vars
+        |> List.map (\( var, value ) -> var ++ ": " ++ value)
+        |> String.join ";"
+        |> HA.attribute "style"
+
+
+mapLoggedOutView : List (Html FrontendMsg)
+mapLoggedOutView =
+    [ pageTitleView "Map"
+    , H.img
+        [ HA.id "map-whole"
+        , HA.src "images/map_whole.png"
+        , HA.width 1400
+        , HA.height 1500
+        ]
+        []
     ]
 
 
@@ -1022,7 +1147,6 @@ loggedInLinksView player currentRoute =
             case player of
                 NeedsCharCreated _ ->
                     [ ( "New Char", LinkIn Route.CharCreation, Nothing )
-                    , ( "Ladder", LinkIn Route.Ladder, Nothing )
                     , ( "Logout", LinkMsg Logout, Nothing )
                     ]
 
@@ -1050,6 +1174,7 @@ loggedOutLinksView currentRoute =
         , HA.class "links"
         ]
         ([ ( "Refresh", LinkMsg Refresh, Nothing )
+         , ( "Map", LinkIn Route.Map, Nothing )
          , ( "Ladder", LinkIn Route.Ladder, Nothing )
          ]
             |> List.map (linkView currentRoute)
