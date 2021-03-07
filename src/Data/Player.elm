@@ -57,7 +57,6 @@ type alias CPlayer =
     , losses : Int
     , location : TileNum
     , knownMapTiles : Set TileNum
-    , distantMapTiles : Set TileNum
     }
 
 
@@ -84,7 +83,6 @@ type alias SPlayer =
     , losses : Int
     , location : TileNum
     , knownMapTiles : Set TileNum
-    , distantMapTiles : Set TileNum
     }
 
 
@@ -102,7 +100,6 @@ serverToClient p =
     , losses = p.losses
     , location = p.location
     , knownMapTiles = p.knownMapTiles
-    , distantMapTiles = p.distantMapTiles
     }
 
 
@@ -191,7 +188,6 @@ fromNewChar auth newChar =
     , losses = 0
     , location = startingTileNum
     , knownMapTiles = Set.singleton startingTileNum
-    , distantMapTiles = Map.neighbours startingTileNum
     }
 
 
@@ -200,8 +196,5 @@ tileVisibility player tileNum =
     if Set.member tileNum player.knownMapTiles then
         Known
 
-    else if Set.member tileNum player.distantMapTiles then
-        Distant
-
     else
-        Unknown
+        Distant

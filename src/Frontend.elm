@@ -531,7 +531,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 , HA.height Map.tileSize
                 , HA.src <| Map.tileSrc tileNum
                 , HA.classList
-                    [ ( "tile", True )
+                    [ ( "grid-tile", True )
                     , ( "distant", distant )
                     ]
                 , cssVars
@@ -601,6 +601,19 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 , HE.onClick MapMouseClick
                 ]
                 []
+
+        mapTilesView : List (Html FrontendMsg)
+        mapTilesView =
+            List.range 0 (Map.tilesCount - 1)
+                |> List.map
+                    (\tileNum ->
+                        case tileVisibility tileNum of
+                            Known ->
+                                knownTileView tileNum
+
+                            Distant ->
+                                distantTileView tileNum
+                    )
     in
     [ pageTitleView "Map"
     , H.div
@@ -613,6 +626,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
         ]
         (mapMarkerView playerCoords
             :: mouseEventCatcherView
+            :: H.div [ HA.id "map-tiles" ] mapTilesView
             :: (case mouseCoords of
                     Nothing ->
                         []
@@ -620,20 +634,6 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                     Just ( mouseCoords_, pathToCoords ) ->
                         mouseTileView mouseCoords_
                             :: List.map pathTileView (Set.toList (Set.remove mouseCoords_ pathToCoords))
-               )
-            ++ (List.range 0 (Map.tilesCount - 1)
-                    |> List.filterMap
-                        (\tileNum ->
-                            case tileVisibility tileNum of
-                                Known ->
-                                    Just <| knownTileView tileNum
-
-                                Distant ->
-                                    Just <| distantTileView tileNum
-
-                                Unknown ->
-                                    Nothing
-                        )
                )
         )
     ]

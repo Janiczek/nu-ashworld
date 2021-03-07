@@ -392,17 +392,11 @@ moveTo newCoords pathTaken clientId player model =
 
     else
         let
-            neighbours =
-                pathTaken
-                    |> Set.map Map.toTileNum
-                    |> Set.concatMap Map.neighbours
-
             newModel =
                 model
                     |> subtractAp apCost player.name
                     |> setLocation (Map.toTileNum newCoords) player.name
                     |> addKnownMapTiles (Set.map Map.toTileNum pathTaken) player.name
-                    |> addDistantMapTiles neighbours player.name
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -585,14 +579,7 @@ setLocation tileNum =
 
 addKnownMapTiles : Set TileNum -> PlayerName -> Model -> Model
 addKnownMapTiles addedKnownTiles =
-    -- TODO somehow cleanup the distant tiles once they become known
     updatePlayer (\player -> { player | knownMapTiles = Set.union addedKnownTiles player.knownMapTiles })
-
-
-addDistantMapTiles : Set TileNum -> PlayerName -> Model -> Model
-addDistantMapTiles addedDistantTiles =
-    -- TODO somehow cleanup the distant tiles once they become known
-    updatePlayer (\player -> { player | distantMapTiles = Set.union addedDistantTiles player.distantMapTiles })
 
 
 tickAddAp : Player SPlayer -> Player SPlayer
