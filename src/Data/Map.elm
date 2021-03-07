@@ -6,7 +6,6 @@ module Data.Map exposing
     , columns
     , neighbours
     , rows
-    , test
     , tileCenterPx
     , tileSize
     , tileSizeFloat
@@ -379,38 +378,3 @@ touchedTiles tileSizePx (( fromPxX, fromPxY ) as fromPx) ( toPxX, toPxY ) =
                     go newPx newTile newTiles
         in
         go firstStepPx firstStepTile (Set.fromList [ fromTile, firstStepTile ])
-
-
-test : TileCoords -> ()
-test coords =
-    let
-        _ =
-            List.range 0 (columns - 1)
-                |> List.concatMap
-                    (\x ->
-                        List.range 0 (rows - 1)
-                            |> List.map
-                                (\y ->
-                                    let
-                                        _ =
-                                            Debug.log "starting" ( x, y )
-                                    in
-                                    let
-                                        _ =
-                                            ( x
-                                            , y
-                                            , touchedTiles
-                                                tileSizeFloat
-                                                (tileCenterPx coords)
-                                                (tileCenterPx ( x, y ))
-                                            )
-                                    in
-                                    let
-                                        _ =
-                                            Debug.log "done" ( x, y )
-                                    in
-                                    ()
-                                )
-                    )
-    in
-    ()
