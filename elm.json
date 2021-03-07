@@ -25,7 +25,8 @@
             "krisajenkins/elm-astar": "2.1.3",
             "lamdera/codecs": "1.0.0",
             "lamdera/core": "1.0.0",
-            "ryannhg/date-format": "2.3.0"
+            "ryannhg/date-format": "2.3.0",
+            "stoeffel/set-extra": "1.2.3"
         },
         "indirect": {
             "elm/bytes": "1.0.8",

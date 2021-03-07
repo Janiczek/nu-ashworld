@@ -1,4 +1,9 @@
-module Logic exposing (affectsHitpoints, healingRate, hitpoints)
+module Logic exposing
+    ( affectsHitpoints
+    , healingRate
+    , hitpoints
+    , maxAp
+    )
 
 import Data.Special exposing (Special, SpecialType(..))
 
@@ -41,3 +46,8 @@ healingRate { endurance } =
 tickHealingRateMultiplier : Int
 tickHealingRateMultiplier =
     2
+
+
+maxAp : Int
+maxAp =
+    20

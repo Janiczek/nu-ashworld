@@ -1,6 +1,13 @@
-module Data.Map.Terrain exposing (Terrain(..), cost, forCoords, isPassable)
+module Data.Map.Terrain exposing
+    ( Terrain(..)
+    , apCost
+    , forCoords
+    , isPassable
+    )
 
-import Data.Map exposing (Coords)
+import Data.Map exposing (TileCoords)
+import Dict exposing (Dict)
+import Logic
 
 
 type Terrain
@@ -10,31 +17,32 @@ type Terrain
     | Mountains
 
 
-forCoords : Coords -> Terrain
+forCoords : TileCoords -> Terrain
 forCoords coords =
     Dict.get coords terrain
         |> Maybe.withDefault Mountains
 
 
-cost : Terrain -> Int
-cost terrain =
-    case terrain of
+apCost : Terrain -> Float
+apCost terrain_ =
+    case terrain_ of
         Ocean ->
-            999
+            -- anything >= Logic.maxAp is non-passable
+            toFloat Logic.maxAp
 
         Coast ->
-            2
-
-        Land ->
             1
 
+        Land ->
+            0.5
+
         Mountains ->
-            3
+            1.5
 
 
 isPassable : Terrain -> Bool
-isPassable terrain =
-    case terrain of
+isPassable terrain_ =
+    case terrain_ of
         Ocean ->
             False
 
@@ -48,7 +56,7 @@ isPassable terrain =
             True
 
 
-terrain : Dict Coords Terrain
+terrain : Dict TileCoords Terrain
 terrain =
     -- The rest are mountains
     Dict.fromList

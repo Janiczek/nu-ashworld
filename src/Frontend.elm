@@ -12,6 +12,7 @@ import Data.Map as Map
         , TileVisibility(..)
         )
 import Data.Map.Location
+import Data.Map.Pathfinding as Pathfinding
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -42,8 +43,7 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic
-import Raycast2D
-import Set
+import Set exposing (Set)
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -219,13 +219,10 @@ update msg model =
                                 | mapMouseCoords =
                                     Just
                                         ( mouseCoords
-                                        , Raycast2D.touchedTiles
-                                            Map.tileSizeFloat
-                                            (Map.tileCenterPx playerCoords)
-                                            (Map.tileCenterPx mouseCoords)
-                                            |> Set.remove playerCoords
-                                            |> Set.remove mouseCoords
-                                            |> Set.toList
+                                        , Pathfinding.naiveStraightPath
+                                            { from = playerCoords
+                                            , to = mouseCoords
+                                            }
                                         )
                               }
                             , Cmd.none
@@ -241,6 +238,16 @@ update msg model =
             ( { model | mapMouseCoords = Nothing }
             , Cmd.none
             )
+
+        MapMouseClick ->
+            case model.mapMouseCoords of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just ( newCoords, path ) ->
+                    ( model
+                    , Lamdera.sendToBackend <| MoveTo newCoords path
+                    )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -502,7 +509,7 @@ faqView =
 mapView :
     { tileVisibility : TileNum -> TileVisibility
     , playerCoords : TileCoords
-    , mouseCoords : Maybe ( TileCoords, List TileCoords )
+    , mouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
     -> List (Html FrontendMsg)
 mapView { tileVisibility, playerCoords, mouseCoords } =
@@ -574,19 +581,24 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 ]
                 []
 
+        mouseCoordsOnly : Maybe TileCoords
+        mouseCoordsOnly =
+            Maybe.map Tuple.first mouseCoords
+
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
             H.div
                 [ HA.id "map-mouse-event-catcher"
                 , HE.stopPropagationOn "mouseover"
                     (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
-                        changedCoordsDecoder mouseCoords
+                        changedCoordsDecoder mouseCoordsOnly
                     )
                 , HE.stopPropagationOn "mousemove"
                     (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
-                        changedCoordsDecoder mouseCoords
+                        changedCoordsDecoder mouseCoordsOnly
                     )
                 , HE.onMouseOut MapMouseOut
+                , HE.onClick MapMouseClick
                 ]
                 []
     in
@@ -607,7 +619,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
 
                     Just ( mouseCoords_, pathToCoords ) ->
                         mouseTileView mouseCoords_
-                            :: List.map pathTileView pathToCoords
+                            :: List.map pathTileView (Set.toList (Set.remove mouseCoords_ pathToCoords))
                )
             ++ (List.range 0 (Map.tilesCount - 1)
                     |> List.filterMap
@@ -627,7 +639,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
     ]
 
 
-changedCoordsDecoder : Maybe ( TileCoords, List TileCoords ) -> Decoder TileCoords
+changedCoordsDecoder : Maybe TileCoords -> Decoder TileCoords
 changedCoordsDecoder mouseCoords =
     JD.map2 Tuple.pair
         (JD.field "offsetX" JD.int)
@@ -644,7 +656,7 @@ changedCoordsDecoder mouseCoords =
                     Nothing ->
                         JD.succeed newCoords
 
-                    Just ( oldCoords, _ ) ->
+                    Just oldCoords ->
                         if oldCoords == newCoords then
                             JD.fail "no change"
 

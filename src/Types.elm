@@ -35,7 +35,7 @@ type alias FrontendModel =
     , world : World
     , newChar : NewChar
     , authError : Maybe String
-    , mapMouseCoords : Maybe ( TileCoords, List TileCoords )
+    , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
 
 
@@ -65,6 +65,7 @@ type FrontendMsg
     | NewCharDecSpecial SpecialType
     | MapMouseAtCoords TileCoords
     | MapMouseOut
+    | MapMouseClick
 
 
 type ToBackend
@@ -75,6 +76,7 @@ type ToBackend
     | Fight PlayerName
     | RefreshPlease
     | IncSpecial SpecialType
+    | MoveTo TileCoords (Set TileCoords)
 
 
 type BackendMsg

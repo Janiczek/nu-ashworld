@@ -10,6 +10,9 @@ import Data.Fight as Fight
         ( FightInfo
         , FightResult(..)
         )
+import Data.Map as Map exposing (TileCoords, TileNum)
+import Data.Map.Pathfinding as Pathfinding
+import Data.Map.Terrain as Terrain
 import Data.NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -33,7 +36,8 @@ import Lamdera exposing (ClientId, SessionId)
 import Logic
 import Process
 import Random
-import Set
+import Set exposing (Set)
+import Set.Extra as Set
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -113,11 +117,6 @@ getWorldLoggedIn_ player model =
                                 otherPlayer
                 )
     }
-
-
-maxAc : Int
-maxAc =
-    20
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -356,6 +355,64 @@ updateFromFrontend _ clientId msg model =
         CreateNewChar newChar ->
             withLoggedInPlayer (createNewChar newChar)
 
+        MoveTo newCoords pathTaken ->
+            withLoggedInCreatedPlayer (moveTo newCoords pathTaken)
+
+
+moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+moveTo newCoords pathTaken clientId player model =
+    let
+        currentCoords : TileCoords
+        currentCoords =
+            Map.toTileCoords player.location
+
+        apCost : Int
+        apCost =
+            Pathfinding.apCost pathTaken
+    in
+    if currentCoords == newCoords then
+        ( model, Cmd.none )
+
+    else if
+        pathTaken
+            /= Set.remove currentCoords
+                {- TODO in the future allow different ways to create the paths
+                   (like A* that takes terrain into account etc.)
+                -}
+                (Pathfinding.naiveStraightPath
+                    { from = currentCoords
+                    , to = newCoords
+                    }
+                )
+    then
+        ( model, Cmd.none )
+
+    else if apCost > player.ap then
+        ( model, Cmd.none )
+
+    else
+        let
+            neighbours =
+                pathTaken
+                    |> Set.map Map.toTileNum
+                    |> Set.concatMap Map.neighbours
+
+            newModel =
+                model
+                    |> subtractAp apCost player.name
+                    |> setLocation (Map.toTileNum newCoords) player.name
+                    |> addKnownMapTiles (Set.map Map.toTileNum pathTaken) player.name
+                    |> addDistantMapTiles neighbours player.name
+        in
+        getWorldLoggedIn player.name newModel
+            |> Maybe.map
+                (\world ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                    )
+                )
+            |> Maybe.withDefault ( model, Cmd.none )
+
 
 createNewChar : NewChar -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
 createNewChar newChar clientId player model =
@@ -516,9 +573,31 @@ decAp =
     updatePlayer (\player -> { player | ap = max 0 (player.ap - 1) })
 
 
+subtractAp : Int -> PlayerName -> Model -> Model
+subtractAp n =
+    updatePlayer (\player -> { player | ap = max 0 (player.ap - n) })
+
+
+setLocation : TileNum -> PlayerName -> Model -> Model
+setLocation tileNum =
+    updatePlayer (\player -> { player | location = tileNum })
+
+
+addKnownMapTiles : Set TileNum -> PlayerName -> Model -> Model
+addKnownMapTiles addedKnownTiles =
+    -- TODO somehow cleanup the distant tiles once they become known
+    updatePlayer (\player -> { player | knownMapTiles = Set.union addedKnownTiles player.knownMapTiles })
+
+
+addDistantMapTiles : Set TileNum -> PlayerName -> Model -> Model
+addDistantMapTiles addedDistantTiles =
+    -- TODO somehow cleanup the distant tiles once they become known
+    updatePlayer (\player -> { player | distantMapTiles = Set.union addedDistantTiles player.distantMapTiles })
+
+
 tickAddAp : Player SPlayer -> Player SPlayer
 tickAddAp =
-    Player.map (\player -> { player | ap = min maxAc (player.ap + Tick.acPerTick) })
+    Player.map (\player -> { player | ap = min Logic.maxAp (player.ap + Tick.acPerTick) })
 
 
 tickHeal : Player SPlayer -> Player SPlayer
