@@ -414,7 +414,15 @@ ul {
   width:  calc(var(--map-columns) * var(--map-cell-size));
   height: calc(var(--map-rows)    * var(--map-cell-size));
   background-color: black;
+  background-image: url('../images/map_whole.png');
+  background-position: 0 0;
+  background-repeat: no-repeat;
   user-select: none;
+}
+
+#map-fog {
+  fill: #000000;
+  fill-opacity: 0.5;
 }
 
 #map-tiles {
@@ -430,15 +438,6 @@ ul {
   right: 0;
   bottom: 0;
   position: absolute;
-}
-
-.grid-tile {
-  width: var(--map-cell-size);
-  height: var(--map-cell-size);
-}
-
-.grid-tile.distant {
-  filter: brightness(50%);
 }
 
 .tile {

@@ -11,7 +11,6 @@ module Data.Player exposing
     , map
     , serverToClient
     , serverToClientOther
-    , tileVisibility
     )
 
 import Data.Auth
@@ -22,11 +21,7 @@ import Data.Auth
         , Verified
         )
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
-import Data.Map as Map
-    exposing
-        ( TileNum
-        , TileVisibility(..)
-        )
+import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.NewChar exposing (NewChar)
 import Data.Special exposing (Special)
@@ -189,12 +184,3 @@ fromNewChar auth newChar =
     , location = startingTileNum
     , knownMapTiles = Set.singleton startingTileNum
     }
-
-
-tileVisibility : CPlayer -> TileNum -> TileVisibility
-tileVisibility player tileNum =
-    if Set.member tileNum player.knownMapTiles then
-        Known
-
-    else
-        Distant

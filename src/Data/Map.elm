@@ -2,8 +2,10 @@ module Data.Map exposing
     ( PxCoords
     , TileCoords
     , TileNum
-    , TileVisibility(..)
+    , allTiles
     , columns
+    , distantTiles
+    , height
     , rows
     , tileCenterPx
     , tileSize
@@ -12,6 +14,7 @@ module Data.Map exposing
     , tilesCount
     , toTileCoords
     , toTileNum
+    , width
     )
 
 import Set exposing (Set)
@@ -27,11 +30,6 @@ type alias TileCoords =
 
 type alias PxCoords =
     ( Float, Float )
-
-
-type TileVisibility
-    = Known
-    | Distant
 
 
 tilesCount : Int
@@ -52,6 +50,27 @@ rows =
 tileSize : Int
 tileSize =
     50
+
+
+width : Int
+width =
+    tileSize * columns
+
+
+height : Int
+height =
+    tileSize * rows
+
+
+allTiles : Set TileNum
+allTiles =
+    List.range 0 (columns * rows - 1)
+        |> Set.fromList
+
+
+distantTiles : Set TileNum -> Set TileNum
+distantTiles knownTiles =
+    Set.diff allTiles knownTiles
 
 
 tileSizeFloat : Float

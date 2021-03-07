@@ -9,7 +9,6 @@ import Data.Map as Map
     exposing
         ( TileCoords
         , TileNum
-        , TileVisibility(..)
         )
 import Data.Map.Location
 import Data.Map.Pathfinding as Pathfinding
@@ -44,6 +43,8 @@ import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic
 import Set exposing (Set)
+import Svg as S
+import Svg.Attributes as SA
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -418,7 +419,7 @@ contentView model =
                 withCreatedPlayer world.player
                     (\player ->
                         mapView
-                            { tileVisibility = Player.tileVisibility player
+                            { knownTiles = player.knownMapTiles
                             , playerCoords = Map.toTileCoords player.location
                             , mouseCoords = model.mapMouseCoords
                             }
@@ -507,54 +508,13 @@ faqView =
 
 
 mapView :
-    { tileVisibility : TileNum -> TileVisibility
+    { knownTiles : Set TileNum
     , playerCoords : TileCoords
     , mouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
     -> List (Html FrontendMsg)
-mapView { tileVisibility, playerCoords, mouseCoords } =
+mapView { knownTiles, playerCoords, mouseCoords } =
     let
-        imgTileView :
-            { distant : Bool
-            , seeCity : Bool
-            }
-            -> TileNum
-            -> Html FrontendMsg
-        imgTileView { distant } tileNum =
-            let
-                ( x, y ) =
-                    Map.toTileCoords tileNum
-            in
-            -- TODO use seeCity
-            H.img
-                [ HA.width Map.tileSize
-                , HA.height Map.tileSize
-                , HA.src <| Map.tileSrc tileNum
-                , HA.classList
-                    [ ( "grid-tile", True )
-                    , ( "distant", distant )
-                    ]
-                , cssVars
-                    [ ( "--tile-coord-x", String.fromInt x )
-                    , ( "--tile-coord-y", String.fromInt y )
-                    ]
-                ]
-                []
-
-        knownTileView : TileNum -> Html FrontendMsg
-        knownTileView =
-            imgTileView
-                { distant = False
-                , seeCity = True
-                }
-
-        distantTileView : TileNum -> Html FrontendMsg
-        distantTileView =
-            imgTileView
-                { distant = True
-                , seeCity = True
-                }
-
         mouseTileView : TileCoords -> Html FrontendMsg
         mouseTileView ( x, y ) =
             H.div
@@ -602,18 +562,43 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 ]
                 []
 
-        mapTilesView : List (Html FrontendMsg)
-        mapTilesView =
-            List.range 0 (Map.tilesCount - 1)
-                |> List.map
-                    (\tileNum ->
-                        case tileVisibility tileNum of
-                            Known ->
-                                knownTileView tileNum
+        fogRectangle : TileCoords -> String
+        fogRectangle ( x, y ) =
+            let
+                left =
+                    String.fromInt <| x * Map.tileSize
 
-                            Distant ->
-                                distantTileView tileNum
-                    )
+                top =
+                    String.fromInt <| y * Map.tileSize
+
+                size =
+                    String.fromInt Map.tileSize
+            in
+            [ "M " ++ left ++ "," ++ top
+            , "h " ++ size
+            , "v " ++ size
+            , "h -" ++ size
+            , "v -" ++ size
+            ]
+                |> String.join " "
+
+        fogPath : String
+        fogPath =
+            Map.distantTiles knownTiles
+                |> Set.toList
+                |> List.map (Map.toTileCoords >> fogRectangle)
+                |> String.join " "
+
+        fogView : Html FrontendMsg
+        fogView =
+            S.svg
+                [ HA.id "map-fog"
+                , SA.viewBox <| "0 0 " ++ String.fromInt Map.width ++ " " ++ String.fromInt Map.height
+                ]
+                [ S.path
+                    [ SA.d fogPath ]
+                    []
+                ]
     in
     [ pageTitleView "Map"
     , H.div
@@ -626,7 +611,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
         ]
         (mapMarkerView playerCoords
             :: mouseEventCatcherView
-            :: H.div [ HA.id "map-tiles" ] mapTilesView
+            :: fogView
             :: (case mouseCoords of
                     Nothing ->
                         []
