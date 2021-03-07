@@ -1,16 +1,18 @@
 module Data.Map exposing
-    ( Coords
+    ( PxCoords
+    , TileCoords
     , TileNum
     , TileVisibility(..)
     , columns
     , neighbours
     , rows
+    , test
     , tileCenterPx
     , tileSize
     , tileSizeFloat
     , tileSrc
     , tilesCount
-    , toCoords
+    , toTileCoords
     , toTileNum
     , touchedTiles
     )
@@ -22,8 +24,12 @@ type alias TileNum =
     Int
 
 
-type alias Coords =
+type alias TileCoords =
     ( Int, Int )
+
+
+type alias PxCoords =
+    ( Float, Float )
 
 
 type TileVisibility
@@ -57,7 +63,7 @@ tileSizeFloat =
     toFloat tileSize
 
 
-tileCenterPx : Coords -> ( Float, Float )
+tileCenterPx : TileCoords -> PxCoords
 tileCenterPx ( x, y ) =
     ( tileSizeFloat * (toFloat x + 0.5)
     , tileSizeFloat * (toFloat y + 0.5)
@@ -71,8 +77,8 @@ tileSrc tileNum =
         ++ ".png"
 
 
-toCoords : TileNum -> Coords
-toCoords tileNum =
+toTileCoords : TileNum -> TileCoords
+toTileCoords tileNum =
     let
         x =
             tileNum |> remainderBy columns
@@ -83,7 +89,7 @@ toCoords tileNum =
     ( x, y )
 
 
-toTileNum : Coords -> TileNum
+toTileNum : TileCoords -> TileNum
 toTileNum ( x, y ) =
     y * columns + x
 
@@ -91,7 +97,7 @@ toTileNum ( x, y ) =
 neighbours : TileNum -> Set TileNum
 neighbours tileNum =
     let
-        neighbours_ : Coords -> Set Coords
+        neighbours_ : TileCoords -> Set TileCoords
         neighbours_ ( x, y ) =
             let
                 left : Bool
@@ -155,7 +161,7 @@ neighbours tileNum =
                 |> Set.fromList
     in
     tileNum
-        |> toCoords
+        |> toTileCoords
         |> neighbours_
         |> Set.map toTileNum
 
@@ -173,30 +179,30 @@ sign n =
             1
 
 
-symFloor : Float -> Float
+symFloor : Float -> Int
 symFloor n =
-    sign n * toFloat (floor (abs n))
+    sign (round n) * floor (abs n)
 
 
-symCeiling : Float -> Float
+symCeiling : Float -> Int
 symCeiling n =
-    sign n * toFloat (ceiling (abs n))
+    sign (round n) * ceiling (abs n)
 
 
 ceilingToMultipleOf : Float -> Float -> Float
 ceilingToMultipleOf d n =
-    d * symCeiling (n / d)
+    d * toFloat (symCeiling (n / d))
 
 
 floorToMultipleOf : Float -> Float -> Float
 floorToMultipleOf d n =
-    d * symFloor (n / d)
+    d * toFloat (symFloor (n / d))
 
 
-touchedTiles : Float -> ( Float, Float ) -> ( Float, Float ) -> Set Coords
-touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
+touchedTiles : Float -> PxCoords -> PxCoords -> Set TileCoords
+touchedTiles tileSizePx (( fromPxX, fromPxY ) as fromPx) ( toPxX, toPxY ) =
     let
-        fromTile : Coords
+        fromTile : TileCoords
         fromTile =
             ( floor <| fromPxX / tileSizePx
             , floor <| fromPxY / tileSizePx
@@ -205,7 +211,7 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
         ( fromTileX, fromTileY ) =
             fromTile
 
-        toTile : Coords
+        toTile : TileCoords
         toTile =
             ( floor <| toPxX / tileSizePx
             , floor <| toPxY / tileSizePx
@@ -216,8 +222,8 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
 
     else
         let
-            moveTilePx : Bool -> Float -> Float
-            moveTilePx goNegative current =
+            moveToTileEdge : Bool -> Float -> Float
+            moveToTileEdge goNegative current =
                 let
                     fn =
                         if goNegative then
@@ -239,25 +245,7 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
                 else
                     potentiallyNew
 
-            moveTile : Order -> Coords -> Coords
-            moveTile xVsY_ ( tileX, tileY ) =
-                case xVsY_ of
-                    LT ->
-                        ( tileX + stepX
-                        , tileY
-                        )
-
-                    EQ ->
-                        ( tileX + stepX
-                        , tileY + stepY
-                        )
-
-                    GT ->
-                        ( tileX
-                        , tileY + stepY
-                        )
-
-            movePx : Order -> ( Float, Float ) -> ( Float, Float )
+            movePx : Order -> PxCoords -> PxCoords
             movePx xVsY_ ( pxX, pxY ) =
                 case xVsY_ of
                     LT ->
@@ -290,11 +278,11 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
 
             moveX : Float -> Float
             moveX =
-                moveTilePx rayDirXNegative
+                moveToTileEdge rayDirXNegative
 
             moveY : Float -> Float
             moveY =
-                moveTilePx rayDirYNegative
+                moveToTileEdge rayDirYNegative
 
             normalize : ( Float, Float ) -> ( Float, Float )
             normalize ( x, y ) =
@@ -330,22 +318,6 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
             rayDirYNegative =
                 rayDirY < 0
 
-            stepX : Int
-            stepX =
-                if rayDirXNegative then
-                    -1
-
-                else
-                    1
-
-            stepY : Int
-            stepY =
-                if rayDirYNegative then
-                    -1
-
-                else
-                    1
-
             ( initRayLengthX, initRayLengthY ) =
                 ( abs <| (moveX fromPxX - fromPxX) * rayUnitStepSizeX
                 , abs <| (moveY fromPxY - fromPxY) * rayUnitStepSizeY
@@ -355,18 +327,32 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
             initXVsY =
                 compare initRayLengthX initRayLengthY
 
-            firstStepPx : ( Float, Float )
+            firstStepPx : PxCoords
             firstStepPx =
                 movePx initXVsY ( fromPxX, fromPxY )
 
-            firstStepTile : Coords
-            firstStepTile =
-                moveTile initXVsY fromTile
+            moveALittle : Bool -> Float -> Float
+            moveALittle negative coord =
+                if negative then
+                    coord - 1
 
-            go : ( Float, Float ) -> Coords -> Set Coords -> Set Coords
-            go ( currentX, currentY ) ( x, y ) touched =
+                else
+                    coord + 1
+
+            tileForPx : PxCoords -> TileCoords
+            tileForPx ( x, y ) =
+                ( symFloor <| moveALittle rayDirXNegative x / tileSizePx
+                , symFloor <| moveALittle rayDirYNegative y / tileSizePx
+                )
+
+            firstStepTile : TileCoords
+            firstStepTile =
+                tileForPx firstStepPx
+
+            go : PxCoords -> TileCoords -> Set TileCoords -> Set TileCoords
+            go ( currentX, currentY ) ( x, y ) seenTiles =
                 if ( x, y ) == toTile then
-                    touched
+                    seenTiles
 
                 else
                     let
@@ -379,17 +365,52 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
                         xVsY =
                             compare rayLengthX rayLengthY
 
-                        ( newX, newY ) =
-                            moveTile xVsY ( x, y )
-
-                        newTouched : Set Coords
-                        newTouched =
-                            Set.insert ( newX, newY ) touched
-
                         newPx : ( Float, Float )
                         newPx =
                             movePx xVsY ( currentX, currentY )
+
+                        (( newX, newY ) as newTile) =
+                            tileForPx newPx
+
+                        newTiles : Set TileCoords
+                        newTiles =
+                            Set.insert newTile seenTiles
                     in
-                    go newPx ( newX, newY ) newTouched
+                    go newPx newTile newTiles
         in
         go firstStepPx firstStepTile (Set.fromList [ fromTile, firstStepTile ])
+
+
+test : TileCoords -> ()
+test coords =
+    let
+        _ =
+            List.range 0 (columns - 1)
+                |> List.concatMap
+                    (\x ->
+                        List.range 0 (rows - 1)
+                            |> List.map
+                                (\y ->
+                                    let
+                                        _ =
+                                            Debug.log "starting" ( x, y )
+                                    in
+                                    let
+                                        _ =
+                                            ( x
+                                            , y
+                                            , touchedTiles
+                                                tileSizeFloat
+                                                (tileCenterPx coords)
+                                                (tileCenterPx ( x, y ))
+                                            )
+                                    in
+                                    let
+                                        _ =
+                                            Debug.log "done" ( x, y )
+                                    in
+                                    ()
+                                )
+                    )
+    in
+    ()

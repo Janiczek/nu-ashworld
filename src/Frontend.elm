@@ -7,7 +7,7 @@ import Data.Fight exposing (FightInfo, FightResult(..))
 import Data.HealthStatus as HealthStatus
 import Data.Map as Map
     exposing
-        ( Coords
+        ( TileCoords
         , TileNum
         , TileVisibility(..)
         )
@@ -212,7 +212,7 @@ update msg model =
                         Player cPlayer ->
                             let
                                 playerCoords =
-                                    Map.toCoords cPlayer.location
+                                    Map.toTileCoords cPlayer.location
                             in
                             ( { model
                                 | mapMouseCoords =
@@ -411,7 +411,7 @@ contentView model =
                     (\player ->
                         mapView
                             { tileVisibility = Player.tileVisibility player
-                            , playerCoords = Map.toCoords player.location
+                            , playerCoords = Map.toTileCoords player.location
                             , mouseCoords = model.mapMouseCoords
                             }
                     )
@@ -500,8 +500,8 @@ faqView =
 
 mapView :
     { tileVisibility : TileNum -> TileVisibility
-    , playerCoords : Coords
-    , mouseCoords : Maybe ( Coords, List Coords )
+    , playerCoords : TileCoords
+    , mouseCoords : Maybe ( TileCoords, List TileCoords )
     }
     -> List (Html FrontendMsg)
 mapView { tileVisibility, playerCoords, mouseCoords } =
@@ -515,7 +515,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
         imgTileView { distant } tileNum =
             let
                 ( x, y ) =
-                    Map.toCoords tileNum
+                    Map.toTileCoords tileNum
             in
             -- TODO use seeCity
             H.img
@@ -547,7 +547,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 , seeCity = True
                 }
 
-        mouseTileView : Coords -> Html FrontendMsg
+        mouseTileView : TileCoords -> Html FrontendMsg
         mouseTileView ( x, y ) =
             H.div
                 [ HA.id "map-mouse-tile"
@@ -559,7 +559,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 ]
                 []
 
-        pathTileView : Coords -> Html FrontendMsg
+        pathTileView : TileCoords -> Html FrontendMsg
         pathTileView ( x, y ) =
             H.div
                 [ HA.classList
@@ -626,7 +626,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
     ]
 
 
-changedCoordsDecoder : Maybe ( Coords, List Coords ) -> Decoder Coords
+changedCoordsDecoder : Maybe ( TileCoords, List TileCoords ) -> Decoder TileCoords
 changedCoordsDecoder mouseCoords =
     JD.map2 Tuple.pair
         (JD.field "offsetX" JD.int)
@@ -652,7 +652,7 @@ changedCoordsDecoder mouseCoords =
             )
 
 
-mapMarkerView : Coords -> Html FrontendMsg
+mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
         [ HA.id "map-marker"

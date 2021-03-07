@@ -4,7 +4,7 @@ module Data.Map.Location exposing
     , default
     )
 
-import Data.Map exposing (Coords)
+import Data.Map exposing (TileCoords)
 
 
 default : Location
@@ -51,7 +51,7 @@ type Location
     | VillageNearVaultCity
 
 
-coords : Location -> Coords
+coords : Location -> TileCoords
 coords loc =
     case loc of
         Arroyo ->
