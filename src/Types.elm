@@ -35,7 +35,7 @@ type alias FrontendModel =
     , world : World
     , newChar : NewChar
     , authError : Maybe String
-    , mapMouseCoords : Maybe Coords
+    , mapMouseCoords : Maybe ( Coords, List Coords )
     }
 
 

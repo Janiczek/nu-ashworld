@@ -42,6 +42,7 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic
+import Set
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -204,10 +205,36 @@ update msg model =
             , Cmd.none
             )
 
-        MapMouseAtCoords coords ->
-            ( { model | mapMouseCoords = Just coords }
-            , Cmd.none
-            )
+        MapMouseAtCoords mouseCoords ->
+            case model.world of
+                WorldLoggedIn world ->
+                    case world.player of
+                        Player cPlayer ->
+                            let
+                                playerCoords =
+                                    Map.toCoords cPlayer.location
+                            in
+                            ( { model
+                                | mapMouseCoords =
+                                    Just
+                                        ( mouseCoords
+                                        , Map.touchedTiles
+                                            Map.tileSizeFloat
+                                            (Map.tileCenterPx playerCoords)
+                                            (Map.tileCenterPx mouseCoords)
+                                            |> Set.remove playerCoords
+                                            |> Set.remove mouseCoords
+                                            |> Set.toList
+                                        )
+                              }
+                            , Cmd.none
+                            )
+
+                        _ ->
+                            ( model, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
         MapMouseOut ->
             ( { model | mapMouseCoords = Nothing }
@@ -474,7 +501,7 @@ faqView =
 mapView :
     { tileVisibility : TileNum -> TileVisibility
     , playerCoords : Coords
-    , mouseCoords : Maybe Coords
+    , mouseCoords : Maybe ( Coords, List Coords )
     }
     -> List (Html FrontendMsg)
 mapView { tileVisibility, playerCoords, mouseCoords } =
@@ -532,6 +559,20 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
                 ]
                 []
 
+        pathTileView : Coords -> Html FrontendMsg
+        pathTileView ( x, y ) =
+            H.div
+                [ HA.classList
+                    [ ( "tile", True )
+                    , ( "map-path-tile", True )
+                    ]
+                , cssVars
+                    [ ( "--tile-coord-x", String.fromInt x )
+                    , ( "--tile-coord-y", String.fromInt y )
+                    ]
+                ]
+                []
+
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
             H.div
@@ -559,8 +600,15 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
         ]
         (mapMarkerView playerCoords
             :: mouseEventCatcherView
-            :: H.viewMaybe mouseTileView mouseCoords
-            :: (List.range 0 (Map.tilesCount - 1)
+            :: (case mouseCoords of
+                    Nothing ->
+                        []
+
+                    Just ( mouseCoords_, pathToCoords ) ->
+                        mouseTileView mouseCoords_
+                            :: List.map pathTileView pathToCoords
+               )
+            ++ (List.range 0 (Map.tilesCount - 1)
                     |> List.filterMap
                         (\tileNum ->
                             case tileVisibility tileNum of
@@ -578,7 +626,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
     ]
 
 
-changedCoordsDecoder : Maybe Coords -> Decoder Coords
+changedCoordsDecoder : Maybe ( Coords, List Coords ) -> Decoder Coords
 changedCoordsDecoder mouseCoords =
     JD.map2 Tuple.pair
         (JD.field "offsetX" JD.int)
@@ -595,7 +643,7 @@ changedCoordsDecoder mouseCoords =
                     Nothing ->
                         JD.succeed newCoords
 
-                    Just oldCoords ->
+                    Just ( oldCoords, _ ) ->
                         if oldCoords == newCoords then
                             JD.fail "no change"
 

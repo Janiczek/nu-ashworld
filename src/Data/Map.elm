@@ -239,6 +239,55 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
                 else
                     potentiallyNew
 
+            moveTile : Order -> Coords -> Coords
+            moveTile xVsY_ ( tileX, tileY ) =
+                case xVsY_ of
+                    LT ->
+                        ( tileX + stepX
+                        , tileY
+                        )
+
+                    EQ ->
+                        ( tileX + stepX
+                        , tileY + stepY
+                        )
+
+                    GT ->
+                        ( tileX
+                        , tileY + stepY
+                        )
+
+            movePx : Order -> ( Float, Float ) -> ( Float, Float )
+            movePx xVsY_ ( pxX, pxY ) =
+                case xVsY_ of
+                    LT ->
+                        let
+                            newX =
+                                moveX pxX
+                        in
+                        ( newX
+                        , pxY + (newX - pxX) * moveYForUnitOfX
+                        )
+
+                    EQ ->
+                        let
+                            newX =
+                                moveX pxX
+
+                            newY =
+                                moveY pxY
+                        in
+                        ( newX, newY )
+
+                    GT ->
+                        let
+                            newY =
+                                moveY pxY
+                        in
+                        ( pxX + (newY - pxY) * moveXForUnitOfY
+                        , newY
+                        )
+
             moveX : Float -> Float
             moveX =
                 moveTilePx rayDirXNegative
@@ -302,37 +351,17 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
                 , abs <| (moveY fromPxY - fromPxY) * rayUnitStepSizeY
                 )
 
-            firstStepGoX : Bool
-            firstStepGoX =
-                initRayLengthX < initRayLengthY
+            initXVsY : Order
+            initXVsY =
+                compare initRayLengthX initRayLengthY
 
             firstStepPx : ( Float, Float )
             firstStepPx =
-                if firstStepGoX then
-                    let
-                        newX =
-                            moveX fromPxX
-                    in
-                    ( newX
-                    , fromPxY + (newX - fromPxX) * moveYForUnitOfX
-                    )
-
-                else
-                    let
-                        newY =
-                            moveY fromPxY
-                    in
-                    ( fromPxX + (newY - fromPxY) * moveXForUnitOfY
-                    , newY
-                    )
+                movePx initXVsY ( fromPxX, fromPxY )
 
             firstStepTile : Coords
             firstStepTile =
-                if firstStepGoX then
-                    ( fromTileX + stepX, fromTileY )
-
-                else
-                    ( fromTileX, fromTileY + stepY )
+                moveTile initXVsY fromTile
 
             go : ( Float, Float ) -> Coords -> Set Coords -> Set Coords
             go ( currentX, currentY ) ( x, y ) touched =
@@ -346,16 +375,12 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
                             , abs <| (moveY currentY - currentY) * rayUnitStepSizeY
                             )
 
-                        goX : Bool
-                        goX =
-                            rayLengthX < rayLengthY
+                        xVsY : Order
+                        xVsY =
+                            compare rayLengthX rayLengthY
 
                         ( newX, newY ) =
-                            if goX then
-                                ( x + stepX, y )
-
-                            else
-                                ( x, y + stepY )
+                            moveTile xVsY ( x, y )
 
                         newTouched : Set Coords
                         newTouched =
@@ -363,23 +388,7 @@ touchedTiles tileSizePx ( fromPxX, fromPxY ) ( toPxX, toPxY ) =
 
                         newPx : ( Float, Float )
                         newPx =
-                            if goX then
-                                let
-                                    newX_ =
-                                        moveX currentX
-                                in
-                                ( newX_
-                                , currentY + (newX_ - currentX) * moveYForUnitOfX
-                                )
-
-                            else
-                                let
-                                    newY_ =
-                                        moveY currentY
-                                in
-                                ( currentX + (newY_ - currentY) * moveXForUnitOfY
-                                , newY_
-                                )
+                            movePx xVsY ( currentX, currentY )
                     in
                     go newPx ( newX, newY ) newTouched
         in

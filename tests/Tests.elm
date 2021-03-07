@@ -25,6 +25,7 @@ touchedTiles : Test
 touchedTiles =
     Test.describe "Data.Map.touchedTiles"
         [ touchedTilesExampleNondegenerate
+        , touchedTilesExampleDiagonal
         , touchedTilesCommutativity
         ]
 
@@ -47,6 +48,24 @@ touchedTilesExampleNondegenerate =
                         , ( 5, 2 )
                         , ( 5, 3 )
                         , ( 6, 3 )
+                        ]
+                    )
+
+
+touchedTilesExampleDiagonal : Test
+touchedTilesExampleDiagonal =
+    Test.test "(3,2) -> (0,5)" <|
+        \() ->
+            Data.Map.touchedTiles
+                Data.Map.tileSizeFloat
+                (Data.Map.tileCenterPx ( 3, 2 ))
+                (Data.Map.tileCenterPx ( 0, 5 ))
+                |> Expect.equalSets
+                    (Set.fromList
+                        [ ( 3, 2 )
+                        , ( 2, 3 )
+                        , ( 1, 4 )
+                        , ( 0, 5 )
                         ]
                     )
 

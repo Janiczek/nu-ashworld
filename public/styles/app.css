@@ -442,9 +442,16 @@ ul {
   filter: brightness(50%);
 }
 
+.map-path-tile {
+  background: var(--bg02);
+  opacity: 0.375;
+  pointer-events: none;
+  z-index: 1;
+}
+
 #map-mouse-tile {
   background: var(--bg02);
-  opacity: 0.5;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
