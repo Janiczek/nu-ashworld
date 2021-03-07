@@ -8,6 +8,7 @@ module Data.Special exposing
     , get
     , increment
     , init
+    , isUseful
     , label
     )
 
@@ -31,6 +32,31 @@ type SpecialType
     | Intelligence
     | Agility
     | Luck
+
+
+isUseful : SpecialType -> Bool
+isUseful type_ =
+    case type_ of
+        Strength ->
+            True
+
+        Perception ->
+            True
+
+        Endurance ->
+            True
+
+        Charisma ->
+            False
+
+        Intelligence ->
+            False
+
+        Agility ->
+            False
+
+        Luck ->
+            False
 
 
 label : SpecialType -> String

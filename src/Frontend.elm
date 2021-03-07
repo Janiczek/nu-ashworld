@@ -707,9 +707,16 @@ charCreationView newChar =
             let
                 value =
                     Special.get type_ newChar.special
+
+                isUseful =
+                    Special.isUseful type_
             in
             H.tr
-                [ HA.class "character-special-item" ]
+                [ HA.classList
+                    [ ( "character-special-item", True )
+                    , ( "not-useful", not isUseful )
+                    ]
+                ]
                 [ H.td
                     [ HA.class "character-special-item-dec" ]
                     [ H.button
@@ -723,7 +730,9 @@ charCreationView newChar =
                         [ H.text "[-]" ]
                     ]
                 , H.td
-                    [ HA.class "character-special-item-label" ]
+                    [ HA.class "character-special-item-label"
+                    , HA.attributeIf (not isUseful) skillNotUseful
+                    ]
                     [ H.text <| Special.label type_ ]
                 , H.td
                     [ HA.class "character-special-item-value" ]
@@ -791,6 +800,11 @@ charCreationView newChar =
     ]
 
 
+skillNotUseful : Attribute msg
+skillNotUseful =
+    HA.title "This skill is not yet useful in this version of the game."
+
+
 characterView : CPlayer -> List (Html FrontendMsg)
 characterView player =
     let
@@ -798,11 +812,20 @@ characterView player =
             let
                 value =
                     Special.get type_ player.special
+
+                isUseful =
+                    Special.isUseful type_
             in
             H.tr
-                [ HA.class "character-special-item" ]
+                [ HA.classList
+                    [ ( "character-special-item", True )
+                    , ( "not-useful", not isUseful )
+                    ]
+                ]
                 [ H.td
-                    [ HA.class "character-special-item-label" ]
+                    [ HA.class "character-special-item-label"
+                    , HA.attributeIf (not isUseful) skillNotUseful
+                    ]
                     [ H.text <| Special.label type_ ]
                 , H.td
                     [ HA.class "character-special-item-value" ]

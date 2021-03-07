@@ -355,6 +355,10 @@ ul {
   height: 100%;
 }
 
+.character-special-item.not-useful {
+  opacity: 0.5;
+}
+
 .character-special-item-value {
   padding-left: 20px;
 }
