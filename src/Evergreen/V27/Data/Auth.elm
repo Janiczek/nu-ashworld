@@ -28,3 +28,8 @@ init =
     { name = ""
     , password = Password ""
     }
+
+
+unwrap : Password a -> String
+unwrap (Password password_) =
+    password_
