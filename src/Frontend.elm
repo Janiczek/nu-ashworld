@@ -42,6 +42,7 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic
+import Raycast2D
 import Set
 import Task
 import Time exposing (Posix)

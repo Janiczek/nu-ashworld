@@ -443,14 +443,14 @@ ul {
 }
 
 .map-path-tile {
-  background: var(--bg02);
-  opacity: 0.375;
+  background: var(--fg03);
+  opacity: 0.5;
   pointer-events: none;
   z-index: 1;
 }
 
 #map-mouse-tile {
-  background: var(--bg02);
+  background: var(--fg03);
   opacity: 0.75;
   pointer-events: none;
   z-index: 1;

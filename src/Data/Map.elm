@@ -13,7 +13,6 @@ module Data.Map exposing
     , tilesCount
     , toTileCoords
     , toTileNum
-    , touchedTiles
     )
 
 import Set exposing (Set)
