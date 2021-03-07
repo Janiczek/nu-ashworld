@@ -22,12 +22,12 @@ import Data.Auth
         , Verified
         )
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
-import Data.Location as Location
 import Data.Map as Map
     exposing
         ( TileNum
         , TileVisibility(..)
         )
+import Data.Map.Location as Location
 import Data.NewChar exposing (NewChar)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)

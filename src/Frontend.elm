@@ -5,13 +5,13 @@ import Browser.Navigation as Nav
 import Data.Auth as Auth exposing (Password)
 import Data.Fight exposing (FightInfo, FightResult(..))
 import Data.HealthStatus as HealthStatus
-import Data.Location
 import Data.Map as Map
     exposing
         ( Coords
         , TileNum
         , TileVisibility(..)
         )
+import Data.Map.Location
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -492,8 +492,8 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
             in
             -- TODO use seeCity
             H.img
-                [ HA.width Map.tileWidth
-                , HA.height Map.tileHeight
+                [ HA.width Map.tileSize
+                , HA.height Map.tileSize
                 , HA.src <| Map.tileSrc tileNum
                 , HA.classList
                     [ ( "tile", True )
@@ -554,8 +554,7 @@ mapView { tileVisibility, playerCoords, mouseCoords } =
         , cssVars
             [ ( "--map-columns", String.fromInt Map.columns )
             , ( "--map-rows", String.fromInt Map.rows )
-            , ( "--map-cell-width", String.fromInt Map.tileWidth ++ "px" )
-            , ( "--map-cell-height", String.fromInt Map.tileHeight ++ "px" )
+            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
         (mapMarkerView playerCoords
@@ -588,8 +587,8 @@ changedCoordsDecoder mouseCoords =
             (\( x, y ) ->
                 let
                     newCoords =
-                        ( x // Map.tileWidth
-                        , y // Map.tileHeight
+                        ( x // Map.tileSize
+                        , y // Map.tileSize
                         )
                 in
                 case mouseCoords of

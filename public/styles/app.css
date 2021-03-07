@@ -411,8 +411,8 @@ ul {
 
 #map {
   position: relative;
-  width:  calc(var(--map-columns) * var(--map-cell-width));
-  height: calc(var(--map-rows)    * var(--map-cell-height));
+  width:  calc(var(--map-columns) * var(--map-cell-size));
+  height: calc(var(--map-rows)    * var(--map-cell-size));
   background-color: black;
   user-select: none;
 }
@@ -430,11 +430,11 @@ ul {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--map-cell-width);
-  height: var(--map-cell-height);
+  width: var(--map-cell-size);
+  height: var(--map-cell-size);
   transform: translate(
-    calc(var(--map-cell-width)  * var(--tile-coord-x)),
-    calc(var(--map-cell-height) * var(--tile-coord-y))
+    calc(var(--map-cell-size)  * var(--tile-coord-x)),
+    calc(var(--map-cell-size) * var(--tile-coord-y))
   );
 }
 
@@ -454,8 +454,8 @@ ul {
   left: 0;
   top: 0;
   transform: translate(
-    calc(var(--map-cell-width)  * (0.5 + var(--player-coord-x)) - 50%),
-    calc(var(--map-cell-height) * (0.5 + var(--player-coord-y)) - 50%)
+    calc(var(--map-cell-size)  * (0.5 + var(--player-coord-x)) - 50%),
+    calc(var(--map-cell-size) * (0.5 + var(--player-coord-y)) - 50%)
   );
   z-index: 2;
 }

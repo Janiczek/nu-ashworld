@@ -1,4 +1,4 @@
-module Data.Location exposing
+module Data.Map.Location exposing
     ( Location(..)
     , coords
     , default
