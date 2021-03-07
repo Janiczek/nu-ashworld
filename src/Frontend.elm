@@ -218,7 +218,7 @@ update msg model =
                                 | mapMouseCoords =
                                     Just
                                         ( mouseCoords
-                                        , Map.touchedTiles
+                                        , Raycast2D.touchedTiles
                                             Map.tileSizeFloat
                                             (Map.tileCenterPx playerCoords)
                                             (Map.tileCenterPx mouseCoords)
