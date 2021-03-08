@@ -48,6 +48,14 @@ label level_ =
 
 tooltip : PerceptionLevel -> String
 tooltip level_ =
+    [ healthPerceptionTooltip level_
+    , mapMovementTooltip level_
+    ]
+        |> String.join " "
+
+
+healthPerceptionTooltip : PerceptionLevel -> String
+healthPerceptionTooltip level_ =
     case level_ of
         Perfect ->
             "You see everybody's exact HP and max HP."
@@ -63,3 +71,31 @@ tooltip level_ =
 
         Atrocious ->
             "You have no idea if others are even alive or not."
+
+
+mapMovementTooltip : PerceptionLevel -> String
+mapMovementTooltip level_ =
+    let
+        okayMovement : String
+        okayMovement =
+            "When planning longer route on the map you always go in a mostly efficient straight line but ignore terrain like mountains etc."
+
+        inefficientMovement : String
+        inefficientMovement =
+            "When planning longer route on the map you always go in a (not very efficient) straight line but ignore terrain like mountains etc."
+    in
+    case level_ of
+        Perfect ->
+            okayMovement
+
+        Great ->
+            okayMovement
+
+        Good ->
+            okayMovement
+
+        Bad ->
+            inefficientMovement
+
+        Atrocious ->
+            inefficientMovement

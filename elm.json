@@ -6,6 +6,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "Elm-Canvas/raster-shapes": "1.1.2",
             "Janiczek/elm-raycasting": "1.0.1",
             "billstclair/elm-sha256": "1.0.9",
             "elm/browser": "1.0.2",

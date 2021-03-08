@@ -21,6 +21,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Special as Special exposing (SpecialType)
+import Data.Special.Perception as Perception
 import Data.Tick as Tick
 import Data.World
     exposing
@@ -376,10 +377,8 @@ moveTo newCoords pathTaken clientId player model =
     else if
         pathTaken
             /= Set.remove currentCoords
-                {- TODO in the future allow different ways to create the paths
-                   (like A* that takes terrain into account etc.)
-                -}
-                (Pathfinding.naiveStraightPath
+                (Pathfinding.path
+                    (Perception.level player.special.perception)
                     { from = currentCoords
                     , to = newCoords
                     }

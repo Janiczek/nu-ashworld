@@ -220,7 +220,8 @@ update msg model =
                                 | mapMouseCoords =
                                     Just
                                         ( mouseCoords
-                                        , Pathfinding.naiveStraightPath
+                                        , Pathfinding.path
+                                            (Perception.level cPlayer.special.perception)
                                             { from = playerCoords
                                             , to = mouseCoords
                                             }
