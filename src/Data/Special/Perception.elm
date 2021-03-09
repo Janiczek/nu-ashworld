@@ -1,4 +1,10 @@
-module Data.Special.Perception exposing (PerceptionLevel(..), label, level, tooltip)
+module Data.Special.Perception exposing
+    ( PerceptionLevel(..)
+    , atLeast
+    , label
+    , level
+    , tooltip
+    )
 
 
 type PerceptionLevel
@@ -25,6 +31,30 @@ level perception =
 
     else
         Atrocious
+
+
+toComparable : PerceptionLevel -> Int
+toComparable level_ =
+    case level_ of
+        Atrocious ->
+            1
+
+        Bad ->
+            2
+
+        Good ->
+            3
+
+        Great ->
+            4
+
+        Perfect ->
+            5
+
+
+atLeast : PerceptionLevel -> Int -> Bool
+atLeast neededLevel perception =
+    toComparable (level perception) >= toComparable neededLevel
 
 
 label : PerceptionLevel -> String
@@ -76,13 +106,9 @@ healthPerceptionTooltip level_ =
 mapMovementTooltip : PerceptionLevel -> String
 mapMovementTooltip level_ =
     let
-        terrainAwareMovement : String
-        terrainAwareMovement =
-            "When planning longer route on the map you always choose the most efficient path possible, accounting for terrain like mountains etc."
-
         okayMovement : String
         okayMovement =
-            "When planning longer route on the map you always go in a mostly efficient straight line but ignore terrain like mountains etc."
+            "When planning longer route on the map you always go in a mostly efficient straight line but ignore terrain like mountains etc. You also see the AP cost of your route."
 
         inefficientMovement : String
         inefficientMovement =
@@ -90,7 +116,7 @@ mapMovementTooltip level_ =
     in
     case level_ of
         Perfect ->
-            terrainAwareMovement
+            okayMovement
 
         Great ->
             okayMovement

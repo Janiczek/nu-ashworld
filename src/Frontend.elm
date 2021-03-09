@@ -419,14 +419,7 @@ contentView model =
 
             ( Route.Map, WorldLoggedIn world ) ->
                 withCreatedPlayer world.player
-                    (\player ->
-                        mapView
-                            { knownTiles = player.knownMapTiles
-                            , playerCoords = Map.toTileCoords player.location
-                            , playerAp = Just player.ap
-                            , mouseCoords = model.mapMouseCoords
-                            }
-                    )
+                    (mapView model.mapMouseCoords)
 
             ( Route.Map, _ ) ->
                 mapLoggedOutView
@@ -511,16 +504,17 @@ faqView =
 
 
 mapView :
-    { knownTiles : Set TileNum
-    , playerCoords : TileCoords
-    , playerAp : Maybe Int
-    , mouseCoords : Maybe ( TileCoords, Set TileCoords )
-    }
+    Maybe ( TileCoords, Set TileCoords )
+    -> CPlayer
     -> List (Html FrontendMsg)
-mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
+mapView mouseCoords player =
     let
-        mouseRelatedView : ( ( TileCoords, Set TileCoords ), Int ) -> Html FrontendMsg
-        mouseRelatedView ( ( ( x, y ) as mouseCoords_, pathTaken ), playerAp_ ) =
+        playerCoords : TileCoords
+        playerCoords =
+            Map.toTileCoords player.location
+
+        mouseRelatedView : ( TileCoords, Set TileCoords ) -> Html FrontendMsg
+        mouseRelatedView ( ( x, y ) as mouseCoords_, pathTaken ) =
             let
                 notAllPassable : Bool
                 notAllPassable =
@@ -534,7 +528,7 @@ mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
 
                 tooDistant : Bool
                 tooDistant =
-                    cost > playerAp_
+                    cost > player.ap
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -557,23 +551,24 @@ mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
                     (List.map pathTileView
                         (Set.toList (Set.remove mouseCoords_ pathTaken))
                     )
-                , H.div
-                    [ HA.id "map-cost-info"
-                    , cssVars
-                        [ ( "--tile-coord-x", String.fromInt x )
-                        , ( "--tile-coord-y", String.fromInt y )
-                        ]
-                    ]
-                    [ if notAllPassable then
-                        H.text "Not all tiles in your path are passable."
-
-                      else
-                        H.div []
-                            [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " AP" ]
-                            , H.viewIf tooDistant <|
-                                H.div [] [ H.text <| "You don't have enough AP." ]
+                , H.viewIf (Perception.atLeast Perception.Good player.special.perception) <|
+                    H.div
+                        [ HA.id "map-cost-info"
+                        , cssVars
+                            [ ( "--tile-coord-x", String.fromInt x )
+                            , ( "--tile-coord-y", String.fromInt y )
                             ]
-                    ]
+                        ]
+                        [ if notAllPassable then
+                            H.text "Not all tiles in your path are passable."
+
+                          else
+                            H.div []
+                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " AP" ]
+                                , H.viewIf tooDistant <|
+                                    H.div [] [ H.text <| "You don't have enough AP." ]
+                                ]
+                        ]
                 ]
 
         pathTileView : TileCoords -> Html FrontendMsg
@@ -633,7 +628,7 @@ mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
 
         fogPath : String
         fogPath =
-            Map.distantTiles knownTiles
+            Map.distantTiles player.knownMapTiles
                 |> Set.toList
                 |> List.map (Map.toTileCoords >> fogRectangle)
                 |> String.join " "
@@ -661,11 +656,7 @@ mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
         [ mapMarkerView playerCoords
         , mouseEventCatcherView
         , fogView
-        , H.viewMaybe mouseRelatedView
-            (Maybe.map2 Tuple.pair
-                mouseCoords
-                playerAp
-            )
+        , H.viewMaybe mouseRelatedView mouseCoords
         ]
     ]
 
