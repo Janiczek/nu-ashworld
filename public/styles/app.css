@@ -5,9 +5,10 @@
   --fg03: #007C00;
   --fg02: #00C000;
   --fg01: #3CF800;
-
   --fg-highlight: #FCFD7D;
+
   --fg-highlight-transparent: rgba(252,253,125,0.25);
+
   --table-border: rgba(0,124,0,0.5); /* fg03 with opacity 0.5 */
 
   /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
@@ -424,6 +425,33 @@ ul {
   user-select: none;
 }
 
+#map-cost-info {
+  transform: translate(
+    calc(var(--map-cell-size) * (0.5 + var(--tile-coord-x)) - 50%),
+    calc(var(--map-cell-size) * var(--tile-coord-y) - 100% - 10px)
+  );
+  width: min-content;
+  white-space: nowrap;
+  padding: 20px;
+  background-color: var(--bg01);
+  color: var(--bad-path-color, var(--fg02));
+  position: relative;
+  z-index: 3;
+}
+
+#map-mouse-layer {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+}
+
+#map-mouse-layer.too-distant,
+#map-mouse-layer.not-all-passable {
+  --bad-path-color: var(--fg-highlight);
+}
+
 #map-fog {
   fill: #000000;
   fill-opacity: 0.5;
@@ -436,7 +464,7 @@ ul {
 }
 
 #map-mouse-event-catcher {
-  z-index: 3;
+  z-index: 4;
   left: 0;
   top: 0;
   right: 0;
@@ -456,15 +484,23 @@ ul {
   );
 }
 
+#map-path-tiles {
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+}
+
 .map-path-tile {
-  background: var(--fg03);
+  background: var(--bad-path-color,var(--fg03));
   opacity: 0.5;
   pointer-events: none;
   z-index: 1;
 }
 
 #map-mouse-tile {
-  background: var(--fg03);
+  background: var(--bad-path-color,var(--fg03));
   opacity: 0.75;
   pointer-events: none;
   z-index: 1;

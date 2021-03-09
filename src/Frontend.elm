@@ -12,6 +12,7 @@ import Data.Map as Map
         )
 import Data.Map.Location
 import Data.Map.Pathfinding as Pathfinding
+import Data.Map.Terrain as Terrain
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -422,6 +423,7 @@ contentView model =
                         mapView
                             { knownTiles = player.knownMapTiles
                             , playerCoords = Map.toTileCoords player.location
+                            , playerAp = Just player.ap
                             , mouseCoords = model.mapMouseCoords
                             }
                     )
@@ -511,22 +513,68 @@ faqView =
 mapView :
     { knownTiles : Set TileNum
     , playerCoords : TileCoords
+    , playerAp : Maybe Int
     , mouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
     -> List (Html FrontendMsg)
-mapView { knownTiles, playerCoords, mouseCoords } =
+mapView { knownTiles, playerCoords, mouseCoords, playerAp } =
     let
-        mouseTileView : TileCoords -> Html FrontendMsg
-        mouseTileView ( x, y ) =
+        mouseRelatedView : ( ( TileCoords, Set TileCoords ), Int ) -> Html FrontendMsg
+        mouseRelatedView ( ( ( x, y ) as mouseCoords_, pathTaken ), playerAp_ ) =
+            let
+                notAllPassable : Bool
+                notAllPassable =
+                    pathTaken
+                        |> Set.toList
+                        |> List.any (Terrain.forCoords >> Terrain.isPassable >> not)
+
+                cost : Int
+                cost =
+                    Pathfinding.apCost pathTaken
+
+                tooDistant : Bool
+                tooDistant =
+                    cost > playerAp_
+            in
             H.div
-                [ HA.id "map-mouse-tile"
-                , HA.class "tile"
-                , cssVars
-                    [ ( "--tile-coord-x", String.fromInt x )
-                    , ( "--tile-coord-y", String.fromInt y )
+                [ HA.id "map-mouse-layer"
+                , HA.classList
+                    [ ( "too-distant", tooDistant )
+                    , ( "not-all-passable", notAllPassable )
                     ]
                 ]
-                []
+                [ H.div
+                    [ HA.id "map-mouse-tile"
+                    , HA.class "tile"
+                    , cssVars
+                        [ ( "--tile-coord-x", String.fromInt x )
+                        , ( "--tile-coord-y", String.fromInt y )
+                        ]
+                    ]
+                    []
+                , H.div
+                    [ HA.id "map-path-tiles" ]
+                    (List.map pathTileView
+                        (Set.toList (Set.remove mouseCoords_ pathTaken))
+                    )
+                , H.div
+                    [ HA.id "map-cost-info"
+                    , cssVars
+                        [ ( "--tile-coord-x", String.fromInt x )
+                        , ( "--tile-coord-y", String.fromInt y )
+                        ]
+                    ]
+                    [ if notAllPassable then
+                        H.text "Not all tiles in your path are passable."
+
+                      else
+                        H.div []
+                            [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " AP" ]
+                            , H.viewIf tooDistant <|
+                                H.div [] [ H.text <| "You don't have enough AP." ]
+                            ]
+                    ]
+                ]
 
         pathTileView : TileCoords -> Html FrontendMsg
         pathTileView ( x, y ) =
@@ -610,18 +658,15 @@ mapView { knownTiles, playerCoords, mouseCoords } =
             , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
-        (mapMarkerView playerCoords
-            :: mouseEventCatcherView
-            :: fogView
-            :: (case mouseCoords of
-                    Nothing ->
-                        []
-
-                    Just ( mouseCoords_, pathToCoords ) ->
-                        mouseTileView mouseCoords_
-                            :: List.map pathTileView (Set.toList (Set.remove mouseCoords_ pathToCoords))
-               )
-        )
+        [ mapMarkerView playerCoords
+        , mouseEventCatcherView
+        , fogView
+        , H.viewMaybe mouseRelatedView
+            (Maybe.map2 Tuple.pair
+                mouseCoords
+                playerAp
+            )
+        ]
     ]
 
 
