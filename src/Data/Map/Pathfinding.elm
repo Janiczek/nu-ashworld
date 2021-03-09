@@ -3,6 +3,7 @@ module Data.Map.Pathfinding exposing
     , path
     )
 
+import AStar
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Terrain as Terrain
 import Data.Special exposing (Special)
@@ -21,8 +22,6 @@ apCost pathTaken =
         |> ceiling
 
 
-{-| TODO add leastApCostPath that will use A\*
--}
 path :
     PerceptionLevel
     ->
@@ -33,7 +32,7 @@ path :
 path level =
     case level of
         Perfect ->
-            okayPath
+            terrainAwarePath
 
         Great ->
             okayPath
@@ -84,3 +83,28 @@ okayPath { from, to } =
         |> List.map toCoords
         |> Set.fromList
         |> Set.remove from
+
+
+terrainAwarePath :
+    { from : TileCoords
+    , to : TileCoords
+    }
+    -> Set TileCoords
+terrainAwarePath { from, to } =
+    AStar.findPath
+        {- This implementation of A* always has the goal tile as the first
+           argument, and any candidate tile from the open set as the second
+           argument. We can take advantage of that and treat this
+           (from -> to -> cost) function as a (tile -> cost) function by ignoring
+           the first argument.
+
+           This makes the algorithm do much more work than a simple manhattanCost
+           or straightLineCost would though. TODO optimize it! Find a way to do
+           A* that cares about terrains, fast.
+        -}
+        (\_ tileCoords -> Terrain.apCost (Terrain.forCoords tileCoords))
+        Map.neighbours
+        from
+        to
+        |> Maybe.withDefault []
+        |> Set.fromList

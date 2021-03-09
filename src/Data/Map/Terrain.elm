@@ -27,8 +27,7 @@ apCost : Terrain -> Float
 apCost terrain_ =
     case terrain_ of
         Ocean ->
-            -- anything >= Logic.maxAp is non-passable
-            toFloat Logic.maxAp
+            20
 
         Coast ->
             1
