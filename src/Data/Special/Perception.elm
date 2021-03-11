@@ -106,6 +106,10 @@ healthPerceptionTooltip level_ =
 mapMovementTooltip : PerceptionLevel -> String
 mapMovementTooltip level_ =
     let
+        terrainAwareOptimalMovement : String
+        terrainAwareOptimalMovement =
+            "When planning longer route on the map you always go in the most efficient line, taking into consideration the terrain like mountains etc. You also see the AP cost of your route."
+
         okayMovement : String
         okayMovement =
             "When planning longer route on the map you always go in a mostly efficient straight line but ignore terrain like mountains etc. You also see the AP cost of your route."
@@ -116,7 +120,7 @@ mapMovementTooltip level_ =
     in
     case level_ of
         Perfect ->
-            okayMovement
+            terrainAwareOptimalMovement
 
         Great ->
             okayMovement

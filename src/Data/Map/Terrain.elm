@@ -27,7 +27,10 @@ apCost : Terrain -> Float
 apCost terrain_ =
     case terrain_ of
         Ocean ->
-            20
+            {- Non-passable tiles: as low cost as we can get away with, while not
+               being used by A* as a part of a path.
+            -}
+            3
 
         Coast ->
             1

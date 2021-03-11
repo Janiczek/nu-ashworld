@@ -10,6 +10,7 @@ import Data.Special.Perception exposing (PerceptionLevel(..))
 import RasterShapes
 import Raycast2D
 import Set exposing (Set)
+import Vendored.AStar as AStar
 
 
 apCost : Set TileCoords -> Int
@@ -31,7 +32,7 @@ path :
 path level =
     case level of
         Perfect ->
-            okayPath
+            terrainAwareOptimalPath
 
         Great ->
             okayPath
@@ -82,3 +83,19 @@ okayPath { from, to } =
         |> List.map toCoords
         |> Set.fromList
         |> Set.remove from
+
+
+terrainAwareOptimalPath :
+    { from : TileCoords
+    , to : TileCoords
+    }
+    -> Set TileCoords
+terrainAwareOptimalPath { from, to } =
+    AStar.findPath
+        (\_ neighbourTileCoords -> Terrain.apCost (Terrain.forCoords neighbourTileCoords))
+        AStar.manhattanHeuristic
+        Map.neighbours
+        from
+        to
+        |> Maybe.withDefault []
+        |> Set.fromList
