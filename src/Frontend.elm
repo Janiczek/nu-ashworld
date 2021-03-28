@@ -811,7 +811,7 @@ charCreationView newChar =
             [ HA.class "character-special-available-number" ]
             [ H.text <| String.fromInt newChar.availableSpecial ]
         ]
-    , [ ( "HP"
+    , [ ( "Hitpoints"
         , String.fromInt <|
             Logic.hitpoints
                 { level = 1
@@ -826,6 +826,9 @@ charCreationView newChar =
         , Perception.label perceptionLevel
             ++ ". "
             ++ Perception.tooltip perceptionLevel
+        )
+      , ( "Action Points"
+        , String.fromInt <| Logic.actionPoints newChar.special
         )
       ]
         |> List.map itemView
@@ -939,6 +942,10 @@ characterView player =
       , ( "Perception Level"
         , Perception.label perceptionLevel
         , Just <| Perception.tooltip perceptionLevel
+        )
+      , ( "Action Points"
+        , String.fromInt <| Logic.actionPoints player.special
+        , Nothing
         )
       ]
         |> List.map itemView

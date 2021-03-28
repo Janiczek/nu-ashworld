@@ -53,7 +53,7 @@ isUseful type_ =
             False
 
         Agility ->
-            False
+            True
 
         Luck ->
             False
