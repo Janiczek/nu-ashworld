@@ -204,20 +204,28 @@ generator initPlayers =
             let
                 availableAp =
                     playerAp who ongoing
+
+                chanceToHit : ShotType -> Float
+                chanceToHit shot =
+                    toFloat
+                        (Logic.unarmedChanceToHit
+                            { attackerSpecial = player_ who ongoing |> .special
+                            , targetSpecial = player_ (theOther who) ongoing |> .special
+                            , distanceHexes = ongoing.distanceHexes
+                            , shotType = shot
+                            }
+                        )
+                        / 100
             in
-            Random.uniform NormalShot
+            Random.weighted
+                ( chanceToHit NormalShot, NormalShot )
                 (if availableAp >= attackApCost { isAimedShot = True } then
                     ShotType.allAimed
-                        |> List.map AimedShot
-                        |> List.filter
+                        |> List.map
                             (\shot ->
-                                Logic.unarmedChanceToHit
-                                    { attackerSpecial = player_ who ongoing |> .special
-                                    , targetSpecial = player_ (theOther who) ongoing |> .special
-                                    , distanceHexes = ongoing.distanceHexes
-                                    , shotType = shot
-                                    }
-                                    > 0
+                                ( chanceToHit (AimedShot shot)
+                                , AimedShot shot
+                                )
                             )
 
                  else
