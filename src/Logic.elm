@@ -4,8 +4,8 @@ module Logic exposing
     , armourClass
     , healingRate
     , hitpoints
-    , meleeChanceToHit
     , sequence
+    , unarmedChanceToHit
     , xpGained
     )
 
@@ -93,15 +93,20 @@ darknessPenalty isItDark distanceHexes =
         0
 
 
-meleeChanceToHit :
+unarmedChanceToHit :
     { attackerSpecial : Special
     , targetSpecial : Special
-    , isItDark : Bool
     , distanceHexes : Int
     , shotType : ShotType
     }
     -> Int
-meleeChanceToHit r =
+unarmedChanceToHit r =
+    let
+        -- TODO vary the nighttime
+        isItDark =
+            False
+    in
+    -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
     if r.distanceHexes > 0 then
         0
 
@@ -109,13 +114,12 @@ meleeChanceToHit r =
         let
             skillPercentage : Int
             skillPercentage =
-                -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
                 -- TODO take this from the skills record in the SPlayer once we have it. Right now we compute the initial value
                 30 + 2 * (r.attackerSpecial.strength + r.attackerSpecial.agility)
 
             shotPenalty : Int
             shotPenalty =
-                ShotType.penalty r.shotType
+                ShotType.chanceToHitPenalty r.shotType
         in
         (skillPercentage
             - armourClass r.targetSpecial
@@ -125,7 +129,7 @@ meleeChanceToHit r =
                when distance = 0:
             -}
             - distancePenalty r.distanceHexes
-            - darknessPenalty r.isItDark r.distanceHexes
+            - darknessPenalty isItDark r.distanceHexes
         )
             |> clamp 0 95
 

@@ -1,7 +1,12 @@
 module Data.Fight.ShotType exposing
     ( AimedShot(..)
     , ShotType(..)
-    , penalty
+    , all
+    , allAimed
+    , apCostPenalty
+    , chanceToHitPenalty
+    , isAimed
+    , label
     )
 
 
@@ -15,12 +20,52 @@ type AimedShot
     | Torso
     | Eyes
     | Groin
-    | Arms
-    | Legs
+    | LeftArm
+    | RightArm
+    | LeftLeg
+    | RightLeg
 
 
-penalty : ShotType -> Int
-penalty shot =
+isAimed : ShotType -> Bool
+isAimed shot =
+    case shot of
+        NormalShot ->
+            False
+
+        AimedShot _ ->
+            True
+
+
+all : List ShotType
+all =
+    NormalShot
+        :: List.map AimedShot allAimed
+
+
+allAimed : List AimedShot
+allAimed =
+    [ Head
+    , Torso
+    , Eyes
+    , Groin
+    , LeftArm
+    , RightArm
+    , LeftLeg
+    , RightLeg
+    ]
+
+
+apCostPenalty : { isAimedShot : Bool } -> Int
+apCostPenalty { isAimedShot } =
+    if isAimedShot then
+        1
+
+    else
+        0
+
+
+chanceToHitPenalty : ShotType -> Int
+chanceToHitPenalty shot =
     case shot of
         NormalShot ->
             0
@@ -44,8 +89,42 @@ aimedShotPenalty shot =
         Groin ->
             30
 
-        Arms ->
+        LeftArm ->
             30
 
-        Legs ->
+        RightArm ->
+            30
+
+        LeftLeg ->
             20
+
+        RightLeg ->
+            20
+
+
+label : AimedShot -> String
+label shot =
+    case shot of
+        Head ->
+            "head"
+
+        Torso ->
+            "torso"
+
+        Eyes ->
+            "eyes"
+
+        Groin ->
+            "groin"
+
+        LeftArm ->
+            "left arm"
+
+        RightArm ->
+            "right arm"
+
+        LeftLeg ->
+            "left leg"
+
+        RightLeg ->
+            "right leg"

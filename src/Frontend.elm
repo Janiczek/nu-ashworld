@@ -4,6 +4,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth exposing (Password)
 import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
+import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.HealthStatus as HealthStatus
 import Data.Map as Map
     exposing
@@ -1024,8 +1025,17 @@ fightView fight =
                                                     ++ String.fromInt remainingDistanceHexes
                                                     ++ " hexes."
 
-                                            Attack { damage, remainingHp } ->
-                                                "attacks "
+                                            Attack { damage, remainingHp, shotType } ->
+                                                (case shotType of
+                                                    NormalShot ->
+                                                        ""
+
+                                                    AimedShot aimed ->
+                                                        "aims for "
+                                                            ++ ShotType.label aimed
+                                                            ++ " and "
+                                                )
+                                                    ++ "attacks "
                                                     ++ other
                                                     ++ " for "
                                                     ++ String.fromInt damage

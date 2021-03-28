@@ -7,6 +7,7 @@ module Data.Fight exposing
     , targetAlreadyDead
     )
 
+import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Perk as Perk
 import Data.Player as Player exposing (PlayerName, SPlayer)
 import Data.Player.SPlayer as SPlayer
@@ -53,8 +54,15 @@ theOther who =
 type FightAction
     = -- TODO later Reload, Heal, WalkAway, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
-    | ComeCloser { hexes : Int, remainingDistanceHexes : Int }
-    | Attack { damage : Int, remainingHp : Int }
+    | ComeCloser
+        { hexes : Int
+        , remainingDistanceHexes : Int
+        }
+    | Attack
+        { damage : Int
+        , shotType : ShotType
+        , remainingHp : Int
+        }
 
 
 type alias OngoingFight =
@@ -74,12 +82,11 @@ generator :
     -> Generator FightInfo
 generator initPlayers =
     let
-        -- TODO for unarmed attacks check that the range is 1? distance = 0?
         -- TODO for non-unarmed attacks check that the range is <= weapon's range
-        startingDistance : Int
+        startingDistance : Generator Int
         startingDistance =
-            -- TODO vary this? based on the Perception / perks / Outdoorsman / ...?
-            15
+            -- TODO vary this based on the Perception / perks / Outdoorsman / ...?
+            Random.int 10 20
 
         attackerMaxAp : Int
         attackerMaxAp =
@@ -89,15 +96,19 @@ generator initPlayers =
         targetMaxAp =
             Logic.actionPoints initPlayers.target.special
 
-        initialFight : OngoingFight
+        initialFight : Generator OngoingFight
         initialFight =
-            { distanceHexes = startingDistance
-            , attacker = initPlayers.attacker
-            , target = initPlayers.target
-            , attackerAp = attackerMaxAp
-            , targetAp = targetMaxAp
-            , reverseLog = [ ( Attacker, Start { distanceHexes = startingDistance } ) ]
-            }
+            startingDistance
+                |> Random.map
+                    (\distance ->
+                        { distanceHexes = distance
+                        , attacker = initPlayers.attacker
+                        , target = initPlayers.target
+                        , attackerAp = attackerMaxAp
+                        , targetAp = targetMaxAp
+                        , reverseLog = [ ( Attacker, Start { distanceHexes = distance } ) ]
+                        }
+                    )
 
         sequenceOrder : List Who
         sequenceOrder =
@@ -135,12 +146,16 @@ generator initPlayers =
         attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
         attackWhilePossible who ongoing =
             let
+                myHp =
+                    player_ who ongoing |> .hp
+
                 otherHp =
-                    player_ (theOther who) ongoing
-                        |> .hp
+                    player_ (theOther who) ongoing |> .hp
+
+                minApCost =
+                    attackApCost { isAimedShot = False }
             in
-            -- TODO perhaps check `who`'s HP too?
-            if playerAp who ongoing >= attackApCost && otherHp > 0 then
+            if playerAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
                 Random.constant ongoing
                     |> Random.andThen (attack who)
                     |> Random.andThen (attackWhilePossible who)
@@ -179,13 +194,42 @@ generator initPlayers =
                 Target ->
                     { ongoing | targetAp = ongoing.targetAp - apToSubtract }
 
-        attackApCost : Int
-        attackApCost =
-            -- TODO vary this based on aimed shot / weapon / ...
+        baseApCost : Int
+        baseApCost =
+            -- TODO vary this based on weapon / ...
             3
 
-        rollDamage : Who -> OngoingFight -> Generator Int
-        rollDamage who ongoing =
+        shotType : Who -> OngoingFight -> Generator ShotType
+        shotType who ongoing =
+            let
+                availableAp =
+                    playerAp who ongoing
+            in
+            Random.uniform NormalShot
+                (if availableAp >= attackApCost { isAimedShot = True } then
+                    ShotType.allAimed
+                        |> List.map AimedShot
+                        |> List.filter
+                            (\shot ->
+                                Logic.unarmedChanceToHit
+                                    { attackerSpecial = player_ who ongoing |> .special
+                                    , targetSpecial = player_ (theOther who) ongoing |> .special
+                                    , distanceHexes = ongoing.distanceHexes
+                                    , shotType = shot
+                                    }
+                                    > 0
+                            )
+
+                 else
+                    []
+                )
+
+        attackApCost : { isAimedShot : Bool } -> Int
+        attackApCost r =
+            baseApCost + ShotType.apCostPenalty r
+
+        rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
+        rollDamage who ongoing shotType_ =
             -- TODO plug in the actual damage calculation
             Random.constant 3
 
@@ -197,23 +241,32 @@ generator initPlayers =
                     theOther who
             in
             -- TODO for now, everything is unarmed
-            if ongoing.distanceHexes == 0 && playerAp who ongoing >= attackApCost then
-                rollDamage who ongoing
-                    |> Random.map
-                        (\damage ->
-                            ongoing
-                                |> addLog who
-                                    (Attack
-                                        { damage = damage
-                                        , remainingHp = .hp (player_ other ongoing) - damage
-                                        }
+            shotType who ongoing
+                |> Random.andThen
+                    (\shot ->
+                        let
+                            apCost =
+                                attackApCost { isAimedShot = ShotType.isAimed shot }
+                        in
+                        if ongoing.distanceHexes == 0 && playerAp who ongoing >= apCost then
+                            rollDamage who ongoing shot
+                                |> Random.map
+                                    (\damage ->
+                                        ongoing
+                                            |> addLog who
+                                                (Attack
+                                                    { damage = damage
+                                                    , shotType = shot
+                                                    , remainingHp = .hp (player_ other ongoing) - damage
+                                                    }
+                                                )
+                                            |> subtractAp who apCost
+                                            |> updatePlayer other (SPlayer.subtractHp damage)
                                     )
-                                |> subtractAp who attackApCost
-                                |> updatePlayer other (SPlayer.subtractHp damage)
-                        )
 
-            else
-                Random.constant ongoing
+                        else
+                            Random.constant ongoing
+                    )
 
         comeCloser : Who -> OngoingFight -> Generator OngoingFight
         comeCloser who ongoing =
@@ -354,7 +407,7 @@ generator initPlayers =
         -- based on various factors attacks take ~5 AP
     in
     initialFight
-        |> turn Attacker
+        |> Random.andThen (turn Attacker)
         |> Random.andThen (turn Target)
         |> Random.andThen turnsBySequenceLoop
         |> Random.map finalizeFight
