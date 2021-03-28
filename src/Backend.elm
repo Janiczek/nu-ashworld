@@ -20,6 +20,7 @@ import Data.Player as Player
         , PlayerName
         , SPlayer
         )
+import Data.Player.SPlayer as SPlayer
 import Data.Special as Special exposing (SpecialType)
 import Data.Special.Perception as Perception
 import Data.Tick as Tick
@@ -193,48 +194,6 @@ processTick model =
     }
 
 
-persistFight : FightInfo -> Model -> Model
-persistFight ({ attacker, target } as fightInfo) model =
-    case fightInfo.result of
-        AttackerWon { xpGained, capsGained } ->
-            model
-                -- TODO set HP of the attacker (dmg done to him?)
-                |> setHp 0 target
-                |> addXp xpGained attacker
-                |> addCaps capsGained attacker
-                |> subtractCaps capsGained target
-                |> incWins attacker
-                |> incLosses target
-                |> decAp attacker
-
-        TargetWon { xpGained, capsGained } ->
-            model
-                -- TODO set HP of the target (dmg done to him?)
-                |> setHp 0 attacker
-                |> addXp xpGained target
-                |> addCaps capsGained target
-                |> subtractCaps capsGained attacker
-                |> incWins target
-                |> incLosses attacker
-                |> decAp attacker
-
-        TargetAlreadyDead ->
-            model
-                |> decAp attacker
-
-        BothDead ->
-            model
-                |> setHp 0 attacker
-                |> setHp 0 target
-                |> decAp attacker
-
-        NobodyDead ->
-            model
-                -- TODO set HP of attacker (dmg done to him)
-                -- TODO set HP of target (dmg done to him)
-                |> decAp attacker
-
-
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend _ clientId msg model =
     let
@@ -379,9 +338,9 @@ moveTo newCoords pathTaken clientId player model =
         currentCoords =
             Map.toTileCoords player.location
 
-        apCost : Int
-        apCost =
-            Pathfinding.apCost pathTaken
+        tickCost : Int
+        tickCost =
+            Pathfinding.tickCost pathTaken
     in
     if currentCoords == newCoords then
         ( model, Cmd.none )
@@ -398,14 +357,14 @@ moveTo newCoords pathTaken clientId player model =
     then
         ( model, Cmd.none )
 
-    else if apCost > player.ap then
+    else if tickCost > player.ticks then
         ( model, Cmd.none )
 
     else
         let
             newModel =
                 model
-                    |> subtractAp apCost player.name
+                    |> subtractTicks tickCost player.name
                     |> setLocation (Map.toTileNum newCoords) player.name
                     |> addKnownMapTiles (Set.map Map.toTileNum pathTaken) player.name
         in
@@ -535,67 +494,62 @@ updatePlayer fn playerName model =
 
 setHp : Int -> PlayerName -> Model -> Model
 setHp newHp =
-    updatePlayer (\player -> { player | hp = newHp })
+    updatePlayer (SPlayer.setHp newHp)
 
 
 addXp : Int -> PlayerName -> Model -> Model
-addXp addedXp =
-    updatePlayer (\player -> { player | xp = player.xp + addedXp })
+addXp n =
+    updatePlayer (SPlayer.addXp n)
 
 
 addCaps : Int -> PlayerName -> Model -> Model
-addCaps addedCaps =
-    updatePlayer (\player -> { player | caps = player.caps + addedCaps })
+addCaps n =
+    updatePlayer (SPlayer.addCaps n)
 
 
 subtractCaps : Int -> PlayerName -> Model -> Model
-subtractCaps addedCaps =
-    updatePlayer (\player -> { player | caps = max 0 <| player.caps - addedCaps })
+subtractCaps n =
+    updatePlayer (SPlayer.subtractCaps n)
 
 
 incWins : PlayerName -> Model -> Model
 incWins =
-    updatePlayer (\player -> { player | wins = player.wins + 1 })
+    updatePlayer SPlayer.incWins
 
 
 incLosses : PlayerName -> Model -> Model
 incLosses =
-    updatePlayer (\player -> { player | losses = player.losses + 1 })
+    updatePlayer SPlayer.incLosses
 
 
 incSpecial : SpecialType -> PlayerName -> Model -> Model
 incSpecial type_ =
-    updatePlayer (\player -> { player | special = Special.increment type_ player.special })
+    updatePlayer (SPlayer.incSpecial type_)
 
 
 decAvailableSpecial : PlayerName -> Model -> Model
 decAvailableSpecial =
-    updatePlayer (\player -> { player | availableSpecial = player.availableSpecial - 1 })
+    updatePlayer SPlayer.decAvailableSpecial
 
 
-decAp : PlayerName -> Model -> Model
-decAp =
-    updatePlayer (\player -> { player | ap = max 0 (player.ap - 1) })
-
-
-subtractAp : Int -> PlayerName -> Model -> Model
-subtractAp n =
-    updatePlayer (\player -> { player | ap = max 0 (player.ap - n) })
+subtractTicks : Int -> PlayerName -> Model -> Model
+subtractTicks n =
+    updatePlayer (SPlayer.subtractTicks n)
 
 
 setLocation : TileNum -> PlayerName -> Model -> Model
 setLocation tileNum =
-    updatePlayer (\player -> { player | location = tileNum })
+    updatePlayer (SPlayer.setLocation tileNum)
 
 
 addKnownMapTiles : Set TileNum -> PlayerName -> Model -> Model
-addKnownMapTiles addedKnownTiles =
-    updatePlayer (\player -> { player | knownMapTiles = Set.union addedKnownTiles player.knownMapTiles })
+addKnownMapTiles tiles =
+    updatePlayer (SPlayer.addKnownMapTiles tiles)
 
 
 tickAddAp : Player SPlayer -> Player SPlayer
 tickAddAp =
-    Player.map (\player -> { player | ap = min Logic.maxAp (player.ap + Tick.acPerTick) })
+    Player.map (SPlayer.addTicks Tick.ticksAddedPerTick)
 
 
 tickHeal : Player SPlayer -> Player SPlayer
@@ -603,12 +557,9 @@ tickHeal =
     Player.map
         (\player ->
             if player.hp < player.maxHp then
-                { player
-                    | hp =
-                        -- Logic.healingRate already accounts for tick healing rate multiplier
-                        (player.hp + Logic.healingRate player.special)
-                            |> min player.maxHp
-                }
+                -- Logic.healingRate already accounts for tick healing rate multiplier
+                player
+                    |> SPlayer.addHp (Logic.healingRate player.special)
 
             else
                 player
@@ -638,8 +589,7 @@ recalculateHp =
                     else
                         min player.hp newMaxHp
             in
-            { player
-                | hp = newHp
-                , maxHp = newMaxHp
-            }
+            player
+                |> SPlayer.setMaxHp newMaxHp
+                |> SPlayer.setHp newHp
         )

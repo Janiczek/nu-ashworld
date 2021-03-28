@@ -9,6 +9,7 @@ module Data.Fight exposing
 
 import Data.Perk as Perk
 import Data.Player as Player exposing (PlayerName, SPlayer)
+import Data.Player.SPlayer as SPlayer
 import Data.Special exposing (Special)
 import Logic
 import Random exposing (Generator)
@@ -16,13 +17,16 @@ import Random.Extra as Random
 
 
 type alias FightInfo =
-    { attacker : PlayerName
-    , target : PlayerName
+    { attacker : SPlayer
+    , target : SPlayer
     , log : List ( Who, FightAction )
     , result : FightResult
     }
 
 
+{-| These are only for presentation purposes, at the time of construction they
+have already been udpated in the SPlayer.
+-}
 type FightResult
     = AttackerWon { xpGained : Int, capsGained : Int }
     | TargetWon { xpGained : Int, capsGained : Int }
@@ -36,6 +40,16 @@ type Who
     | Target
 
 
+theOther : Who -> Who
+theOther who =
+    case who of
+        Attacker ->
+            Target
+
+        Target ->
+            Attacker
+
+
 type FightAction
     = -- TODO later Reload, WalkAway, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
@@ -44,8 +58,11 @@ type FightAction
 
 
 type alias OngoingFight =
-    { attackerHp : Int
-    , targetHp : Int
+    { distanceHexes : Int
+    , attacker : SPlayer
+    , target : SPlayer
+    , attackerAp : Int
+    , targetAp : Int
     , reverseLog : List ( Who, FightAction )
     }
 
@@ -55,7 +72,7 @@ generator :
     , target : SPlayer
     }
     -> Generator FightInfo
-generator { attacker, target } =
+generator initPlayers =
     let
         -- TODO for unarmed attacks check that the range is 1? distance = 0?
         -- TODO for non-unarmed attacks check that the range is <= weapon's range
@@ -64,17 +81,28 @@ generator { attacker, target } =
             -- TODO vary this? based on the Perception / perks / Outdoorsman / ...?
             15
 
+        attackerMaxAp : Int
+        attackerMaxAp =
+            Logic.actionPoints initPlayers.attacker.special
+
+        targetMaxAp : Int
+        targetMaxAp =
+            Logic.actionPoints initPlayers.target.special
+
         initialFight : OngoingFight
         initialFight =
-            { attackerHp = attacker.hp
-            , targetHp = target.hp
+            { distanceHexes = startingDistance
+            , attacker = initPlayers.attacker
+            , target = initPlayers.target
+            , attackerAp = attackerMaxAp
+            , targetAp = targetMaxAp
             , reverseLog = [ ( Attacker, Start { distanceHexes = startingDistance } ) ]
             }
 
         sequenceOrder : List Who
         sequenceOrder =
-            [ ( Attacker, attacker )
-            , ( Target, target )
+            [ ( Attacker, initPlayers.attacker )
+            , ( Target, initPlayers.target )
             ]
                 |> List.sortBy
                     (\( _, player ) ->
@@ -89,7 +117,104 @@ generator { attacker, target } =
 
         turn : Who -> OngoingFight -> Generator OngoingFight
         turn who ongoing =
-            Debug.todo "turn"
+            ongoing
+                |> resetAp who
+                |> Random.constant
+                |> Random.andThen (comeCloser who)
+                |> Random.andThen (attackUntilApRunsOut who)
+
+        resetAp : Who -> OngoingFight -> OngoingFight
+        resetAp who ongoing =
+            case who of
+                Attacker ->
+                    { ongoing | attackerAp = attackerMaxAp }
+
+                Target ->
+                    { ongoing | targetAp = targetMaxAp }
+
+        attackUntilApRunsOut : Who -> OngoingFight -> Generator OngoingFight
+        attackUntilApRunsOut who ongoing =
+            if playerAp who ongoing >= attackApCost then
+                Random.constant ongoing
+                    |> Random.andThen (attack who)
+                    |> Random.andThen (attackUntilApRunsOut who)
+
+            else
+                Random.constant ongoing
+
+        playerAp : Who -> OngoingFight -> Int
+        playerAp who ongoing =
+            case who of
+                Attacker ->
+                    ongoing.attackerAp
+
+                Target ->
+                    ongoing.targetAp
+
+        addLog : Who -> FightAction -> OngoingFight -> OngoingFight
+        addLog who action ongoing =
+            { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
+
+        subtractAp : Who -> Int -> OngoingFight -> OngoingFight
+        subtractAp who apToSubtract ongoing =
+            case who of
+                Attacker ->
+                    { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
+
+                Target ->
+                    { ongoing | targetAp = ongoing.targetAp - apToSubtract }
+
+        attackApCost : Int
+        attackApCost =
+            -- TODO vary this based on aimed shot / weapon / ...
+            3
+
+        rollDamage : Who -> OngoingFight -> Generator Int
+        rollDamage who ongoing =
+            -- TODO plug in the actual damage calculation
+            Random.constant 3
+
+        attack : Who -> OngoingFight -> Generator OngoingFight
+        attack who ongoing =
+            -- TODO for now, everything is unarmed
+            if ongoing.distanceHexes == 0 && playerAp who ongoing >= attackApCost then
+                rollDamage who ongoing
+                    |> Random.map
+                        (\damage ->
+                            ongoing
+                                |> addLog who (Attack { damage = damage })
+                                |> subtractAp who attackApCost
+                                |> updatePlayer (theOther who) (SPlayer.subtractHp damage)
+                        )
+
+            else
+                Random.constant ongoing
+
+        comeCloser : Who -> OngoingFight -> Generator OngoingFight
+        comeCloser who ongoing =
+            -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
+            -- Eg. unarmed needs distance 0
+            -- Melee might need distance <2 and might prefer distance 0
+            -- Small guns might need distance <35 and prefer the largest where the chance to hit is ~95% or something
+            -- TODO currently everything is unarmed.
+            if ongoing.distanceHexes <= 0 then
+                Random.constant ongoing
+
+            else
+                let
+                    maxPossibleMove : Int
+                    maxPossibleMove =
+                        min ongoing.distanceHexes (playerAp who ongoing)
+                in
+                ongoing
+                    |> addLog who (ComeCloser { hexes = maxPossibleMove })
+                    |> subtractDistance maxPossibleMove
+                    |> subtractAp who maxPossibleMove
+                    |> Random.constant
+
+        subtractDistance : Int -> OngoingFight -> OngoingFight
+        subtractDistance n ongoing =
+            { ongoing | distanceHexes = ongoing.distanceHexes - n }
 
         turnsBySequenceLoop : OngoingFight -> Generator OngoingFight
         turnsBySequenceLoop ongoing =
@@ -116,35 +241,82 @@ generator { attacker, target } =
 
         ifBothAlive : (OngoingFight -> Generator OngoingFight) -> OngoingFight -> Generator OngoingFight
         ifBothAlive fn ongoing =
-            if ongoing.attackerHp > 0 && ongoing.targetHp > 0 then
+            if ongoing.attacker.hp > 0 && ongoing.target.hp > 0 then
                 fn ongoing
 
             else
                 Random.constant ongoing
 
+        updatePlayer : Who -> (SPlayer -> SPlayer) -> OngoingFight -> OngoingFight
+        updatePlayer who fn ongoing =
+            case who of
+                Attacker ->
+                    { ongoing | attacker = fn ongoing.attacker }
+
+                Target ->
+                    { ongoing | target = fn ongoing.target }
+
         finalizeFight : OngoingFight -> FightInfo
         finalizeFight ongoing =
-            { attacker = attacker.name
-            , target = target.name
-            , log = List.reverse ongoing.reverseLog
-            , result =
-                if ongoing.attackerHp <= 0 && ongoing.targetHp <= 0 then
-                    BothDead
+            let
+                result : FightResult
+                result =
+                    if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
+                        BothDead
 
-                else if ongoing.attackerHp <= 0 then
-                    TargetWon
-                        { capsGained = Debug.todo "target won gained caps"
-                        , xpGained = Debug.todo "target won gained xp"
-                        }
+                    else if ongoing.attacker.hp <= 0 then
+                        TargetWon
+                            { capsGained = ongoing.attacker.caps
+                            , xpGained = "TODO target won gained xp"
+                            }
 
-                else if ongoing.targetHp <= 0 then
-                    AttackerWon
-                        { capsGained = Debug.todo "attacker won gained caps"
-                        , xpGained = Debug.todo "attacker won gained xp"
-                        }
+                    else if ongoing.target.hp <= 0 then
+                        AttackerWon
+                            { capsGained = ongoing.target.caps
+                            , xpGained = "TODO attacker won gained xp"
+                            }
 
-                else
-                    NobodyDead
+                    else
+                        NobodyDead
+
+                final : OngoingFight
+                final =
+                    let
+                        withoutTick : OngoingFight
+                        withoutTick =
+                            ongoing
+                                |> updatePlayer Attacker (SPlayer.subtractTicks 1)
+                    in
+                    case result of
+                        BothDead ->
+                            withoutTick
+
+                        NobodyDead ->
+                            withoutTick
+
+                        TargetAlreadyDead ->
+                            withoutTick
+
+                        AttackerWon { xpGained, capsGained } ->
+                            withoutTick
+                                |> updatePlayer Attacker (SPlayer.addXp xpGained)
+                                |> updatePlayer Attacker (SPlayer.addCaps capsGained)
+                                |> updatePlayer Target (SPlayer.subtractCaps capsGained)
+                                |> updatePlayer Attacker SPlayer.incWins
+                                |> updatePlayer Target SPlayer.incLosses
+
+                        TargetWon { xpGained, capsGained } ->
+                            withoutTick
+                                |> updatePlayer Target (SPlayer.addXp xpGained)
+                                |> updatePlayer Target (SPlayer.addCaps capsGained)
+                                |> updatePlayer Attacker (SPlayer.subtractCaps capsGained)
+                                |> updatePlayer Target SPlayer.incWins
+                                |> updatePlayer Attacker SPlayer.incLosses
+            in
+            { attacker = final.attacker
+            , target = final.target
+            , log = List.reverse final.reverseLog
+            , result = result
             }
 
         -- AP costs:
@@ -153,14 +325,14 @@ generator { attacker, target } =
     in
     initialFight
         |> turn Attacker
-        |> Random.andThen (ifBothAlive (turn Target))
+        |> Random.andThen (turn Target)
         |> Random.andThen turnsBySequenceLoop
         |> Random.map finalizeFight
 
 
 targetAlreadyDead :
-    { attacker : PlayerName
-    , target : PlayerName
+    { attacker : SPlayer
+    , target : SPlayer
     }
     -> FightInfo
 targetAlreadyDead { attacker, target } =

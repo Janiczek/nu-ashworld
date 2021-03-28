@@ -1,5 +1,5 @@
 module Data.Map.Pathfinding exposing
-    ( apCost
+    ( tickCost
     , path
     )
 
@@ -13,11 +13,11 @@ import Set exposing (Set)
 import Vendored.AStar as AStar
 
 
-apCost : Set TileCoords -> Int
-apCost pathTaken =
+tickCost : Set TileCoords -> Int
+tickCost pathTaken =
     pathTaken
         |> Set.toList
-        |> List.map (Terrain.forCoords >> Terrain.apCost)
+        |> List.map (Terrain.forCoords >> Terrain.tickCost)
         |> List.sum
         |> ceiling
 
@@ -92,7 +92,7 @@ terrainAwareOptimalPath :
     -> Set TileCoords
 terrainAwareOptimalPath { from, to } =
     AStar.findPath
-        (\_ neighbourTileCoords -> Terrain.apCost (Terrain.forCoords neighbourTileCoords))
+        (\_ neighbourTileCoords -> Terrain.tickCost (Terrain.forCoords neighbourTileCoords))
         AStar.manhattanHeuristic
         Map.neighbours
         from

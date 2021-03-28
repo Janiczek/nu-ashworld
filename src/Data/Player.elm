@@ -50,7 +50,7 @@ type alias CPlayer =
     , special : Special
     , availableSpecial : Int
     , caps : Int
-    , ap : Int
+    , ticks : Int
     , wins : Int
     , losses : Int
     , location : TileNum
@@ -77,7 +77,7 @@ type alias SPlayer =
     , special : Special
     , availableSpecial : Int
     , caps : Int
-    , ap : Int
+    , ticks : Int
     , wins : Int
     , losses : Int
     , location : TileNum
@@ -95,7 +95,7 @@ serverToClient p =
     , special = p.special
     , availableSpecial = p.availableSpecial
     , caps = p.caps
-    , ap = p.ap
+    , ticks = p.ticks
     , wins = p.wins
     , losses = p.losses
     , location = p.location
@@ -184,7 +184,7 @@ fromNewChar auth newChar =
     , special = newChar.special
     , availableSpecial = newChar.availableSpecial
     , caps = 15
-    , ap = 10
+    , ticks = 10
     , wins = 0
     , losses = 0
     , location = startingTileNum

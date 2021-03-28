@@ -2,13 +2,13 @@
 - hitpoints
   - 15 + 2 * EN + ST
   - every new level this increases by 2 + EN/2
+
+- action points
+  - 5 + AG/2
 ==== ^ DONE
 
 - armour class
   - AG
-
-- action points
-  - 5 + AG/2
 
 - carry weight
   - 25 + 25 * ST

@@ -1,6 +1,6 @@
 module Data.Map.Terrain exposing
     ( Terrain(..)
-    , apCost
+    , tickCost
     , forCoords
     , isPassable
     )
@@ -23,8 +23,8 @@ forCoords coords =
         |> Maybe.withDefault Mountains
 
 
-apCost : Terrain -> Float
-apCost terrain_ =
+tickCost : Terrain -> Float
+tickCost terrain_ =
     case terrain_ of
         Ocean ->
             {- Non-passable tiles: as low cost as we can get away with, while not

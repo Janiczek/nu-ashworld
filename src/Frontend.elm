@@ -524,11 +524,11 @@ mapView mouseCoords player =
 
                 cost : Int
                 cost =
-                    Pathfinding.apCost pathTaken
+                    Pathfinding.tickCost pathTaken
 
                 tooDistant : Bool
                 tooDistant =
-                    cost > player.ap
+                    cost > player.ticks
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -564,9 +564,9 @@ mapView mouseCoords player =
 
                           else
                             H.div []
-                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " AP" ]
+                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " ticks" ]
                                 , H.viewIf tooDistant <|
-                                    H.div [] [ H.text <| "You don't have enough AP." ]
+                                    H.div [] [ H.text <| "You don't have enough ticks." ]
                                 ]
                         ]
                 ]
@@ -907,28 +907,27 @@ characterView player =
     [ pageTitleView "Character"
     , H.div
         [ HA.id "character-special" ]
-        (H.h3
+        [ H.h3
             [ HA.id "character-special-title" ]
             [ H.text "SPECIAL" ]
-            :: [ H.table
-                    [ HA.id "character-special-table" ]
-                    (List.map specialItemView Special.all)
-               , H.div
-                    [ HA.class "character-special-available" ]
-                    [ H.span
-                        [ HA.class "character-special-available-label" ]
-                        [ H.text "Available SPECIAL points: " ]
-                    , H.span
-                        [ HA.class "character-special-available-number" ]
-                        [ H.text <| String.fromInt player.availableSpecial ]
-                    ]
-               ]
-        )
+        , H.table
+            [ HA.id "character-special-table" ]
+            (List.map specialItemView Special.all)
+        , H.div
+            [ HA.class "character-special-available" ]
+            [ H.span
+                [ HA.class "character-special-available-label" ]
+                [ H.text "Available SPECIAL points: " ]
+            , H.span
+                [ HA.class "character-special-available-number" ]
+                [ H.text <| String.fromInt player.availableSpecial ]
+            ]
+        ]
     , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp, Nothing )
       , ( "XP", String.fromInt player.xp, Nothing )
       , ( "Name", player.name, Nothing )
       , ( "Caps", String.fromInt player.caps, Nothing )
-      , ( "AP", String.fromInt player.ap, Nothing )
+      , ( "Ticks", String.fromInt player.ticks, Nothing )
       , ( "Wins", String.fromInt player.wins, Nothing )
       , ( "Losses", String.fromInt player.losses, Nothing )
       , ( "Healing rate"
@@ -1428,8 +1427,8 @@ createdPlayerInfoView player =
             [ HA.class "player-stat-label"
             , HA.title "Action points"
             ]
-            [ H.text "AP:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ap ]
+            [ H.text "Ticks:" ]
+        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ticks ]
         ]
 
 

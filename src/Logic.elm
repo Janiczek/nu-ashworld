@@ -4,7 +4,6 @@ module Logic exposing
     , armourClass
     , healingRate
     , hitpoints
-    , maxAp
     , meleeChanceToHit
     , sequence
     )
@@ -57,11 +56,6 @@ tickHealingRateMultiplier =
     2
 
 
-maxAp : Int
-maxAp =
-    20
-
-
 armourClass : Special -> Int
 armourClass { agility } =
     -- TODO take armour into account once we have it
@@ -70,7 +64,6 @@ armourClass { agility } =
 
 actionPoints : Special -> Int
 actionPoints { agility } =
-    -- TODO name clashing with the "do stuff in the rest of the game" APs...
     5 + agility // 2
 
 
