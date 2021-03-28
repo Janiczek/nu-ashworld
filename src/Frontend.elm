@@ -471,7 +471,7 @@ contentView model =
                 newsView model.zone
 
             ( Route.Fight fightInfo, WorldLoggedIn world ) ->
-                fightView fightInfo
+                withCreatedPlayer world.player (fightView fightInfo)
 
             ( Route.Fight _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -977,35 +977,118 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-fightView : FightInfo -> List (Html FrontendMsg)
-fightView fight =
-    let
-        getNames : Who -> ( String, String )
-        getNames who =
-            case who of
-                Attacker ->
-                    ( fight.attacker.name
-                    , fight.target.name
-                    )
+type Name
+    = You
+    | AttackerVerbatim
+    | TargetVerbatim
 
-                Target ->
-                    ( fight.target.name
-                    , fight.attacker.name
-                    )
+
+type alias Names =
+    -- cap = Capitalized
+    -- poss = Possessive
+    -- verbPresent = the '-s' suffix in "player initiates" VS "you initiate"
+    { name : String
+    , nameCap : String
+    , namePossCap : String
+    , verbPresent : String -> String
+    }
+
+
+fightView : FightInfo -> CPlayer -> List (Html FrontendMsg)
+fightView fight player =
+    let
+        youAreAttacker : Bool
+        youAreAttacker =
+            fight.attacker.name == player.name
+
+        normalPoss : String -> String
+        normalPoss name =
+            name ++ "'s"
+
+        addS : String -> String
+        addS verb =
+            verb ++ "s"
+
+        getNames : Who -> { subject : Names, object : Names }
+        getNames who =
+            let
+                names : Name -> Names
+                names name =
+                    case name of
+                        You ->
+                            { name = "you"
+                            , nameCap = "You"
+                            , namePossCap = "Your"
+                            , verbPresent = identity
+                            }
+
+                        TargetVerbatim ->
+                            { name = fight.target.name
+                            , nameCap = fight.target.name
+                            , namePossCap = normalPoss fight.target.name
+                            , verbPresent = addS
+                            }
+
+                        AttackerVerbatim ->
+                            { name = fight.attacker.name
+                            , nameCap = fight.attacker.name
+                            , namePossCap = normalPoss fight.attacker.name
+                            , verbPresent = addS
+                            }
+            in
+            case ( who, youAreAttacker ) of
+                ( Attacker, True ) ->
+                    { subject = names You
+                    , object = names TargetVerbatim
+                    }
+
+                ( Attacker, False ) ->
+                    { subject = names AttackerVerbatim
+                    , object = names You
+                    }
+
+                ( Target, True ) ->
+                    { subject = names TargetVerbatim
+                    , object = names You
+                    }
+
+                ( Target, False ) ->
+                    { subject = names You
+                    , object = names AttackerVerbatim
+                    }
     in
     [ pageTitleView "Fight"
-    , H.div [] [ H.text <| "Attacker: " ++ fight.attacker.name ]
-    , H.div [] [ H.text <| "Target: " ++ fight.target.name ]
+    , H.div []
+        [ H.text <|
+            "Attacker: " ++ fight.attacker.name
+                ++ (if youAreAttacker then
+                        " (you)"
+
+                    else
+                        ""
+                   )
+        ]
+    , H.div []
+        [ H.text <|
+            "Target: " ++ fight.target.name
+                ++ (if youAreAttacker then
+                        ""
+
+                    else
+                        " (you)"
+                   )
+        ]
     , fight.log
         |> List.Extra.groupWhile (\( a, _ ) ( b, _ ) -> a == b)
         |> List.map
             (\( ( who, _ ) as first, rest ) ->
                 let
-                    ( who_, other ) =
+                    names : { subject : Names, object : Names }
+                    names =
                         getNames who
                 in
                 H.li []
-                    [ H.text <| who_ ++ "'s turn"
+                    [ H.text <| names.subject.namePossCap ++ " turn"
                     , (first :: rest)
                         |> List.map
                             (\( _, action ) ->
@@ -1014,12 +1097,14 @@ fightView fight =
                                     action_ =
                                         case action of
                                             Start { distanceHexes } ->
-                                                "initiates the fight from "
+                                                names.subject.verbPresent "initiate"
+                                                    ++ " the fight from "
                                                     ++ String.fromInt distanceHexes
                                                     ++ " hexes away."
 
                                             ComeCloser { hexes, remainingDistanceHexes } ->
-                                                "comes closer "
+                                                names.subject.verbPresent "come"
+                                                    ++ " closer "
                                                     ++ String.fromInt hexes
                                                     ++ " hexes. Remaining distance: "
                                                     ++ String.fromInt remainingDistanceHexes
@@ -1031,12 +1116,14 @@ fightView fight =
                                                         ""
 
                                                     AimedShot aimed ->
-                                                        "aims for "
+                                                        names.subject.verbPresent "aim"
+                                                            ++ " for "
                                                             ++ ShotType.label aimed
                                                             ++ " and "
                                                 )
-                                                    ++ "attacks "
-                                                    ++ other
+                                                    ++ names.subject.verbPresent "attack"
+                                                    ++ " "
+                                                    ++ names.object.name
                                                     ++ " for "
                                                     ++ String.fromInt damage
                                                     ++ " damage. Remaining HP: "
@@ -1044,7 +1131,7 @@ fightView fight =
                                                     ++ "."
                                 in
                                 H.li []
-                                    [ H.text <| who_ ++ " " ++ action_ ]
+                                    [ H.text <| names.subject.nameCap ++ " " ++ action_ ]
                             )
                         |> H.ul []
                     ]
