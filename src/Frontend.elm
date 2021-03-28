@@ -45,6 +45,7 @@ import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import List.Extra
 import Logic
+import Markdown
 import Set exposing (Set)
 import Svg as S
 import Svg.Attributes as SA
@@ -1060,7 +1061,8 @@ fightView fight player =
     [ pageTitleView "Fight"
     , H.div []
         [ H.text <|
-            "Attacker: " ++ fight.attacker.name
+            "Attacker: "
+                ++ fight.attacker.name
                 ++ (if youAreAttacker then
                         " (you)"
 
@@ -1070,7 +1072,8 @@ fightView fight player =
         ]
     , H.div []
         [ H.text <|
-            "Target: " ++ fight.target.name
+            "Target: "
+                ++ fight.target.name
                 ++ (if youAreAttacker then
                         ""
 
@@ -1086,6 +1089,11 @@ fightView fight player =
                     names : { subject : Names, object : Names }
                     names =
                         getNames who
+
+                    name : String -> String
+                    name n =
+                        -- This is then picked up by the CSS
+                        "**" ++ n ++ "**"
                 in
                 H.li []
                     [ H.text <| names.subject.namePossCap ++ " turn"
@@ -1103,6 +1111,7 @@ fightView fight player =
                                                     ++ " hexes away."
 
                                             ComeCloser { hexes, remainingDistanceHexes } ->
+                                                -- TODO hide the remaining distance if your SPECIAL is not good enough
                                                 names.subject.verbPresent "come"
                                                     ++ " closer "
                                                     ++ String.fromInt hexes
@@ -1111,6 +1120,7 @@ fightView fight player =
                                                     ++ " hexes."
 
                                             Attack { damage, remainingHp, shotType } ->
+                                                -- TODO hide the remaining HP if your SPECIAL is not good enough
                                                 (case shotType of
                                                     NormalShot ->
                                                         ""
@@ -1123,7 +1133,7 @@ fightView fight player =
                                                 )
                                                     ++ names.subject.verbPresent "attack"
                                                     ++ " "
-                                                    ++ names.object.name
+                                                    ++ name names.object.name
                                                     ++ " for "
                                                     ++ String.fromInt damage
                                                     ++ " damage. Remaining HP: "
@@ -1131,7 +1141,11 @@ fightView fight player =
                                                     ++ "."
                                 in
                                 H.li []
-                                    [ H.text <| names.subject.nameCap ++ " " ++ action_ ]
+                                    [ Markdown.toHtml [ HA.class "fight-log-action" ] <|
+                                        name names.subject.nameCap
+                                            ++ " "
+                                            ++ action_
+                                    ]
                             )
                         |> H.ul []
                     ]

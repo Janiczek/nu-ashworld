@@ -516,3 +516,8 @@ ul {
   );
   z-index: 2;
 }
+
+.fight-log-action strong {
+  color: var(--fg-highlight);
+
+}
