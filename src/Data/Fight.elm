@@ -51,10 +51,10 @@ theOther who =
 
 
 type FightAction
-    = -- TODO later Reload, WalkAway, uncousciousness and other debuffs...
+    = -- TODO later Reload, Heal, WalkAway, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
-    | ComeCloser { hexes : Int }
-    | Attack { damage : Int }
+    | ComeCloser { hexes : Int, remainingDistanceHexes : Int }
+    | Attack { damage : Int, remainingHp : Int }
 
 
 type alias OngoingFight =
@@ -121,7 +121,7 @@ generator initPlayers =
                 |> resetAp who
                 |> Random.constant
                 |> Random.andThen (comeCloser who)
-                |> Random.andThen (attackUntilApRunsOut who)
+                |> Random.andThen (attackWhilePossible who)
 
         resetAp : Who -> OngoingFight -> OngoingFight
         resetAp who ongoing =
@@ -132,15 +132,30 @@ generator initPlayers =
                 Target ->
                     { ongoing | targetAp = targetMaxAp }
 
-        attackUntilApRunsOut : Who -> OngoingFight -> Generator OngoingFight
-        attackUntilApRunsOut who ongoing =
-            if playerAp who ongoing >= attackApCost then
+        attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
+        attackWhilePossible who ongoing =
+            let
+                otherHp =
+                    player_ (theOther who) ongoing
+                        |> .hp
+            in
+            -- TODO perhaps check `who`'s HP too?
+            if playerAp who ongoing >= attackApCost && otherHp > 0 then
                 Random.constant ongoing
                     |> Random.andThen (attack who)
-                    |> Random.andThen (attackUntilApRunsOut who)
+                    |> Random.andThen (attackWhilePossible who)
 
             else
                 Random.constant ongoing
+
+        player_ : Who -> OngoingFight -> SPlayer
+        player_ who ongoing =
+            case who of
+                Attacker ->
+                    ongoing.attacker
+
+                Target ->
+                    ongoing.target
 
         playerAp : Who -> OngoingFight -> Int
         playerAp who ongoing =
@@ -176,15 +191,25 @@ generator initPlayers =
 
         attack : Who -> OngoingFight -> Generator OngoingFight
         attack who ongoing =
+            let
+                other : Who
+                other =
+                    theOther who
+            in
             -- TODO for now, everything is unarmed
             if ongoing.distanceHexes == 0 && playerAp who ongoing >= attackApCost then
                 rollDamage who ongoing
                     |> Random.map
                         (\damage ->
                             ongoing
-                                |> addLog who (Attack { damage = damage })
+                                |> addLog who
+                                    (Attack
+                                        { damage = damage
+                                        , remainingHp = .hp (player_ other ongoing) - damage
+                                        }
+                                    )
                                 |> subtractAp who attackApCost
-                                |> updatePlayer (theOther who) (SPlayer.subtractHp damage)
+                                |> updatePlayer other (SPlayer.subtractHp damage)
                         )
 
             else
@@ -207,7 +232,12 @@ generator initPlayers =
                         min ongoing.distanceHexes (playerAp who ongoing)
                 in
                 ongoing
-                    |> addLog who (ComeCloser { hexes = maxPossibleMove })
+                    |> addLog who
+                        (ComeCloser
+                            { hexes = maxPossibleMove
+                            , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
+                            }
+                        )
                     |> subtractDistance maxPossibleMove
                     |> subtractAp who maxPossibleMove
                     |> Random.constant
@@ -267,13 +297,13 @@ generator initPlayers =
                     else if ongoing.attacker.hp <= 0 then
                         TargetWon
                             { capsGained = ongoing.attacker.caps
-                            , xpGained = "TODO target won gained xp"
+                            , xpGained = Logic.xpGained { damageDealt = initPlayers.attacker.hp }
                             }
 
                     else if ongoing.target.hp <= 0 then
                         AttackerWon
                             { capsGained = ongoing.target.caps
-                            , xpGained = "TODO attacker won gained xp"
+                            , xpGained = Logic.xpGained { damageDealt = initPlayers.target.hp }
                             }
 
                     else

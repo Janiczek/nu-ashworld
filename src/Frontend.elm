@@ -3,7 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth exposing (Password)
-import Data.Fight exposing (FightInfo, FightResult(..))
+import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
 import Data.HealthStatus as HealthStatus
 import Data.Map as Map
     exposing
@@ -42,6 +42,7 @@ import Html.Events.Extra as HE
 import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
+import List.Extra
 import Logic
 import Set exposing (Set)
 import Svg as S
@@ -970,12 +971,70 @@ newsView zone =
 
 fightView : FightInfo -> List (Html FrontendMsg)
 fightView fight =
+    let
+        getNames : Who -> ( String, String )
+        getNames who =
+            case who of
+                Attacker ->
+                    ( fight.attacker.name
+                    , fight.target.name
+                    )
+
+                Target ->
+                    ( fight.target.name
+                    , fight.attacker.name
+                    )
+    in
     [ pageTitleView "Fight"
-    , H.div [] [ H.text <| "Attacker: " ++ fight.attacker ]
-    , H.div [] [ H.text <| "Target: " ++ fight.target ]
+    , H.div [] [ H.text <| "Attacker: " ++ fight.attacker.name ]
+    , H.div [] [ H.text <| "Target: " ++ fight.target.name ]
+    , fight.log
+        |> List.Extra.groupWhile (\( a, _ ) ( b, _ ) -> a == b)
+        |> List.map
+            (\( ( who, _ ) as first, rest ) ->
+                let
+                    ( who_, other ) =
+                        getNames who
+                in
+                H.li []
+                    [ H.text <| who_ ++ "'s turn"
+                    , (first :: rest)
+                        |> List.map
+                            (\( _, action ) ->
+                                let
+                                    action_ : String
+                                    action_ =
+                                        case action of
+                                            Start { distanceHexes } ->
+                                                "initiates the fight from "
+                                                    ++ String.fromInt distanceHexes
+                                                    ++ " hexes away."
+
+                                            ComeCloser { hexes, remainingDistanceHexes } ->
+                                                "comes closer "
+                                                    ++ String.fromInt hexes
+                                                    ++ " hexes. Remaining distance: "
+                                                    ++ String.fromInt remainingDistanceHexes
+                                                    ++ " hexes."
+
+                                            Attack { damage, remainingHp } ->
+                                                "attacks "
+                                                    ++ other
+                                                    ++ " for "
+                                                    ++ String.fromInt damage
+                                                    ++ " damage. Remaining HP: "
+                                                    ++ String.fromInt remainingHp
+                                                    ++ "."
+                                in
+                                H.li []
+                                    [ H.text <| who_ ++ " " ++ action_ ]
+                            )
+                        |> H.ul []
+                    ]
+            )
+        |> H.ul []
     , H.div []
-        [ H.text <| Debug.todo "fight log"
-        , H.text <|
+        [ H.text <|
             "Result: "
                 ++ (case fight.result of
                         AttackerWon { xpGained, capsGained } ->

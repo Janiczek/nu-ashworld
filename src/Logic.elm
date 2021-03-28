@@ -6,6 +6,7 @@ module Logic exposing
     , hitpoints
     , meleeChanceToHit
     , sequence
+    , xpGained
     )
 
 import Data.Fight.ShotType as ShotType exposing (ShotType)
@@ -153,3 +154,13 @@ sequence { perception, hasKamikazePerk, earlierSequencePerkCount } =
     base
         + kamikazeBonus
         + earlierSequenceBonus
+
+
+xpPerHpMultiplier : Int
+xpPerHpMultiplier =
+    10
+
+
+xpGained : { damageDealt : Int } -> Int
+xpGained { damageDealt } =
+    damageDealt * xpPerHpMultiplier

@@ -166,7 +166,9 @@ update msg model =
         GeneratedFight clientId sPlayer fightInfo ->
             let
                 newModel =
-                    persistFight fightInfo model
+                    model
+                        |> savePlayer fightInfo.attacker
+                        |> savePlayer fightInfo.target
             in
             getWorldLoggedIn sPlayer.name newModel
                 |> Maybe.map
@@ -457,8 +459,8 @@ fight otherPlayerName clientId sPlayer model =
                                 clientId
                                 sPlayer
                                 (Fight.targetAlreadyDead
-                                    { attacker = sPlayer.name
-                                    , target = otherPlayerName
+                                    { attacker = sPlayer
+                                    , target = target
                                     }
                                 )
                             )
@@ -485,6 +487,11 @@ subscriptions _ =
         , Lamdera.onDisconnect Disconnected
         , Time.every 10000 Tick
         ]
+
+
+savePlayer : SPlayer -> Model -> Model
+savePlayer newPlayer model =
+    updatePlayer (always newPlayer) newPlayer.name model
 
 
 updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model
