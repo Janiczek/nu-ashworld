@@ -1530,6 +1530,8 @@ logoView =
             ]
             []
         , H.div
-            [ HA.id "version" ]
+            [ HA.id "version"
+            , HA.title "Game version"
+            ]
             [ H.text Version.version ]
         ]
