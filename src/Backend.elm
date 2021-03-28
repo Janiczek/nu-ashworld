@@ -196,30 +196,42 @@ processTick model =
 persistFight : FightInfo -> Model -> Model
 persistFight ({ attacker, target } as fightInfo) model =
     case fightInfo.result of
-        AttackerWon ->
+        AttackerWon { xpGained, capsGained } ->
             model
                 -- TODO set HP of the attacker (dmg done to him?)
                 |> setHp 0 target
-                |> addXp fightInfo.winnerXpGained attacker
-                |> addCaps fightInfo.winnerCapsGained attacker
-                |> subtractCaps fightInfo.winnerCapsGained target
+                |> addXp xpGained attacker
+                |> addCaps capsGained attacker
+                |> subtractCaps capsGained target
                 |> incWins attacker
                 |> incLosses target
                 |> decAp attacker
 
-        TargetWon ->
+        TargetWon { xpGained, capsGained } ->
             model
                 -- TODO set HP of the target (dmg done to him?)
                 |> setHp 0 attacker
-                |> addXp fightInfo.winnerXpGained target
-                |> addCaps fightInfo.winnerCapsGained target
-                |> subtractCaps fightInfo.winnerCapsGained attacker
+                |> addXp xpGained target
+                |> addCaps capsGained target
+                |> subtractCaps capsGained attacker
                 |> incWins target
                 |> incLosses attacker
                 |> decAp attacker
 
         TargetAlreadyDead ->
             model
+                |> decAp attacker
+
+        BothDead ->
+            model
+                |> setHp 0 attacker
+                |> setHp 0 target
+                |> decAp attacker
+
+        NobodyDead ->
+            model
+                -- TODO set HP of attacker (dmg done to him)
+                -- TODO set HP of target (dmg done to him)
                 |> decAp attacker
 
 

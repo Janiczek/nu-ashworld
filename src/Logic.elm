@@ -1,11 +1,20 @@
 module Logic exposing
-    ( affectsHitpoints
+    ( actionPoints
+    , affectsHitpoints
+    , armourClass
     , healingRate
     , hitpoints
     , maxAp
+    , meleeChanceToHit
+    , sequence
     )
 
-import Data.Special exposing (Special, SpecialType(..))
+import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Special
+    exposing
+        ( Special
+        , SpecialType(..)
+        )
 
 
 affectsHitpoints : SpecialType -> Bool
@@ -51,3 +60,103 @@ tickHealingRateMultiplier =
 maxAp : Int
 maxAp =
     20
+
+
+armourClass : Special -> Int
+armourClass { agility } =
+    -- TODO take armour into account once we have it
+    agility
+
+
+actionPoints : Special -> Int
+actionPoints { agility } =
+    -- TODO name clashing with the "do stuff in the rest of the game" APs...
+    5 + agility // 2
+
+
+distancePenalty : Int -> Int
+distancePenalty distanceHexes =
+    distanceHexes * 4
+
+
+darknessPenalty : Bool -> Int -> Int
+darknessPenalty isItDark distanceHexes =
+    if isItDark then
+        if distanceHexes <= 0 then
+            0
+
+        else if distanceHexes == 1 then
+            10
+
+        else if distanceHexes == 2 then
+            25
+
+        else
+            -- 3+
+            40
+
+    else
+        0
+
+
+meleeChanceToHit :
+    { attackerSpecial : Special
+    , targetSpecial : Special
+    , isItDark : Bool
+    , distanceHexes : Int
+    , shotType : ShotType
+    }
+    -> Int
+meleeChanceToHit r =
+    if r.distanceHexes > 0 then
+        0
+
+    else
+        let
+            skillPercentage : Int
+            skillPercentage =
+                -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
+                -- TODO take this from the skills record in the SPlayer once we have it. Right now we compute the initial value
+                30 + 2 * (r.attackerSpecial.strength + r.attackerSpecial.agility)
+
+            shotPenalty : Int
+            shotPenalty =
+                ShotType.penalty r.shotType
+        in
+        (skillPercentage
+            - armourClass r.targetSpecial
+            - shotPenalty
+            {- Those two never matter for unarmed fights right now, but let's
+               keep them in case we later tweak the two functions to do something
+               when distance = 0:
+            -}
+            - distancePenalty r.distanceHexes
+            - darknessPenalty r.isItDark r.distanceHexes
+        )
+            |> clamp 0 95
+
+
+sequence :
+    { perception : Int
+    , hasKamikazePerk : Bool
+    , earlierSequencePerkCount : Int
+    }
+    -> Int
+sequence { perception, hasKamikazePerk, earlierSequencePerkCount } =
+    let
+        base =
+            2 * perception
+
+        kamikazeBonus =
+            if hasKamikazePerk then
+                5
+
+            else
+                0
+
+        earlierSequenceBonus =
+            earlierSequencePerkCount * 2
+    in
+    base
+        + kamikazeBonus
+        + earlierSequenceBonus

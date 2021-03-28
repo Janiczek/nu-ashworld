@@ -9,10 +9,12 @@ module Data.Player exposing
     , getAuth
     , getPlayerData
     , map
+    , perkCount
     , serverToClient
     , serverToClientOther
     )
 
+import AssocList as Dict_
 import Data.Auth
     exposing
         ( Auth
@@ -24,6 +26,7 @@ import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.NewChar exposing (NewChar)
+import Data.Perk as Perk exposing (Perk)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
 import Logic
@@ -52,6 +55,7 @@ type alias CPlayer =
     , losses : Int
     , location : TileNum
     , knownMapTiles : Set TileNum
+    , perks : Dict_.Dict Perk Int
     }
 
 
@@ -78,6 +82,7 @@ type alias SPlayer =
     , losses : Int
     , location : TileNum
     , knownMapTiles : Set TileNum
+    , perks : Dict_.Dict Perk Int
     }
 
 
@@ -95,6 +100,7 @@ serverToClient p =
     , losses = p.losses
     , location = p.location
     , knownMapTiles = p.knownMapTiles
+    , perks = p.perks
     }
 
 
@@ -183,4 +189,11 @@ fromNewChar auth newChar =
     , losses = 0
     , location = startingTileNum
     , knownMapTiles = Set.singleton startingTileNum
+    , perks = Dict_.empty
     }
+
+
+perkCount : Perk -> SPlayer -> Int
+perkCount perk { perks } =
+    Dict_.get perk perks
+        |> Maybe.withDefault 0

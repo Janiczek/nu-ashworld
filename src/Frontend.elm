@@ -975,25 +975,32 @@ fightView fight =
     , H.div [] [ H.text <| "Attacker: " ++ fight.attacker ]
     , H.div [] [ H.text <| "Target: " ++ fight.target ]
     , H.div []
-        [ H.text <|
+        [ H.text <| Debug.todo "fight log"
+        , H.text <|
             "Result: "
                 ++ (case fight.result of
-                        AttackerWon ->
+                        AttackerWon { xpGained, capsGained } ->
                             "You won! You gained "
-                                ++ String.fromInt fight.winnerXpGained
+                                ++ String.fromInt xpGained
                                 ++ " XP and looted "
-                                ++ String.fromInt fight.winnerCapsGained
+                                ++ String.fromInt capsGained
                                 ++ " caps."
 
-                        TargetWon ->
+                        TargetWon { xpGained, capsGained } ->
                             "You lost! Your target gained "
-                                ++ String.fromInt fight.winnerXpGained
+                                ++ String.fromInt xpGained
                                 ++ " XP and looted "
-                                ++ String.fromInt fight.winnerCapsGained
+                                ++ String.fromInt capsGained
                                 ++ " caps."
 
                         TargetAlreadyDead ->
                             "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
+
+                        BothDead ->
+                            "You both end up dead."
+
+                        NobodyDead ->
+                            "You both get out of the fight alive."
                    )
         ]
     , H.button

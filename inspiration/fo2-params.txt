@@ -33,12 +33,12 @@
 - radiation resistance
   - 2 * EN + armor resistance
 
+===== DONE
 - sequence
   - 2 * PE
   - kamikaze perk: +5
   - earlier sequence perk: +2 per rank
 
-===== DONE
 - healing rate
   - how much HP you heal in 3 hours of rest
   - EN/3
