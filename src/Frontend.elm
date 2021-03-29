@@ -563,7 +563,7 @@ mapView mouseCoords player =
                             H.div []
                                 [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " ticks" ]
                                 , H.viewIf tooDistant <|
-                                    H.div [] [ H.text <| "You don't have enough ticks." ]
+                                    H.div [] [ H.text "You don't have enough ticks." ]
                                 ]
                         ]
                 ]

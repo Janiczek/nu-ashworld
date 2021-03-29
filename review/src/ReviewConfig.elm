@@ -15,9 +15,14 @@ import Review.Rule as Rule exposing (Rule)
 config : List Rule
 config =
     [ NoUnused.CustomTypeConstructors.rule []
+        |> Rule.ignoreErrorsForFiles
+            [ "src/Data/Map/Location.elm"
+            , "src/Data/Auth.elm"
+            ]
     , NoUnused.Dependencies.rule
     , NoUnused.Exports.rule
     , NoUnused.Modules.rule
+        |> Rule.ignoreErrorsForFiles [ "src/Env.elm" ]
     , NoUnused.Parameters.rule
     , NoUnused.Patterns.rule
     , NoUnused.Variables.rule

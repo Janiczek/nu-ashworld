@@ -1,7 +1,6 @@
 module Data.Fight.ShotType exposing
     ( AimedShot(..)
     , ShotType(..)
-    , all
     , allAimed
     , apCostPenalty
     , chanceToHitPenalty
@@ -34,12 +33,6 @@ isAimed shot =
 
         AimedShot _ ->
             True
-
-
-all : List ShotType
-all =
-    NormalShot
-        :: List.map AimedShot allAimed
 
 
 allAimed : List AimedShot

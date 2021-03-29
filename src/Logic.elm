@@ -1,7 +1,6 @@
 module Logic exposing
     ( actionPoints
     , affectsHitpoints
-    , armourClass
     , healingRate
     , hitpoints
     , sequence

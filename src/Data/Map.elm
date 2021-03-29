@@ -2,7 +2,6 @@ module Data.Map exposing
     ( PxCoords
     , TileCoords
     , TileNum
-    , allTiles
     , columns
     , distantTiles
     , height
@@ -11,8 +10,6 @@ module Data.Map exposing
     , tileCenterPx
     , tileSize
     , tileSizeFloat
-    , tileSrc
-    , tilesCount
     , toTileCoords
     , toTileNum
     , width
@@ -31,11 +28,6 @@ type alias TileCoords =
 
 type alias PxCoords =
     ( Float, Float )
-
-
-tilesCount : Int
-tilesCount =
-    columns * rows
 
 
 columns : Int
@@ -84,13 +76,6 @@ tileCenterPx ( x, y ) =
     ( tileSizeFloat * (toFloat x + 0.5)
     , tileSizeFloat * (toFloat y + 0.5)
     )
-
-
-tileSrc : TileNum -> String
-tileSrc tileNum =
-    "images/map/tile_"
-        ++ String.padLeft 3 '0' (String.fromInt tileNum)
-        ++ ".png"
 
 
 toTileCoords : TileNum -> TileCoords
