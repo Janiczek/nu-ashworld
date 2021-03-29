@@ -4,6 +4,7 @@ module Logic exposing
     , healingRate
     , hitpoints
     , sequence
+    , unarmedAttackStats
     , unarmedChanceToHit
     , xpGained
     )
@@ -92,6 +93,13 @@ darknessPenalty isItDark distanceHexes =
         0
 
 
+temporaryUnarmedSkill : Special -> Int
+temporaryUnarmedSkill { strength, agility } =
+    -- TODO this is just the initial value
+    -- TODO remove this and use the value from SPlayer once we start tracking it there
+    30 + 2 * (strength + agility)
+
+
 unarmedChanceToHit :
     { attackerSpecial : Special
     , targetSpecial : Special
@@ -113,8 +121,7 @@ unarmedChanceToHit r =
         let
             skillPercentage : Int
             skillPercentage =
-                -- TODO take this from the skills record in the SPlayer once we have it. Right now we compute the initial value
-                30 + 2 * (r.attackerSpecial.strength + r.attackerSpecial.agility)
+                temporaryUnarmedSkill r.attackerSpecial
 
             shotPenalty : Int
             shotPenalty =
@@ -167,3 +174,51 @@ xpPerHpMultiplier =
 xpGained : { damageDealt : Int } -> Int
 xpGained { damageDealt } =
     damageDealt * xpPerHpMultiplier
+
+
+unarmedAttackStats :
+    { special : Special
+    , level : Int
+    }
+    ->
+        { minDamage : Int
+        , maxDamage : Int
+        , criticalChanceBonus : Int
+        }
+unarmedAttackStats { special, level } =
+    let
+        { strength, agility } =
+            special
+
+        unarmedSkill : Int
+        unarmedSkill =
+            temporaryUnarmedSkill special
+    in
+    -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
+    -- TODO return a list of possible attacks
+    -- TODO track their AP cost too
+    -- TODO Bonus HtH Damage perk https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Melee_combat
+    -- TODO Heavy Handed trait https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Melee_combat
+    if unarmedSkill < 55 || agility < 6 then
+        { minDamage = 1
+        , maxDamage = 2
+        , criticalChanceBonus = 0
+        }
+
+    else if unarmedSkill < 75 || strength < 5 || level < 6 then
+        { minDamage = 4
+        , maxDamage = 5
+        , criticalChanceBonus = 0
+        }
+
+    else if unarmedSkill < 100 || agility < 7 || level < 9 then
+        { minDamage = 6
+        , maxDamage = 7
+        , criticalChanceBonus = 5
+        }
+
+    else
+        { minDamage = 8
+        , maxDamage = 9
+        , criticalChanceBonus = 15
+        }

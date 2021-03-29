@@ -11,6 +11,7 @@ import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Perk as Perk
 import Data.Player as Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
+import Data.Xp as Xp
 import Logic
 import Random exposing (Generator)
 import Random.Bool
@@ -237,10 +238,81 @@ generator initPlayers =
         attackApCost r =
             baseApCost + ShotType.apCostPenalty r
 
+        attackStats who ongoing =
+            let
+                { special, xp } =
+                    player_ who ongoing
+            in
+            Logic.unarmedAttackStats
+                { special = special
+                , level = Xp.currentLevel xp
+                }
+
         rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
-        rollDamage _ _ _ =
-            -- TODO plug in the actual damage calculation
-            Random.constant 3
+        rollDamage who ongoing _ =
+            let
+                stats =
+                    attackStats who ongoing
+            in
+            Random.int stats.minDamage stats.maxDamage
+                |> Random.map
+                    (\damage ->
+                        let
+                            damage_ =
+                                toFloat damage
+
+                            rangedBonus =
+                                -- TODO ranged attacks and perks
+                                0
+
+                            ammoDamageMultiplier =
+                                -- TODO ammo in combat
+                                1
+
+                            ammoDamageDivisor =
+                                -- TODO ammo in combat
+                                1
+
+                            criticalHitDamageMultiplier =
+                                -- TODO critical hits
+                                2
+
+                            combatDifficultyMultiplier =
+                                100
+
+                            armorIgnore =
+                                -- TODO armor ignoring attacks
+                                0
+
+                            armorDamageThreshold =
+                                -- TODO armor
+                                0
+
+                            armorDamageResistance =
+                                -- TODO armor
+                                0
+
+                            ammoDamageResistanceModifier =
+                                -- TODO ammo
+                                0
+                        in
+                        round <|
+                            (((damage_ + rangedBonus)
+                                * (ammoDamageMultiplier / ammoDamageDivisor)
+                                * (criticalHitDamageMultiplier / 2)
+                                * (combatDifficultyMultiplier / 100)
+                             )
+                                - (armorDamageThreshold / max 1 (5 * armorIgnore))
+                            )
+                                * ((100
+                                        - max 0
+                                            ((armorDamageResistance / max 1 (5 * armorIgnore))
+                                                + ammoDamageResistanceModifier
+                                            )
+                                   )
+                                    / 100
+                                  )
+                    )
 
         attack : Who -> OngoingFight -> Generator OngoingFight
         attack who ongoing =
