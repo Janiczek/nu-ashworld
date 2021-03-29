@@ -987,12 +987,17 @@ type Name
 type alias Names =
     -- cap = Capitalized
     -- poss = Possessive
-    -- verbPresent = the '-s' suffix in "player initiates" VS "you initiate"
+    -- verbPresent = the '-s' or '-es' suffix in "player initiates" VS "you initiate", or "player misses" vs "you miss"
     { name : String
     , nameCap : String
     , namePossCap : String
     , verbPresent : String -> String
     }
+
+
+esWords : Set String
+esWords =
+    Set.fromList [ "miss" ]
 
 
 fightView : FightInfo -> CPlayer -> List (Html FrontendMsg)
@@ -1008,7 +1013,11 @@ fightView fight player =
 
         addS : String -> String
         addS verb =
-            verb ++ "s"
+            if Set.member verb esWords then
+                verb ++ "es"
+
+            else
+                verb ++ "s"
 
         getNames : Who -> { subject : Names, object : Names }
         getNames who =
@@ -1138,6 +1147,25 @@ fightView fight player =
                                                     ++ String.fromInt damage
                                                     ++ " damage. Remaining HP: "
                                                     ++ String.fromInt remainingHp
+                                                    ++ "."
+
+                                            Miss { shotType } ->
+                                                -- TODO hide the remaining distance if your SPECIAL is not good enough
+                                                (case shotType of
+                                                    NormalShot ->
+                                                        ""
+
+                                                    AimedShot aimed ->
+                                                        names.subject.verbPresent "aim"
+                                                            ++ " for "
+                                                            ++ ShotType.label aimed
+                                                            ++ " and "
+                                                )
+                                                    ++ names.subject.verbPresent "attack"
+                                                    ++ " "
+                                                    ++ name names.object.name
+                                                    ++ " but "
+                                                    ++ names.subject.verbPresent "miss"
                                                     ++ "."
                                 in
                                 H.li []

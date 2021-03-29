@@ -14,6 +14,7 @@ import Data.Player.SPlayer as SPlayer
 import Data.Special exposing (Special)
 import Logic
 import Random exposing (Generator)
+import Random.Bool
 import Random.Extra as Random
 
 
@@ -63,6 +64,7 @@ type FightAction
         , shotType : ShotType
         , remainingHp : Int
         }
+    | Miss { shotType : ShotType }
 
 
 type alias OngoingFight =
@@ -257,19 +259,42 @@ generator initPlayers =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
                         in
                         if ongoing.distanceHexes == 0 && playerAp who ongoing >= apCost then
-                            rollDamage who ongoing shot
-                                |> Random.map
-                                    (\damage ->
-                                        ongoing
-                                            |> addLog who
-                                                (Attack
-                                                    { damage = damage
-                                                    , shotType = shot
-                                                    , remainingHp = .hp (player_ other ongoing) - damage
-                                                    }
-                                                )
-                                            |> subtractAp who apCost
-                                            |> updatePlayer other (SPlayer.subtractHp damage)
+                            let
+                                chanceToHit =
+                                    toFloat
+                                        (Logic.unarmedChanceToHit
+                                            { attackerSpecial = player_ who ongoing |> .special
+                                            , targetSpecial = player_ (theOther who) ongoing |> .special
+                                            , distanceHexes = ongoing.distanceHexes
+                                            , shotType = shot
+                                            }
+                                        )
+                                        / 100
+                            in
+                            Random.Bool.weightedBool chanceToHit
+                                |> Random.andThen
+                                    (\hasHit ->
+                                        if hasHit then
+                                            rollDamage who ongoing shot
+                                                |> Random.map
+                                                    (\damage ->
+                                                        ongoing
+                                                            |> addLog who
+                                                                (Attack
+                                                                    { damage = damage
+                                                                    , shotType = shot
+                                                                    , remainingHp = .hp (player_ other ongoing) - damage
+                                                                    }
+                                                                )
+                                                            |> subtractAp who apCost
+                                                            |> updatePlayer other (SPlayer.subtractHp damage)
+                                                    )
+
+                                        else
+                                            ongoing
+                                                |> addLog who (Miss { shotType = shot })
+                                                |> subtractAp who apCost
+                                                |> Random.constant
                                     )
 
                         else
