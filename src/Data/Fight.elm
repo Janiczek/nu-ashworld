@@ -273,6 +273,7 @@ generator initPlayers =
                             Random.Bool.weightedBool chanceToHit
                                 |> Random.andThen
                                     (\hasHit ->
+                                        -- TODO critical misses, critical hits according to inspiration/fo2-calc/fo2calg.pdf
                                         if hasHit then
                                             rollDamage who ongoing shot
                                                 |> Random.map
