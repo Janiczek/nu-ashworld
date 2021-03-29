@@ -1,0 +1,6 @@
+{
+    "entrypoints": [
+        "./src/Frontend.elm",
+        "./src/Backend.elm"
+    ]
+}

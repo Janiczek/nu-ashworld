@@ -1,13 +1,12 @@
 module Data.Map.Terrain exposing
     ( Terrain(..)
-    , tickCost
     , forCoords
     , isPassable
+    , tickCost
     )
 
 import Data.Map exposing (TileCoords)
 import Dict exposing (Dict)
-import Logic
 
 
 type Terrain

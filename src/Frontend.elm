@@ -2,16 +2,11 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Data.Auth as Auth exposing (Password)
+import Data.Auth as Auth
 import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.HealthStatus as HealthStatus
-import Data.Map as Map
-    exposing
-        ( TileCoords
-        , TileNum
-        )
-import Data.Map.Location
+import Data.Map as Map exposing (TileCoords)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.Terrain as Terrain
 import Data.NewChar as NewChar exposing (NewChar)
@@ -29,11 +24,10 @@ import Data.World as World
     exposing
         ( World(..)
         , WorldLoggedInData
-        , WorldLoggedOutData
         )
 import Data.Xp as Xp
 import DateFormat
-import Frontend.News as News exposing (Item)
+import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
@@ -119,7 +113,7 @@ update msg model =
                     , Nav.load url
                     )
 
-        UrlChanged url ->
+        UrlChanged _ ->
             ( model, Cmd.none )
 
         Logout ->
@@ -450,13 +444,13 @@ contentView model =
             ( Route.Ladder, WorldNotInitialized _ ) ->
                 ladderLoadingView
 
-            ( Route.Town, WorldLoggedIn world ) ->
+            ( Route.Town, WorldLoggedIn _ ) ->
                 townView
 
             ( Route.Town, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Settings, WorldLoggedIn world ) ->
+            ( Route.Settings, WorldLoggedIn _ ) ->
                 settingsView
 
             ( Route.Settings, _ ) ->
@@ -477,7 +471,7 @@ contentView model =
             ( Route.Fight _, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.CharCreation, WorldLoggedIn world ) ->
+            ( Route.CharCreation, WorldLoggedIn _ ) ->
                 charCreationView model.newChar
 
             ( Route.CharCreation, _ ) ->

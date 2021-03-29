@@ -9,9 +9,8 @@ module Data.Fight exposing
 
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Perk as Perk
-import Data.Player as Player exposing (PlayerName, SPlayer)
+import Data.Player as Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
-import Data.Special exposing (Special)
 import Logic
 import Random exposing (Generator)
 import Random.Bool
@@ -239,7 +238,7 @@ generator initPlayers =
             baseApCost + ShotType.apCostPenalty r
 
         rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
-        rollDamage who ongoing shotType_ =
+        rollDamage _ _ _ =
             -- TODO plug in the actual damage calculation
             Random.constant 3
 

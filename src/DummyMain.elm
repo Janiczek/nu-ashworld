@@ -6,7 +6,7 @@ import Html
 
 
 main =
-    Html.div
-        (Html.text (String.fromInt Backend.maxAc)
+    Html.div []
+        (Html.text (Debug.toString Backend.app)
             :: Frontend.aboutView
         )

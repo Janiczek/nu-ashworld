@@ -50,12 +50,8 @@ cheapestOpen heuristicFn model =
         |> Set.toList
         |> List.filterMap
             (\position ->
-                case Dict.get position model.costs of
-                    Nothing ->
-                        Nothing
-
-                    Just cost ->
-                        Just ( position, cost + heuristicFn position )
+                Dict.get position model.costs
+                    |> Maybe.map (\cost -> ( position, cost + heuristicFn position ))
             )
         |> List.sortBy Tuple.second
         |> List.head
@@ -115,39 +111,38 @@ astar :
     -> Model comparable
     -> Maybe (Array comparable)
 astar neighbourCostFn heuristicFn moveFn goal model =
-    case cheapestOpen (heuristicFn goal) model of
-        Nothing ->
-            Nothing
+    cheapestOpen (heuristicFn goal) model
+        |> Maybe.andThen
+            (\current ->
+                if current == goal then
+                    Just (reconstructPath model.cameFrom goal)
 
-        Just current ->
-            if current == goal then
-                Just (reconstructPath model.cameFrom goal)
+                else
+                    let
+                        modelPopped =
+                            { model
+                                | openSet = Set.remove current model.openSet
+                                , evaluated = Set.insert current model.evaluated
+                            }
 
-            else
-                let
-                    modelPopped =
-                        { model
-                            | openSet = Set.remove current model.openSet
-                            , evaluated = Set.insert current model.evaluated
-                        }
+                        neighbours =
+                            moveFn current
 
-                    neighbours =
-                        moveFn current
+                        newNeighbours =
+                            Set.diff neighbours modelPopped.evaluated
 
-                    newNeighbours =
-                        Set.diff neighbours modelPopped.evaluated
+                        modelWithNeighbours =
+                            { modelPopped
+                                | openSet =
+                                    Set.union modelPopped.openSet
+                                        newNeighbours
+                            }
 
-                    modelWithNeighbours =
-                        { modelPopped
-                            | openSet =
-                                Set.union modelPopped.openSet
-                                    newNeighbours
-                        }
-
-                    modelWithCosts =
-                        Set.foldl (updateCost neighbourCostFn current) modelWithNeighbours newNeighbours
-                in
-                astar neighbourCostFn heuristicFn moveFn goal modelWithCosts
+                        modelWithCosts =
+                            Set.foldl (updateCost neighbourCostFn current) modelWithNeighbours newNeighbours
+                    in
+                    astar neighbourCostFn heuristicFn moveFn goal modelWithCosts
+            )
 
 
 manhattanHeuristic : ( Int, Int ) -> ( Int, Int ) -> Float

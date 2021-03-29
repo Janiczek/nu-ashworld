@@ -5,14 +5,9 @@ import Data.Auth as Auth
         ( Auth
         , Verified
         )
-import Data.Fight as Fight
-    exposing
-        ( FightInfo
-        , FightResult(..)
-        )
+import Data.Fight as Fight exposing (FightResult(..))
 import Data.Map as Map exposing (TileCoords, TileNum)
 import Data.Map.Pathfinding as Pathfinding
-import Data.Map.Terrain as Terrain
 import Data.NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -26,22 +21,19 @@ import Data.Special.Perception as Perception
 import Data.Tick as Tick
 import Data.World
     exposing
-        ( World
-        , WorldLoggedInData
+        ( WorldLoggedInData
         , WorldLoggedOutData
         )
 import Data.Xp as Xp
 import Dict
 import Dict.Extra as Dict
-import Html
 import Lamdera exposing (ClientId, SessionId)
 import Logic
-import Process
 import Random
 import Set exposing (Set)
 import Set.Extra as Set
 import Task
-import Time exposing (Posix)
+import Time
 import Time.Extra as Time
 import Types exposing (..)
 

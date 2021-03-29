@@ -26,7 +26,7 @@ import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.NewChar exposing (NewChar)
-import Data.Perk as Perk exposing (Perk)
+import Data.Perk exposing (Perk)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
 import Logic

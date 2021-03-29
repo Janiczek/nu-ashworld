@@ -1,11 +1,10 @@
 module Data.Map.Pathfinding exposing
-    ( tickCost
-    , path
+    ( path
+    , tickCost
     )
 
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Terrain as Terrain
-import Data.Special exposing (Special)
 import Data.Special.Perception exposing (PerceptionLevel(..))
 import RasterShapes
 import Raycast2D
