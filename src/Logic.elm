@@ -235,7 +235,7 @@ unarmedAttackStats { special, level } =
 
         maxDamage : Int
         maxDamage =
-            2 + unarmedAttackBonus + bonusMeleeDamage
+            1 + unarmedAttackBonus + bonusMeleeDamage
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks
