@@ -277,9 +277,6 @@ generator initPlayers =
                                 -- TODO critical hits
                                 2
 
-                            combatDifficultyMultiplier =
-                                100
-
                             armorIgnore =
                                 -- TODO armor ignoring attacks
                                 0
@@ -296,19 +293,19 @@ generator initPlayers =
                                 -- TODO ammo
                                 0
                         in
+                        -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
+                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
                         round <|
                             (((damage_ + rangedBonus)
                                 * (ammoDamageMultiplier / ammoDamageDivisor)
                                 * (criticalHitDamageMultiplier / 2)
-                                * (combatDifficultyMultiplier / 100)
+                              -- * (combatDifficultyMultiplier / 100)
                              )
                                 - (armorDamageThreshold / max 1 (5 * armorIgnore))
                             )
                                 * ((100
-                                        - max 0
-                                            ((armorDamageResistance / max 1 (5 * armorIgnore))
-                                                + ammoDamageResistanceModifier
-                                            )
+                                        - max 0 (armorDamageResistance / max 1 (5 * armorIgnore))
+                                        + ammoDamageResistanceModifier
                                    )
                                     / 100
                                   )

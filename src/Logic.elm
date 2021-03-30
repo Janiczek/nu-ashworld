@@ -193,32 +193,54 @@ unarmedAttackStats { special, level } =
         unarmedSkill : Int
         unarmedSkill =
             temporaryUnarmedSkill special
+
+        heavyHandedTraitBonus : Int
+        heavyHandedTraitBonus =
+            -- TODO
+            0
+
+        hthDamagePerkBonus : Int
+        hthDamagePerkBonus =
+            -- TODO
+            0
+
+        bonusMeleeDamage : Int
+        bonusMeleeDamage =
+            max 1 (strength - 5) + heavyHandedTraitBonus + hthDamagePerkBonus
+
+        { unarmedAttackBonus, criticalChanceBonus } =
+            if unarmedSkill < 55 || agility < 6 then
+                { unarmedAttackBonus = 0
+                , criticalChanceBonus = 0
+                }
+
+            else if unarmedSkill < 75 || strength < 5 || level < 6 then
+                { unarmedAttackBonus = 3
+                , criticalChanceBonus = 0
+                }
+
+            else if unarmedSkill < 100 || agility < 7 || level < 9 then
+                { unarmedAttackBonus = 5
+                , criticalChanceBonus = 5
+                }
+
+            else
+                { unarmedAttackBonus = 7
+                , criticalChanceBonus = 15
+                }
+
+        minDamage : Int
+        minDamage =
+            1 + unarmedAttackBonus
+
+        maxDamage : Int
+        maxDamage =
+            2 + unarmedAttackBonus + bonusMeleeDamage
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks
     -- TODO track their AP cost too
-    -- TODO Bonus HtH Damage perk https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Melee_combat
-    -- TODO Heavy Handed trait https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Melee_combat
-    if unarmedSkill < 55 || agility < 6 then
-        { minDamage = 1
-        , maxDamage = 2
-        , criticalChanceBonus = 0
-        }
-
-    else if unarmedSkill < 75 || strength < 5 || level < 6 then
-        { minDamage = 4
-        , maxDamage = 5
-        , criticalChanceBonus = 0
-        }
-
-    else if unarmedSkill < 100 || agility < 7 || level < 9 then
-        { minDamage = 6
-        , maxDamage = 7
-        , criticalChanceBonus = 5
-        }
-
-    else
-        { minDamage = 8
-        , maxDamage = 9
-        , criticalChanceBonus = 15
-        }
+    { minDamage = minDamage
+    , maxDamage = maxDamage
+    , criticalChanceBonus = criticalChanceBonus
+    }
