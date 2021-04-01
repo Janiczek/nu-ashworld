@@ -40,7 +40,8 @@ And more long-term plans:
 * Quests
 * Town NPCs (barter vendors, quest givers)
 
-P.S.: I've created a Twitter account @NuAshworld where I share screenshots from
+P.S.: I've created a Twitter account
+[@NuAshworld](https://twitter.com/NuAshworld) where I share screenshots from
 development. Follow me!
 
 ~janiczek
