@@ -656,7 +656,7 @@ locationsView : Html FrontendMsg
 locationsView =
     Location.allLocations
         |> List.map locationView
-        |> H.div []
+        |> H.div [ HA.id "map-locations" ]
 
 
 changedCoordsDecoder : Maybe TileCoords -> Decoder TileCoords
@@ -719,7 +719,7 @@ mapLoggedOutView =
             , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
-        []
+        [ locationsView ]
     ]
 
 
