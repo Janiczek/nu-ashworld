@@ -7,6 +7,8 @@
   --fg01: #3CF800;
   --fg-highlight: #FCFD7D;
 
+  --fg01-half-transparent: rgba(60,248,0,0.5);
+  --fg01-fully-transparent: rgba(60,248,0,0);
   --fg-highlight-transparent: rgba(252,253,125,0.25);
 
   --table-border: rgba(0,124,0,0.5); /* fg03 with opacity 0.5 */
@@ -505,6 +507,55 @@ ul {
   pointer-events: none;
   z-index: 1;
 }
+
+.map-location {
+  color: var(--fg01);
+}
+
+.map-location.small {
+  --location-border-width: 1px;
+  --location-size: 11px;
+  --location-name-top: 68%;
+}
+
+.map-location.middle {
+  --location-border-width: 1px;
+  --location-size: 23px;
+  --location-name-top: 75%;
+}
+
+.map-location.large {
+  --location-border-width: 2px;
+  --location-size: 45px;
+  --location-name-top: 100%;
+}
+
+.map-location:before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  content: '';
+  display: block;
+  width: var(--location-size);
+  height: var(--location-size);
+  border: var(--location-border-width) solid var(--fg01);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,248,0,0) 0%, rgba(60,248,0,0.5) 100%);
+  transform: translate(-50%, -50%);
+}
+
+.map-location:after {
+  content: attr(data-location-name);
+  display: block;
+  font-size: 16px;
+  top: var(--location-name-top);
+  left: 50%;
+  transform: translate(-50%, 0);
+  text-align: center;
+  position: absolute;
+  white-space: nowrap;
+}
+
 
 #map-marker {
   position: absolute;

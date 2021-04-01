@@ -7,6 +7,7 @@ import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..)
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.HealthStatus as HealthStatus
 import Data.Map as Map exposing (TileCoords)
+import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.Terrain as Terrain
 import Data.NewChar as NewChar exposing (NewChar)
@@ -650,12 +651,51 @@ mapView mouseCoords player =
             , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
-        [ mapMarkerView playerCoords
+        [ locationsView
+        , mapMarkerView playerCoords
         , mouseEventCatcherView
         , fogView
         , H.viewMaybe mouseRelatedView mouseCoords
         ]
     ]
+
+
+locationView : Location -> Html FrontendMsg
+locationView location =
+    let
+        ( x, y ) =
+            Location.coords location
+
+        size : Location.Size
+        size =
+            Location.size location
+
+        name : String
+        name =
+            Location.name location
+    in
+    H.div
+        [ HA.classList
+            [ ( "tile", True )
+            , ( "map-location", True )
+            , ( "small", size == Location.Small )
+            , ( "middle", size == Location.Middle )
+            , ( "large", size == Location.Large )
+            ]
+        , HA.attribute "data-location-name" name
+        , cssVars
+            [ ( "--tile-coord-x", String.fromInt x )
+            , ( "--tile-coord-y", String.fromInt y )
+            ]
+        ]
+        []
+
+
+locationsView : Html FrontendMsg
+locationsView =
+    Location.allLocations
+        |> List.map locationView
+        |> H.div []
 
 
 changedCoordsDecoder : Maybe TileCoords -> Decoder TileCoords
@@ -710,11 +750,13 @@ cssVars vars =
 mapLoggedOutView : List (Html FrontendMsg)
 mapLoggedOutView =
     [ pageTitleView "Map"
-    , H.img
-        [ HA.id "map-whole"
-        , HA.src "images/map_whole.png"
-        , HA.width 1400
-        , HA.height 1500
+    , H.div
+        [ HA.id "map"
+        , cssVars
+            [ ( "--map-columns", String.fromInt Map.columns )
+            , ( "--map-rows", String.fromInt Map.rows )
+            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+            ]
         ]
         []
     ]

@@ -1,7 +1,11 @@
 module Data.Map.Location exposing
     ( Location(..)
+    , Size(..)
+    , allLocations
     , coords
     , default
+    , name
+    , size
     )
 
 import Data.Map exposing (TileCoords)
@@ -11,6 +15,12 @@ default : Location
 default =
     -- TODO does this cause issues? Do new players need protection from PKers?
     Arroyo
+
+
+type Size
+    = Large
+    | Middle
+    | Small
 
 
 type Location
@@ -49,6 +59,155 @@ type Location
     | Vault15
     | VaultCity
     | VillageNearVaultCity
+
+
+allLocations : List Location
+allLocations =
+    [ AbandonedHouse
+    , Abbey
+    , Arroyo
+    , BrokenHills
+    , Den
+    , DenSlaveRun
+    , EPA
+    , EnclavePlatform
+    , FakeVault13
+    , Gecko
+    , GhostFarm
+    , Golgotha
+    , HubologistStash
+    , Klamath
+    , KlamathSafeHouse
+    , MilitaryBase
+    , Modoc
+    , Navarro
+    , NewCaliforniaRepublic
+    , NewReno
+    , NewRenoSafeHouse
+    , Raiders
+    , Redding
+    , ReddingSafeHouse
+    , SanFrancisco
+    , ShiSubmarine
+    , SierraArmyDepot
+    , SlaverCamp
+    , Stables
+    , ToxicCaves
+    , UmbraTribe
+    , Vault13
+    , Vault15
+    , VaultCity
+    , VillageNearVaultCity
+    ]
+
+
+size : Location -> Size
+size location =
+    case location of
+        Arroyo ->
+            Middle
+
+        Klamath ->
+            Large
+
+        ToxicCaves ->
+            Small
+
+        KlamathSafeHouse ->
+            Small
+
+        Den ->
+            Large
+
+        DenSlaveRun ->
+            Small
+
+        Modoc ->
+            Large
+
+        GhostFarm ->
+            Small
+
+        Abbey ->
+            Middle
+
+        Gecko ->
+            Large
+
+        VillageNearVaultCity ->
+            Small
+
+        VaultCity ->
+            Large
+
+        SlaverCamp ->
+            Small
+
+        UmbraTribe ->
+            Middle
+
+        Redding ->
+            Large
+
+        Navarro ->
+            Middle
+
+        ReddingSafeHouse ->
+            Small
+
+        Raiders ->
+            Middle
+
+        EPA ->
+            Middle
+
+        SierraArmyDepot ->
+            Middle
+
+        Stables ->
+            Small
+
+        NewReno ->
+            Large
+
+        Golgotha ->
+            Small
+
+        NewRenoSafeHouse ->
+            Small
+
+        BrokenHills ->
+            Large
+
+        FakeVault13 ->
+            Small
+
+        EnclavePlatform ->
+            Large
+
+        ShiSubmarine ->
+            Small
+
+        SanFrancisco ->
+            Large
+
+        HubologistStash ->
+            Small
+
+        AbandonedHouse ->
+            Small
+
+        MilitaryBase ->
+            Large
+
+        Vault13 ->
+            Middle
+
+        NewCaliforniaRepublic ->
+            Large
+
+        Vault15 ->
+            Middle
 
 
 coords : Location -> TileCoords
@@ -158,3 +317,112 @@ coords loc =
 
         Vault15 ->
             ( 25, 28 )
+
+
+name : Location -> String
+name location =
+    case location of
+        AbandonedHouse ->
+            "Abandoned House"
+
+        Abbey ->
+            "Abbey"
+
+        Arroyo ->
+            "Arroyo"
+
+        BrokenHills ->
+            "Broken Hills"
+
+        Den ->
+            "Den"
+
+        DenSlaveRun ->
+            "Den Slave Run"
+
+        EPA ->
+            "EPA"
+
+        EnclavePlatform ->
+            "Enclave Platform"
+
+        FakeVault13 ->
+            "Fake Vault 13"
+
+        Gecko ->
+            "Gecko"
+
+        GhostFarm ->
+            "Ghost Farm"
+
+        Golgotha ->
+            "Golgotha"
+
+        HubologistStash ->
+            "Hubologist Stash"
+
+        Klamath ->
+            "Klamath"
+
+        KlamathSafeHouse ->
+            "Safe House"
+
+        MilitaryBase ->
+            "Military Base"
+
+        Modoc ->
+            "Modoc"
+
+        Navarro ->
+            "Navarro"
+
+        NewCaliforniaRepublic ->
+            "New California Republic"
+
+        NewReno ->
+            "New Reno"
+
+        NewRenoSafeHouse ->
+            "Safe House"
+
+        Raiders ->
+            "Raiders"
+
+        Redding ->
+            "Redding"
+
+        ReddingSafeHouse ->
+            "Safe House"
+
+        SanFrancisco ->
+            "San Francisco"
+
+        ShiSubmarine ->
+            "Shi Submarine"
+
+        SierraArmyDepot ->
+            "Sierra Army Depot"
+
+        SlaverCamp ->
+            "Slaver Camp"
+
+        Stables ->
+            "Stables"
+
+        ToxicCaves ->
+            "Toxic Caves"
+
+        UmbraTribe ->
+            "Umbra Tribe"
+
+        Vault13 ->
+            "Vault 13"
+
+        Vault15 ->
+            "Vault 15"
+
+        VaultCity ->
+            "Vault City"
+
+        VillageNearVaultCity ->
+            "Village"
