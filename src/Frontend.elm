@@ -163,6 +163,11 @@ update msg model =
             , Lamdera.sendToBackend <| Fight playerName
             )
 
+        AskToHeal ->
+            ( model
+            , Lamdera.sendToBackend HealMe
+            )
+
         Refresh ->
             ( model
             , Lamdera.sendToBackend RefreshPlease
@@ -1530,17 +1535,17 @@ loginFormView authError world =
             )
 
 
-type Link
+type LinkType
     = LinkOut String
     | LinkIn Route
     | LinkMsg FrontendMsg
 
 
-linkView : Route -> ( String, Link, Maybe String ) -> Html FrontendMsg
-linkView currentRoute ( label, link, tooltip ) =
+linkView : Route -> Link -> Html FrontendMsg
+linkView currentRoute { label, type_, tooltip, disabled } =
     let
         ( tag, linkAttrs, maybeRoute ) =
-            case link of
+            case type_ of
                 LinkOut http ->
                     ( H.a
                     , [ HA.href http
@@ -1551,19 +1556,19 @@ linkView currentRoute ( label, link, tooltip ) =
                     )
 
                 LinkIn route ->
-                    -- TODO button?
-                    ( H.div
+                    ( H.button
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
+                      , HA.disabled disabled
                       ]
                     , Just route
                     )
 
                 LinkMsg msg ->
-                    -- TODO button?
-                    ( H.div
+                    ( H.button
                     , [ HE.onClick msg
                       , HA.attributeMaybe HA.title tooltip
+                      , HA.disabled disabled
                       ]
                     , Nothing
                     )
@@ -1588,24 +1593,59 @@ linkView currentRoute ( label, link, tooltip ) =
         ]
 
 
+type alias Link =
+    { label : String
+    , type_ : LinkType
+    , tooltip : Maybe String
+    , disabled : Bool
+    }
+
+
+linkOut : String -> String -> Maybe String -> Bool -> Link
+linkOut label url tooltip disabled =
+    Link label (LinkOut url) tooltip disabled
+
+
+linkIn : String -> Route -> Maybe String -> Bool -> Link
+linkIn label route tooltip disabled =
+    Link label (LinkIn route) tooltip disabled
+
+
+linkMsg : String -> FrontendMsg -> Maybe String -> Bool -> Link
+linkMsg label msg tooltip disabled =
+    Link label (LinkMsg msg) tooltip disabled
+
+
 loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
 loggedInLinksView player currentRoute =
     let
         links =
             case player of
                 NeedsCharCreated _ ->
-                    [ ( "New Char", LinkIn Route.CharCreation, Nothing )
-                    , ( "Logout", LinkMsg Logout, Nothing )
+                    [ linkIn "New Char" Route.CharCreation Nothing False
+                    , linkMsg "Logout" Logout Nothing False
                     ]
 
-                Player _ ->
-                    [ ( "Refresh", LinkMsg Refresh, Nothing )
-                    , ( "Character", LinkIn Route.Character, Nothing )
-                    , ( "Map", LinkIn Route.Map, Nothing )
-                    , ( "Ladder", LinkIn Route.Ladder, Nothing )
-                    , ( "Town", LinkIn Route.Town, Nothing )
-                    , ( "Settings", LinkIn Route.Settings, Nothing )
-                    , ( "Logout", LinkMsg Logout, Nothing )
+                Player p ->
+                    [ linkMsg "Heal"
+                        AskToHeal
+                        (if p.hp >= p.maxHp then
+                            Just "Cost: 1 tick. You are at full HP!"
+
+                         else if p.ticks < 1 then
+                            Just "Cost: 1 tick. You have no ticks left!"
+
+                         else
+                            Just "Cost: 1 tick"
+                        )
+                        (p.ticks < 1 || p.hp >= p.maxHp)
+                    , linkMsg "Refresh" Refresh Nothing False
+                    , linkIn "Character" Route.Character Nothing False
+                    , linkIn "Map" Route.Map Nothing False
+                    , linkIn "Ladder" Route.Ladder Nothing False
+                    , linkIn "Town" Route.Town Nothing False
+                    , linkIn "Settings" Route.Settings Nothing False
+                    , linkMsg "Logout" Logout Nothing False
                     ]
     in
     H.div
@@ -1619,11 +1659,11 @@ adminLinksView : AdminData -> Route -> Html FrontendMsg
 adminLinksView data currentRoute =
     let
         links =
-            [ ( "Refresh", LinkMsg Refresh, Nothing )
-            , ( "Players", LinkIn (Route.Admin Route.Players), Nothing )
-            , ( "Logged In", LinkIn (Route.Admin Route.LoggedIn), Nothing )
-            , ( "Ladder", LinkIn Route.Ladder, Nothing )
-            , ( "Logout", LinkMsg Logout, Nothing )
+            [ linkMsg "Refresh" Refresh Nothing False
+            , linkIn "Players" (Route.Admin Route.Players) Nothing False
+            , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
+            , linkIn "Ladder" Route.Ladder Nothing False
+            , linkMsg "Logout" Logout Nothing False
             ]
     in
     H.div
@@ -1639,9 +1679,9 @@ loggedOutLinksView currentRoute =
         [ HA.id "logged-out-links"
         , HA.class "links"
         ]
-        ([ ( "Refresh", LinkMsg Refresh, Nothing )
-         , ( "Map", LinkIn Route.Map, Nothing )
-         , ( "Ladder", LinkIn Route.Ladder, Nothing )
+        ([ linkMsg "Refresh" Refresh Nothing False
+         , linkIn "Map" Route.Map Nothing False
+         , linkIn "Ladder" Route.Ladder Nothing False
          ]
             |> List.map (linkView currentRoute)
         )
@@ -1653,13 +1693,13 @@ commonLinksView currentRoute =
         [ HA.id "common-links"
         , HA.class "links"
         ]
-        ([ ( "News", LinkIn Route.News, Nothing )
-         , ( "About", LinkIn Route.About, Nothing )
-         , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
-         , ( "Twitter →", LinkOut "https://twitter.com/NuAshworld", Nothing )
-         , ( "Discord →", LinkOut "https://discord.gg/HUmwvnv4xV", Nothing )
-         , ( "Reddit  →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
-         , ( "Donate  →", LinkOut "https://patreon.com/janiczek", Nothing )
+        ([ linkIn "News" Route.News Nothing False
+         , linkIn "About" Route.About Nothing False
+         , linkIn "FAQ" Route.FAQ (Just "Frequently Asked Questions") False
+         , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
+         , linkOut "Discord →" "https://discord.gg/HUmwvnv4xV" Nothing False
+         , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False
+         , linkOut "Donate  →" "https://patreon.com/janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)
         )
@@ -1672,7 +1712,7 @@ playerInfoView player =
         |> H.viewMaybe createdPlayerInfoView
 
 
-createdPlayerInfoView : CPlayer -> Html msg
+createdPlayerInfoView : CPlayer -> Html FrontendMsg
 createdPlayerInfoView player =
     H.div
         [ HA.id "player-info" ]
@@ -1713,7 +1753,7 @@ createdPlayerInfoView player =
         , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
         , H.div
             [ HA.class "player-stat-label"
-            , HA.title "Action points"
+            , HA.title "Ticks"
             ]
             [ H.text "Ticks:" ]
         , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ticks ]

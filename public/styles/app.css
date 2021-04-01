@@ -180,6 +180,7 @@ ul {
   cursor: pointer;
   text-decoration: none;
   display: block;
+  text-align: left;
 }
 
 .link-label {
@@ -196,6 +197,13 @@ ul {
 .link:hover,
 .link:hover .link-label {
   color: var(--fg-highlight);
+}
+
+.link:disabled .link-left-bracket,
+.link:disabled .link-right-bracket,
+.link:disabled .link-label {
+  color: var(--fg03);
+
 }
 
 #player-info {

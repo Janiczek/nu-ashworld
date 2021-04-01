@@ -339,6 +339,9 @@ updateFromFrontend sessionId clientId msg model =
         Fight otherPlayerName ->
             withLoggedInCreatedPlayer (fight otherPlayerName)
 
+        HealMe ->
+            withLoggedInCreatedPlayer healMe
+
         RefreshPlease ->
             let
                 loggedOut () =
@@ -499,13 +502,37 @@ incrementSpecial type_ clientId player model =
         ( model, Cmd.none )
 
 
+healMe : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+healMe clientId player model =
+    if player.hp >= player.maxHp then
+        ( model, Cmd.none )
+
+    else if player.ticks <= 0 then
+        ( model, Cmd.none )
+
+    else
+        let
+            newModel =
+                model
+                    |> subtractTicks 1 player.name
+                    |> setHp player.maxHp player.name
+        in
+        getWorldLoggedIn player.name newModel
+            |> Maybe.map
+                (\world ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                    )
+                )
+            |> Maybe.withDefault ( model, Cmd.none )
+
+
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 fight otherPlayerName clientId sPlayer model =
     if sPlayer.hp == 0 then
         ( model, Cmd.none )
 
     else
-        -- TODO consume an AP
         Dict.get otherPlayerName model.players
             |> Maybe.andThen Player.getPlayerData
             |> Maybe.map

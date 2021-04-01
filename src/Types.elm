@@ -58,6 +58,7 @@ type FrontendMsg
     | GotZone Time.Zone
     | GotTime Time.Posix
     | AskToFight PlayerName
+    | AskToHeal
     | Refresh
     | AskToIncSpecial SpecialType
     | SetAuthName String
@@ -76,6 +77,7 @@ type ToBackend
     | CreateNewChar NewChar
     | LogMeOut
     | Fight PlayerName
+    | HealMe
     | RefreshPlease
     | IncSpecial SpecialType
     | MoveTo TileCoords (Set TileCoords)
