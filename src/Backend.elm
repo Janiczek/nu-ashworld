@@ -323,7 +323,11 @@ updateFromFrontend sessionId clientId msg model =
         LogMeOut ->
             let
                 newModel =
-                    { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
+                    if isAdmin sessionId clientId model then
+                        { model | adminLoggedIn = Nothing }
+
+                    else
+                        { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
 
                 world =
                     getWorldLoggedOut newModel
