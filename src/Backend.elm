@@ -21,7 +21,8 @@ import Data.Special.Perception as Perception
 import Data.Tick as Tick
 import Data.World
     exposing
-        ( WorldLoggedInData
+        ( AdminData
+        , WorldLoggedInData
         , WorldLoggedOutData
         )
 import Data.Xp as Xp
@@ -56,9 +57,18 @@ init =
     ( { players = Dict.empty
       , loggedInPlayers = Dict.empty
       , nextWantedTick = Nothing
+      , adminLoggedIn = Nothing
       }
     , Task.perform Tick Time.now
     )
+
+
+getAdminData : Model -> AdminData
+getAdminData model =
+    { players = Dict.values model.players
+    , loggedInPlayers = Set.fromList <| Dict.values model.loggedInPlayers
+    , nextWantedTick = model.nextWantedTick
+    }
 
 
 getWorldLoggedOut : Model -> WorldLoggedOutData
@@ -189,7 +199,7 @@ processTick model =
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateFromFrontend _ clientId msg model =
+updateFromFrontend sessionId clientId msg model =
     let
         withLoggedInPlayer : (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
         withLoggedInPlayer fn =
@@ -205,79 +215,110 @@ updateFromFrontend _ clientId msg model =
                 |> Maybe.andThen Player.getPlayerData
                 |> Maybe.map (\player -> fn clientId player model)
                 |> Maybe.withDefault ( model, Cmd.none )
+
+        withAdmin : (Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withAdmin fn =
+            if isAdmin sessionId clientId model then
+                fn model
+
+            else
+                ( model, Cmd.none )
     in
     case msg of
         LogMeIn auth ->
-            case Dict.get auth.name model.players of
-                Nothing ->
-                    ( model
-                    , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+            if Auth.isAdminName auth then
+                if Auth.adminPasswordChecksOut auth then
+                    let
+                        adminData : AdminData
+                        adminData =
+                            getAdminData model
+                    in
+                    ( { model | adminLoggedIn = Just ( sessionId, clientId ) }
+                    , Lamdera.sendToFrontend clientId <| YoureLoggedInAsAdmin adminData
                     )
 
-                Just player ->
-                    let
-                        playerAuth : Auth Verified
-                        playerAuth =
-                            Player.getAuth player
-                    in
-                    if Auth.verify auth playerAuth then
-                        getWorldLoggedIn auth.name model
-                            |> Maybe.map
-                                (\world ->
-                                    let
-                                        ( loggedOutPlayers, otherPlayers ) =
-                                            Dict.partition (\_ name -> name == auth.name) model.loggedInPlayers
+                else
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| AuthError "Nuh-uh..."
+                    )
 
-                                        worldLoggedOut =
-                                            getWorldLoggedOut model
-                                    in
-                                    ( { model | loggedInPlayers = Dict.insert clientId auth.name otherPlayers }
-                                    , Cmd.batch <|
-                                        (Lamdera.sendToFrontend clientId <| YoureLoggedIn world)
-                                            :: (loggedOutPlayers
-                                                    |> Dict.keys
-                                                    |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut worldLoggedOut)
-                                               )
-                                    )
-                                )
-                            -- weird?
-                            |> Maybe.withDefault ( model, Cmd.none )
-
-                    else
+            else
+                case Dict.get auth.name model.players of
+                    Nothing ->
                         ( model
                         , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
                         )
 
-        RegisterMe auth ->
-            case Dict.get auth.name model.players of
-                Just _ ->
-                    ( model
-                    , Lamdera.sendToFrontend clientId <| AuthError "Username exists"
-                    )
-
-                Nothing ->
-                    if Auth.isEmpty auth.password then
-                        ( model
-                        , Lamdera.sendToFrontend clientId <| AuthError "Password is empty"
-                        )
-
-                    else
+                    Just player ->
                         let
-                            player =
-                                NeedsCharCreated <| Auth.promote auth
-
-                            newModel =
-                                { model
-                                    | players = Dict.insert auth.name player model.players
-                                    , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
-                                }
-
-                            world =
-                                getWorldLoggedIn_ player model
+                            playerAuth : Auth Verified
+                            playerAuth =
+                                Player.getAuth player
                         in
-                        ( newModel
-                        , Lamdera.sendToFrontend clientId <| YoureRegistered world
+                        if Auth.verify auth playerAuth then
+                            getWorldLoggedIn auth.name model
+                                |> Maybe.map
+                                    (\world ->
+                                        let
+                                            ( loggedOutPlayers, otherPlayers ) =
+                                                Dict.partition (\_ name -> name == auth.name) model.loggedInPlayers
+
+                                            worldLoggedOut =
+                                                getWorldLoggedOut model
+                                        in
+                                        ( { model | loggedInPlayers = Dict.insert clientId auth.name otherPlayers }
+                                        , Cmd.batch <|
+                                            (Lamdera.sendToFrontend clientId <| YoureLoggedIn world)
+                                                :: (loggedOutPlayers
+                                                        |> Dict.keys
+                                                        |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut worldLoggedOut)
+                                                   )
+                                        )
+                                    )
+                                -- weird?
+                                |> Maybe.withDefault ( model, Cmd.none )
+
+                        else
+                            ( model
+                            , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+                            )
+
+        RegisterMe auth ->
+            if Auth.isAdminName auth then
+                ( model
+                , Lamdera.sendToFrontend clientId <| AuthError "Nuh-uh..."
+                )
+
+            else
+                case Dict.get auth.name model.players of
+                    Just _ ->
+                        ( model
+                        , Lamdera.sendToFrontend clientId <| AuthError "Username exists"
                         )
+
+                    Nothing ->
+                        if Auth.isEmpty auth.password then
+                            ( model
+                            , Lamdera.sendToFrontend clientId <| AuthError "Password is empty"
+                            )
+
+                        else
+                            let
+                                player =
+                                    NeedsCharCreated <| Auth.promote auth
+
+                                newModel =
+                                    { model
+                                        | players = Dict.insert auth.name player model.players
+                                        , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
+                                    }
+
+                                world =
+                                    getWorldLoggedIn_ player model
+                            in
+                            ( newModel
+                            , Lamdera.sendToFrontend clientId <| YoureRegistered world
+                            )
 
         LogMeOut ->
             let
@@ -301,19 +342,25 @@ updateFromFrontend _ clientId msg model =
                     , Lamdera.sendToFrontend clientId <| CurrentWorld <| getWorldLoggedOut model
                     )
             in
-            case Dict.get clientId model.loggedInPlayers of
-                Nothing ->
-                    loggedOut ()
+            if isAdmin sessionId clientId model then
+                ( model
+                , Lamdera.sendToFrontend clientId <| CurrentAdminData <| getAdminData model
+                )
 
-                Just playerName ->
-                    getWorldLoggedIn playerName model
-                        |> Maybe.map
-                            (\world ->
-                                ( model
-                                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+            else
+                case Dict.get clientId model.loggedInPlayers of
+                    Nothing ->
+                        loggedOut ()
+
+                    Just playerName ->
+                        getWorldLoggedIn playerName model
+                            |> Maybe.map
+                                (\world ->
+                                    ( model
+                                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                    )
                                 )
-                            )
-                        |> Maybe.withDefault (loggedOut ())
+                            |> Maybe.withDefault (loggedOut ())
 
         IncSpecial type_ ->
             withLoggedInCreatedPlayer (incrementSpecial type_)
@@ -323,6 +370,21 @@ updateFromFrontend _ clientId msg model =
 
         MoveTo newCoords pathTaken ->
             withLoggedInCreatedPlayer (moveTo newCoords pathTaken)
+
+        AdminToBackend adminMsg ->
+            withAdmin (updateAdmin adminMsg)
+
+
+updateAdmin : AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateAdmin msg model =
+    case msg of
+        Foo ->
+            ( model, Cmd.none )
+
+
+isAdmin : SessionId -> ClientId -> Model -> Bool
+isAdmin sessionId clientId { adminLoggedIn } =
+    adminLoggedIn == Just ( sessionId, clientId )
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

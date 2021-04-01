@@ -1,9 +1,11 @@
 module Data.World exposing
-    ( World(..)
+    ( AdminData
+    , World(..)
     , WorldLoggedInData
     , WorldLoggedOutData
     , allPlayers
     , getAuth
+    , isAdmin
     , isLoggedIn
     , mapAuth
     )
@@ -14,7 +16,11 @@ import Data.Player as Player
         ( COtherPlayer
         , CPlayer
         , Player(..)
+        , PlayerName
+        , SPlayer
         )
+import Set exposing (Set)
+import Time exposing (Posix)
 
 
 {-| TODO it would be nice if we didn't have to send the hashed password back to the user
@@ -23,6 +29,16 @@ type World
     = WorldNotInitialized (Auth Plaintext)
     | WorldLoggedOut (Auth Plaintext) WorldLoggedOutData
     | WorldLoggedIn WorldLoggedInData
+    | WorldAdmin AdminData
+
+
+{-| Very similar to Types.BackendModel
+-}
+type alias AdminData =
+    { players : List (Player SPlayer)
+    , loggedInPlayers : Set PlayerName
+    , nextWantedTick : Maybe Posix
+    }
 
 
 type alias WorldLoggedOutData =
@@ -59,6 +75,25 @@ isLoggedIn world =
         WorldLoggedIn _ ->
             True
 
+        WorldAdmin _ ->
+            False
+
+
+isAdmin : World -> Bool
+isAdmin world =
+    case world of
+        WorldNotInitialized _ ->
+            False
+
+        WorldLoggedOut _ _ ->
+            False
+
+        WorldLoggedIn _ ->
+            False
+
+        WorldAdmin _ ->
+            True
+
 
 getAuth : World -> Maybe (Auth Plaintext)
 getAuth world =
@@ -70,6 +105,9 @@ getAuth world =
             Just auth
 
         WorldLoggedIn _ ->
+            Nothing
+
+        WorldAdmin _ ->
             Nothing
 
 
@@ -84,3 +122,6 @@ mapAuth fn world =
 
         WorldLoggedIn data ->
             WorldLoggedIn data
+
+        WorldAdmin data ->
+            WorldAdmin data

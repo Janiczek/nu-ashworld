@@ -1,6 +1,8 @@
 module Frontend.Route exposing
-    ( Route(..)
+    ( AdminRoute(..)
+    , Route(..)
     , loggedOut
+    , needsAdmin
     , needsLogin
     )
 
@@ -18,6 +20,12 @@ type Route
     | News
     | Fight FightInfo
     | CharCreation
+    | Admin AdminRoute
+
+
+type AdminRoute
+    = Players
+    | LoggedIn
 
 
 needsLogin : Route -> Bool
@@ -52,6 +60,19 @@ needsLogin route =
 
         CharCreation ->
             True
+
+        Admin _ ->
+            False
+
+
+needsAdmin : Route -> Bool
+needsAdmin route =
+    case route of
+        Admin _ ->
+            True
+
+        _ ->
+            False
 
 
 loggedOut : Route -> Route

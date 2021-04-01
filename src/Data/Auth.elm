@@ -5,8 +5,10 @@ module Data.Auth exposing
     , Password(..)
     , Plaintext
     , Verified
+    , adminPasswordChecksOut
     , hash
     , init
+    , isAdminName
     , isEmpty
     , promote
     , setPlaintextPassword
@@ -112,3 +114,20 @@ isEmpty (Password password_) =
 emptyHashedPassword : String
 emptyHashedPassword =
     Sha256.sha256 ""
+
+
+{-| Choke on that :)
+-}
+adminPasswordChecksOut : Auth Hashed -> Bool
+adminPasswordChecksOut { password } =
+    unwrap password == "d52c237ad4a0551eea62e725037a06bdff7f539005c9ed5dee6460195f1a3ec1"
+
+
+isAdminName : Auth Hashed -> Bool
+isAdminName { name } =
+    name == adminName
+
+
+adminName : String
+adminName =
+    "admin"

@@ -16,10 +16,42 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1614637525
+    [ { date = 1617309687
+      , title = "Fight system"
+      , text = """
+Fights should, now that I've
+[implemented](https://twitter.com/janiczek/status/1377043815043846149) the
+unarmed version of Fallout 2 combat algorithm and raised the XP rewards, be
+interesting and rewarding enough that getting to a level 2 shouldn't be too
+much of a problem :) At least, that would be the case if you had an option to
+heal instantly. It's planned, read more below!
+
+What's planned for the immediate future:
+
+* Fast healing (Pip-boy rest-until-healed that would cost you ticks)
+* Skill system (train your Unarmed skill for better damage etc.)
+* PvM random encounters to train on
+* Inventory system, items, drops
+* Non-unarmed combat (melee, guns, ammo)
+
+And more long-term plans:
+
+* Perks / traits
+* Quests
+* Town NPCs (barter vendors, quest givers)
+
+P.S.: I've created a Twitter account @NuAshworld where I share screenshots from
+development. Follow me!
+
+~janiczek
+"""
+      }
+    , { date = 1614637525
       , title = "Plans before alpha"
       , text = """
-I've just added a tick system (one tick at the start of every hour) which should heal you and give you Action Points. Let's hope it's not too broken :)
+I've just added a tick system (one tick at the start of every hour) which
+should heal you and give you ticks to use for movement, fights, etc. Let's hope
+it's not too broken :)
 
 I want to talk about my plans a bit. Some of my immediate plans are:
 

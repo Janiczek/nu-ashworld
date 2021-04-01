@@ -23,7 +23,8 @@ import Data.Tick as Tick
 import Data.Version as Version
 import Data.World as World
     exposing
-        ( World(..)
+        ( AdminData
+        , World(..)
         , WorldLoggedInData
         )
 import Data.Xp as Xp
@@ -94,7 +95,10 @@ update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
         GoToRoute route ->
-            ( if Route.needsLogin route && not (World.isLoggedIn model.world) then
+            ( if Route.needsAdmin route && not (World.isAdmin model.world) then
+                model
+
+              else if Route.needsLogin route && not (World.isLoggedIn model.world) then
                 model
 
               else
@@ -268,6 +272,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        YoureLoggedInAsAdmin adminData ->
+            ( { model | world = WorldAdmin adminData }
+            , Cmd.none
+            )
+
         YoureRegistered world ->
             ( { model
                 | world = WorldLoggedIn world
@@ -294,6 +303,11 @@ updateFromBackend msg model =
 
         YourCurrentWorld world ->
             ( { model | world = WorldLoggedIn world }
+            , Cmd.none
+            )
+
+        CurrentAdminData data ->
+            ( { model | world = WorldAdmin data }
             , Cmd.none
             )
 
@@ -341,6 +355,9 @@ view model =
 
             WorldLoggedIn data ->
                 loggedInView data model
+
+            WorldAdmin data ->
+                adminView data model
         ]
     }
 
@@ -442,6 +459,15 @@ contentView model =
                     , players = world.players
                     }
 
+            ( Route.Ladder, WorldAdmin data ) ->
+                ladderView
+                    { loggedInPlayer = Nothing
+                    , players =
+                        data.players
+                            |> List.filterMap Player.getPlayerData
+                            |> List.map (Player.serverToClientOther { perception = 10 })
+                    }
+
             ( Route.Ladder, WorldNotInitialized _ ) ->
                 ladderLoadingView
 
@@ -477,6 +503,18 @@ contentView model =
 
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
+
+            ( Route.Admin Route.Players, WorldAdmin data ) ->
+                adminPlayersView
+
+            ( Route.Admin Route.Players, _ ) ->
+                contentUnavailableToNonAdminView
+
+            ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
+                adminLoggedInView
+
+            ( Route.Admin Route.LoggedIn, _ ) ->
+                contentUnavailableToNonAdminView
         )
 
 
@@ -497,6 +535,20 @@ aboutView =
 faqView : List (Html FrontendMsg)
 faqView =
     [ pageTitleView "FAQ"
+    , H.text "TODO"
+    ]
+
+
+adminPlayersView : List (Html FrontendMsg)
+adminPlayersView =
+    [ pageTitleView "Admin :: Players"
+    , H.text "TODO"
+    ]
+
+
+adminLoggedInView : List (Html FrontendMsg)
+adminLoggedInView =
+    [ pageTitleView "Admin :: Logged In"
     , H.text "TODO"
     ]
 
@@ -1355,6 +1407,11 @@ contentUnavailableToLoggedOutView =
     contentUnavailableView "you're not logged in"
 
 
+contentUnavailableToNonAdminView : List (Html FrontendMsg)
+contentUnavailableToNonAdminView =
+    contentUnavailableView "you're not an admin"
+
+
 contentUnavailableToNonCreatedView : List (Html FrontendMsg)
 contentUnavailableToNonCreatedView =
     contentUnavailableView "you haven't created your character yet"
@@ -1406,6 +1463,16 @@ loggedInView world model =
         { leftNav =
             [ playerInfoView world.player
             , loggedInLinksView world.player model.route
+            ]
+        }
+        model
+
+
+adminView : AdminData -> Model -> Html FrontendMsg
+adminView data model =
+    appView
+        { leftNav =
+            [ adminLinksView data model.route
             ]
         }
         model
@@ -1548,6 +1615,24 @@ loggedInLinksView player currentRoute =
         (List.map (linkView currentRoute) links)
 
 
+adminLinksView : AdminData -> Route -> Html FrontendMsg
+adminLinksView data currentRoute =
+    let
+        links =
+            [ ( "Refresh", LinkMsg Refresh, Nothing )
+            , ( "Players", LinkIn (Route.Admin Route.Players), Nothing )
+            , ( "Logged In", LinkIn (Route.Admin Route.LoggedIn), Nothing )
+            , ( "Ladder", LinkIn Route.Ladder, Nothing )
+            , ( "Logout", LinkMsg Logout, Nothing )
+            ]
+    in
+    H.div
+        [ HA.id "logged-in-links"
+        , HA.class "links"
+        ]
+        (List.map (linkView currentRoute) links)
+
+
 loggedOutLinksView : Route -> Html FrontendMsg
 loggedOutLinksView currentRoute =
     H.div
@@ -1571,6 +1656,7 @@ commonLinksView currentRoute =
         ([ ( "News", LinkIn Route.News, Nothing )
          , ( "About", LinkIn Route.About, Nothing )
          , ( "FAQ", LinkIn Route.FAQ, Just "Frequently Asked Questions" )
+         , ( "Twitter →", LinkOut "https://twitter.com/NuAshworld", Nothing )
          , ( "Discord →", LinkOut "https://discord.gg/HUmwvnv4xV", Nothing )
          , ( "Reddit  →", LinkOut "https://www.reddit.com/r/NuAshworld/", Nothing )
          , ( "Donate  →", LinkOut "https://patreon.com/janiczek", Nothing )

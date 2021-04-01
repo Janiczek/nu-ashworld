@@ -15,7 +15,8 @@ import Data.Player
 import Data.Special exposing (SpecialType)
 import Data.World
     exposing
-        ( World
+        ( AdminData
+        , World
         , WorldLoggedInData
         , WorldLoggedOutData
         )
@@ -43,6 +44,7 @@ type alias BackendModel =
     { players : Dict PlayerName (Player SPlayer)
     , loggedInPlayers : Dict ClientId PlayerName
     , nextWantedTick : Maybe Posix
+    , adminLoggedIn : Maybe ( ClientId, SessionId )
     }
 
 
@@ -77,6 +79,12 @@ type ToBackend
     | RefreshPlease
     | IncSpecial SpecialType
     | MoveTo TileCoords (Set TileCoords)
+    | AdminToBackend AdminToBackend
+
+
+type AdminToBackend
+    = -- TODO use this somehow. It should be secure enough already.
+      Foo
 
 
 type BackendMsg
@@ -89,9 +97,11 @@ type BackendMsg
 type ToFrontend
     = YourCurrentWorld WorldLoggedInData
     | CurrentWorld WorldLoggedOutData
+    | CurrentAdminData AdminData
     | YourFightResult ( FightInfo, WorldLoggedInData )
     | YoureLoggedIn WorldLoggedInData
     | YoureRegistered WorldLoggedInData
     | YouHaveCreatedChar WorldLoggedInData
     | YoureLoggedOut WorldLoggedOutData
     | AuthError String
+    | YoureLoggedInAsAdmin AdminData
