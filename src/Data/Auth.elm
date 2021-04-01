@@ -16,6 +16,7 @@ module Data.Auth exposing
     , verify
     )
 
+import Env
 import Sha256
 
 
@@ -113,14 +114,15 @@ isEmpty (Password password_) =
 
 emptyHashedPassword : String
 emptyHashedPassword =
-    Sha256.sha256 ""
+    -- Sha256.sha256 ""
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 
 {-| Choke on that :)
 -}
 adminPasswordChecksOut : Auth Hashed -> Bool
 adminPasswordChecksOut { password } =
-    unwrap password == "d52c237ad4a0551eea62e725037a06bdff7f539005c9ed5dee6460195f1a3ec1"
+    unwrap password == Env.adminPasswordHash
 
 
 isAdminName : Auth Hashed -> Bool
