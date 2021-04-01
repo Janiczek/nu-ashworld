@@ -360,7 +360,6 @@ moveTo newCoords pathTaken clientId player model =
                 model
                     |> subtractTicks tickCost player.name
                     |> setLocation (Map.toTileNum newCoords) player.name
-                    |> addKnownMapTiles (Set.map Map.toTileNum pathTaken) player.name
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -539,11 +538,6 @@ subtractTicks n =
 setLocation : TileNum -> PlayerName -> Model -> Model
 setLocation tileNum =
     updatePlayer (SPlayer.setLocation tileNum)
-
-
-addKnownMapTiles : Set TileNum -> PlayerName -> Model -> Model
-addKnownMapTiles tiles =
-    updatePlayer (SPlayer.addKnownMapTiles tiles)
 
 
 tickAddAp : Player SPlayer -> Player SPlayer

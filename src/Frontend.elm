@@ -603,44 +603,6 @@ mapView mouseCoords player =
                 , HE.onClick MapMouseClick
                 ]
                 []
-
-        fogRectangle : TileCoords -> String
-        fogRectangle ( x, y ) =
-            let
-                left =
-                    String.fromInt <| x * Map.tileSize
-
-                top =
-                    String.fromInt <| y * Map.tileSize
-
-                size =
-                    String.fromInt Map.tileSize
-            in
-            [ "M " ++ left ++ "," ++ top
-            , "h " ++ size
-            , "v " ++ size
-            , "h -" ++ size
-            , "v -" ++ size
-            ]
-                |> String.join " "
-
-        fogPath : String
-        fogPath =
-            Map.distantTiles player.knownMapTiles
-                |> Set.toList
-                |> List.map (Map.toTileCoords >> fogRectangle)
-                |> String.join " "
-
-        fogView : Html FrontendMsg
-        fogView =
-            S.svg
-                [ HA.id "map-fog"
-                , SA.viewBox <| "0 0 " ++ String.fromInt Map.width ++ " " ++ String.fromInt Map.height
-                ]
-                [ S.path
-                    [ SA.d fogPath ]
-                    []
-                ]
     in
     [ pageTitleView "Map"
     , H.div
@@ -654,7 +616,6 @@ mapView mouseCoords player =
         [ locationsView
         , mapMarkerView playerCoords
         , mouseEventCatcherView
-        , fogView
         , H.viewMaybe mouseRelatedView mouseCoords
         ]
     ]

@@ -1,7 +1,6 @@
 module Data.Player.SPlayer exposing
     ( addCaps
     , addHp
-    , addKnownMapTiles
     , addTicks
     , addXp
     , decAvailableSpecial
@@ -35,11 +34,6 @@ addHp n player =
 subtractHp : Int -> SPlayer -> SPlayer
 subtractHp n player =
     { player | hp = (player.hp - n) |> max 0 }
-
-
-addKnownMapTiles : Set TileNum -> SPlayer -> SPlayer
-addKnownMapTiles tiles player =
-    { player | knownMapTiles = Set.union tiles player.knownMapTiles }
 
 
 setHp : Int -> SPlayer -> SPlayer

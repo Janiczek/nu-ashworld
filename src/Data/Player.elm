@@ -30,7 +30,6 @@ import Data.Perk exposing (Perk)
 import Data.Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
 import Logic
-import Set exposing (Set)
 
 
 type alias PlayerName =
@@ -54,7 +53,6 @@ type alias CPlayer =
     , wins : Int
     , losses : Int
     , location : TileNum
-    , knownMapTiles : Set TileNum
     , perks : Dict_.Dict Perk Int
     }
 
@@ -81,7 +79,6 @@ type alias SPlayer =
     , wins : Int
     , losses : Int
     , location : TileNum
-    , knownMapTiles : Set TileNum
     , perks : Dict_.Dict Perk Int
     }
 
@@ -99,7 +96,6 @@ serverToClient p =
     , wins = p.wins
     , losses = p.losses
     , location = p.location
-    , knownMapTiles = p.knownMapTiles
     , perks = p.perks
     }
 
@@ -188,7 +184,6 @@ fromNewChar auth newChar =
     , wins = 0
     , losses = 0
     , location = startingTileNum
-    , knownMapTiles = Set.singleton startingTileNum
     , perks = Dict_.empty
     }
 

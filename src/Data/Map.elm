@@ -3,8 +3,6 @@ module Data.Map exposing
     , TileCoords
     , TileNum
     , columns
-    , distantTiles
-    , height
     , neighbours
     , rows
     , tileCenterPx
@@ -12,7 +10,6 @@ module Data.Map exposing
     , tileSizeFloat
     , toTileCoords
     , toTileNum
-    , width
     )
 
 import Set exposing (Set)
@@ -45,25 +42,10 @@ tileSize =
     50
 
 
-width : Int
-width =
-    tileSize * columns
-
-
-height : Int
-height =
-    tileSize * rows
-
-
 allTiles : Set TileNum
 allTiles =
     List.range 0 (columns * rows - 1)
         |> Set.fromList
-
-
-distantTiles : Set TileNum -> Set TileNum
-distantTiles knownTiles =
-    Set.diff allTiles knownTiles
 
 
 tileSizeFloat : Float
