@@ -554,6 +554,10 @@ ul {
   text-align: center;
   position: absolute;
   white-space: nowrap;
+  background-color: rgba(0,0,0,0.25);
+  padding: 0 4px;
+  line-height: 13px;
+  text-shadow: 2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000;
 }
 
 
