@@ -7,6 +7,7 @@ module Data.Player.SPlayer exposing
     , incLosses
     , incSpecial
     , incWins
+    , recalculateHp
     , setHp
     , setLocation
     , setMaxHp
@@ -18,6 +19,8 @@ module Data.Player.SPlayer exposing
 import Data.Map exposing (TileNum)
 import Data.Player exposing (SPlayer)
 import Data.Special as Special exposing (SpecialType)
+import Data.Xp as Xp
+import Logic
 
 
 addTicks : Int -> SPlayer -> SPlayer
@@ -47,7 +50,27 @@ setMaxHp newMaxHp player =
 
 addXp : Int -> SPlayer -> SPlayer
 addXp n player =
-    { player | xp = player.xp + n }
+    let
+        newXp =
+            player.xp + n
+
+        currentLevel =
+            Xp.currentLevel player.xp
+
+        newLevel =
+            Xp.currentLevel newXp
+
+        levelsDiff =
+            newLevel - currentLevel
+    in
+    { player | xp = newXp }
+        |> (if Debug.log "diff" levelsDiff > 0 then
+                -- TODO later add skill points, perks, etc.
+                recalculateHp
+
+            else
+                identity
+           )
 
 
 addCaps : Int -> SPlayer -> SPlayer
@@ -88,3 +111,30 @@ decAvailableSpecial player =
 setLocation : TileNum -> SPlayer -> SPlayer
 setLocation tileNum player =
     { player | location = tileNum }
+
+
+recalculateHp : SPlayer -> SPlayer
+recalculateHp player =
+    let
+        newMaxHp =
+            Logic.hitpoints
+                { level = Xp.currentLevel player.xp
+                , special = player.special
+                }
+                |> Debug.log "new max hp"
+
+        diff =
+            newMaxHp - player.maxHp
+
+        newHp =
+            -- adding maxHp: add hp too
+            -- lowering maxHp: try to keep hp the same
+            if diff > 0 then
+                player.hp + diff
+
+            else
+                min player.hp newMaxHp
+    in
+    player
+        |> setMaxHp newMaxHp
+        |> setHp newHp

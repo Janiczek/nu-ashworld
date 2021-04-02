@@ -615,11 +615,6 @@ setHp newHp =
     updatePlayer (SPlayer.setHp newHp)
 
 
-addXp : Int -> PlayerName -> Model -> Model
-addXp n =
-    updatePlayer (SPlayer.addXp n)
-
-
 addCaps : Int -> PlayerName -> Model -> Model
 addCaps n =
     updatePlayer (SPlayer.addCaps n)
@@ -681,28 +676,4 @@ tickHeal =
 
 recalculateHp : PlayerName -> Model -> Model
 recalculateHp =
-    updatePlayer
-        (\player ->
-            let
-                newMaxHp =
-                    Logic.hitpoints
-                        { level = Xp.currentLevel player.xp
-                        , special = player.special
-                        }
-
-                diff =
-                    newMaxHp - player.maxHp
-
-                newHp =
-                    -- adding maxHp: add hp too
-                    -- lowering maxHp: try to keep hp the same
-                    if diff > 0 then
-                        player.hp + diff
-
-                    else
-                        min player.hp newMaxHp
-            in
-            player
-                |> SPlayer.setMaxHp newMaxHp
-                |> SPlayer.setHp newHp
-        )
+    updatePlayer SPlayer.recalculateHp
