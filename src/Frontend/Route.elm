@@ -79,7 +79,7 @@ needsAdmin route =
 
 loggedOut : Route -> Route
 loggedOut route =
-    if needsLogin route then
+    if needsLogin route || needsAdmin route then
         News
 
     else
