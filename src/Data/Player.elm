@@ -5,6 +5,7 @@ module Data.Player exposing
     , PlayerName
     , SPlayer
     , clientToClientOther
+    , decoder
     , encode
     , encodeSPlayer
     , fromNewChar
@@ -12,6 +13,7 @@ module Data.Player exposing
     , getPlayerData
     , map
     , perkCount
+    , sPlayerDecoder
     , serverToClient
     , serverToClientOther
     )
@@ -32,6 +34,8 @@ import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Special as Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
+import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Logic
 
@@ -120,6 +124,43 @@ encodeSPlayer player =
         , ( "location", JE.int player.location )
         , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
         ]
+
+
+decoder : Decoder a -> Decoder (Player a)
+decoder innerDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "needs-char-created" ->
+                        JD.field "auth" Auth.verifiedDecoder
+                            |> JD.map NeedsCharCreated
+
+                    "player" ->
+                        JD.field "data" innerDecoder
+                            |> JD.map Player
+
+                    _ ->
+                        JD.fail <| "Unknown player type: '" ++ type_ ++ "'"
+            )
+
+
+sPlayerDecoder : Decoder SPlayer
+sPlayerDecoder =
+    JD.succeed SPlayer
+        |> JDE.andMap (JD.field "name" JD.string)
+        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JDE.andMap (JD.field "hp" JD.int)
+        |> JDE.andMap (JD.field "maxHp" JD.int)
+        |> JDE.andMap (JD.field "xp" JD.int)
+        |> JDE.andMap (JD.field "special" Special.decoder)
+        |> JDE.andMap (JD.field "availableSpecial" JD.int)
+        |> JDE.andMap (JD.field "caps" JD.int)
+        |> JDE.andMap (JD.field "ticks" JD.int)
+        |> JDE.andMap (JD.field "wins" JD.int)
+        |> JDE.andMap (JD.field "losses" JD.int)
+        |> JDE.andMap (JD.field "location" JD.int)
+        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
 
 
 serverToClient : SPlayer -> CPlayer

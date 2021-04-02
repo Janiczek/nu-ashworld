@@ -161,8 +161,8 @@ ul {
   justify-content: space-between;
 }
 
-#auth-error {
-  margin-top: 1em;
+#message {
+  margin-top: 40px;
   color: var(--fg-highlight);
 }
 

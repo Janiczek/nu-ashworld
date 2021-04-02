@@ -1,6 +1,7 @@
-module AssocList.Extra exposing (encode)
+module AssocList.Extra exposing (decoder, encode)
 
 import AssocList
+import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 
 
@@ -17,3 +18,16 @@ encode encodeKey encodeValue dict =
     dict
         |> AssocList.toList
         |> JE.list encodeTuple
+
+
+decoder : Decoder k -> Decoder v -> Decoder (AssocList.Dict k v)
+decoder keyDecoder valueDecoder =
+    let
+        tupleDecoder : Decoder ( k, v )
+        tupleDecoder =
+            JD.map2 Tuple.pair
+                (JD.field "key" keyDecoder)
+                (JD.field "value" valueDecoder)
+    in
+    JD.list tupleDecoder
+        |> JD.map AssocList.fromList

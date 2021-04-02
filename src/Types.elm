@@ -21,8 +21,8 @@ import Data.World
         , WorldLoggedOutData
         )
 import Dict exposing (Dict)
+import File exposing (File)
 import Frontend.Route exposing (Route)
-import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
 import Time exposing (Posix)
@@ -36,7 +36,7 @@ type alias FrontendModel =
     , route : Route
     , world : World
     , newChar : NewChar
-    , authError : Maybe String
+    , message : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
 
@@ -61,6 +61,9 @@ type FrontendMsg
     | AskToFight PlayerName
     | AskToHeal
     | AskForExport
+    | InitiateImport
+    | ReadImportFile File
+    | AskToImportFile String
     | Refresh
     | AskToIncSpecial SpecialType
     | SetAuthName String
@@ -87,8 +90,8 @@ type ToBackend
 
 
 type AdminToBackend
-    = --| ImportJson JE.Value
-      ExportJson
+    = ExportJson
+    | ImportJson String
 
 
 type BackendMsg
@@ -107,6 +110,6 @@ type ToFrontend
     | YoureRegistered WorldLoggedInData
     | YouHaveCreatedChar WorldLoggedInData
     | YoureLoggedOut WorldLoggedOutData
-    | AuthError String
+    | Message String
     | YoureLoggedInAsAdmin AdminData
     | JsonExportDone String

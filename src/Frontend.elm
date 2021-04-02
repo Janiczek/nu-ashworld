@@ -29,7 +29,9 @@ import Data.World as World
         )
 import Data.Xp as Xp
 import DateFormat
+import File
 import File.Download
+import File.Select
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
@@ -77,7 +79,7 @@ init _ key =
       , time = Time.millisToPosix 0
       , zone = Time.utc
       , newChar = NewChar.init
-      , authError = Nothing
+      , message = Nothing
       , mapMouseCoords = Nothing
       }
     , Cmd.batch
@@ -169,6 +171,21 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
+        InitiateImport ->
+            ( model
+            , File.Select.file [ "application/json" ] ReadImportFile
+            )
+
+        ReadImportFile file ->
+            ( model
+            , Task.perform AskToImportFile <| File.toString file
+            )
+
+        AskToImportFile jsonString ->
+            ( model
+            , Lamdera.sendToBackend <| AdminToBackend <| ImportJson <| jsonString
+            )
+
         AskForExport ->
             ( model
             , Lamdera.sendToBackend <| AdminToBackend ExportJson
@@ -190,7 +207,7 @@ update msg model =
                     World.mapAuth
                         (\auth -> { auth | name = newName })
                         model.world
-                , authError = Nothing
+                , message = Nothing
               }
             , Cmd.none
             )
@@ -201,7 +218,7 @@ update msg model =
                     World.mapAuth
                         (Auth.setPlaintextPassword newPassword)
                         model.world
-                , authError = Nothing
+                , message = Nothing
               }
             , Cmd.none
             )
@@ -344,8 +361,8 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        AuthError error ->
-            ( { model | authError = Just error }
+        Message message ->
+            ( { model | message = Just message }
             , Cmd.none
             )
 
@@ -1449,7 +1466,8 @@ notInitializedView : Model -> Html FrontendMsg
 notInitializedView model =
     appView
         { leftNav =
-            [ loginFormView model.authError model.world
+            [ loginFormView model.world
+            , messageView model.message
             , loadingNavView
             ]
         }
@@ -1469,7 +1487,8 @@ loggedOutView : Model -> Html FrontendMsg
 loggedOutView model =
     appView
         { leftNav =
-            [ loginFormView model.authError model.world
+            [ loginFormView model.world
+            , messageView model.message
             , loggedOutLinksView model.route
             ]
         }
@@ -1480,7 +1499,8 @@ loggedInView : WorldLoggedInData -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
         { leftNav =
-            [ playerInfoView world.player
+            [ messageView model.message
+            , playerInfoView world.player
             , loggedInLinksView world.player model.route
             ]
         }
@@ -1491,14 +1511,26 @@ adminView : AdminData -> Model -> Html FrontendMsg
 adminView data model =
     appView
         { leftNav =
-            [ adminLinksView data model.route
+            [ messageView model.message
+            , adminLinksView data model.route
             ]
         }
         model
 
 
-loginFormView : Maybe String -> World -> Html FrontendMsg
-loginFormView authError world =
+messageView : Maybe String -> Html FrontendMsg
+messageView maybeMessage =
+    maybeMessage
+        |> H.viewMaybe
+            (\message ->
+                H.div
+                    [ HA.id "message" ]
+                    [ H.text message ]
+            )
+
+
+loginFormView : World -> Html FrontendMsg
+loginFormView world =
     World.getAuth world
         |> H.viewMaybe
             (\auth ->
@@ -1538,13 +1570,6 @@ loginFormView authError world =
                             ]
                             [ H.text "[Register]" ]
                         ]
-                    , authError
-                        |> H.viewMaybe
-                            (\error ->
-                                H.div
-                                    [ HA.id "auth-error" ]
-                                    [ H.text error ]
-                            )
                     ]
             )
 
@@ -1676,6 +1701,7 @@ adminLinksView data currentRoute =
             [ linkMsg "Refresh" Refresh Nothing False
             , linkIn "Players" (Route.Admin Route.Players) Nothing False
             , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
+            , linkMsg "Import" InitiateImport Nothing False
             , linkMsg "Export" AskForExport Nothing False
             , linkIn "Ladder" Route.Ladder Nothing False
             , linkMsg "Logout" Logout Nothing False

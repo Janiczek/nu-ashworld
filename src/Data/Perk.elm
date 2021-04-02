@@ -1,7 +1,9 @@
-module Data.Perk exposing (Perk(..), encode)
+module Data.Perk exposing (Perk(..), decoder, encode)
 
 -- TODO finish implementing perks
 
+import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Extra as JDE
 import Json.Encode as JE
 
 
@@ -19,3 +21,20 @@ encode perk =
 
             EarlierSequence ->
                 "earlier-sequence"
+
+
+decoder : Decoder Perk
+decoder =
+    JD.string
+        |> JD.andThen
+            (\perk ->
+                case perk of
+                    "kamikaze" ->
+                        JD.succeed Kamikaze
+
+                    "earlier-sequence" ->
+                        JD.succeed EarlierSequence
+
+                    _ ->
+                        JD.fail <| "unknown Perk: '" ++ perk ++ "'"
+            )

@@ -4,6 +4,7 @@ module Data.Special exposing
     , all
     , canDecrement
     , canIncrement
+    , decoder
     , decrement
     , encode
     , get
@@ -13,6 +14,8 @@ module Data.Special exposing
     , label
     )
 
+import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Extra as JDE
 import Json.Encode as JE
 
 
@@ -185,3 +188,15 @@ encode special =
         , ( "agility", JE.int special.agility )
         , ( "luck", JE.int special.luck )
         ]
+
+
+decoder : Decoder Special
+decoder =
+    JD.succeed Special
+        |> JDE.andMap (JD.field "strength" JD.int)
+        |> JDE.andMap (JD.field "perception" JD.int)
+        |> JDE.andMap (JD.field "endurance" JD.int)
+        |> JDE.andMap (JD.field "charisma" JD.int)
+        |> JDE.andMap (JD.field "intelligence" JD.int)
+        |> JDE.andMap (JD.field "agility" JD.int)
+        |> JDE.andMap (JD.field "luck" JD.int)

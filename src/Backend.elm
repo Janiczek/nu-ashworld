@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Admin
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -28,8 +29,8 @@ import Data.World
 import Data.Xp as Xp
 import Dict
 import Dict.Extra as Dict
+import Json.Decode as JD
 import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import Lamdera exposing (ClientId, SessionId)
 import Logic
 import Random
@@ -241,14 +242,14 @@ updateFromFrontend sessionId clientId msg model =
 
                 else
                     ( model
-                    , Lamdera.sendToFrontend clientId <| AuthError "Nuh-uh..."
+                    , Lamdera.sendToFrontend clientId <| Message "Nuh-uh..."
                     )
 
             else
                 case Dict.get auth.name model.players of
                     Nothing ->
                         ( model
-                        , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+                        , Lamdera.sendToFrontend clientId <| Message "Login failed"
                         )
 
                     Just player ->
@@ -282,26 +283,26 @@ updateFromFrontend sessionId clientId msg model =
 
                         else
                             ( model
-                            , Lamdera.sendToFrontend clientId <| AuthError "Login failed"
+                            , Lamdera.sendToFrontend clientId <| Message "Login failed"
                             )
 
         RegisterMe auth ->
             if Auth.isAdminName auth then
                 ( model
-                , Lamdera.sendToFrontend clientId <| AuthError "Nuh-uh..."
+                , Lamdera.sendToFrontend clientId <| Message "Nuh-uh..."
                 )
 
             else
                 case Dict.get auth.name model.players of
                     Just _ ->
                         ( model
-                        , Lamdera.sendToFrontend clientId <| AuthError "Username exists"
+                        , Lamdera.sendToFrontend clientId <| Message "Username exists"
                         )
 
                     Nothing ->
                         if Auth.isEmpty auth.password then
                             ( model
-                            , Lamdera.sendToFrontend clientId <| AuthError "Password is empty"
+                            , Lamdera.sendToFrontend clientId <| Message "Password is empty"
                             )
 
                         else
@@ -392,25 +393,27 @@ updateAdmin clientId msg model =
                 json : String
                 json =
                     model
-                        |> exportJson
+                        |> Admin.encodeBackendModel
                         |> JE.encode 0
             in
             ( model
             , Lamdera.sendToFrontend clientId <| JsonExportDone json
             )
 
+        ImportJson jsonString ->
+            case JD.decodeString Admin.backendModelDecoder jsonString of
+                Ok newModel ->
+                    ( { newModel | adminLoggedIn = model.adminLoggedIn }
+                    , Cmd.batch
+                        [ Lamdera.sendToFrontend clientId <| CurrentAdminData <| getAdminData newModel
+                        , Lamdera.sendToFrontend clientId <| Message "Import successful!"
+                        ]
+                    )
 
-exportJson : Model -> JE.Value
-exportJson model =
-    let
-        adminData : AdminData
-        adminData =
-            getAdminData model
-    in
-    JE.object
-        [ ( "players", JE.list (Player.encode Player.encodeSPlayer) adminData.players )
-        , ( "nextWantedTick", JEE.maybe JEE.iso8601 adminData.nextWantedTick )
-        ]
+                Err error ->
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| Message <| JD.errorToString error
+                    )
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool
