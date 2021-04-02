@@ -551,7 +551,7 @@ contentView model =
             ( Route.Admin (Route.Import textarea), WorldAdmin _ ) ->
                 adminImportView textarea
 
-            ( Route.Admin (Route.Import inputValue), _ ) ->
+            ( Route.Admin (Route.Import _), _ ) ->
                 contentUnavailableToNonAdminView
         )
 
