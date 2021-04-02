@@ -4,6 +4,7 @@ module Frontend.Route exposing
     , loggedOut
     , needsAdmin
     , needsLogin
+    , setImportValue
     )
 
 import Data.Fight exposing (FightInfo)
@@ -26,6 +27,7 @@ type Route
 type AdminRoute
     = Players
     | LoggedIn
+    | Import String
 
 
 needsLogin : Route -> Bool
@@ -82,3 +84,13 @@ loggedOut route =
 
     else
         route
+
+
+setImportValue : String -> Route -> Route
+setImportValue newValue route =
+    case route of
+        Admin (Import _) ->
+            Admin (Import newValue)
+
+        _ ->
+            route

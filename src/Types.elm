@@ -61,13 +61,12 @@ type FrontendMsg
     | AskToFight PlayerName
     | AskToHeal
     | AskForExport
-    | InitiateImport
-    | ReadImportFile File
-    | AskToImportFile String
+    | AskToImport String
     | Refresh
     | AskToIncSpecial SpecialType
     | SetAuthName String
     | SetAuthPassword String
+    | SetImportValue String
     | CreateChar
     | NewCharIncSpecial SpecialType
     | NewCharDecSpecial SpecialType

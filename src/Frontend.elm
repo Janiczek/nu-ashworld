@@ -29,9 +29,7 @@ import Data.World as World
         )
 import Data.Xp as Xp
 import DateFormat
-import File
 import File.Download
-import File.Select
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
@@ -171,17 +169,7 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
-        InitiateImport ->
-            ( model
-            , File.Select.file [ "application/json" ] ReadImportFile
-            )
-
-        ReadImportFile file ->
-            ( model
-            , Task.perform AskToImportFile <| File.toString file
-            )
-
-        AskToImportFile jsonString ->
+        AskToImport jsonString ->
             ( model
             , Lamdera.sendToBackend <| AdminToBackend <| ImportJson jsonString
             )
@@ -218,6 +206,14 @@ update msg model =
                     World.mapAuth
                         (Auth.setPlaintextPassword newPassword)
                         model.world
+                , message = Nothing
+              }
+            , Cmd.none
+            )
+
+        SetImportValue newTextarea ->
+            ( { model
+                | route = Route.setImportValue newTextarea model.route
                 , message = Nothing
               }
             , Cmd.none
@@ -540,16 +536,22 @@ contentView model =
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Admin Route.Players, WorldAdmin data ) ->
+            ( Route.Admin Route.Players, WorldAdmin _ ) ->
                 adminPlayersView
 
             ( Route.Admin Route.Players, _ ) ->
                 contentUnavailableToNonAdminView
 
-            ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
+            ( Route.Admin Route.LoggedIn, WorldAdmin _ ) ->
                 adminLoggedInView
 
             ( Route.Admin Route.LoggedIn, _ ) ->
+                contentUnavailableToNonAdminView
+
+            ( Route.Admin (Route.Import textarea), WorldAdmin _ ) ->
+                adminImportView textarea
+
+            ( Route.Admin (Route.Import inputValue), _ ) ->
                 contentUnavailableToNonAdminView
         )
 
@@ -586,6 +588,24 @@ adminLoggedInView : List (Html FrontendMsg)
 adminLoggedInView =
     [ pageTitleView "Admin :: Logged In"
     , H.text "TODO"
+    ]
+
+
+adminImportView : String -> List (Html FrontendMsg)
+adminImportView textarea =
+    [ pageTitleView "Admin :: Import"
+    , H.div []
+        [ H.textarea
+            [ HE.onInput SetImportValue
+            , HA.id "import-textarea"
+            ]
+            [ H.text textarea ]
+        ]
+    , H.button
+        [ HE.onClick <| AskToImport textarea
+        , HA.disabled <| String.isEmpty textarea
+        ]
+        [ H.text "[ IMPORT ]" ]
     ]
 
 
@@ -1701,7 +1721,7 @@ adminLinksView currentRoute =
             [ linkMsg "Refresh" Refresh Nothing False
             , linkIn "Players" (Route.Admin Route.Players) Nothing False
             , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
-            , linkMsg "Import" InitiateImport Nothing False
+            , linkIn "Import" (Route.Admin (Route.Import "")) Nothing False
             , linkMsg "Export" AskForExport Nothing False
             , linkIn "Ladder" Route.Ladder Nothing False
             , linkMsg "Logout" Logout Nothing False

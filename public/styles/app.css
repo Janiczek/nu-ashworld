@@ -54,7 +54,7 @@ body:after {
   pointer-events: none;
 }
 
-button, input {
+button, input, textarea {
   font-family: BQN386;
   border: none;
   background: transparent;
@@ -62,6 +62,10 @@ button, input {
   color: var(--fg02);
   padding: 0;
   margin: 0;
+}
+
+input:focus, textarea:focus {
+  outline: none;
 }
 
 button {
@@ -151,7 +155,6 @@ ul {
 }
 
 #login-form input:focus {
-  outline: none;
   background-color: var(--bg01);
 }
 
@@ -586,5 +589,12 @@ ul {
 
 .fight-log-action strong {
   color: var(--fg-highlight);
+}
 
+#import-textarea {
+  border: none;
+  background-color: var(--bg02);
+  width: 80ch;
+  height: 20em;
+  margin-bottom: 1em;
 }
