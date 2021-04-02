@@ -542,8 +542,8 @@ contentView model =
             ( Route.Admin Route.Players, _ ) ->
                 contentUnavailableToNonAdminView
 
-            ( Route.Admin Route.LoggedIn, WorldAdmin _ ) ->
-                adminLoggedInView
+            ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
+                adminLoggedInView data
 
             ( Route.Admin Route.LoggedIn, _ ) ->
                 contentUnavailableToNonAdminView
@@ -584,10 +584,12 @@ adminPlayersView =
     ]
 
 
-adminLoggedInView : List (Html FrontendMsg)
-adminLoggedInView =
+adminLoggedInView : AdminData -> List (Html FrontendMsg)
+adminLoggedInView data =
     [ pageTitleView "Admin :: Logged In"
-    , H.text "TODO"
+    , data.loggedInPlayers
+        |> List.map (\name -> H.li [] [ H.text name ])
+        |> H.ul []
     ]
 
 

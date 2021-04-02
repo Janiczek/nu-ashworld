@@ -36,7 +36,7 @@ type World
 -}
 type alias AdminData =
     { players : List (Player SPlayer)
-    , loggedInPlayers : Set PlayerName
+    , loggedInPlayers : List PlayerName
     , nextWantedTick : Maybe Posix
     }
 

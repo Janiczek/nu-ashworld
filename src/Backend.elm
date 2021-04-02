@@ -69,7 +69,7 @@ init =
 getAdminData : Model -> AdminData
 getAdminData model =
     { players = Dict.values model.players
-    , loggedInPlayers = Set.fromList <| Dict.values model.loggedInPlayers
+    , loggedInPlayers = Dict.values model.loggedInPlayers
     , nextWantedTick = model.nextWantedTick
     }
 
