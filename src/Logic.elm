@@ -1,6 +1,5 @@
 module Logic exposing
     ( actionPoints
-    , affectsHitpoints
     , healingRate
     , hitpoints
     , sequence
@@ -15,19 +14,6 @@ import Data.Special
         ( Special
         , SpecialType(..)
         )
-
-
-affectsHitpoints : SpecialType -> Bool
-affectsHitpoints type_ =
-    case type_ of
-        Strength ->
-            True
-
-        Endurance ->
-            True
-
-        _ ->
-            False
 
 
 hitpoints :

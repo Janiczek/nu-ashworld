@@ -189,16 +189,7 @@ update msg model =
 processTick : Model -> Model
 processTick model =
     -- TODO refresh the affected users that are logged-in
-    { model
-        | players =
-            model.players
-                |> Dict.map
-                    (\_ player ->
-                        player
-                            |> tickHeal
-                            |> tickAddAp
-                    )
-    }
+    { model | players = Dict.map (always (Player.map SPlayer.tick)) model.players }
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -454,8 +445,11 @@ moveTo newCoords pathTaken clientId player model =
         let
             newModel =
                 model
-                    |> subtractTicks tickCost player.name
-                    |> setLocation (Map.toTileNum newCoords) player.name
+                    |> updatePlayer
+                        (SPlayer.subtractTicks tickCost
+                            >> SPlayer.setLocation (Map.toTileNum newCoords)
+                        )
+                        player.name
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -501,19 +495,15 @@ incrementSpecial : SpecialType -> ClientId -> SPlayer -> Model -> ( Model, Cmd B
 incrementSpecial type_ clientId player model =
     if Special.canIncrement player.availableSpecial type_ player.special then
         let
-            maybeRecalculateHp =
-                if Logic.affectsHitpoints type_ then
-                    recalculateHp player.name
-
-                else
-                    identity
-
             newModel : Model
             newModel =
                 model
-                    |> incSpecial type_ player.name
-                    |> decAvailableSpecial player.name
-                    |> maybeRecalculateHp
+                    |> updatePlayer
+                        (SPlayer.incSpecial type_
+                            >> SPlayer.decAvailableSpecial
+                            >> SPlayer.recalculateHp
+                        )
+                        player.name
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -531,27 +521,19 @@ incrementSpecial type_ clientId player model =
 
 healMe : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 healMe clientId player model =
-    if player.hp >= player.maxHp then
-        ( model, Cmd.none )
-
-    else if player.ticks <= 0 then
-        ( model, Cmd.none )
-
-    else
-        let
-            newModel =
-                model
-                    |> subtractTicks 1 player.name
-                    |> setHp player.maxHp player.name
-        in
-        getWorldLoggedIn player.name newModel
-            |> Maybe.map
-                (\world ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                    )
+    let
+        newModel =
+            model
+                |> updatePlayer SPlayer.healUsingTick player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
                 )
-            |> Maybe.withDefault ( model, Cmd.none )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -608,72 +590,3 @@ savePlayer newPlayer model =
 updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model
 updatePlayer fn playerName model =
     { model | players = Dict.update playerName (Maybe.map (Player.map fn)) model.players }
-
-
-setHp : Int -> PlayerName -> Model -> Model
-setHp newHp =
-    updatePlayer (SPlayer.setHp newHp)
-
-
-addCaps : Int -> PlayerName -> Model -> Model
-addCaps n =
-    updatePlayer (SPlayer.addCaps n)
-
-
-subtractCaps : Int -> PlayerName -> Model -> Model
-subtractCaps n =
-    updatePlayer (SPlayer.subtractCaps n)
-
-
-incWins : PlayerName -> Model -> Model
-incWins =
-    updatePlayer SPlayer.incWins
-
-
-incLosses : PlayerName -> Model -> Model
-incLosses =
-    updatePlayer SPlayer.incLosses
-
-
-incSpecial : SpecialType -> PlayerName -> Model -> Model
-incSpecial type_ =
-    updatePlayer (SPlayer.incSpecial type_)
-
-
-decAvailableSpecial : PlayerName -> Model -> Model
-decAvailableSpecial =
-    updatePlayer SPlayer.decAvailableSpecial
-
-
-subtractTicks : Int -> PlayerName -> Model -> Model
-subtractTicks n =
-    updatePlayer (SPlayer.subtractTicks n)
-
-
-setLocation : TileNum -> PlayerName -> Model -> Model
-setLocation tileNum =
-    updatePlayer (SPlayer.setLocation tileNum)
-
-
-tickAddAp : Player SPlayer -> Player SPlayer
-tickAddAp =
-    Player.map (SPlayer.addTicks Tick.ticksAddedPerInterval)
-
-
-tickHeal : Player SPlayer -> Player SPlayer
-tickHeal =
-    Player.map
-        (\player ->
-            if player.hp < player.maxHp then
-                -- Logic.healingRate already accounts for tick healing rate multiplier
-                player
-                    |> SPlayer.addHp (Logic.healingRate player.special)
-
-            else
-                player
-        )
-
-
-recalculateHp : PlayerName -> Model -> Model
-recalculateHp =
-    updatePlayer SPlayer.recalculateHp

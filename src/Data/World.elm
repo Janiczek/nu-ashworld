@@ -19,7 +19,6 @@ import Data.Player as Player
         , PlayerName
         , SPlayer
         )
-import Set exposing (Set)
 import Time exposing (Posix)
 
 

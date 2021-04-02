@@ -1,24 +1,23 @@
 module Data.Player.SPlayer exposing
     ( addCaps
-    , addHp
-    , addTicks
     , addXp
     , decAvailableSpecial
+    , healUsingTick
     , incLosses
     , incSpecial
     , incWins
     , recalculateHp
-    , setHp
     , setLocation
-    , setMaxHp
     , subtractCaps
     , subtractHp
     , subtractTicks
+    , tick
     )
 
 import Data.Map exposing (TileNum)
 import Data.Player exposing (SPlayer)
 import Data.Special as Special exposing (SpecialType)
+import Data.Tick as Tick
 import Data.Xp as Xp
 import Logic
 
@@ -64,7 +63,7 @@ addXp n player =
             newLevel - currentLevel
     in
     { player | xp = newXp }
-        |> (if Debug.log "diff" levelsDiff > 0 then
+        |> (if levelsDiff > 0 then
                 -- TODO later add skill points, perks, etc.
                 recalculateHp
 
@@ -121,7 +120,6 @@ recalculateHp player =
                 { level = Xp.currentLevel player.xp
                 , special = player.special
                 }
-                |> Debug.log "new max hp"
 
         diff =
             newMaxHp - player.maxHp
@@ -138,3 +136,27 @@ recalculateHp player =
     player
         |> setMaxHp newMaxHp
         |> setHp newHp
+
+
+tick : SPlayer -> SPlayer
+tick player =
+    player
+        |> addTicks Tick.ticksAddedPerInterval
+        |> (if player.hp < player.maxHp then
+                -- Logic.healingRate already accounts for tick healing rate multiplier
+                addHp (Logic.healingRate player.special)
+
+            else
+                identity
+           )
+
+
+healUsingTick : SPlayer -> SPlayer
+healUsingTick player =
+    if player.hp >= player.maxHp || player.ticks <= 0 then
+        player
+
+    else
+        player
+            |> subtractTicks 1
+            |> setHp player.maxHp
