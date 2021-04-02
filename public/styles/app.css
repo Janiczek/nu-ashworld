@@ -420,11 +420,23 @@ ul {
   margin-top: 40px;
 }
 
-#next-tick {
+#next-tick,
+#server-tick {
   font-size: 14px;
   color: var(--fg03);
-  margin-top: 20px;
   height: 1em;
+}
+
+#next-tick {
+  margin-top: 20px;
+}
+
+#server-tick {
+  margin-top: 10px;
+}
+
+#server-tick:not(.ok) .slightly-emphasized {
+  color: var(--fg-highlight);
 }
 
 #map {

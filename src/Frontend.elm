@@ -38,6 +38,7 @@ import Html.Attributes.Extra as HA
 import Html.Events as HE
 import Html.Events.Extra as HE
 import Html.Extra as H
+import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import List.Extra
@@ -388,8 +389,8 @@ view model =
             WorldLoggedIn data ->
                 loggedInView data model
 
-            WorldAdmin _ ->
-                adminView model
+            WorldAdmin data ->
+                adminView data model
         ]
     }
 
@@ -442,6 +443,46 @@ nextTickView zone time =
                 [ HA.class "slightly-emphasized" ]
                 [ H.text nextTickString ]
             ]
+
+
+serverTickView : Time.Zone -> Posix -> Posix -> Html FrontendMsg
+serverTickView zone currentTime serverTick =
+    let
+        { nextTick } =
+            Tick.nextTick currentTime
+
+        isOk : Bool
+        isOk =
+            nextTick == serverTick
+
+        ( serverTickTooltip, serverTickString ) =
+            if isOk then
+                ( "Agrees with what users see"
+                , "OK"
+                )
+
+            else
+                ( Iso8601.fromTime serverTick
+                , DateFormat.format
+                    [ DateFormat.hourMilitaryFixed
+                    , DateFormat.text ":"
+                    , DateFormat.minuteFixed
+                    ]
+                    zone
+                    serverTick
+                )
+    in
+    H.div
+        [ HA.id "server-tick"
+        , HA.classList [ ( "ok", isOk ) ]
+        ]
+        [ H.text "Server planned tick: "
+        , H.span
+            [ HA.class "slightly-emphasized"
+            , HA.title serverTickTooltip
+            ]
+            [ H.text serverTickString ]
+        ]
 
 
 contentView : Model -> Html FrontendMsg
@@ -1529,11 +1570,12 @@ loggedInView world model =
         model
 
 
-adminView : Model -> Html FrontendMsg
-adminView model =
+adminView : AdminData -> Model -> Html FrontendMsg
+adminView adminData model =
     appView
         { leftNav =
-            [ messageView model.message
+            [ H.viewMaybe (serverTickView model.zone model.time) adminData.nextWantedTick
+            , messageView model.message
             , adminLinksView model.route
             ]
         }
