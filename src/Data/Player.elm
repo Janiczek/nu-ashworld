@@ -5,6 +5,8 @@ module Data.Player exposing
     , PlayerName
     , SPlayer
     , clientToClientOther
+    , encode
+    , encodeSPlayer
     , fromNewChar
     , getAuth
     , getPlayerData
@@ -15,7 +17,8 @@ module Data.Player exposing
     )
 
 import AssocList as Dict_
-import Data.Auth
+import AssocList.Extra as Dict_
+import Data.Auth as Auth
     exposing
         ( Auth
         , HasAuth
@@ -26,9 +29,10 @@ import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.NewChar exposing (NewChar)
-import Data.Perk exposing (Perk)
-import Data.Special exposing (Special)
+import Data.Perk as Perk exposing (Perk)
+import Data.Special as Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
+import Json.Encode as JE
 import Logic
 
 
@@ -81,6 +85,41 @@ type alias SPlayer =
     , location : TileNum
     , perks : Dict_.Dict Perk Int
     }
+
+
+encode : (a -> JE.Value) -> Player a -> JE.Value
+encode encodeInner player =
+    case player of
+        NeedsCharCreated auth ->
+            JE.object
+                [ ( "type", JE.string "needs-char-created" )
+                , ( "auth", Auth.encode auth )
+                ]
+
+        Player inner ->
+            JE.object
+                [ ( "type", JE.string "player" )
+                , ( "data", encodeInner inner )
+                ]
+
+
+encodeSPlayer : SPlayer -> JE.Value
+encodeSPlayer player =
+    JE.object
+        [ ( "name", JE.string player.name )
+        , ( "password", Auth.encodePassword player.password )
+        , ( "hp", JE.int player.hp )
+        , ( "maxHp", JE.int player.maxHp )
+        , ( "xp", JE.int player.xp )
+        , ( "special", Special.encode player.special )
+        , ( "availableSpecial", JE.int player.availableSpecial )
+        , ( "caps", JE.int player.caps )
+        , ( "ticks", JE.int player.ticks )
+        , ( "wins", JE.int player.wins )
+        , ( "losses", JE.int player.losses )
+        , ( "location", JE.int player.location )
+        , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
+        ]
 
 
 serverToClient : SPlayer -> CPlayer

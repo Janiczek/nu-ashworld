@@ -22,6 +22,7 @@ import Data.World
         )
 import Dict exposing (Dict)
 import Frontend.Route exposing (Route)
+import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
 import Time exposing (Posix)
@@ -59,6 +60,7 @@ type FrontendMsg
     | GotTime Time.Posix
     | AskToFight PlayerName
     | AskToHeal
+    | AskForExport
     | Refresh
     | AskToIncSpecial SpecialType
     | SetAuthName String
@@ -85,8 +87,8 @@ type ToBackend
 
 
 type AdminToBackend
-    = -- TODO use this somehow. It should be secure enough already.
-      Foo
+    = --| ImportJson JE.Value
+      ExportJson
 
 
 type BackendMsg
@@ -107,3 +109,4 @@ type ToFrontend
     | YoureLoggedOut WorldLoggedOutData
     | AuthError String
     | YoureLoggedInAsAdmin AdminData
+    | JsonExportDone String

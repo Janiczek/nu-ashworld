@@ -11,6 +11,7 @@
             "billstclair/elm-sha256": "1.0.9",
             "elm/browser": "1.0.2",
             "elm/core": "1.0.5",
+            "elm/file": "1.0.5",
             "elm/html": "1.0.0",
             "elm/http": "2.0.0",
             "elm/json": "1.1.3",
@@ -28,16 +29,19 @@
             "lamdera/core": "1.0.0",
             "pzp1997/assoc-list": "1.0.0",
             "ryannhg/date-format": "2.3.0",
-            "stoeffel/set-extra": "1.2.3"
+            "stoeffel/set-extra": "1.2.3",
+            "waratuman/json-extra": "1.0.2"
         },
         "indirect": {
             "elm/bytes": "1.0.8",
-            "elm/file": "1.0.5",
             "elm/parser": "1.1.0",
             "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "justinmimbs/date": "3.2.1",
-            "owanturist/elm-union-find": "1.0.0"
+            "justinmimbs/timezone-data": "2.1.4",
+            "owanturist/elm-union-find": "1.0.0",
+            "rtfeldman/elm-iso8601-date-strings": "1.1.3",
+            "waratuman/time-extra": "1.1.0"
         }
     },
     "test-dependencies": {

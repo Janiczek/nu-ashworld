@@ -1,6 +1,6 @@
 module Data.Tick exposing
     ( nextTick
-    , ticksAddedPerTick
+    , ticksAddedPerInterval
     )
 
 import Time exposing (Posix)
@@ -23,6 +23,6 @@ tickFrequency =
     Time.Hour
 
 
-ticksAddedPerTick : Int
-ticksAddedPerTick =
+ticksAddedPerInterval : Int
+ticksAddedPerInterval =
     2

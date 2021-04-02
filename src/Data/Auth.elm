@@ -6,6 +6,8 @@ module Data.Auth exposing
     , Plaintext
     , Verified
     , adminPasswordChecksOut
+    , encode
+    , encodePassword
     , hash
     , init
     , isAdminName
@@ -17,6 +19,7 @@ module Data.Auth exposing
     )
 
 import Env
+import Json.Encode as JE
 import Sha256
 
 
@@ -31,6 +34,19 @@ init =
     { name = ""
     , password = Password ""
     }
+
+
+encode : Auth a -> JE.Value
+encode auth =
+    JE.object
+        [ ( "name", JE.string auth.name )
+        , ( "password", encodePassword auth.password )
+        ]
+
+
+encodePassword : Password a -> JE.Value
+encodePassword password =
+    JE.string <| unwrap password
 
 
 type Password a

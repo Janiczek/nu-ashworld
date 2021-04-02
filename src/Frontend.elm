@@ -29,6 +29,7 @@ import Data.World as World
         )
 import Data.Xp as Xp
 import DateFormat
+import File.Download
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
@@ -166,6 +167,11 @@ update msg model =
         AskToHeal ->
             ( model
             , Lamdera.sendToBackend HealMe
+            )
+
+        AskForExport ->
+            ( model
+            , Lamdera.sendToBackend <| AdminToBackend ExportJson
             )
 
         Refresh ->
@@ -341,6 +347,14 @@ updateFromBackend msg model =
         AuthError error ->
             ( { model | authError = Just error }
             , Cmd.none
+            )
+
+        JsonExportDone json ->
+            ( model
+            , File.Download.string
+                "nu-ashworld-db-export.json"
+                "application/json"
+                json
             )
 
 
@@ -1662,6 +1676,7 @@ adminLinksView data currentRoute =
             [ linkMsg "Refresh" Refresh Nothing False
             , linkIn "Players" (Route.Admin Route.Players) Nothing False
             , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
+            , linkMsg "Export" AskForExport Nothing False
             , linkIn "Ladder" Route.Ladder Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]

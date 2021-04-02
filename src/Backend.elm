@@ -28,6 +28,8 @@ import Data.World
 import Data.Xp as Xp
 import Dict
 import Dict.Extra as Dict
+import Json.Encode as JE
+import Json.Encode.Extra as JEE
 import Lamdera exposing (ClientId, SessionId)
 import Logic
 import Random
@@ -379,14 +381,36 @@ updateFromFrontend sessionId clientId msg model =
             withLoggedInCreatedPlayer (moveTo newCoords pathTaken)
 
         AdminToBackend adminMsg ->
-            withAdmin (updateAdmin adminMsg)
+            withAdmin (updateAdmin clientId adminMsg)
 
 
-updateAdmin : AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
-updateAdmin msg model =
+updateAdmin : ClientId -> AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateAdmin clientId msg model =
     case msg of
-        Foo ->
-            ( model, Cmd.none )
+        ExportJson ->
+            let
+                json : String
+                json =
+                    model
+                        |> exportJson
+                        |> JE.encode 0
+            in
+            ( model
+            , Lamdera.sendToFrontend clientId <| JsonExportDone json
+            )
+
+
+exportJson : Model -> JE.Value
+exportJson model =
+    let
+        adminData : AdminData
+        adminData =
+            getAdminData model
+    in
+    JE.object
+        [ ( "players", JE.list (Player.encode Player.encodeSPlayer) adminData.players )
+        , ( "nextWantedTick", JEE.maybe JEE.iso8601 adminData.nextWantedTick )
+        ]
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool
@@ -635,7 +659,7 @@ setLocation tileNum =
 
 tickAddAp : Player SPlayer -> Player SPlayer
 tickAddAp =
-    Player.map (SPlayer.addTicks Tick.ticksAddedPerTick)
+    Player.map (SPlayer.addTicks Tick.ticksAddedPerInterval)
 
 
 tickHeal : Player SPlayer -> Player SPlayer

@@ -5,12 +5,15 @@ module Data.Special exposing
     , canDecrement
     , canIncrement
     , decrement
+    , encode
     , get
     , increment
     , init
     , isUseful
     , label
     )
+
+import Json.Encode as JE
 
 
 type alias Special =
@@ -169,3 +172,16 @@ map fn type_ special =
 init : Special
 init =
     Special 5 5 5 5 5 5 5
+
+
+encode : Special -> JE.Value
+encode special =
+    JE.object
+        [ ( "strength", JE.int special.strength )
+        , ( "perception", JE.int special.perception )
+        , ( "endurance", JE.int special.endurance )
+        , ( "charisma", JE.int special.charisma )
+        , ( "intelligence", JE.int special.intelligence )
+        , ( "agility", JE.int special.agility )
+        , ( "luck", JE.int special.luck )
+        ]
