@@ -1760,7 +1760,7 @@ commonLinksView currentRoute =
          , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
          , linkOut "Discord →" "https://discord.gg/HUmwvnv4xV" Nothing False
          , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "GitHub  →" "https://github.com/Janiczk/nu-ashworld-lamdera" Nothing False
+         , linkOut "GitHub  →" "https://github.com/Janiczek/nu-ashworld-lamdera" Nothing False
          , linkOut "Donate  →" "https://patreon.com/janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)
