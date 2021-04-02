@@ -18,7 +18,6 @@ module Data.Player.SPlayer exposing
 import Data.Map exposing (TileNum)
 import Data.Player exposing (SPlayer)
 import Data.Special as Special exposing (SpecialType)
-import Set exposing (Set)
 
 
 addTicks : Int -> SPlayer -> SPlayer

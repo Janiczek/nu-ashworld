@@ -42,12 +42,6 @@ tileSize =
     50
 
 
-allTiles : Set TileNum
-allTiles =
-    List.range 0 (columns * rows - 1)
-        |> Set.fromList
-
-
 tileSizeFloat : Float
 tileSizeFloat =
     toFloat tileSize

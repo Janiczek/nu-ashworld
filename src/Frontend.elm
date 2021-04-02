@@ -183,7 +183,7 @@ update msg model =
 
         AskToImportFile jsonString ->
             ( model
-            , Lamdera.sendToBackend <| AdminToBackend <| ImportJson <| jsonString
+            , Lamdera.sendToBackend <| AdminToBackend <| ImportJson jsonString
             )
 
         AskForExport ->
@@ -392,8 +392,8 @@ view model =
             WorldLoggedIn data ->
                 loggedInView data model
 
-            WorldAdmin data ->
-                adminView data model
+            WorldAdmin _ ->
+                adminView model
         ]
     }
 
@@ -1507,12 +1507,12 @@ loggedInView world model =
         model
 
 
-adminView : AdminData -> Model -> Html FrontendMsg
-adminView data model =
+adminView : Model -> Html FrontendMsg
+adminView model =
     appView
         { leftNav =
             [ messageView model.message
-            , adminLinksView data model.route
+            , adminLinksView model.route
             ]
         }
         model
@@ -1694,8 +1694,8 @@ loggedInLinksView player currentRoute =
         (List.map (linkView currentRoute) links)
 
 
-adminLinksView : AdminData -> Route -> Html FrontendMsg
-adminLinksView data currentRoute =
+adminLinksView : Route -> Html FrontendMsg
+adminLinksView currentRoute =
     let
         links =
             [ linkMsg "Refresh" Refresh Nothing False

@@ -3,7 +3,6 @@ module Data.Perk exposing (Perk(..), decoder, encode)
 -- TODO finish implementing perks
 
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
 import Json.Encode as JE
 
 
