@@ -556,9 +556,6 @@ contentView model =
             ( Route.Settings, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.FAQ, _ ) ->
-                faqView
-
             ( Route.About, _ ) ->
                 aboutView
 
@@ -607,13 +604,6 @@ pageTitleView title =
 aboutView : List (Html FrontendMsg)
 aboutView =
     [ pageTitleView "About"
-    , H.text "TODO"
-    ]
-
-
-faqView : List (Html FrontendMsg)
-faqView =
-    [ pageTitleView "FAQ"
     , H.text "TODO"
     ]
 
@@ -1800,7 +1790,6 @@ commonLinksView currentRoute =
         ]
         ([ linkIn "News" Route.News Nothing False
          , linkIn "About" Route.About Nothing False
-         , linkIn "FAQ" Route.FAQ (Just "Frequently Asked Questions") False
          , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
          , linkOut "Discord →" "https://discord.gg/HUmwvnv4xV" Nothing False
          , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False

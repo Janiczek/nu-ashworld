@@ -16,7 +16,6 @@ type Route
     | Ladder
     | Town
     | Settings
-    | FAQ
     | About
     | News
     | Fight FightInfo
@@ -47,9 +46,6 @@ needsLogin route =
 
         Settings ->
             True
-
-        FAQ ->
-            False
 
         About ->
             False
