@@ -2,7 +2,6 @@ module Data.Player exposing
     ( COtherPlayer
     , CPlayer
     , Player(..)
-    , PlayerName
     , SPlayer
     , clientToClientOther
     , decoder
@@ -30,18 +29,17 @@ import Data.Auth as Auth
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
+import Data.Message as Message exposing (Message)
 import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
+import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special as Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
 import Logic
-
-
-type alias PlayerName =
-    String
+import Time exposing (Posix)
 
 
 type Player a
@@ -62,6 +60,7 @@ type alias CPlayer =
     , losses : Int
     , location : TileNum
     , perks : Dict_.Dict Perk Int
+    , messages : List Message
     }
 
 
@@ -88,6 +87,7 @@ type alias SPlayer =
     , losses : Int
     , location : TileNum
     , perks : Dict_.Dict Perk Int
+    , messages : List Message
     }
 
 
@@ -123,6 +123,7 @@ encodeSPlayer player =
         , ( "losses", JE.int player.losses )
         , ( "location", JE.int player.location )
         , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
+        , ( "messages", JE.list Message.encode player.messages )
         ]
 
 
@@ -147,6 +148,14 @@ decoder innerDecoder =
 
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
+    JD.oneOf
+        [ sPlayerDecoderV2
+        , sPlayerDecoderV1
+        ]
+
+
+sPlayerDecoderV1 : Decoder SPlayer
+sPlayerDecoderV1 =
     JD.succeed SPlayer
         |> JDE.andMap (JD.field "name" JD.string)
         |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
@@ -161,6 +170,28 @@ sPlayerDecoder =
         |> JDE.andMap (JD.field "losses" JD.int)
         |> JDE.andMap (JD.field "location" JD.int)
         |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JDE.andMap (JD.field "messages" (JD.succeed []))
+
+
+{-| adds "messages" field
+-}
+sPlayerDecoderV2 : Decoder SPlayer
+sPlayerDecoderV2 =
+    JD.succeed SPlayer
+        |> JDE.andMap (JD.field "name" JD.string)
+        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JDE.andMap (JD.field "hp" JD.int)
+        |> JDE.andMap (JD.field "maxHp" JD.int)
+        |> JDE.andMap (JD.field "xp" JD.int)
+        |> JDE.andMap (JD.field "special" Special.decoder)
+        |> JDE.andMap (JD.field "availableSpecial" JD.int)
+        |> JDE.andMap (JD.field "caps" JD.int)
+        |> JDE.andMap (JD.field "ticks" JD.int)
+        |> JDE.andMap (JD.field "wins" JD.int)
+        |> JDE.andMap (JD.field "losses" JD.int)
+        |> JDE.andMap (JD.field "location" JD.int)
+        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JDE.andMap (JD.field "messages" (JD.list Message.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -177,6 +208,7 @@ serverToClient p =
     , losses = p.losses
     , location = p.location
     , perks = p.perks
+    , messages = p.messages
     }
 
 
@@ -236,8 +268,8 @@ getAuth player =
             }
 
 
-fromNewChar : Auth Verified -> NewChar -> SPlayer
-fromNewChar auth newChar =
+fromNewChar : Posix -> Auth Verified -> NewChar -> SPlayer
+fromNewChar currentTime auth newChar =
     let
         hp : Int
         hp =
@@ -265,6 +297,7 @@ fromNewChar auth newChar =
     , losses = 0
     , location = startingTileNum
     , perks = Dict_.empty
+    , messages = [ Message.new currentTime Message.Welcome ]
     }
 
 

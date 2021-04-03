@@ -6,6 +6,7 @@ import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import Time
 import Types exposing (BackendModel)
 
 
@@ -29,6 +30,7 @@ backendModelDecoder =
             , loggedInPlayers = Dict.empty
             , nextWantedTick = nextWantedTick
             , adminLoggedIn = Nothing
+            , time = Time.millisToPosix 0
             }
         )
         (JD.field "players"

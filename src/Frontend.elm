@@ -5,11 +5,13 @@ import Browser.Navigation as Nav
 import Data.Auth as Auth
 import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
+import Data.Fight.View
 import Data.HealthStatus as HealthStatus
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.Terrain as Terrain
+import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
@@ -29,6 +31,7 @@ import Data.World as World
         )
 import Data.Xp as Xp
 import DateFormat
+import DateFormat.Relative
 import File.Download
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
@@ -78,7 +81,7 @@ init _ key =
       , time = Time.millisToPosix 0
       , zone = Time.utc
       , newChar = NewChar.init
-      , message = Nothing
+      , alertMessage = Nothing
       , mapMouseCoords = Nothing
       }
     , Cmd.batch
@@ -90,7 +93,7 @@ init _ key =
 
 subscriptions : Model -> Sub FrontendMsg
 subscriptions _ =
-    Time.every 10000 GotTime
+    Time.every 1000 GotTime
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
@@ -196,7 +199,7 @@ update msg model =
                     World.mapAuth
                         (\auth -> { auth | name = newName })
                         model.world
-                , message = Nothing
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
@@ -207,7 +210,7 @@ update msg model =
                     World.mapAuth
                         (Auth.setPlaintextPassword newPassword)
                         model.world
-                , message = Nothing
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
@@ -215,7 +218,7 @@ update msg model =
         SetImportValue newTextarea ->
             ( { model
                 | route = Route.setImportValue newTextarea model.route
-                , message = Nothing
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
@@ -278,6 +281,16 @@ update msg model =
                     ( model
                     , Lamdera.sendToBackend <| MoveTo newCoords path
                     )
+
+        OpenMessage message ->
+            ( { model | route = Route.Message message }
+            , Lamdera.sendToBackend <| MessageWasRead message
+            )
+
+        AskToRemoveMessage message ->
+            ( model
+            , Lamdera.sendToBackend <| RemoveMessage message
+            )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -358,8 +371,8 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        Message message ->
-            ( { model | message = Just message }
+        AlertMessage message ->
+            ( { model | alertMessage = Just message }
             , Cmd.none
             )
 
@@ -566,6 +579,18 @@ contentView model =
                 withCreatedPlayer world.player (fightView fightInfo)
 
             ( Route.Fight _, _ ) ->
+                contentUnavailableToLoggedOutView
+
+            ( Route.Messages, WorldLoggedIn world ) ->
+                withCreatedPlayer world.player (messagesView model.time model.zone)
+
+            ( Route.Messages, _ ) ->
+                contentUnavailableToLoggedOutView
+
+            ( Route.Message message, WorldLoggedIn world ) ->
+                withCreatedPlayer world.player (messageView model.zone message)
+
+            ( Route.Message _, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.CharCreation, WorldLoggedIn _ ) ->
@@ -1093,6 +1118,102 @@ characterView player =
     ]
 
 
+messagesView : Posix -> Time.Zone -> CPlayer -> List (Html FrontendMsg)
+messagesView currentTime zone player =
+    [ pageTitleView "Messages"
+    , H.table [ HA.id "messages-table" ]
+        [ H.thead []
+            [ H.tr []
+                [ H.th
+                    [ HA.class "messages-unread"
+                    , HA.title "Unread"
+                    ]
+                    [ H.text "U" ]
+                , H.th [ HA.class "messages-summary" ] [ H.text "Summary" ]
+                , H.th [ HA.class "messages-date" ] [ H.text "Date" ]
+                , H.th
+                    [ HA.class "messages-remove"
+                    , HA.title "Remove"
+                    ]
+                    [ H.text "✗" ]
+                ]
+            ]
+        , H.tbody []
+            (player.messages
+                |> List.map
+                    (\message ->
+                        let
+                            isUnread : Bool
+                            isUnread =
+                                not message.hasBeenRead
+
+                            summary : String
+                            summary =
+                                Message.summary message
+
+                            relativeDate : String
+                            relativeDate =
+                                DateFormat.Relative.relativeTime
+                                    currentTime
+                                    message.date
+                        in
+                        H.tr
+                            [ HA.classList [ ( "is-unread", isUnread ) ]
+                            , -- TODO does this work here?
+                              HE.onClick <| OpenMessage message
+                            ]
+                            [ if isUnread then
+                                H.td
+                                    [ HA.class "messages-unread"
+                                    , HA.title "Unread"
+                                    ]
+                                    [ H.text "*" ]
+
+                              else
+                                H.td [ HA.class "messages-unread" ] []
+                            , H.td
+                                [ HA.class "messages-summary"
+                                , HA.title summary
+                                ]
+                                [ H.text summary ]
+                            , H.td
+                                [ HA.class "messages-date"
+                                , HA.title <| Message.fullDate zone message
+                                ]
+                                [ H.text relativeDate ]
+                            , H.td
+                                [ HA.class "messages-remove"
+                                , HA.title "Remove"
+                                , HE.onClickStopPropagation <| AskToRemoveMessage message
+                                ]
+                                [ H.text "✗" ]
+                            ]
+                    )
+            )
+        ]
+    ]
+
+
+messageView : Time.Zone -> Message -> CPlayer -> List (Html FrontendMsg)
+messageView zone message player =
+    [ pageTitleView "Message"
+    , H.h3
+        [ HA.id "message-summary" ]
+        [ H.text <| Message.summary message ]
+    , H.div
+        [ HA.id "message-date" ]
+        [ H.text <| Message.fullDate zone message ]
+    , Message.content
+        [ HA.id "message-content" ]
+        message
+    , H.button
+        [ HE.onClick <| GoToRoute Route.Messages
+        , HA.id "message-back-button"
+        ]
+        [ H.text "[Back]" ]
+    ]
+
+
 newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
 newsItemView zone { date, title, text } =
     H.div
@@ -1116,235 +1237,10 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-type Name
-    = You
-    | AttackerVerbatim
-    | TargetVerbatim
-
-
-type alias Names =
-    -- cap = Capitalized
-    -- poss = Possessive
-    -- verbPresent = the '-s' or '-es' suffix in "player initiates" VS "you initiate", or "player misses" vs "you miss"
-    { name : String
-    , nameCap : String
-    , namePossCap : String
-    , verbPresent : String -> String
-    }
-
-
-esWords : Set String
-esWords =
-    Set.fromList [ "miss" ]
-
-
 fightView : FightInfo -> CPlayer -> List (Html FrontendMsg)
 fightView fight player =
-    let
-        youAreAttacker : Bool
-        youAreAttacker =
-            fight.attacker.name == player.name
-
-        normalPoss : String -> String
-        normalPoss name =
-            name ++ "'s"
-
-        addS : String -> String
-        addS verb =
-            if Set.member verb esWords then
-                verb ++ "es"
-
-            else
-                verb ++ "s"
-
-        getNames : Who -> { subject : Names, object : Names }
-        getNames who =
-            let
-                names : Name -> Names
-                names name =
-                    case name of
-                        You ->
-                            { name = "you"
-                            , nameCap = "You"
-                            , namePossCap = "Your"
-                            , verbPresent = identity
-                            }
-
-                        TargetVerbatim ->
-                            { name = fight.target.name
-                            , nameCap = fight.target.name
-                            , namePossCap = normalPoss fight.target.name
-                            , verbPresent = addS
-                            }
-
-                        AttackerVerbatim ->
-                            { name = fight.attacker.name
-                            , nameCap = fight.attacker.name
-                            , namePossCap = normalPoss fight.attacker.name
-                            , verbPresent = addS
-                            }
-            in
-            case ( who, youAreAttacker ) of
-                ( Attacker, True ) ->
-                    { subject = names You
-                    , object = names TargetVerbatim
-                    }
-
-                ( Attacker, False ) ->
-                    { subject = names AttackerVerbatim
-                    , object = names You
-                    }
-
-                ( Target, True ) ->
-                    { subject = names TargetVerbatim
-                    , object = names You
-                    }
-
-                ( Target, False ) ->
-                    { subject = names You
-                    , object = names AttackerVerbatim
-                    }
-    in
     [ pageTitleView "Fight"
-    , H.div []
-        [ H.text <|
-            "Attacker: "
-                ++ fight.attacker.name
-                ++ (if youAreAttacker then
-                        " (you)"
-
-                    else
-                        ""
-                   )
-        ]
-    , H.div []
-        [ H.text <|
-            "Target: "
-                ++ fight.target.name
-                ++ (if youAreAttacker then
-                        ""
-
-                    else
-                        " (you)"
-                   )
-        ]
-    , fight.log
-        |> List.Extra.groupWhile (\( a, _ ) ( b, _ ) -> a == b)
-        |> List.map
-            (\( ( who, _ ) as first, rest ) ->
-                let
-                    names : { subject : Names, object : Names }
-                    names =
-                        getNames who
-
-                    name : String -> String
-                    name n =
-                        -- This is then picked up by the CSS
-                        "**" ++ n ++ "**"
-                in
-                H.li []
-                    [ H.text <| names.subject.namePossCap ++ " turn"
-                    , (first :: rest)
-                        |> List.map
-                            (\( _, action ) ->
-                                let
-                                    action_ : String
-                                    action_ =
-                                        case action of
-                                            Start { distanceHexes } ->
-                                                names.subject.verbPresent "initiate"
-                                                    ++ " the fight from "
-                                                    ++ String.fromInt distanceHexes
-                                                    ++ " hexes away."
-
-                                            ComeCloser { hexes, remainingDistanceHexes } ->
-                                                -- TODO hide the remaining distance if your SPECIAL is not good enough
-                                                names.subject.verbPresent "come"
-                                                    ++ " closer "
-                                                    ++ String.fromInt hexes
-                                                    ++ " hexes. Remaining distance: "
-                                                    ++ String.fromInt remainingDistanceHexes
-                                                    ++ " hexes."
-
-                                            Attack { damage, remainingHp, shotType } ->
-                                                -- TODO hide the remaining HP if your SPECIAL is not good enough
-                                                (case shotType of
-                                                    NormalShot ->
-                                                        ""
-
-                                                    AimedShot aimed ->
-                                                        names.subject.verbPresent "aim"
-                                                            ++ " for "
-                                                            ++ ShotType.label aimed
-                                                            ++ " and "
-                                                )
-                                                    ++ names.subject.verbPresent "attack"
-                                                    ++ " "
-                                                    ++ name names.object.name
-                                                    ++ " for "
-                                                    ++ String.fromInt damage
-                                                    ++ " damage. Remaining HP: "
-                                                    ++ String.fromInt remainingHp
-                                                    ++ "."
-
-                                            Miss { shotType } ->
-                                                -- TODO hide the remaining distance if your SPECIAL is not good enough
-                                                (case shotType of
-                                                    NormalShot ->
-                                                        ""
-
-                                                    AimedShot aimed ->
-                                                        names.subject.verbPresent "aim"
-                                                            ++ " for "
-                                                            ++ ShotType.label aimed
-                                                            ++ " and "
-                                                )
-                                                    ++ names.subject.verbPresent "attack"
-                                                    ++ " "
-                                                    ++ name names.object.name
-                                                    ++ " but "
-                                                    ++ names.subject.verbPresent "miss"
-                                                    ++ "."
-                                in
-                                H.li []
-                                    [ Markdown.toHtml [ HA.class "fight-log-action" ] <|
-                                        name names.subject.nameCap
-                                            ++ " "
-                                            ++ action_
-                                    ]
-                            )
-                        |> H.ul []
-                    ]
-            )
-        |> H.ul []
-    , H.div []
-        [ H.text <|
-            "Result: "
-                ++ (case fight.result of
-                        AttackerWon { xpGained, capsGained } ->
-                            "You won! You gained "
-                                ++ String.fromInt xpGained
-                                ++ " XP and looted "
-                                ++ String.fromInt capsGained
-                                ++ " caps."
-
-                        TargetWon { xpGained, capsGained } ->
-                            "You lost! Your target gained "
-                                ++ String.fromInt xpGained
-                                ++ " XP and looted "
-                                ++ String.fromInt capsGained
-                                ++ " caps."
-
-                        TargetAlreadyDead ->
-                            "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
-
-                        BothDead ->
-                            "You both end up dead."
-
-                        NobodyDead ->
-                            "You both get out of the fight alive."
-                   )
-        ]
+    , Data.Fight.View.view fight player.name
     , H.button
         [ HE.onClick <| GoToRoute Route.Ladder
         , HA.id "fight-back-button"
@@ -1520,7 +1416,7 @@ notInitializedView model =
     appView
         { leftNav =
             [ loginFormView model.world
-            , messageView model.message
+            , alertMessageView model.alertMessage
             , loadingNavView
             ]
         }
@@ -1541,7 +1437,7 @@ loggedOutView model =
     appView
         { leftNav =
             [ loginFormView model.world
-            , messageView model.message
+            , alertMessageView model.alertMessage
             , loggedOutLinksView model.route
             ]
         }
@@ -1552,7 +1448,7 @@ loggedInView : WorldLoggedInData -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
         { leftNav =
-            [ messageView model.message
+            [ alertMessageView model.alertMessage
             , playerInfoView world.player
             , loggedInLinksView world.player model.route
             ]
@@ -1565,20 +1461,20 @@ adminView adminData model =
     appView
         { leftNav =
             [ H.viewMaybe (serverTickView model.zone model.time) adminData.nextWantedTick
-            , messageView model.message
+            , alertMessageView model.alertMessage
             , adminLinksView model.route
             ]
         }
         model
 
 
-messageView : Maybe String -> Html FrontendMsg
-messageView maybeMessage =
+alertMessageView : Maybe String -> Html FrontendMsg
+alertMessageView maybeMessage =
     maybeMessage
         |> H.viewMaybe
             (\message ->
                 H.div
-                    [ HA.id "message" ]
+                    [ HA.id "alert-message" ]
                     [ H.text message ]
             )
 
@@ -1720,24 +1616,28 @@ loggedInLinksView player currentRoute =
                     ]
 
                 Player p ->
-                    [ linkMsg "Heal"
-                        AskToHeal
-                        (if p.hp >= p.maxHp then
-                            Just "Cost: 1 tick. You are at full HP!"
+                    let
+                        healTooltip =
+                            if p.hp >= p.maxHp then
+                                Just "Cost: 1 tick. You are at full HP!"
 
-                         else if p.ticks < 1 then
-                            Just "Cost: 1 tick. You have no ticks left!"
+                            else if p.ticks < 1 then
+                                Just "Cost: 1 tick. You have no ticks left!"
 
-                         else
-                            Just "Cost: 1 tick"
-                        )
-                        (p.ticks < 1 || p.hp >= p.maxHp)
+                            else
+                                Just "Cost: 1 tick"
+
+                        healDisabled =
+                            p.ticks < 1 || p.hp >= p.maxHp
+                    in
+                    [ linkMsg "Heal" AskToHeal healTooltip healDisabled
                     , linkMsg "Refresh" Refresh Nothing False
                     , linkIn "Character" Route.Character Nothing False
                     , linkIn "Map" Route.Map Nothing False
                     , linkIn "Ladder" Route.Ladder Nothing False
                     , linkIn "Town" Route.Town Nothing False
                     , linkIn "Settings" Route.Settings Nothing False
+                    , linkIn "Messages" Route.Messages Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in

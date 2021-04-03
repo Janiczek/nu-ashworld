@@ -1,12 +1,15 @@
 module Data.Player.SPlayer exposing
     ( addCaps
+    , addMessage
     , addXp
     , decAvailableSpecial
     , healUsingTick
     , incLosses
     , incSpecial
     , incWins
+    , readMessage
     , recalculateHp
+    , removeMessage
     , setLocation
     , subtractCaps
     , subtractHp
@@ -15,11 +18,13 @@ module Data.Player.SPlayer exposing
     )
 
 import Data.Map exposing (TileNum)
+import Data.Message as Message exposing (Message, Type(..))
 import Data.Player exposing (SPlayer)
 import Data.Special as Special exposing (SpecialType)
 import Data.Tick as Tick
 import Data.Xp as Xp
 import Logic
+import Time exposing (Posix)
 
 
 addTicks : Int -> SPlayer -> SPlayer
@@ -47,8 +52,8 @@ setMaxHp newMaxHp player =
     { player | maxHp = newMaxHp }
 
 
-addXp : Int -> SPlayer -> SPlayer
-addXp n player =
+addXp : Int -> Posix -> SPlayer -> SPlayer
+addXp n currentTime player =
     let
         newXp =
             player.xp + n
@@ -66,6 +71,11 @@ addXp n player =
         |> (if levelsDiff > 0 then
                 -- TODO later add skill points, perks, etc.
                 recalculateHp
+                    >> addMessage
+                        (Message.new
+                            currentTime
+                            (YouAdvancedLevel { newLevel = newLevel })
+                        )
 
             else
                 identity
@@ -160,3 +170,29 @@ healUsingTick player =
         player
             |> subtractTicks 1
             |> setHp player.maxHp
+
+
+addMessage : Message -> SPlayer -> SPlayer
+addMessage message player =
+    { player | messages = message :: player.messages }
+
+
+readMessage : Message -> SPlayer -> SPlayer
+readMessage messageToRead player =
+    { player
+        | messages =
+            List.map
+                (\message ->
+                    if message == messageToRead then
+                        { message | hasBeenRead = True }
+
+                    else
+                        message
+                )
+                player.messages
+    }
+
+
+removeMessage : Message -> SPlayer -> SPlayer
+removeMessage messageToRemove player =
+    { player | messages = List.filter ((/=) messageToRemove) player.messages }

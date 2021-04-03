@@ -164,7 +164,7 @@ ul {
   justify-content: space-between;
 }
 
-#message {
+#alert-message {
   margin-top: 40px;
   color: var(--fg-highlight);
 }
@@ -270,29 +270,33 @@ ul {
   margin: 0 0 40px;
 }
 
-#ladder-table {
+table {
   text-align: left;
   border-collapse: collapse;
 }
 
-#ladder-table tbody td {
+table tbody td {
   border-left: 1px solid var(--table-border);
   padding: 4px 8px;
 }
 
-#ladder-table thead {
+table thead {
   color: var(--fg03);
   border-bottom: 3px solid var(--table-border);
 }
 
-#ladder-table thead th {
+table thead th {
   border-left: 3px solid var(--table-border);
   padding: 4px 8px;
 }
 
-#ladder-table tbody td:first-child,
-#ladder-table thead th:first-child {
+table tbody td:first-child,
+table thead th:first-child {
   border-left: none;
+}
+
+table tbody tr:hover td {
+  background: var(--bg02);
 }
 
 #ladder-table tbody tr.is-player {
@@ -300,10 +304,6 @@ ul {
 }
 
 #ladder-table tbody tr.is-player td {
-  background: var(--bg02);
-}
-
-#ladder-table tbody tr:hover td {
   background: var(--bg02);
 }
 
@@ -326,6 +326,32 @@ ul {
 
 #ladder-table tbody tr.is-player .ladder-fight {
   color: var(--fg03);
+}
+
+#messages-table tbody .messages-unread {
+  text-align: right;
+}
+
+#messages-table tbody tr.is-unread {
+  color: var(--fg01);
+}
+
+#messages-table tbody .messages-remove:hover {
+  color: var(--fg-highlight);
+}
+
+#message-summary {
+  margin: 0;
+  color: var(--fg01);
+}
+
+#message-date {
+  font-size: 14px;
+  color: var(--fg03);
+}
+
+#message-content {
+  max-width: 60ch;
 }
 
 .news-item:not(:first-of-type) {
@@ -413,6 +439,10 @@ ul {
 }
 
 #fight-back-button {
+  margin-top: 40px;
+}
+
+#message-back-button {
   margin-top: 40px;
 }
 
@@ -601,6 +631,10 @@ ul {
 
 .fight-log-action strong {
   color: var(--fg-highlight);
+}
+
+.fight-info {
+  margin-top: 40px;
 }
 
 #import-textarea {

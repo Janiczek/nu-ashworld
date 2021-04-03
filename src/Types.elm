@@ -5,13 +5,14 @@ import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Fight exposing (FightInfo)
 import Data.Map exposing (TileCoords)
+import Data.Message exposing (Message)
 import Data.NewChar exposing (NewChar)
 import Data.Player
     exposing
         ( Player
-        , PlayerName
         , SPlayer
         )
+import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special exposing (SpecialType)
 import Data.World
     exposing
@@ -31,12 +32,12 @@ import Url exposing (Url)
 
 type alias FrontendModel =
     { key : Key
-    , time : Time.Posix
+    , time : Posix
     , zone : Time.Zone
     , route : Route
     , world : World
     , newChar : NewChar
-    , message : Maybe String
+    , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     }
 
@@ -46,6 +47,7 @@ type alias BackendModel =
     , loggedInPlayers : Dict ClientId PlayerName
     , nextWantedTick : Maybe Posix
     , adminLoggedIn : Maybe ( ClientId, SessionId )
+    , time : Posix
     }
 
 
@@ -73,6 +75,8 @@ type FrontendMsg
     | MapMouseAtCoords TileCoords
     | MapMouseOut
     | MapMouseClick
+    | OpenMessage Message
+    | AskToRemoveMessage Message
 
 
 type ToBackend
@@ -85,6 +89,8 @@ type ToBackend
     | RefreshPlease
     | IncSpecial SpecialType
     | MoveTo TileCoords (Set TileCoords)
+    | MessageWasRead Message
+    | RemoveMessage Message
     | AdminToBackend AdminToBackend
 
 
@@ -96,8 +102,15 @@ type AdminToBackend
 type BackendMsg
     = Connected SessionId ClientId
     | Disconnected SessionId ClientId
-    | GeneratedFight ClientId SPlayer FightInfo
+    | GeneratedFight
+        ClientId
+        SPlayer
+        { finalAttacker : SPlayer
+        , finalTarget : SPlayer
+        , fightInfo : FightInfo
+        }
     | Tick Posix
+    | CreateNewCharWithTime ClientId NewChar Posix
 
 
 type ToFrontend
@@ -109,6 +122,6 @@ type ToFrontend
     | YoureRegistered WorldLoggedInData
     | YouHaveCreatedChar WorldLoggedInData
     | YoureLoggedOut WorldLoggedOutData
-    | Message String
+    | AlertMessage String
     | YoureLoggedInAsAdmin AdminData
     | JsonExportDone String

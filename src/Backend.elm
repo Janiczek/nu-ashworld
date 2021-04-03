@@ -7,15 +7,17 @@ import Data.Auth as Auth
         , Verified
         )
 import Data.Fight as Fight exposing (FightResult(..))
+import Data.Fight.Generator as FightGen
 import Data.Map as Map exposing (TileCoords, TileNum)
 import Data.Map.Pathfinding as Pathfinding
+import Data.Message exposing (Message)
 import Data.NewChar exposing (NewChar)
 import Data.Player as Player
     exposing
         ( Player(..)
-        , PlayerName
         , SPlayer
         )
+import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
 import Data.Special as Special exposing (SpecialType)
 import Data.Special.Perception as Perception
@@ -37,7 +39,7 @@ import Random
 import Set exposing (Set)
 import Set.Extra as Set
 import Task
-import Time
+import Time exposing (Posix)
 import Time.Extra as Time
 import Types exposing (..)
 
@@ -61,6 +63,7 @@ init =
       , loggedInPlayers = Dict.empty
       , nextWantedTick = Nothing
       , adminLoggedIn = Nothing
+      , time = Time.millisToPosix 0
       }
     , Task.perform Tick Time.now
     )
@@ -128,6 +131,10 @@ getWorldLoggedIn_ player model =
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
+    let
+        withLoggedInPlayer =
+            withLoggedInPlayer_ model
+    in
     case msg of
         Connected _ clientId ->
             let
@@ -150,7 +157,10 @@ update msg model =
                         { nextTick } =
                             Tick.nextTick currentTime
                     in
-                    ( { model | nextWantedTick = Just nextTick }
+                    ( { model
+                        | nextWantedTick = Just nextTick
+                        , time = currentTime
+                      }
                     , Cmd.none
                     )
 
@@ -160,30 +170,38 @@ update msg model =
                             { nextTick } =
                                 Tick.nextTick currentTime
                         in
-                        ( { model | nextWantedTick = Just nextTick }
+                        ( { model
+                            | nextWantedTick = Just nextTick
+                            , time = currentTime
+                          }
                             |> processTick
                         , Cmd.none
                         )
 
                     else
-                        ( model, Cmd.none )
+                        ( { model | time = currentTime }
+                        , Cmd.none
+                        )
 
-        GeneratedFight clientId sPlayer fightInfo ->
+        GeneratedFight clientId sPlayer fight_ ->
             let
                 newModel =
                     model
-                        |> savePlayer fightInfo.attacker
-                        |> savePlayer fightInfo.target
+                        |> savePlayer fight_.finalAttacker
+                        |> savePlayer fight_.finalTarget
             in
             getWorldLoggedIn sPlayer.name newModel
                 |> Maybe.map
                     (\world ->
                         ( newModel
-                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fightInfo, world )
+                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fight_.fightInfo, world )
                         )
                     )
                 -- Shouldn't happen but we don't have a good way of getting rid of the Maybe
                 |> Maybe.withDefault ( newModel, Cmd.none )
+
+        CreateNewCharWithTime clientId newChar time ->
+            withLoggedInPlayer clientId (createNewCharWithTime newChar time)
 
 
 processTick : Model -> Model
@@ -192,15 +210,19 @@ processTick model =
     { model | players = Dict.map (always (Player.map SPlayer.tick)) model.players }
 
 
+withLoggedInPlayer_ : Model -> ClientId -> (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+withLoggedInPlayer_ model clientId fn =
+    Dict.get clientId model.loggedInPlayers
+        |> Maybe.andThen (\name -> Dict.get name model.players)
+        |> Maybe.map (\player -> fn clientId player model)
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
-        withLoggedInPlayer : (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
-        withLoggedInPlayer fn =
-            Dict.get clientId model.loggedInPlayers
-                |> Maybe.andThen (\name -> Dict.get name model.players)
-                |> Maybe.map (\player -> fn clientId player model)
-                |> Maybe.withDefault ( model, Cmd.none )
+        withLoggedInPlayer =
+            withLoggedInPlayer_ model clientId
 
         withLoggedInCreatedPlayer : (ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
         withLoggedInCreatedPlayer fn =
@@ -233,14 +255,14 @@ updateFromFrontend sessionId clientId msg model =
 
                 else
                     ( model
-                    , Lamdera.sendToFrontend clientId <| Message "Nuh-uh..."
+                    , Lamdera.sendToFrontend clientId <| AlertMessage "Nuh-uh..."
                     )
 
             else
                 case Dict.get auth.name model.players of
                     Nothing ->
                         ( model
-                        , Lamdera.sendToFrontend clientId <| Message "Login failed"
+                        , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
                         )
 
                     Just player ->
@@ -274,26 +296,26 @@ updateFromFrontend sessionId clientId msg model =
 
                         else
                             ( model
-                            , Lamdera.sendToFrontend clientId <| Message "Login failed"
+                            , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
                             )
 
         RegisterMe auth ->
             if Auth.isAdminName auth then
                 ( model
-                , Lamdera.sendToFrontend clientId <| Message "Nuh-uh..."
+                , Lamdera.sendToFrontend clientId <| AlertMessage "Nuh-uh..."
                 )
 
             else
                 case Dict.get auth.name model.players of
                     Just _ ->
                         ( model
-                        , Lamdera.sendToFrontend clientId <| Message "Username exists"
+                        , Lamdera.sendToFrontend clientId <| AlertMessage "Username exists"
                         )
 
                     Nothing ->
                         if Auth.isEmpty auth.password then
                             ( model
-                            , Lamdera.sendToFrontend clientId <| Message "Password is empty"
+                            , Lamdera.sendToFrontend clientId <| AlertMessage "Password is empty"
                             )
 
                         else
@@ -372,6 +394,12 @@ updateFromFrontend sessionId clientId msg model =
         MoveTo newCoords pathTaken ->
             withLoggedInCreatedPlayer (moveTo newCoords pathTaken)
 
+        MessageWasRead message ->
+            withLoggedInCreatedPlayer (readMessage message)
+
+        RemoveMessage message ->
+            withLoggedInCreatedPlayer (removeMessage message)
+
         AdminToBackend adminMsg ->
             withAdmin (updateAdmin clientId adminMsg)
 
@@ -397,19 +425,53 @@ updateAdmin clientId msg model =
                     ( { newModel | adminLoggedIn = model.adminLoggedIn }
                     , Cmd.batch
                         [ Lamdera.sendToFrontend clientId <| CurrentAdminData <| getAdminData newModel
-                        , Lamdera.sendToFrontend clientId <| Message "Import successful!"
+                        , Lamdera.sendToFrontend clientId <| AlertMessage "Import successful!"
                         ]
                     )
 
                 Err error ->
                     ( model
-                    , Lamdera.sendToFrontend clientId <| Message <| JD.errorToString error
+                    , Lamdera.sendToFrontend clientId <| AlertMessage <| JD.errorToString error
                     )
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool
 isAdmin sessionId clientId { adminLoggedIn } =
     adminLoggedIn == Just ( sessionId, clientId )
+
+
+readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+readMessage message clientId player model =
+    let
+        newModel =
+            model
+                |> updatePlayer (SPlayer.readMessage message) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
+removeMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+removeMessage message clientId player model =
+    let
+        newModel =
+            model
+                |> updatePlayer (SPlayer.removeMessage message) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -465,14 +527,25 @@ createNewChar : NewChar -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd B
 createNewChar newChar clientId player model =
     case player of
         Player _ ->
-            -- TODO send the player a message? "already created"
+            ( model, Cmd.none )
+
+        NeedsCharCreated auth ->
+            ( model
+            , Task.perform (CreateNewCharWithTime clientId newChar) Time.now
+            )
+
+
+createNewCharWithTime : NewChar -> Posix -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
+createNewCharWithTime newChar currentTime clientId player model =
+    case player of
+        Player _ ->
             ( model, Cmd.none )
 
         NeedsCharCreated auth ->
             let
                 sPlayer : SPlayer
                 sPlayer =
-                    Player.fromNewChar auth newChar
+                    Player.fromNewChar currentTime auth newChar
 
                 newPlayer : Player SPlayer
                 newPlayer =
@@ -551,7 +624,7 @@ fight otherPlayerName clientId sPlayer model =
                             (GeneratedFight
                                 clientId
                                 sPlayer
-                                (Fight.targetAlreadyDead
+                                (FightGen.targetAlreadyDead
                                     { attacker = sPlayer
                                     , target = target
                                     }
@@ -563,7 +636,8 @@ fight otherPlayerName clientId sPlayer model =
                         ( model
                         , Random.generate
                             (GeneratedFight clientId sPlayer)
-                            (Fight.generator
+                            (FightGen.generator
+                                model.time
                                 { attacker = sPlayer
                                 , target = target
                                 }
@@ -578,7 +652,7 @@ subscriptions _ =
     Sub.batch
         [ Lamdera.onConnect Connected
         , Lamdera.onDisconnect Disconnected
-        , Time.every 10000 Tick
+        , Time.every 1000 Tick
         ]
 
 

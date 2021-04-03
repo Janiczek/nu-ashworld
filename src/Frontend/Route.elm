@@ -8,6 +8,7 @@ module Frontend.Route exposing
     )
 
 import Data.Fight exposing (FightInfo)
+import Data.Message exposing (Message)
 
 
 type Route
@@ -19,6 +20,8 @@ type Route
     | About
     | News
     | Fight FightInfo
+    | Messages
+    | Message Message
     | CharCreation
     | Admin AdminRoute
 
@@ -54,6 +57,12 @@ needsLogin route =
             False
 
         Fight _ ->
+            True
+
+        Messages ->
+            True
+
+        Message _ ->
             True
 
         CharCreation ->

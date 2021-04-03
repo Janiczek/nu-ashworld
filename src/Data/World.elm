@@ -16,9 +16,9 @@ import Data.Player as Player
         ( COtherPlayer
         , CPlayer
         , Player(..)
-        , PlayerName
         , SPlayer
         )
+import Data.Player.PlayerName exposing (PlayerName)
 import Time exposing (Posix)
 
 

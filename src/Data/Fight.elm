@@ -3,32 +3,29 @@ module Data.Fight exposing
     , FightInfo
     , FightResult(..)
     , Who(..)
-    , generator
-    , targetAlreadyDead
+    , encodeFightInfo
+    , fightInfoDecoder
+    , theOther
     )
 
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Perk as Perk
-import Data.Player as Player exposing (SPlayer)
-import Data.Player.SPlayer as SPlayer
+import Data.Player.PlayerName exposing (PlayerName)
 import Data.Xp as Xp
+import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Extra as JDE
+import Json.Encode as JE
 import Logic
-import Random exposing (Generator)
-import Random.Bool
-import Random.Extra as Random
 
 
 type alias FightInfo =
-    { attacker : SPlayer
-    , target : SPlayer
+    { attackerName : PlayerName
+    , targetName : PlayerName
     , log : List ( Who, FightAction )
     , result : FightResult
     }
 
 
-{-| These are only for presentation purposes, at the time of construction they
-have already been udpated in the SPlayer.
--}
 type FightResult
     = AttackerWon { xpGained : Int, capsGained : Int }
     | TargetWon { xpGained : Int, capsGained : Int }
@@ -40,16 +37,6 @@ type FightResult
 type Who
     = Attacker
     | Target
-
-
-theOther : Who -> Who
-theOther who =
-    case who of
-        Attacker ->
-            Target
-
-        Target ->
-            Attacker
 
 
 type FightAction
@@ -67,462 +54,215 @@ type FightAction
     | Miss { shotType : ShotType }
 
 
-type alias OngoingFight =
-    { distanceHexes : Int
-    , attacker : SPlayer
-    , target : SPlayer
-    , attackerAp : Int
-    , targetAp : Int
-    , reverseLog : List ( Who, FightAction )
-    }
+theOther : Who -> Who
+theOther who =
+    case who of
+        Attacker ->
+            Target
+
+        Target ->
+            Attacker
 
 
-generator :
-    { attacker : SPlayer
-    , target : SPlayer
-    }
-    -> Generator FightInfo
-generator initPlayers =
+fightInfoDecoder : Decoder FightInfo
+fightInfoDecoder =
     let
-        -- TODO for non-unarmed attacks check that the range is <= weapon's range
-        startingDistance : Generator Int
-        startingDistance =
-            -- TODO vary this based on the Perception / perks / Outdoorsman / ...?
-            Random.int 10 20
-
-        attackerMaxAp : Int
-        attackerMaxAp =
-            Logic.actionPoints initPlayers.attacker.special
-
-        targetMaxAp : Int
-        targetMaxAp =
-            Logic.actionPoints initPlayers.target.special
-
-        initialFight : Generator OngoingFight
-        initialFight =
-            startingDistance
-                |> Random.map
-                    (\distance ->
-                        { distanceHexes = distance
-                        , attacker = initPlayers.attacker
-                        , target = initPlayers.target
-                        , attackerAp = attackerMaxAp
-                        , targetAp = targetMaxAp
-                        , reverseLog = [ ( Attacker, Start { distanceHexes = distance } ) ]
-                        }
-                    )
-
-        sequenceOrder : List Who
-        sequenceOrder =
-            [ ( Attacker, initPlayers.attacker )
-            , ( Target, initPlayers.target )
-            ]
-                |> List.sortBy
-                    (\( _, player ) ->
-                        negate <|
-                            Logic.sequence
-                                { perception = player.special.perception
-                                , hasKamikazePerk = Player.perkCount Perk.Kamikaze player > 0
-                                , earlierSequencePerkCount = Player.perkCount Perk.EarlierSequence player
-                                }
-                    )
-                |> List.map Tuple.first
-
-        turn : Who -> OngoingFight -> Generator OngoingFight
-        turn who ongoing =
-            ongoing
-                |> resetAp who
-                |> Random.constant
-                |> Random.andThen (comeCloser who)
-                |> Random.andThen (attackWhilePossible who)
-
-        resetAp : Who -> OngoingFight -> OngoingFight
-        resetAp who ongoing =
-            case who of
-                Attacker ->
-                    { ongoing | attackerAp = attackerMaxAp }
-
-                Target ->
-                    { ongoing | targetAp = targetMaxAp }
-
-        attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
-        attackWhilePossible who ongoing =
-            let
-                myHp =
-                    player_ who ongoing |> .hp
-
-                otherHp =
-                    player_ (theOther who) ongoing |> .hp
-
-                minApCost =
-                    attackApCost { isAimedShot = False }
-            in
-            if playerAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
-                Random.constant ongoing
-                    |> Random.andThen (attack who)
-                    |> Random.andThen (attackWhilePossible who)
-
-            else
-                Random.constant ongoing
-
-        player_ : Who -> OngoingFight -> SPlayer
-        player_ who ongoing =
-            case who of
-                Attacker ->
-                    ongoing.attacker
-
-                Target ->
-                    ongoing.target
-
-        playerAp : Who -> OngoingFight -> Int
-        playerAp who ongoing =
-            case who of
-                Attacker ->
-                    ongoing.attackerAp
-
-                Target ->
-                    ongoing.targetAp
-
-        addLog : Who -> FightAction -> OngoingFight -> OngoingFight
-        addLog who action ongoing =
-            { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
-
-        subtractAp : Who -> Int -> OngoingFight -> OngoingFight
-        subtractAp who apToSubtract ongoing =
-            case who of
-                Attacker ->
-                    { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
-
-                Target ->
-                    { ongoing | targetAp = ongoing.targetAp - apToSubtract }
-
-        baseApCost : Int
-        baseApCost =
-            -- TODO vary this based on weapon / ...
-            3
-
-        shotType : Who -> OngoingFight -> Generator ShotType
-        shotType who ongoing =
-            let
-                availableAp =
-                    playerAp who ongoing
-
-                chanceToHit : ShotType -> Float
-                chanceToHit shot =
-                    toFloat
-                        (Logic.unarmedChanceToHit
-                            { attackerSpecial = player_ who ongoing |> .special
-                            , targetSpecial = player_ (theOther who) ongoing |> .special
-                            , distanceHexes = ongoing.distanceHexes
-                            , shotType = shot
-                            }
-                        )
-                        / 100
-            in
-            Random.weighted
-                ( chanceToHit NormalShot, NormalShot )
-                (if availableAp >= attackApCost { isAimedShot = True } then
-                    ShotType.allAimed
-                        |> List.map
-                            (\shot ->
-                                ( chanceToHit (AimedShot shot)
-                                , AimedShot shot
-                                )
-                            )
-
-                 else
-                    []
-                )
-
-        attackApCost : { isAimedShot : Bool } -> Int
-        attackApCost r =
-            baseApCost + ShotType.apCostPenalty r
-
-        attackStats who ongoing =
-            let
-                { special, xp } =
-                    player_ who ongoing
-            in
-            Logic.unarmedAttackStats
-                { special = special
-                , level = Xp.currentLevel xp
-                }
-
-        rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
-        rollDamage who ongoing _ =
-            let
-                stats =
-                    attackStats who ongoing
-            in
-            Random.int stats.minDamage stats.maxDamage
-                |> Random.map
-                    (\damage ->
-                        let
-                            damage_ =
-                                toFloat damage
-
-                            rangedBonus =
-                                -- TODO ranged attacks and perks
-                                0
-
-                            ammoDamageMultiplier =
-                                -- TODO ammo in combat
-                                1
-
-                            ammoDamageDivisor =
-                                -- TODO ammo in combat
-                                1
-
-                            criticalHitDamageMultiplier =
-                                -- TODO critical hits
-                                2
-
-                            armorIgnore =
-                                -- TODO armor ignoring attacks
-                                0
-
-                            armorDamageThreshold =
-                                -- TODO armor
-                                0
-
-                            armorDamageResistance =
-                                -- TODO armor
-                                0
-
-                            ammoDamageResistanceModifier =
-                                -- TODO ammo
-                                0
-                        in
-                        -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
-                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                        round <|
-                            (((damage_ + rangedBonus)
-                                * (ammoDamageMultiplier / ammoDamageDivisor)
-                                * (criticalHitDamageMultiplier / 2)
-                              -- * (combatDifficultyMultiplier / 100)
-                             )
-                                - (armorDamageThreshold / max 1 (5 * armorIgnore))
-                            )
-                                * ((100
-                                        - max 0 (armorDamageResistance / max 1 (5 * armorIgnore))
-                                        + ammoDamageResistanceModifier
-                                   )
-                                    / 100
-                                  )
-                    )
-
-        attack : Who -> OngoingFight -> Generator OngoingFight
-        attack who ongoing =
-            let
-                other : Who
-                other =
-                    theOther who
-            in
-            -- TODO for now, everything is unarmed
-            shotType who ongoing
-                |> Random.andThen
-                    (\shot ->
-                        let
-                            apCost =
-                                attackApCost { isAimedShot = ShotType.isAimed shot }
-                        in
-                        if ongoing.distanceHexes == 0 && playerAp who ongoing >= apCost then
-                            let
-                                chanceToHit =
-                                    toFloat
-                                        (Logic.unarmedChanceToHit
-                                            { attackerSpecial = player_ who ongoing |> .special
-                                            , targetSpecial = player_ (theOther who) ongoing |> .special
-                                            , distanceHexes = ongoing.distanceHexes
-                                            , shotType = shot
-                                            }
-                                        )
-                                        / 100
-                            in
-                            Random.Bool.weightedBool chanceToHit
-                                |> Random.andThen
-                                    (\hasHit ->
-                                        -- TODO critical misses, critical hits according to inspiration/fo2-calc/fo2calg.pdf
-                                        if hasHit then
-                                            rollDamage who ongoing shot
-                                                |> Random.map
-                                                    (\damage ->
-                                                        ongoing
-                                                            |> addLog who
-                                                                (Attack
-                                                                    { damage = damage
-                                                                    , shotType = shot
-                                                                    , remainingHp = .hp (player_ other ongoing) - damage
-                                                                    }
-                                                                )
-                                                            |> subtractAp who apCost
-                                                            |> updatePlayer other (SPlayer.subtractHp damage)
-                                                    )
-
-                                        else
-                                            ongoing
-                                                |> addLog who (Miss { shotType = shot })
-                                                |> subtractAp who apCost
-                                                |> Random.constant
-                                    )
-
-                        else
-                            Random.constant ongoing
-                    )
-
-        comeCloser : Who -> OngoingFight -> Generator OngoingFight
-        comeCloser who ongoing =
-            -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
-            -- Eg. unarmed needs distance 0
-            -- Melee might need distance <2 and might prefer distance 0
-            -- Small guns might need distance <35 and prefer the largest where the chance to hit is ~95% or something
-            -- TODO currently everything is unarmed.
-            if ongoing.distanceHexes <= 0 then
-                Random.constant ongoing
-
-            else
-                let
-                    maxPossibleMove : Int
-                    maxPossibleMove =
-                        min ongoing.distanceHexes (playerAp who ongoing)
-                in
-                ongoing
-                    |> addLog who
-                        (ComeCloser
-                            { hexes = maxPossibleMove
-                            , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
-                            }
-                        )
-                    |> subtractDistance maxPossibleMove
-                    |> subtractAp who maxPossibleMove
-                    |> Random.constant
-
-        subtractDistance : Int -> OngoingFight -> OngoingFight
-        subtractDistance n ongoing =
-            { ongoing | distanceHexes = ongoing.distanceHexes - n }
-
-        turnsBySequenceLoop : OngoingFight -> Generator OngoingFight
-        turnsBySequenceLoop ongoing =
-            ongoing
-                |> ifBothAlive
-                    (\ongoing_ ->
-                        turnsBySequence sequenceOrder ongoing_
-                            |> Random.andThen turnsBySequenceLoop
-                    )
-
-        turnsBySequence : List Who -> OngoingFight -> Generator OngoingFight
-        turnsBySequence remaining ongoing =
-            ongoing
-                |> ifBothAlive
-                    (\ongoing_ ->
-                        case remaining of
-                            [] ->
-                                Random.constant ongoing_
-
-                            current :: rest ->
-                                turn current ongoing_
-                                    |> Random.andThen (turnsBySequence rest)
-                    )
-
-        ifBothAlive : (OngoingFight -> Generator OngoingFight) -> OngoingFight -> Generator OngoingFight
-        ifBothAlive fn ongoing =
-            if ongoing.attacker.hp > 0 && ongoing.target.hp > 0 then
-                fn ongoing
-
-            else
-                Random.constant ongoing
-
-        updatePlayer : Who -> (SPlayer -> SPlayer) -> OngoingFight -> OngoingFight
-        updatePlayer who fn ongoing =
-            case who of
-                Attacker ->
-                    { ongoing | attacker = fn ongoing.attacker }
-
-                Target ->
-                    { ongoing | target = fn ongoing.target }
-
-        finalizeFight : OngoingFight -> FightInfo
-        finalizeFight ongoing =
-            let
-                result : FightResult
-                result =
-                    if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
-                        BothDead
-
-                    else if ongoing.attacker.hp <= 0 then
-                        TargetWon
-                            { capsGained = ongoing.attacker.caps
-                            , xpGained = Logic.xpGained { damageDealt = initPlayers.attacker.hp }
-                            }
-
-                    else if ongoing.target.hp <= 0 then
-                        AttackerWon
-                            { capsGained = ongoing.target.caps
-                            , xpGained = Logic.xpGained { damageDealt = initPlayers.target.hp }
-                            }
-
-                    else
-                        NobodyDead
-
-                final : OngoingFight
-                final =
-                    let
-                        withoutTick : OngoingFight
-                        withoutTick =
-                            ongoing
-                                |> updatePlayer Attacker (SPlayer.subtractTicks 1)
-                    in
-                    case result of
-                        BothDead ->
-                            withoutTick
-
-                        NobodyDead ->
-                            withoutTick
-
-                        TargetAlreadyDead ->
-                            withoutTick
-
-                        AttackerWon { xpGained, capsGained } ->
-                            withoutTick
-                                |> updatePlayer Attacker (SPlayer.addXp xpGained)
-                                |> updatePlayer Attacker (SPlayer.addCaps capsGained)
-                                |> updatePlayer Target (SPlayer.subtractCaps capsGained)
-                                |> updatePlayer Attacker SPlayer.incWins
-                                |> updatePlayer Target SPlayer.incLosses
-
-                        TargetWon { xpGained, capsGained } ->
-                            withoutTick
-                                |> updatePlayer Target (SPlayer.addXp xpGained)
-                                |> updatePlayer Target (SPlayer.addCaps capsGained)
-                                |> updatePlayer Attacker (SPlayer.subtractCaps capsGained)
-                                |> updatePlayer Target SPlayer.incWins
-                                |> updatePlayer Attacker SPlayer.incLosses
-            in
-            { attacker = final.attacker
-            , target = final.target
-            , log = List.reverse final.reverseLog
-            , result = result
-            }
-
-        -- AP costs:
-        -- movement takes 1 AP per hex
-        -- based on various factors attacks take ~5 AP
+        logItemDecoder : Decoder ( Who, FightAction )
+        logItemDecoder =
+            JD.map2 Tuple.pair
+                (JD.field "who" whoDecoder)
+                (JD.field "action" fightActionDecoder)
     in
-    initialFight
-        |> Random.andThen (turn Attacker)
-        |> Random.andThen (turn Target)
-        |> Random.andThen turnsBySequenceLoop
-        |> Random.map finalizeFight
+    JD.succeed FightInfo
+        |> JDE.andMap (JD.field "attackerName" JD.string)
+        |> JDE.andMap (JD.field "targetName" JD.string)
+        |> JDE.andMap (JD.field "log" (JD.list logItemDecoder))
+        |> JDE.andMap (JD.field "result" fightResultDecoder)
 
 
-targetAlreadyDead :
-    { attacker : SPlayer
-    , target : SPlayer
-    }
-    -> FightInfo
-targetAlreadyDead { attacker, target } =
-    { attacker = attacker
-    , target = target
-    , log = []
-    , result = TargetAlreadyDead
-    }
+encodeFightInfo : FightInfo -> JE.Value
+encodeFightInfo info =
+    let
+        encodeLogItem : ( Who, FightAction ) -> JE.Value
+        encodeLogItem ( who, action ) =
+            JE.object
+                [ ( "who", encodeWho who )
+                , ( "action", encodeFightAction action )
+                ]
+    in
+    JE.object
+        [ ( "attackerName", JE.string info.attackerName )
+        , ( "targetName", JE.string info.targetName )
+        , ( "log", JE.list encodeLogItem info.log )
+        , ( "result", encodeFightResult info.result )
+        ]
+
+
+encodeFightResult : FightResult -> JE.Value
+encodeFightResult result =
+    case result of
+        AttackerWon r ->
+            JE.object
+                [ ( "type", JE.string "AttackerWon" )
+                , ( "xpGained", JE.int r.xpGained )
+                , ( "capsGained", JE.int r.capsGained )
+                ]
+
+        TargetWon r ->
+            JE.object
+                [ ( "type", JE.string "TargetWon" )
+                , ( "xpGained", JE.int r.xpGained )
+                , ( "capsGained", JE.int r.capsGained )
+                ]
+
+        TargetAlreadyDead ->
+            JE.object [ ( "type", JE.string "TargetAlreadyDead" ) ]
+
+        BothDead ->
+            JE.object [ ( "type", JE.string "BothDead" ) ]
+
+        NobodyDead ->
+            JE.object [ ( "type", JE.string "NobodyDead" ) ]
+
+
+fightResultDecoder : Decoder FightResult
+fightResultDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "AttackerWon" ->
+                        JD.map2
+                            (\xp caps ->
+                                AttackerWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+
+                    "TargetWon" ->
+                        JD.map2
+                            (\xp caps ->
+                                TargetWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+
+                    "TargetAlreadyDead" ->
+                        JD.succeed TargetAlreadyDead
+
+                    "BothDead" ->
+                        JD.succeed BothDead
+
+                    "NobodyDead" ->
+                        JD.succeed NobodyDead
+
+                    _ ->
+                        JD.fail <| "Unknown FightResult: '" ++ type_ ++ "'"
+            )
+
+
+encodeWho : Who -> JE.Value
+encodeWho who =
+    case who of
+        Attacker ->
+            JE.string "attacker"
+
+        Target ->
+            JE.string "target"
+
+
+whoDecoder : Decoder Who
+whoDecoder =
+    JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "attacker" ->
+                        JD.succeed Attacker
+
+                    "target" ->
+                        JD.succeed Target
+
+                    _ ->
+                        JD.fail <| "Unknown Who: '" ++ type_ ++ "'"
+            )
+
+
+encodeFightAction : FightAction -> JE.Value
+encodeFightAction action =
+    case action of
+        Start r ->
+            JE.object
+                [ ( "type", JE.string "Start" )
+                , ( "distanceHexes", JE.int r.distanceHexes )
+                ]
+
+        ComeCloser r ->
+            JE.object
+                [ ( "type", JE.string "ComeCloser" )
+                , ( "hexes", JE.int r.hexes )
+                , ( "remainingDistanceHexes", JE.int r.remainingDistanceHexes )
+                ]
+
+        Attack r ->
+            JE.object
+                [ ( "type", JE.string "Attack" )
+                , ( "damage", JE.int r.damage )
+                , ( "shotType", ShotType.encode r.shotType )
+                , ( "remainingHp", JE.int r.remainingHp )
+                ]
+
+        Miss r ->
+            JE.object
+                [ ( "type", JE.string "Miss" )
+                , ( "shotType", ShotType.encode r.shotType )
+                ]
+
+
+fightActionDecoder : Decoder FightAction
+fightActionDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "Start" ->
+                        JD.field "distanceHexes" JD.int
+                            |> JD.map (\distance -> Start { distanceHexes = distance })
+
+                    "ComeCloser" ->
+                        JD.map2
+                            (\hexes remaining ->
+                                ComeCloser
+                                    { hexes = hexes
+                                    , remainingDistanceHexes = remaining
+                                    }
+                            )
+                            (JD.field "hexes" JD.int)
+                            (JD.field "remainingDistanceHexes" JD.int)
+
+                    "Attack" ->
+                        JD.map3
+                            (\damage shotType remainingHp ->
+                                Attack
+                                    { damage = damage
+                                    , shotType = shotType
+                                    , remainingHp = remainingHp
+                                    }
+                            )
+                            (JD.field "damage" JD.int)
+                            (JD.field "shotType" ShotType.decoder)
+                            (JD.field "remainingHp" JD.int)
+
+                    "Miss" ->
+                        JD.field "shotType" ShotType.decoder
+                            |> JD.map (\shotType -> Miss { shotType = shotType })
+
+                    _ ->
+                        JD.fail <| "Unknown FightAction: '" ++ type_ ++ "'"
+            )
