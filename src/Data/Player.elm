@@ -170,7 +170,7 @@ sPlayerDecoderV1 =
         |> JDE.andMap (JD.field "losses" JD.int)
         |> JDE.andMap (JD.field "location" JD.int)
         |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JDE.andMap (JD.field "messages" (JD.succeed []))
+        |> JDE.andMap (JD.succeed [])
 
 
 {-| adds "messages" field
