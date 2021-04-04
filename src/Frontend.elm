@@ -643,9 +643,13 @@ adminPlayersView =
 adminLoggedInView : AdminData -> List (Html FrontendMsg)
 adminLoggedInView data =
     [ pageTitleView "Admin :: Logged In"
-    , data.loggedInPlayers
-        |> List.map (\name -> H.li [] [ H.text name ])
-        |> H.ul []
+    , if List.isEmpty data.loggedInPlayers then
+        H.text "Nobody's here!"
+
+      else
+        data.loggedInPlayers
+            |> List.map (\name -> H.li [] [ H.text name ])
+            |> H.ul []
     ]
 
 
