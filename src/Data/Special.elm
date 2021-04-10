@@ -53,7 +53,7 @@ isUseful type_ =
             True
 
         Charisma ->
-            False
+            True
 
         Intelligence ->
             False

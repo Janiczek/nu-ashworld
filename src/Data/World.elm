@@ -19,6 +19,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Vendor exposing (Vendors)
 import Time exposing (Posix)
 
 
@@ -37,6 +38,8 @@ type alias AdminData =
     { players : List (Player SPlayer)
     , loggedInPlayers : List PlayerName
     , nextWantedTick : Maybe Posix
+
+    -- TODO perhaps have the shops here too, for some manual admin addition of items?
     }
 
 
@@ -48,6 +51,7 @@ type alias WorldLoggedOutData =
 type alias WorldLoggedInData =
     { player : Player CPlayer
     , otherPlayers : List COtherPlayer
+    , vendors : Vendors
     }
 
 

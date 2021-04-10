@@ -2,6 +2,7 @@ module Logic exposing
     ( actionPoints
     , healingRate
     , hitpoints
+    , price
     , sequence
     , unarmedAttackStats
     , unarmedChanceToHit
@@ -77,6 +78,13 @@ darknessPenalty isItDark distanceHexes =
 
     else
         0
+
+
+temporaryBarterSkill : Special -> Int
+temporaryBarterSkill { charisma } =
+    -- TODO this is just the initial value
+    -- TODO remove this and use the value from SPlayer once we start tracking it there
+    4 * charisma
 
 
 temporaryUnarmedSkill : Special -> Int
@@ -230,3 +238,37 @@ unarmedAttackStats { special, level } =
     , maxDamage = maxDamage
     , criticalChanceBonus = criticalChanceBonus
     }
+
+
+price :
+    { capsBeingBought : Int
+    , itemsPriceTotal : Int
+    , playerBarterSkill : Int
+    , traderBarterSkill : Int
+    }
+    -> Int
+price r =
+    --  https://www.nma-fallout.com/threads/fallout-and-fallout-2-barter-formula.217810/#post-4329046
+    let
+        hasMasterTraderPerk : Bool
+        hasMasterTraderPerk =
+            -- TODO Master Trader perk
+            False
+
+        masterTraderDiscount : Int
+        masterTraderDiscount =
+            if hasMasterTraderPerk then
+                25
+
+            else
+                0
+
+        barterPercent : Int
+        barterPercent =
+            max 1 (100 - masterTraderDiscount)
+
+        barterRatio : Float
+        barterRatio =
+            (toFloat r.traderBarterSkill + 160) / (toFloat r.playerBarterSkill + 160) * 2
+    in
+    r.capsBeingBought + round (toFloat r.itemsPriceTotal * barterRatio * (toFloat barterPercent * 0.01))

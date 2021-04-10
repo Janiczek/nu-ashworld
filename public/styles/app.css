@@ -20,6 +20,13 @@
 
 @font-face {
   font-family: BQN386;
+  font-weight: normal;
+  src: url('../fonts/BQN386.ttf'); /* Taken from https://dzaima.github.io/BQN386/BQN386.ttf */
+}
+
+@font-face {
+  font-family: BQN386;
+  font-weight: bold;
   src: url('../fonts/BQN386.ttf'); /* Taken from https://dzaima.github.io/BQN386/BQN386.ttf */
 }
 
@@ -288,6 +295,7 @@ table thead {
 table thead th {
   border-left: 3px solid var(--table-border);
   padding: 4px 8px;
+  font-weight: normal;
 }
 
 table tbody td:first-child,
@@ -338,6 +346,10 @@ table tbody tr:hover td {
 
 #messages-table tbody .messages-remove:hover {
   color: var(--fg-highlight);
+}
+
+#messages-empty-note {
+  margin-top: 40px;
 }
 
 #message-summary {
@@ -393,6 +405,11 @@ table tbody tr:hover td {
 .news-item-text a:hover:after {
   bottom: 0px;
   height: 100%;
+}
+
+.news-item-text strong {
+  font-weight: normal;
+  color: var(--fg-highlight);
 }
 
 .character-special-item.not-useful {

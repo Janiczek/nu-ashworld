@@ -1,6 +1,7 @@
 module Admin exposing (backendModelDecoder, encodeBackendModel)
 
 import Data.Player as Player
+import Data.Vendor as Vendor
 import Dict
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
@@ -19,11 +20,22 @@ encodeBackendModel model =
                 |> JE.list (Player.encode Player.encodeSPlayer)
           )
         , ( "nextWantedTick", JEE.maybe Iso8601.encode model.nextWantedTick )
+        , ( "vendors", Vendor.encodeVendors model.vendors )
         ]
 
 
 backendModelDecoder : Decoder BackendModel
 backendModelDecoder =
+    JD.oneOf
+        [ backendModelDecoderV2
+        , backendModelDecoderV1
+        ]
+
+
+{-| init version
+-}
+backendModelDecoderV1 : Decoder BackendModel
+backendModelDecoderV1 =
     JD.map2
         (\players nextWantedTick ->
             { players = players
@@ -31,6 +43,7 @@ backendModelDecoder =
             , nextWantedTick = nextWantedTick
             , adminLoggedIn = Nothing
             , time = Time.millisToPosix 0
+            , vendors = Vendor.emptyVendors
             }
         )
         (JD.field "players"
@@ -42,3 +55,29 @@ backendModelDecoder =
             )
         )
         (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
+
+
+{-| adds "vendors" field
+-}
+backendModelDecoderV2 : Decoder BackendModel
+backendModelDecoderV2 =
+    JD.map3
+        (\players nextWantedTick vendors ->
+            { players = players
+            , loggedInPlayers = Dict.empty
+            , nextWantedTick = nextWantedTick
+            , adminLoggedIn = Nothing
+            , time = Time.millisToPosix 0
+            , vendors = vendors
+            }
+        )
+        (JD.field "players"
+            (JD.list
+                (Player.decoder Player.sPlayerDecoder
+                    |> JD.map (\player -> ( Player.getAuth player |> .name, player ))
+                )
+                |> JD.map Dict.fromList
+            )
+        )
+        (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
+        (JD.field "vendors" Vendor.vendorsDecoder)

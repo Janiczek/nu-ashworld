@@ -4,11 +4,15 @@ module Data.Map.Location exposing
     , allLocations
     , coords
     , default
+    , location
     , name
     , size
+    , vendor
     )
 
-import Data.Map exposing (TileCoords)
+import Data.Map as Map exposing (TileCoords, TileNum)
+import Data.Vendor exposing (Vendor, Vendors)
+import Dict exposing (Dict)
 
 
 default : Location
@@ -102,8 +106,8 @@ allLocations =
 
 
 size : Location -> Size
-size location =
-    case location of
+size loc =
+    case loc of
         Arroyo ->
             Middle
 
@@ -320,8 +324,8 @@ coords loc =
 
 
 name : Location -> String
-name location =
-    case location of
+name loc =
+    case loc of
         AbandonedHouse ->
             "Abandoned House"
 
@@ -426,3 +430,25 @@ name location =
 
         VillageNearVaultCity ->
             "Village"
+
+
+vendor : Vendors -> Location -> Maybe Vendor
+vendor vendors loc =
+    case loc of
+        Klamath ->
+            Just vendors.klamath
+
+        _ ->
+            Nothing
+
+
+dict : Dict TileNum Location
+dict =
+    allLocations
+        |> List.map (\loc -> ( Map.toTileNum <| coords loc, loc ))
+        |> Dict.fromList
+
+
+location : TileNum -> Maybe Location
+location tile =
+    Dict.get tile dict

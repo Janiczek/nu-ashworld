@@ -22,6 +22,7 @@ import Data.Player as Player
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
+import Data.Vendor exposing (Vendor)
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -501,26 +502,33 @@ serverTickView zone currentTime serverTick =
 contentView : Model -> Html FrontendMsg
 contentView model =
     let
-        withCreatedPlayer : Player CPlayer -> (CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
-        withCreatedPlayer player fn =
-            case player of
+        withCreatedPlayer : WorldLoggedInData -> (WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
+        withCreatedPlayer world fn =
+            case world.player of
                 NeedsCharCreated _ ->
                     contentUnavailableToNonCreatedView
 
                 Player cPlayer ->
-                    fn cPlayer
+                    fn world cPlayer
+
+        withLocation : WorldLoggedInData -> (Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
+        withLocation world fn =
+            world.player
+                |> Player.getPlayerData
+                |> Maybe.andThen (.location >> Location.location)
+                |> Maybe.map (\loc -> withCreatedPlayer world (fn loc))
+                |> Maybe.withDefault contentUnavailableWhenNotInTown
     in
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                withCreatedPlayer world.player characterView
+                withCreatedPlayer world characterView
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.Map, WorldLoggedIn world ) ->
-                withCreatedPlayer world.player
-                    (mapView model.mapMouseCoords)
+                withCreatedPlayer world (mapView model.mapMouseCoords)
 
             ( Route.Map, _ ) ->
                 mapLoggedOutView
@@ -557,10 +565,13 @@ contentView model =
             ( Route.Ladder, WorldNotInitialized _ ) ->
                 ladderLoadingView
 
-            ( Route.Town, WorldLoggedIn _ ) ->
-                townView
+            ( Route.Town Route.MainSquare, WorldLoggedIn world ) ->
+                withLocation world townMainSquareView
 
-            ( Route.Town, _ ) ->
+            ( Route.Town (Route.Store vendor), WorldLoggedIn world ) ->
+                withLocation world (townStoreView vendor)
+
+            ( Route.Town _, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.Settings, WorldLoggedIn _ ) ->
@@ -576,19 +587,19 @@ contentView model =
                 newsView model.zone
 
             ( Route.Fight fightInfo, WorldLoggedIn world ) ->
-                withCreatedPlayer world.player (fightView fightInfo)
+                withCreatedPlayer world (fightView fightInfo)
 
             ( Route.Fight _, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.Messages, WorldLoggedIn world ) ->
-                withCreatedPlayer world.player (messagesView model.time model.zone)
+                withCreatedPlayer world (messagesView model.time model.zone)
 
             ( Route.Messages, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.Message message, WorldLoggedIn world ) ->
-                withCreatedPlayer world.player (messageView model.zone message)
+                withCreatedPlayer world (messageView model.zone message)
 
             ( Route.Message _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -602,19 +613,13 @@ contentView model =
             ( Route.Admin Route.Players, WorldAdmin _ ) ->
                 adminPlayersView
 
-            ( Route.Admin Route.Players, _ ) ->
-                contentUnavailableToNonAdminView
-
             ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
                 adminLoggedInView data
-
-            ( Route.Admin Route.LoggedIn, _ ) ->
-                contentUnavailableToNonAdminView
 
             ( Route.Admin (Route.Import textarea), WorldAdmin _ ) ->
                 adminImportView textarea
 
-            ( Route.Admin (Route.Import _), _ ) ->
+            ( Route.Admin _, _ ) ->
                 contentUnavailableToNonAdminView
         )
 
@@ -673,9 +678,10 @@ adminImportView textarea =
 
 mapView :
     Maybe ( TileCoords, Set TileCoords )
+    -> WorldLoggedInData
     -> CPlayer
     -> List (Html FrontendMsg)
-mapView mouseCoords player =
+mapView mouseCoords _ player =
     let
         playerCoords : TileCoords
         playerCoords =
@@ -893,10 +899,40 @@ mapLoggedOutView =
     ]
 
 
-townView : List (Html FrontendMsg)
-townView =
-    [ pageTitleView "Town"
-    , H.text "TODO"
+townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+townMainSquareView location { vendors } player =
+    [ pageTitleView <| "Town: " ++ Location.name location
+    , case Location.vendor vendors location of
+        Nothing ->
+            H.div [] [ H.text "No vendor in this town..." ]
+
+        Just vendor ->
+            H.div []
+                [ H.button
+                    [ HE.onClick (GoToRoute (Route.Town (Route.Store vendor))) ]
+                    [ H.text "[Visit store]" ]
+                ]
+    ]
+
+
+townStoreView : Vendor -> Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+townStoreView vendor location _ player =
+    [ pageTitleView <| "Store: " ++ Location.name location
+    , H.div [ HA.id "town-store-grid" ]
+        [ H.button
+            [ HA.id "town-store-reset-btn"
+            , HE.onClick TodoResetBarter
+            ]
+            [ H.text "[Reset]" ]
+        , H.button
+            [ HA.id "town-store-confirm-btn"
+            , HE.onClick TodoConfirmBarter
+            ]
+            [ H.text "[Confirm]" ]
+        ]
+    , H.button
+        [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]
+        [ H.text "[Back]" ]
     ]
 
 
@@ -1015,8 +1051,8 @@ skillNotUseful =
     HA.title "This skill is not yet useful in this version of the game."
 
 
-characterView : CPlayer -> List (Html FrontendMsg)
-characterView player =
+characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+characterView _ player =
     let
         specialItemView type_ =
             let
@@ -1122,8 +1158,8 @@ characterView player =
     ]
 
 
-messagesView : Posix -> Time.Zone -> CPlayer -> List (Html FrontendMsg)
-messagesView currentTime zone player =
+messagesView : Posix -> Time.Zone -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+messagesView currentTime zone _ player =
     [ pageTitleView "Messages"
     , H.table [ HA.id "messages-table" ]
         [ H.thead []
@@ -1195,11 +1231,15 @@ messagesView currentTime zone player =
                     )
             )
         ]
+    , H.viewIf (List.isEmpty player.messages) <|
+        H.div
+            [ HA.id "messages-empty-note" ]
+            [ H.text "No messages right now!" ]
     ]
 
 
-messageView : Time.Zone -> Message -> CPlayer -> List (Html FrontendMsg)
-messageView zone message player =
+messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+messageView zone message _ player =
     [ pageTitleView "Message"
     , H.h3
         [ HA.id "message-summary" ]
@@ -1241,8 +1281,8 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-fightView : FightInfo -> CPlayer -> List (Html FrontendMsg)
-fightView fight player =
+fightView : FightInfo -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+fightView fight _ player =
     [ pageTitleView "Fight"
     , Data.Fight.View.view fight player.name
     , H.button
@@ -1394,6 +1434,11 @@ ladderTableView { loggedInPlayer, players } =
 contentUnavailableToLoggedOutView : List (Html FrontendMsg)
 contentUnavailableToLoggedOutView =
     contentUnavailableView "you're not logged in"
+
+
+contentUnavailableWhenNotInTown : List (Html FrontendMsg)
+contentUnavailableWhenNotInTown =
+    contentUnavailableView "you're not in a town or another location"
 
 
 contentUnavailableToNonAdminView : List (Html FrontendMsg)
@@ -1639,7 +1684,7 @@ loggedInLinksView player currentRoute =
                     , linkIn "Character" Route.Character Nothing False
                     , linkIn "Map" Route.Map Nothing False
                     , linkIn "Ladder" Route.Ladder Nothing False
-                    , linkIn "Town" Route.Town Nothing False
+                    , linkIn "Town" (Route.Town Route.MainSquare) Nothing False
                     , linkIn "Settings" Route.Settings Nothing False
                     , linkIn "Messages" Route.Messages Nothing False
                     , linkMsg "Logout" Logout Nothing False

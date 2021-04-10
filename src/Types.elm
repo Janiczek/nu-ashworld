@@ -14,6 +14,7 @@ import Data.Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special exposing (SpecialType)
+import Data.Vendor exposing (Vendors)
 import Data.World
     exposing
         ( AdminData
@@ -48,6 +49,7 @@ type alias BackendModel =
     , nextWantedTick : Maybe Posix
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , time : Posix
+    , vendors : Vendors
     }
 
 
@@ -109,6 +111,7 @@ type BackendMsg
         , finalTarget : SPlayer
         , fightInfo : FightInfo
         }
+    | GeneratedNewVendorsStock Vendors
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
 

@@ -16,7 +16,31 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1617309687
+    [ { date = 1617650980
+      , title = "Beginnings of economy"
+      , text = """
+A big change just landed in NuAshworld:
+
+* you now have an **inventory**, and
+* there is now a **store** in Klamath where you'll be able to barter with the one and only Maida Buckner.
+
+A few caveats:
+
+* Stores currently don't restock periodically. They might ocassionally restock
+as I deploy new versions of the game, but for the most part you'll have to wait
+till I finish implementing the restocking mechanism :)
+
+* The only item currently implemented is the **Stimpak**, and it can't be used
+yet. I plan for you to be able to use it immediately to heal yourself (and save
+your valuable ticks that only generate with time), and to set up some rules for
+fights: "use it whenever my HP drops below 30%" and so on.
+
+Good stuff coming soon!
+
+~janiczek
+"""
+      }
+    , { date = 1617309687
       , title = "Fight system"
       , text = """
 Fights should, now that I've

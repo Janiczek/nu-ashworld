@@ -1,6 +1,7 @@
 module Frontend.Route exposing
     ( AdminRoute(..)
     , Route(..)
+    , TownRoute(..)
     , loggedOut
     , needsAdmin
     , needsLogin
@@ -9,13 +10,14 @@ module Frontend.Route exposing
 
 import Data.Fight exposing (FightInfo)
 import Data.Message exposing (Message)
+import Data.Vendor exposing (Vendor)
 
 
 type Route
     = Character
     | Map
     | Ladder
-    | Town
+    | Town TownRoute
     | Settings
     | About
     | News
@@ -24,6 +26,11 @@ type Route
     | Message Message
     | CharCreation
     | Admin AdminRoute
+
+
+type TownRoute
+    = MainSquare
+    | Store Vendor
 
 
 type AdminRoute
@@ -44,7 +51,7 @@ needsLogin route =
         Ladder ->
             False
 
-        Town ->
+        Town _ ->
             True
 
         Settings ->

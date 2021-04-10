@@ -1,5 +1,6 @@
 module Data.Player.SPlayer exposing
     ( addCaps
+    , addItem
     , addMessage
     , addXp
     , decAvailableSpecial
@@ -17,12 +18,14 @@ module Data.Player.SPlayer exposing
     , tick
     )
 
+import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Player exposing (SPlayer)
 import Data.Special as Special exposing (SpecialType)
 import Data.Tick as Tick
 import Data.Xp as Xp
+import Dict
 import Logic
 import Time exposing (Posix)
 
@@ -196,3 +199,8 @@ readMessage messageToRead player =
 removeMessage : Message -> SPlayer -> SPlayer
 removeMessage messageToRemove player =
     { player | messages = List.filter ((/=) messageToRemove) player.messages }
+
+
+addItem : Item.Id -> Item -> SPlayer -> SPlayer
+addItem id item player =
+    { player | items = Dict.insert id item player.items }

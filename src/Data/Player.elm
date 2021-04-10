@@ -27,6 +27,7 @@ import Data.Auth as Auth
         , Verified
         )
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
+import Data.Item as Item exposing (Item)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.Message as Message exposing (Message)
@@ -35,6 +36,8 @@ import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special as Special exposing (Special)
 import Data.Xp as Xp exposing (Level, Xp)
+import Dict exposing (Dict)
+import Dict.Json as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
@@ -45,32 +48,6 @@ import Time exposing (Posix)
 type Player a
     = NeedsCharCreated (Auth Verified)
     | Player a
-
-
-type alias CPlayer =
-    { hp : Int
-    , maxHp : Int
-    , xp : Xp
-    , name : PlayerName
-    , special : Special
-    , availableSpecial : Int
-    , caps : Int
-    , ticks : Int
-    , wins : Int
-    , losses : Int
-    , location : TileNum
-    , perks : Dict_.Dict Perk Int
-    , messages : List Message
-    }
-
-
-type alias COtherPlayer =
-    { level : Level
-    , name : PlayerName
-    , wins : Int
-    , losses : Int
-    , healthStatus : HealthStatus
-    }
 
 
 type alias SPlayer =
@@ -88,6 +65,34 @@ type alias SPlayer =
     , location : TileNum
     , perks : Dict_.Dict Perk Int
     , messages : List Message
+    , items : Dict Item.Id Item
+    }
+
+
+type alias CPlayer =
+    { hp : Int
+    , maxHp : Int
+    , xp : Xp
+    , name : PlayerName
+    , special : Special
+    , availableSpecial : Int
+    , caps : Int
+    , ticks : Int
+    , wins : Int
+    , losses : Int
+    , location : TileNum
+    , perks : Dict_.Dict Perk Int
+    , messages : List Message
+    , items : Dict Item.Id Item
+    }
+
+
+type alias COtherPlayer =
+    { level : Level
+    , name : PlayerName
+    , wins : Int
+    , losses : Int
+    , healthStatus : HealthStatus
     }
 
 
@@ -124,6 +129,7 @@ encodeSPlayer player =
         , ( "location", JE.int player.location )
         , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
         , ( "messages", JE.list Message.encode player.messages )
+        , ( "items", Dict.encode JE.int Item.encode player.items )
         ]
 
 
@@ -149,7 +155,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV2
+        [ sPlayerDecoderV3
+        , sPlayerDecoderV2
         , sPlayerDecoderV1
         ]
 
@@ -171,6 +178,7 @@ sPlayerDecoderV1 =
         |> JDE.andMap (JD.field "location" JD.int)
         |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
         |> JDE.andMap (JD.succeed [])
+        |> JDE.andMap (JD.succeed Dict.empty)
 
 
 {-| adds "messages" field
@@ -192,6 +200,29 @@ sPlayerDecoderV2 =
         |> JDE.andMap (JD.field "location" JD.int)
         |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
         |> JDE.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JDE.andMap (JD.succeed Dict.empty)
+
+
+{-| adds "items" field
+-}
+sPlayerDecoderV3 : Decoder SPlayer
+sPlayerDecoderV3 =
+    JD.succeed SPlayer
+        |> JDE.andMap (JD.field "name" JD.string)
+        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JDE.andMap (JD.field "hp" JD.int)
+        |> JDE.andMap (JD.field "maxHp" JD.int)
+        |> JDE.andMap (JD.field "xp" JD.int)
+        |> JDE.andMap (JD.field "special" Special.decoder)
+        |> JDE.andMap (JD.field "availableSpecial" JD.int)
+        |> JDE.andMap (JD.field "caps" JD.int)
+        |> JDE.andMap (JD.field "ticks" JD.int)
+        |> JDE.andMap (JD.field "wins" JD.int)
+        |> JDE.andMap (JD.field "losses" JD.int)
+        |> JDE.andMap (JD.field "location" JD.int)
+        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JDE.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JDE.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -209,6 +240,7 @@ serverToClient p =
     , location = p.location
     , perks = p.perks
     , messages = p.messages
+    , items = p.items
     }
 
 
@@ -298,6 +330,7 @@ fromNewChar currentTime auth newChar =
     , location = startingTileNum
     , perks = Dict_.empty
     , messages = [ Message.new currentTime Message.Welcome ]
+    , items = Dict.empty
     }
 
 

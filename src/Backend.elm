@@ -22,6 +22,7 @@ import Data.Player.SPlayer as SPlayer
 import Data.Special as Special exposing (SpecialType)
 import Data.Special.Perception as Perception
 import Data.Tick as Tick
+import Data.Vendor as Vendor
 import Data.World
     exposing
         ( AdminData
@@ -59,13 +60,22 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { players = Dict.empty
-      , loggedInPlayers = Dict.empty
-      , nextWantedTick = Nothing
-      , adminLoggedIn = Nothing
-      , time = Time.millisToPosix 0
-      }
-    , Task.perform Tick Time.now
+    let
+        model =
+            { players = Dict.empty
+            , loggedInPlayers = Dict.empty
+            , nextWantedTick = Nothing
+            , adminLoggedIn = Nothing
+            , time = Time.millisToPosix 0
+            , vendors = Vendor.emptyVendors
+            }
+    in
+    ( model
+    , Cmd.batch
+        [ Task.perform Tick Time.now
+        , Random.generate GeneratedNewVendorsStock
+            (Vendor.restockVendors model.vendors)
+        ]
     )
 
 
@@ -126,6 +136,7 @@ getWorldLoggedIn_ player model =
                                 { perception = perception }
                                 otherPlayer
                 )
+    , vendors = model.vendors
     }
 
 
@@ -202,6 +213,11 @@ update msg model =
 
         CreateNewCharWithTime clientId newChar time ->
             withLoggedInPlayer clientId (createNewCharWithTime newChar time)
+
+        GeneratedNewVendorsStock vendors ->
+            ( { model | vendors = vendors }
+            , Cmd.none
+            )
 
 
 processTick : Model -> Model
