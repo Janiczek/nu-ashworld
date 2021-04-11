@@ -394,6 +394,7 @@ view model =
         , favicon16View
         , favicon32View
 	, genericFaviconView
+	, genericFavicon2View
         , case model.world of
             WorldNotInitialized _ ->
                 notInitializedView model
@@ -1825,11 +1826,10 @@ favicon32View =
 
 genericFaviconView : Html msg
 genericFaviconView =
-    H.node "link" [ HA.rel "shortcut icon",
-HA.type_ "image/png"
-, HA.href "images/favicon-392.png" ] []
-
-<link rel="shortcut icon" type="image/png" href="/favicon.png"/>
+    H.node "link" [ HA.rel "shortcut icon", HA.type_ "image/png" , HA.href "images/favicon-392.png" ] []
+genericFavicon2View : Html msg
+genericFavicon2View =
+    H.node "link" [ HA.rel "apple-touch-icon", HA.href "images/favicon-392.png" ] []
 
 logoView : Html msg
 logoView =
