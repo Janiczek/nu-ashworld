@@ -16,13 +16,15 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1617650980
+    [ { date = 0
       , title = "Beginnings of economy"
       , text = """
 A big change just landed in NuAshworld:
 
 * you now have an **inventory**, and
 * there is now a **store** in Klamath where you'll be able to barter with the one and only Maida Buckner.
+
+**TODO TODO TODO actually implement this instead of talking about the caveats**
 
 A few caveats:
 

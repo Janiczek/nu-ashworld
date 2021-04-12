@@ -5,6 +5,7 @@ import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Barter as Barter
 import Data.Fight exposing (FightInfo)
+import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
 import Data.NewChar exposing (NewChar)
@@ -80,6 +81,16 @@ type FrontendMsg
     | MapMouseClick
     | OpenMessage Message
     | AskToRemoveMessage Message
+    | BarterMsg BarterMsg
+
+
+type BarterMsg
+    = AddPlayerItem Item.Id Int
+    | AddVendorPlayerItem Item.Id Int
+    | AddVendorStockItem Item.Kind Int
+    | RemovePlayerItem Item.Id Int
+    | RemoveVendorPlayerItem Item.Id Int
+    | RemoveVendorStockItem Item.Kind Int
     | ResetBarter
     | ConfirmBarter
 

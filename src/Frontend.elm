@@ -1,5 +1,6 @@
 module Frontend exposing (..)
 
+import AssocList as Dict_
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
@@ -34,6 +35,7 @@ import Data.World as World
 import Data.Xp as Xp
 import DateFormat
 import DateFormat.Relative
+import Dict
 import File.Download
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
@@ -294,20 +296,45 @@ update msg model =
             , Lamdera.sendToBackend <| RemoveMessage message
             )
 
+        BarterMsg barterMsg ->
+            updateBarter barterMsg model
+
+
+updateBarter : BarterMsg -> Model -> ( Model, Cmd FrontendMsg )
+updateBarter msg model =
+    case msg of
         ResetBarter ->
             ( { model | route = resetBarter model.route }
             , Cmd.none
             )
 
         ConfirmBarter ->
-            case Route.barterState model.route of
-                Nothing ->
-                    ( model, Cmd.none )
-
-                Just barterState ->
-                    ( model
-                    , Lamdera.sendToBackend <| Barter barterState
+            Route.barterState model.route
+                |> Maybe.map
+                    (\barterState ->
+                        ( model
+                        , Lamdera.sendToBackend <| Barter barterState
+                        )
                     )
+                |> Maybe.withDefault ( model, Cmd.none )
+
+        AddPlayerItem itemId count ->
+            Debug.todo "barter msg 1"
+
+        AddVendorPlayerItem itemId count ->
+            Debug.todo "barter msg 2"
+
+        AddVendorStockItem itemKind count ->
+            Debug.todo "barter msg 3"
+
+        RemovePlayerItem itemId count ->
+            Debug.todo "barter msg 4"
+
+        RemoveVendorPlayerItem itemId count ->
+            Debug.todo "barter msg 5"
+
+        RemoveVendorStockItem itemKind count ->
+            Debug.todo "barter msg 6"
 
 
 resetBarter : Route -> Route
@@ -962,20 +989,60 @@ townStoreView :
     -> CPlayer
     -> List (Html FrontendMsg)
 townStoreView { vendor, barter } location _ player =
+    let
+        playerItems : List (Html FrontendMsg)
+        playerItems =
+            player.items
+                |> Dict.values
+                |> List.map
+                    (\item ->
+                        H.div
+                            [ HA.class "town-store-grid-item player-item" ]
+                            [ H.text <| Debug.toString item ]
+                    )
+
+        vendorPlayerItems : List (Html FrontendMsg)
+        vendorPlayerItems =
+            vendor.playerItems
+                |> Dict.values
+                |> List.map
+                    (\item ->
+                        H.div
+                            [ HA.class "town-store-grid-item vendor-item vendor-player-item" ]
+                            [ H.text <| Debug.toString item ]
+                    )
+
+        vendorStockItems : List (Html FrontendMsg)
+        vendorStockItems =
+            vendor.stockItems
+                |> Dict_.toList
+                |> List.map
+                    (\( itemKind, count ) ->
+                        H.div
+                            [ HA.class "town-store-grid-item vendor-item vendor-stock-item" ]
+                            [ H.text <| Debug.toString ( itemKind, count ) ]
+                    )
+
+        gridContents =
+            H.button
+                [ HA.id "town-store-reset-btn"
+                , HE.onClick <| BarterMsg ResetBarter
+                ]
+                [ H.text "[Reset]" ]
+                :: H.button
+                    [ HA.id "town-store-confirm-btn"
+                    , HE.onClick <| BarterMsg ConfirmBarter
+                    ]
+                    [ H.text "[Confirm]" ]
+                :: List.concat
+                    [ playerItems
+                    , vendorPlayerItems
+                    , vendorStockItems
+                    ]
+    in
     [ pageTitleView <| "Store: " ++ Location.name location
     , H.div [] [ H.text <| "TODO barter state: " ++ Debug.toString barter ]
-    , H.div [ HA.id "town-store-grid" ]
-        [ H.button
-            [ HA.id "town-store-reset-btn"
-            , HE.onClick ResetBarter
-            ]
-            [ H.text "[Reset]" ]
-        , H.button
-            [ HA.id "town-store-confirm-btn"
-            , HE.onClick ConfirmBarter
-            ]
-            [ H.text "[Confirm]" ]
-        ]
+    , H.div [ HA.id "town-store-grid" ] gridContents
     , H.button
         [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]
         [ H.text "[Back]" ]
