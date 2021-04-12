@@ -7,9 +7,11 @@ module Data.Vendor exposing
     , vendorsDecoder
     )
 
-import AssocSet as Set_
-import AssocSet.Extra as Set_
-import Data.Item as Item exposing (VendorItem)
+import AssocList as Dict_
+import AssocList.Extra as Dict_
+import Data.Item as Item exposing (Item)
+import Dict exposing (Dict)
+import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
@@ -19,7 +21,8 @@ import Random.List
 
 
 type alias Vendor =
-    { items : Set_.Set VendorItem
+    { playerItems : Dict Item.Id Item
+    , stockItems : Dict_.Dict Item.Kind Int
     , barterSkill : Int
     }
 
@@ -31,7 +34,15 @@ type alias Vendors =
 
 emptyVendors : Vendors
 emptyVendors =
-    { klamath = { items = Set_.empty, barterSkill = 55 }
+    { klamath = emptyVendor 55
+    }
+
+
+emptyVendor : Int -> Vendor
+emptyVendor barterSkill =
+    { playerItems = Dict.empty
+    , stockItems = Dict_.empty
+    , barterSkill = barterSkill
     }
 
 
@@ -39,7 +50,7 @@ type alias Stock =
     List { kind : Item.Kind, maxCount : Int }
 
 
-stockGenerator : Stock -> Generator (List { kind : Item.Kind, count : Int })
+stockGenerator : Stock -> Generator (List ( Item.Kind, Int ))
 stockGenerator list =
     let
         listLength =
@@ -56,12 +67,7 @@ stockGenerator list =
                     |> List.map
                         (\{ kind, maxCount } ->
                             halfOrMore maxCount
-                                |> Random.map
-                                    (\count ->
-                                        { kind = kind
-                                        , count = count
-                                        }
-                                    )
+                                |> Random.map (Tuple.pair kind)
                         )
                     |> Random.Extra.sequence
             )
@@ -72,27 +78,8 @@ restockVendors vendors =
     let
         restockVendor : Stock -> Vendor -> Generator Vendor
         restockVendor stock vendor =
-            let
-                playerItems : Set_.Set VendorItem
-                playerItems =
-                    Set_.filter Item.isPlayerItem vendor.items
-            in
             stockGenerator stock
-                |> Random.map
-                    (\newStock ->
-                        let
-                            stockVendorItems : Set_.Set VendorItem
-                            stockVendorItems =
-                                newStock
-                                    |> List.map (\{ kind, count } -> Item.Stock ( kind, count ))
-                                    |> Set_.fromList
-
-                            newItems : Set_.Set VendorItem
-                            newItems =
-                                Set_.union playerItems stockVendorItems
-                        in
-                        { vendor | items = newItems }
-                    )
+                |> Random.map (\newStock -> { vendor | stockItems = Dict_.fromList newStock })
     in
     {- TODO perhaps it's better to have VendorNpc = KlamathMaidaBuckner | ...
        than this (<|) magic?
@@ -120,7 +107,8 @@ vendorsDecoder =
 encode : Vendor -> JE.Value
 encode vendor =
     JE.object
-        [ ( "items", Set_.encode Item.encodeVendorItem vendor.items )
+        [ ( "playerItems", Dict.encode JE.int Item.encode vendor.playerItems )
+        , ( "stockItems", Dict_.encode Item.encodeKind JE.int vendor.stockItems )
         , ( "barterSkill", JE.int vendor.barterSkill )
         ]
 
@@ -128,7 +116,8 @@ encode vendor =
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
-        |> JDE.andMap (JD.field "items" (Set_.decoder Item.vendorItemDecoder))
+        |> JDE.andMap (JD.field "playerItems" (Dict.decoder JD.int Item.decoder))
+        |> JDE.andMap (JD.field "stockItems" (Dict_.decoder Item.kindDecoder JD.int))
         |> JDE.andMap (JD.field "barterSkill" JD.int)
 
 

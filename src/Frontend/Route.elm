@@ -2,12 +2,14 @@ module Frontend.Route exposing
     ( AdminRoute(..)
     , Route(..)
     , TownRoute(..)
+    , barterState
     , loggedOut
     , needsAdmin
     , needsLogin
     , setImportValue
     )
 
+import Data.Barter as Barter
 import Data.Fight exposing (FightInfo)
 import Data.Message exposing (Message)
 import Data.Vendor exposing (Vendor)
@@ -30,7 +32,10 @@ type Route
 
 type TownRoute
     = MainSquare
-    | Store Vendor
+    | Store
+        { vendor : Vendor
+        , barter : Barter.State
+        }
 
 
 type AdminRoute
@@ -106,3 +111,13 @@ setImportValue newValue route =
 
         _ ->
             route
+
+
+barterState : Route -> Maybe Barter.State
+barterState route =
+    case route of
+        Town (Store { barter }) ->
+            Just barter
+
+        _ ->
+            Nothing

@@ -1,4 +1,8 @@
-module AssocList.Extra exposing (decoder, encode)
+module AssocList.Extra exposing
+    ( all
+    , decoder
+    , encode
+    )
 
 import AssocList
 import Json.Decode as JD exposing (Decoder)
@@ -31,3 +35,10 @@ decoder keyDecoder valueDecoder =
     in
     JD.list tupleDecoder
         |> JD.map AssocList.fromList
+
+
+all : (k -> v -> Bool) -> AssocList.Dict k v -> Bool
+all fn dict =
+    dict
+        |> AssocList.toList
+        |> List.all (\( k, v ) -> fn k v)

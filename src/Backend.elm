@@ -1,14 +1,21 @@
 module Backend exposing (..)
 
 import Admin
+import AssocList as Dict_
+import AssocList.Extra as Dict_
+import AssocSet as Set_
+import AssocSet.Extra as Set_
 import Data.Auth as Auth
     exposing
         ( Auth
         , Verified
         )
+import Data.Barter as Barter
 import Data.Fight as Fight exposing (FightResult(..))
 import Data.Fight.Generator as FightGen
+import Data.Item as Item exposing (Item)
 import Data.Map as Map exposing (TileCoords, TileNum)
+import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message exposing (Message)
 import Data.NewChar exposing (NewChar)
@@ -30,8 +37,9 @@ import Data.World
         , WorldLoggedOutData
         )
 import Data.Xp as Xp
-import Dict
+import Dict exposing (Dict)
 import Dict.Extra as Dict
+import Dict.ExtraExtra as Dict
 import Json.Decode as JD
 import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
@@ -255,6 +263,18 @@ updateFromFrontend sessionId clientId msg model =
 
             else
                 ( model, Cmd.none )
+
+        withLocation : (ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withLocation fn =
+            withLoggedInCreatedPlayer
+                (\cId ({ location } as player) m ->
+                    case Location.location location of
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                        Just loc ->
+                            fn cId loc player m
+                )
     in
     case msg of
         LogMeIn auth ->
@@ -416,6 +436,9 @@ updateFromFrontend sessionId clientId msg model =
         RemoveMessage message ->
             withLoggedInCreatedPlayer (removeMessage message)
 
+        Barter barterState ->
+            withLocation (barter barterState)
+
         AdminToBackend adminMsg ->
             withAdmin (updateAdmin clientId adminMsg)
 
@@ -454,6 +477,117 @@ updateAdmin clientId msg model =
 isAdmin : SessionId -> ClientId -> Model -> Bool
 isAdmin sessionId clientId { adminLoggedIn } =
     adminLoggedIn == Just ( sessionId, clientId )
+
+
+barter : Barter.State -> ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+barter barterState clientId location player model =
+    case Location.vendor model.vendors location of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just vendor ->
+            let
+                barterNotEmpty : Bool
+                barterNotEmpty =
+                    barterState /= Barter.empty
+
+                vendorHasStockItem : Item.Kind -> Int -> Bool
+                vendorHasStockItem itemKind neededQuantity =
+                    case Dict_.get itemKind vendor.stockItems of
+                        Nothing ->
+                            False
+
+                        Just availableQuantity ->
+                            neededQuantity <= availableQuantity
+
+                hasItem : Dict Item.Id Item -> Item.Id -> Int -> Bool
+                hasItem ownedItems itemId neededQuantity =
+                    case Dict.get itemId ownedItems of
+                        Nothing ->
+                            False
+
+                        Just { count } ->
+                            neededQuantity <= count
+
+                vendorHasEnoughStockItems : Bool
+                vendorHasEnoughStockItems =
+                    Dict_.all vendorHasStockItem barterState.vendorStockItems
+
+                vendorHasEnoughPlayerItems : Bool
+                vendorHasEnoughPlayerItems =
+                    Dict.all (hasItem vendor.playerItems) barterState.vendorPlayerItems
+
+                playerHasEnoughItems : Bool
+                playerHasEnoughItems =
+                    Dict.all (hasItem player.items) barterState.playerItems
+
+                playerItemsPrice : Int
+                playerItemsPrice =
+                    barterState.playerItems
+                        |> Dict.toList
+                        |> List.filterMap
+                            (\( itemId, count ) ->
+                                Dict.get itemId player.items
+                                    |> Maybe.map (\item -> Item.basePrice item.kind * count)
+                            )
+                        |> List.sum
+
+                vendorPlayerItemsPrice : Int
+                vendorPlayerItemsPrice =
+                    barterState.vendorPlayerItems
+                        |> Dict.toList
+                        |> List.filterMap
+                            (\( itemId, count ) ->
+                                Dict.get itemId vendor.playerItems
+                                    |> Maybe.map
+                                        (\item ->
+                                            Logic.price
+                                                { itemCount = count
+                                                , itemKind = item.kind
+                                                , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                                , traderBarterSkill = vendor.barterSkill
+                                                }
+                                        )
+                            )
+                        |> List.sum
+
+                vendorStockItemsPrice : Int
+                vendorStockItemsPrice =
+                    barterState.vendorStockItems
+                        |> Dict_.toList
+                        |> List.map (\( itemKind, count ) -> Item.basePrice itemKind * count)
+                        |> List.sum
+
+                vendorItemsPrice : Int
+                vendorItemsPrice =
+                    vendorPlayerItemsPrice + vendorStockItemsPrice
+
+                playerOfferValuableEnough : Bool
+                playerOfferValuableEnough =
+                    (playerItemsPrice + barterState.playerCaps)
+                        >= (vendorItemsPrice + barterState.vendorCaps)
+            in
+            if
+                List.all identity
+                    [ barterNotEmpty
+                    , vendorHasEnoughStockItems
+                    , vendorHasEnoughPlayerItems
+                    , playerHasEnoughItems
+                    , playerOfferValuableEnough
+                    ]
+            then
+                let
+                    _ =
+                        Debug.log "TODO woohoo!" ( barterState, vendorItemsPrice, playerItemsPrice )
+                in
+                -- TODO do: remove the vendor's PlayerItems from their list
+                -- TODO do: remove the vendor's Stock items from their list
+                -- TODO do: assign new Items created from the Stock items to the user
+                -- TODO do: assign the PlayerItems to the user
+                ( model, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

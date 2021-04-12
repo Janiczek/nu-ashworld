@@ -3,13 +3,12 @@ module Data.Item exposing
     , Id
     , Item
     , Kind(..)
-    , VendorItem(..)
+    , basePrice
     , category
     , decoder
     , encode
-    , encodeVendorItem
-    , isPlayerItem
-    , vendorItemDecoder
+    , encodeKind
+    , kindDecoder
     )
 
 import AssocList as Dict_
@@ -17,6 +16,10 @@ import AssocList.Extra as Dict_
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JDE
 import Json.Encode as JE
+
+
+
+-- TODO weight : Kind -> Int
 
 
 type alias Item =
@@ -38,19 +41,11 @@ type Kind
     = Stimpak
 
 
-type VendorItem
-    = Stock ( Kind, Int )
-    | PlayerItem Item
-
-
-isPlayerItem : VendorItem -> Bool
-isPlayerItem vendorItem =
-    case vendorItem of
-        PlayerItem _ ->
-            True
-
-        Stock _ ->
-            False
+basePrice : Kind -> Int
+basePrice kind =
+    case kind of
+        Stimpak ->
+            175
 
 
 category : Kind -> Category
@@ -95,41 +90,4 @@ kindDecoder =
 
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
-            )
-
-
-encodeVendorItem : VendorItem -> JE.Value
-encodeVendorItem vendorItem =
-    case vendorItem of
-        Stock ( kind, count ) ->
-            JE.object
-                [ ( "type", JE.string "stock" )
-                , ( "kind", encodeKind kind )
-                , ( "count", JE.int count )
-                ]
-
-        PlayerItem item ->
-            JE.object
-                [ ( "type", JE.string "playerItem" )
-                , ( "item", encode item )
-                ]
-
-
-vendorItemDecoder : Decoder VendorItem
-vendorItemDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "stock" ->
-                        JD.map2 (\kind count -> Stock ( kind, count ))
-                            (JD.field "kind" kindDecoder)
-                            (JD.field "count" JD.int)
-
-                    "playerItem" ->
-                        JD.field "item" decoder
-                            |> JD.map PlayerItem
-
-                    _ ->
-                        JD.fail <| "Unknown vendor item: '" ++ type_ ++ "'"
             )

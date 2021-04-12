@@ -3,6 +3,7 @@ module Frontend exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
+import Data.Barter as Barter
 import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Fight.View
@@ -293,6 +294,31 @@ update msg model =
             , Lamdera.sendToBackend <| RemoveMessage message
             )
 
+        ResetBarter ->
+            ( { model | route = resetBarter model.route }
+            , Cmd.none
+            )
+
+        ConfirmBarter ->
+            case Route.barterState model.route of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just barterState ->
+                    ( model
+                    , Lamdera.sendToBackend <| Barter barterState
+                    )
+
+
+resetBarter : Route -> Route
+resetBarter route =
+    case route of
+        Route.Town (Route.Store r) ->
+            Route.Town (Route.Store { r | barter = Barter.empty })
+
+        _ ->
+            route
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -393,8 +419,8 @@ view model =
         [ stylesLinkView
         , favicon16View
         , favicon32View
-	, genericFaviconView
-	, genericFavicon2View
+        , genericFaviconView
+        , genericFavicon2View
         , case model.world of
             WorldNotInitialized _ ->
                 notInitializedView model
@@ -570,8 +596,8 @@ contentView model =
             ( Route.Town Route.MainSquare, WorldLoggedIn world ) ->
                 withLocation world townMainSquareView
 
-            ( Route.Town (Route.Store vendor), WorldLoggedIn world ) ->
-                withLocation world (townStoreView vendor)
+            ( Route.Town (Route.Store r), WorldLoggedIn world ) ->
+                withLocation world (townStoreView r)
 
             ( Route.Town _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -911,24 +937,42 @@ townMainSquareView location { vendors } player =
         Just vendor ->
             H.div []
                 [ H.button
-                    [ HE.onClick (GoToRoute (Route.Town (Route.Store vendor))) ]
+                    [ HE.onClick
+                        (GoToRoute
+                            (Route.Town
+                                (Route.Store
+                                    { vendor = vendor
+                                    , barter = Barter.empty
+                                    }
+                                )
+                            )
+                        )
+                    ]
                     [ H.text "[Visit store]" ]
                 ]
     ]
 
 
-townStoreView : Vendor -> Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-townStoreView vendor location _ player =
+townStoreView :
+    { vendor : Vendor
+    , barter : Barter.State
+    }
+    -> Location
+    -> WorldLoggedInData
+    -> CPlayer
+    -> List (Html FrontendMsg)
+townStoreView { vendor, barter } location _ player =
     [ pageTitleView <| "Store: " ++ Location.name location
+    , H.div [] [ H.text <| "TODO barter state: " ++ Debug.toString barter ]
     , H.div [ HA.id "town-store-grid" ]
         [ H.button
             [ HA.id "town-store-reset-btn"
-            , HE.onClick TodoResetBarter
+            , HE.onClick ResetBarter
             ]
             [ H.text "[Reset]" ]
         , H.button
             [ HA.id "town-store-confirm-btn"
-            , HE.onClick TodoConfirmBarter
+            , HE.onClick ConfirmBarter
             ]
             [ H.text "[Confirm]" ]
         ]
@@ -1824,12 +1868,16 @@ favicon32View : Html msg
 favicon32View =
     H.node "link" [ HA.rel "icon", HA.href "images/favicon-32.png" ] []
 
+
 genericFaviconView : Html msg
 genericFaviconView =
-    H.node "link" [ HA.rel "shortcut icon", HA.type_ "image/png" , HA.href "images/favicon-392.png" ] []
+    H.node "link" [ HA.rel "shortcut icon", HA.type_ "image/png", HA.href "images/favicon-392.png" ] []
+
+
 genericFavicon2View : Html msg
 genericFavicon2View =
     H.node "link" [ HA.rel "apple-touch-icon", HA.href "images/favicon-392.png" ] []
+
 
 logoView : Html msg
 logoView =

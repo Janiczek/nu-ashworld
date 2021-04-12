@@ -4,12 +4,14 @@ module Logic exposing
     , hitpoints
     , price
     , sequence
+    , temporaryBarterSkill
     , unarmedAttackStats
     , unarmedChanceToHit
     , xpGained
     )
 
 import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Item as Item
 import Data.Special
     exposing
         ( Special
@@ -241,8 +243,8 @@ unarmedAttackStats { special, level } =
 
 
 price :
-    { capsBeingBought : Int
-    , itemsPriceTotal : Int
+    { itemKind : Item.Kind
+    , itemCount : Int
     , playerBarterSkill : Int
     , traderBarterSkill : Int
     }
@@ -270,5 +272,9 @@ price r =
         barterRatio : Float
         barterRatio =
             (toFloat r.traderBarterSkill + 160) / (toFloat r.playerBarterSkill + 160) * 2
+
+        itemTotalPrice : Int
+        itemTotalPrice =
+            Item.basePrice r.itemKind * r.itemCount
     in
-    r.capsBeingBought + round (toFloat r.itemsPriceTotal * barterRatio * (toFloat barterPercent * 0.01))
+    round (toFloat itemTotalPrice * barterRatio * (toFloat barterPercent * 0.01))

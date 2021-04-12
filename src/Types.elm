@@ -3,6 +3,7 @@ module Types exposing (..)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
+import Data.Barter as Barter
 import Data.Fight exposing (FightInfo)
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
@@ -79,6 +80,8 @@ type FrontendMsg
     | MapMouseClick
     | OpenMessage Message
     | AskToRemoveMessage Message
+    | ResetBarter
+    | ConfirmBarter
 
 
 type ToBackend
@@ -93,6 +96,7 @@ type ToBackend
     | MoveTo TileCoords (Set TileCoords)
     | MessageWasRead Message
     | RemoveMessage Message
+    | Barter Barter.State
     | AdminToBackend AdminToBackend
 
 
