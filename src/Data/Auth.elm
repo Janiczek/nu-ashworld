@@ -22,7 +22,7 @@ module Data.Auth exposing
 
 import Env
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Sha256
 
@@ -56,8 +56,8 @@ encodePassword password =
 verifiedDecoder : Decoder (Auth Verified)
 verifiedDecoder =
     JD.succeed Auth
-        |> JDE.andMap (JD.field "name" JD.string)
-        |> JDE.andMap (JD.field "password" verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" verifiedPasswordDecoder)
 
 
 verifiedPasswordDecoder : Decoder (Password Verified)

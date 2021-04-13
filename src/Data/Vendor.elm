@@ -8,12 +8,12 @@ module Data.Vendor exposing
     )
 
 import AssocList as Dict_
-import AssocList.Extra as Dict_
+import AssocList.ExtraExtra as Dict_
 import Data.Item as Item exposing (Item)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
@@ -23,6 +23,7 @@ import Random.List
 type alias Vendor =
     { playerItems : Dict Item.Id Item
     , stockItems : Dict_.Dict Item.Kind Int
+    , caps : Int
     , barterSkill : Int
     }
 
@@ -42,6 +43,7 @@ emptyVendor : Int -> Vendor
 emptyVendor barterSkill =
     { playerItems = Dict.empty
     , stockItems = Dict_.empty
+    , caps = 0
     , barterSkill = barterSkill
     }
 
@@ -101,7 +103,7 @@ encodeVendors vendors =
 vendorsDecoder : Decoder Vendors
 vendorsDecoder =
     JD.succeed Vendors
-        |> JDE.andMap (JD.field "klamath" decoder)
+        |> JD.andMap (JD.field "klamath" decoder)
 
 
 encode : Vendor -> JE.Value
@@ -109,6 +111,7 @@ encode vendor =
     JE.object
         [ ( "playerItems", Dict.encode JE.int Item.encode vendor.playerItems )
         , ( "stockItems", Dict_.encode Item.encodeKind JE.int vendor.stockItems )
+        , ( "caps", JE.int vendor.caps )
         , ( "barterSkill", JE.int vendor.barterSkill )
         ]
 
@@ -116,9 +119,10 @@ encode vendor =
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
-        |> JDE.andMap (JD.field "playerItems" (Dict.decoder JD.int Item.decoder))
-        |> JDE.andMap (JD.field "stockItems" (Dict_.decoder Item.kindDecoder JD.int))
-        |> JDE.andMap (JD.field "barterSkill" JD.int)
+        |> JD.andMap (JD.field "playerItems" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "stockItems" (Dict_.decoder Item.kindDecoder JD.int))
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "barterSkill" JD.int)
 
 
 klamathStock : Stock

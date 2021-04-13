@@ -15,7 +15,7 @@ module Data.Special exposing
     )
 
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 
 
@@ -193,10 +193,10 @@ encode special =
 decoder : Decoder Special
 decoder =
     JD.succeed Special
-        |> JDE.andMap (JD.field "strength" JD.int)
-        |> JDE.andMap (JD.field "perception" JD.int)
-        |> JDE.andMap (JD.field "endurance" JD.int)
-        |> JDE.andMap (JD.field "charisma" JD.int)
-        |> JDE.andMap (JD.field "intelligence" JD.int)
-        |> JDE.andMap (JD.field "agility" JD.int)
-        |> JDE.andMap (JD.field "luck" JD.int)
+        |> JD.andMap (JD.field "strength" JD.int)
+        |> JD.andMap (JD.field "perception" JD.int)
+        |> JD.andMap (JD.field "endurance" JD.int)
+        |> JD.andMap (JD.field "charisma" JD.int)
+        |> JD.andMap (JD.field "intelligence" JD.int)
+        |> JD.andMap (JD.field "agility" JD.int)
+        |> JD.andMap (JD.field "luck" JD.int)

@@ -2,7 +2,7 @@ module Backend exposing (..)
 
 import Admin
 import AssocList as Dict_
-import AssocList.Extra as Dict_
+import AssocList.ExtraExtra as Dict_
 import AssocSet as Set_
 import AssocSet.Extra as Set_
 import Data.Auth as Auth

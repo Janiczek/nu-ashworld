@@ -16,7 +16,7 @@ import DateFormat
 import Html exposing (Attribute, Html)
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Markdown
 import Time exposing (Posix)
@@ -54,9 +54,9 @@ encode message =
 decoder : Decoder Message
 decoder =
     JD.succeed Message
-        |> JDE.andMap (JD.field "type" typeDecoder)
-        |> JDE.andMap (JD.field "hasBeenRead" JD.bool)
-        |> JDE.andMap (JD.field "date" Iso8601.decoder)
+        |> JD.andMap (JD.field "type" typeDecoder)
+        |> JD.andMap (JD.field "hasBeenRead" JD.bool)
+        |> JD.andMap (JD.field "date" Iso8601.decoder)
 
 
 encodeType : Type -> JE.Value

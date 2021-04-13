@@ -18,7 +18,7 @@ module Data.Player exposing
     )
 
 import AssocList as Dict_
-import AssocList.Extra as Dict_
+import AssocList.ExtraExtra as Dict_
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -39,7 +39,7 @@ import Data.Xp as Xp exposing (Level, Xp)
 import Dict exposing (Dict)
 import Dict.Json as Dict
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Logic
 import Time exposing (Posix)
@@ -164,21 +164,21 @@ sPlayerDecoder =
 sPlayerDecoderV1 : Decoder SPlayer
 sPlayerDecoderV1 =
     JD.succeed SPlayer
-        |> JDE.andMap (JD.field "name" JD.string)
-        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JDE.andMap (JD.field "hp" JD.int)
-        |> JDE.andMap (JD.field "maxHp" JD.int)
-        |> JDE.andMap (JD.field "xp" JD.int)
-        |> JDE.andMap (JD.field "special" Special.decoder)
-        |> JDE.andMap (JD.field "availableSpecial" JD.int)
-        |> JDE.andMap (JD.field "caps" JD.int)
-        |> JDE.andMap (JD.field "ticks" JD.int)
-        |> JDE.andMap (JD.field "wins" JD.int)
-        |> JDE.andMap (JD.field "losses" JD.int)
-        |> JDE.andMap (JD.field "location" JD.int)
-        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JDE.andMap (JD.succeed [])
-        |> JDE.andMap (JD.succeed Dict.empty)
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "availableSpecial" JD.int)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.succeed [])
+        |> JD.andMap (JD.succeed Dict.empty)
 
 
 {-| adds "messages" field
@@ -186,21 +186,21 @@ sPlayerDecoderV1 =
 sPlayerDecoderV2 : Decoder SPlayer
 sPlayerDecoderV2 =
     JD.succeed SPlayer
-        |> JDE.andMap (JD.field "name" JD.string)
-        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JDE.andMap (JD.field "hp" JD.int)
-        |> JDE.andMap (JD.field "maxHp" JD.int)
-        |> JDE.andMap (JD.field "xp" JD.int)
-        |> JDE.andMap (JD.field "special" Special.decoder)
-        |> JDE.andMap (JD.field "availableSpecial" JD.int)
-        |> JDE.andMap (JD.field "caps" JD.int)
-        |> JDE.andMap (JD.field "ticks" JD.int)
-        |> JDE.andMap (JD.field "wins" JD.int)
-        |> JDE.andMap (JD.field "losses" JD.int)
-        |> JDE.andMap (JD.field "location" JD.int)
-        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JDE.andMap (JD.field "messages" (JD.list Message.decoder))
-        |> JDE.andMap (JD.succeed Dict.empty)
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "availableSpecial" JD.int)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.succeed Dict.empty)
 
 
 {-| adds "items" field
@@ -208,21 +208,21 @@ sPlayerDecoderV2 =
 sPlayerDecoderV3 : Decoder SPlayer
 sPlayerDecoderV3 =
     JD.succeed SPlayer
-        |> JDE.andMap (JD.field "name" JD.string)
-        |> JDE.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JDE.andMap (JD.field "hp" JD.int)
-        |> JDE.andMap (JD.field "maxHp" JD.int)
-        |> JDE.andMap (JD.field "xp" JD.int)
-        |> JDE.andMap (JD.field "special" Special.decoder)
-        |> JDE.andMap (JD.field "availableSpecial" JD.int)
-        |> JDE.andMap (JD.field "caps" JD.int)
-        |> JDE.andMap (JD.field "ticks" JD.int)
-        |> JDE.andMap (JD.field "wins" JD.int)
-        |> JDE.andMap (JD.field "losses" JD.int)
-        |> JDE.andMap (JD.field "location" JD.int)
-        |> JDE.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JDE.andMap (JD.field "messages" (JD.list Message.decoder))
-        |> JDE.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "availableSpecial" JD.int)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
 
 
 serverToClient : SPlayer -> CPlayer

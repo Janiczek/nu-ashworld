@@ -1,4 +1,4 @@
-module AssocList.Extra exposing
+module AssocList.ExtraExtra exposing
     ( all
     , decoder
     , encode

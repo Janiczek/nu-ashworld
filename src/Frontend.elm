@@ -1,6 +1,7 @@
 module Frontend exposing (..)
 
 import AssocList as Dict_
+import AssocList.Extra as Dict_
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
@@ -9,6 +10,7 @@ import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..)
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
+import Data.Item as Item exposing (Item)
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
@@ -36,6 +38,7 @@ import Data.Xp as Xp
 import DateFormat
 import DateFormat.Relative
 import Dict
+import Dict.Extra as Dict
 import File.Download
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
@@ -990,58 +993,203 @@ townStoreView :
     -> List (Html FrontendMsg)
 townStoreView { vendor, barter } location _ player =
     let
-        playerItems : List (Html FrontendMsg)
-        playerItems =
+        playerKeptCaps : Int
+        playerKeptCaps =
+            player.caps - barter.playerCaps
+
+        vendorKeptCaps : Int
+        vendorKeptCaps =
+            vendor.caps - barter.vendorCaps
+
+        playerTradedCaps : Int
+        playerTradedCaps =
+            barter.playerCaps
+
+        vendorTradedCaps : Int
+        vendorTradedCaps =
+            barter.vendorCaps
+
+        playerTradedValue : Int
+        playerTradedValue =
+            -1
+
+        vendorTradedValue : Int
+        vendorTradedValue =
+            -1
+
+        playerKeptItems : List ( Item.Id, Int )
+        playerKeptItems =
             player.items
-                |> Dict.values
-                |> List.map
-                    (\item ->
-                        H.div
-                            [ HA.class "town-store-grid-item player-item" ]
-                            [ H.text <| Debug.toString item ]
-                    )
+                |> Dict.filterMap
+                    (\itemId item ->
+                        case Dict.get itemId barter.playerItems of
+                            Nothing ->
+                                -- player is not trading this item at all
+                                Just item.count
 
-        vendorPlayerItems : List (Html FrontendMsg)
-        vendorPlayerItems =
+                            Just tradedCount ->
+                                if tradedCount >= item.count then
+                                    -- player is trading it all!
+                                    Nothing
+
+                                else
+                                    -- what amount does player have left in the inventory
+                                    Just <| item.count - tradedCount
+                    )
+                |> Dict.toList
+
+        vendorKeptPlayerItems : List ( Item.Id, Int )
+        vendorKeptPlayerItems =
             vendor.playerItems
-                |> Dict.values
-                |> List.map
-                    (\item ->
-                        H.div
-                            [ HA.class "town-store-grid-item vendor-item vendor-player-item" ]
-                            [ H.text <| Debug.toString item ]
-                    )
+                |> Dict.filterMap
+                    (\itemId item ->
+                        case Dict.get itemId barter.vendorPlayerItems of
+                            Nothing ->
+                                -- vendor is not trading this item at all
+                                Just item.count
 
-        vendorStockItems : List (Html FrontendMsg)
-        vendorStockItems =
+                            Just tradedCount ->
+                                if tradedCount >= item.count then
+                                    -- vendor is trading it all!
+                                    Nothing
+
+                                else
+                                    -- what amount does vendor have left in the inventory
+                                    Just <| item.count - tradedCount
+                    )
+                |> Dict.toList
+
+        vendorKeptStockItems : List ( Item.Kind, Int )
+        vendorKeptStockItems =
             vendor.stockItems
-                |> Dict_.toList
-                |> List.map
-                    (\( itemKind, count ) ->
-                        H.div
-                            [ HA.class "town-store-grid-item vendor-item vendor-stock-item" ]
-                            [ H.text <| Debug.toString ( itemKind, count ) ]
-                    )
+                |> Dict_.filterMap
+                    (\itemKind count ->
+                        case Dict_.get itemKind barter.vendorStockItems of
+                            Nothing ->
+                                -- vendor is not trading this item at all
+                                Just count
 
-        gridContents =
+                            Just tradedCount ->
+                                if tradedCount >= count then
+                                    -- vendor is trading it all!
+                                    Nothing
+
+                                else
+                                    -- what amount does vendor have left in the inventory
+                                    Just <| count - tradedCount
+                    )
+                |> Dict_.toList
+
+        playerTradedItems : List ( Item.Id, Int )
+        playerTradedItems =
+            Dict.toList barter.playerItems
+
+        vendorTradedPlayerItems : List ( Item.Id, Int )
+        vendorTradedPlayerItems =
+            Dict.toList barter.vendorPlayerItems
+
+        vendorTradedStockItems : List ( Item.Kind, Int )
+        vendorTradedStockItems =
+            Dict_.toList barter.vendorStockItems
+
+        resetBtn : Html FrontendMsg
+        resetBtn =
             H.button
                 [ HA.id "town-store-reset-btn"
                 , HE.onClick <| BarterMsg ResetBarter
                 ]
                 [ H.text "[Reset]" ]
-                :: H.button
-                    [ HA.id "town-store-confirm-btn"
-                    , HE.onClick <| BarterMsg ConfirmBarter
-                    ]
-                    [ H.text "[Confirm]" ]
-                :: List.concat
-                    [ playerItems
-                    , vendorPlayerItems
-                    , vendorStockItems
-                    ]
+
+        confirmBtn : Html FrontendMsg
+        confirmBtn =
+            H.button
+                [ HA.id "town-store-confirm-btn"
+                , HE.onClick <| BarterMsg ConfirmBarter
+                ]
+                [ H.text "[Confirm]" ]
+
+        playerKeptCapsView : Html FrontendMsg
+        playerKeptCapsView =
+            H.div
+                [ HA.class <| "town-store-item player-kept-caps" ]
+                [ H.text <| String.fromInt playerKeptCaps ++ "x Caps" ]
+
+        vendorKeptCapsView : Html FrontendMsg
+        vendorKeptCapsView =
+            H.div
+                [ HA.class <| "town-store-item vendor-kept-caps" ]
+                [ H.text <| String.fromInt vendorKeptCaps ++ "x Caps" ]
+
+        playerTradedCapsView : Html FrontendMsg
+        playerTradedCapsView =
+            H.div
+                [ HA.class <| "town-store-item player-traded-caps" ]
+                [ H.text <| String.fromInt playerTradedCaps ++ "x Caps" ]
+
+        vendorTradedCapsView : Html FrontendMsg
+        vendorTradedCapsView =
+            H.div
+                [ HA.class <| "town-store-item vendor-traded-caps" ]
+                [ H.text <| String.fromInt vendorTradedCaps ++ "x Caps" ]
+
+        playerItemView : String -> ( Item.Id, Int ) -> Html FrontendMsg
+        playerItemView class ( id, count ) =
+            H.div
+                [ HA.class <| "town-store-item " ++ class ]
+                [ H.text <| "TODO: " ++ Debug.toString ( id, count ) ]
+
+        stockItemView : String -> ( Item.Kind, Int ) -> Html FrontendMsg
+        stockItemView class ( kind, count ) =
+            H.div
+                [ HA.class <| "town-store-item " ++ class ]
+                [ H.text <| "TODO: " ++ Debug.toString ( kind, count ) ]
+
+        playerNameView : Html FrontendMsg
+        playerNameView =
+            H.div
+                [ HA.id "town-store-player-name" ]
+                [ H.text player.name ]
+
+        vendorNameView : Html FrontendMsg
+        vendorNameView =
+            H.div
+                [ HA.id "town-store-vendor-name" ]
+                [ H.text "Vendor" ]
+
+        playerTradedValueView : Html FrontendMsg
+        playerTradedValueView =
+            H.div
+                [ HA.id "town-store-player-traded-value" ]
+                [ H.text <| "$" ++ String.fromInt playerTradedValue ]
+
+        vendorTradedValueView : Html FrontendMsg
+        vendorTradedValueView =
+            H.div
+                [ HA.id "town-store-vendor-traded-value" ]
+                [ H.text <| "$" ++ String.fromInt vendorTradedValue ]
+
+        gridContents =
+            List.concat
+                [ [ resetBtn
+                  , confirmBtn
+                  , playerNameView
+                  , vendorNameView
+                  , playerKeptCapsView
+                  , vendorKeptCapsView
+                  , playerTradedCapsView
+                  , vendorTradedCapsView
+                  , playerTradedValueView
+                  , vendorTradedValueView
+                  ]
+                , playerKeptItems |> List.map (playerItemView "player-kept-item")
+                , playerTradedItems |> List.map (playerItemView "player-traded-item")
+                , vendorKeptPlayerItems |> List.map (playerItemView "vendor-kept-item")
+                , vendorTradedPlayerItems |> List.map (playerItemView "vendor-traded-item")
+                , vendorKeptStockItems |> List.map (stockItemView "vendor-kept-item")
+                , vendorTradedStockItems |> List.map (stockItemView "vendor-traded-item")
+                ]
     in
     [ pageTitleView <| "Store: " ++ Location.name location
-    , H.div [] [ H.text <| "TODO barter state: " ++ Debug.toString barter ]
     , H.div [ HA.id "town-store-grid" ] gridContents
     , H.button
         [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]

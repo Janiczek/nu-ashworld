@@ -14,7 +14,7 @@ module Data.Item exposing
 import AssocList as Dict_
 import AssocList.Extra as Dict_
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 
 
@@ -67,9 +67,9 @@ encode item =
 decoder : Decoder Item
 decoder =
     JD.succeed Item
-        |> JDE.andMap (JD.field "id" JD.int)
-        |> JDE.andMap (JD.field "kind" kindDecoder)
-        |> JDE.andMap (JD.field "count" JD.int)
+        |> JD.andMap (JD.field "id" JD.int)
+        |> JD.andMap (JD.field "kind" kindDecoder)
+        |> JD.andMap (JD.field "count" JD.int)
 
 
 encodeKind : Kind -> JE.Value

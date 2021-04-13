@@ -13,7 +13,7 @@ import Data.Perk as Perk
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Xp as Xp
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JDE
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Logic
 
@@ -74,10 +74,10 @@ fightInfoDecoder =
                 (JD.field "action" fightActionDecoder)
     in
     JD.succeed FightInfo
-        |> JDE.andMap (JD.field "attackerName" JD.string)
-        |> JDE.andMap (JD.field "targetName" JD.string)
-        |> JDE.andMap (JD.field "log" (JD.list logItemDecoder))
-        |> JDE.andMap (JD.field "result" fightResultDecoder)
+        |> JD.andMap (JD.field "attackerName" JD.string)
+        |> JD.andMap (JD.field "targetName" JD.string)
+        |> JD.andMap (JD.field "log" (JD.list logItemDecoder))
+        |> JD.andMap (JD.field "result" fightResultDecoder)
 
 
 encodeFightInfo : FightInfo -> JE.Value
