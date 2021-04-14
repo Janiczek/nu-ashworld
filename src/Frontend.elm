@@ -1108,41 +1108,30 @@ townStoreView { vendor, barter } location _ player =
                 ]
                 [ H.text "[Confirm]" ]
 
-        playerKeptCapsView : Html FrontendMsg
-        playerKeptCapsView =
+        capsView : String -> Int -> Html FrontendMsg
+        capsView class caps =
+            let
+                capsString : String
+                capsString =
+                    String.fromInt vendorTradedCaps
+            in
             H.div
-                [ HA.class <| "town-store-item player-kept-caps" ]
-                [ H.text <| String.fromInt playerKeptCaps ++ "x Caps" ]
-
-        vendorKeptCapsView : Html FrontendMsg
-        vendorKeptCapsView =
-            H.div
-                [ HA.class <| "town-store-item vendor-kept-caps" ]
-                [ H.text <| String.fromInt vendorKeptCaps ++ "x Caps" ]
-
-        playerTradedCapsView : Html FrontendMsg
-        playerTradedCapsView =
-            H.div
-                [ HA.class <| "town-store-item player-traded-caps" ]
-                [ H.text <| String.fromInt playerTradedCaps ++ "x Caps" ]
-
-        vendorTradedCapsView : Html FrontendMsg
-        vendorTradedCapsView =
-            H.div
-                [ HA.class <| "town-store-item vendor-traded-caps" ]
-                [ H.text <| String.fromInt vendorTradedCaps ++ "x Caps" ]
+                [ HA.class <| "town-store-caps town-store-item " ++ class
+                , HA.attribute "data-caps" capsString
+                ]
+                [ H.text <| capsString ++ "x Caps" ]
 
         playerItemView : String -> ( Item.Id, Int ) -> Html FrontendMsg
         playerItemView class ( id, count ) =
             H.div
                 [ HA.class <| "town-store-item " ++ class ]
-                [ H.text <| "TODO: " ++ Debug.toString ( id, count ) ]
+                [ H.text <| Debug.toString ( id, count ) ]
 
         stockItemView : String -> ( Item.Kind, Int ) -> Html FrontendMsg
         stockItemView class ( kind, count ) =
             H.div
                 [ HA.class <| "town-store-item " ++ class ]
-                [ H.text <| "TODO: " ++ Debug.toString ( kind, count ) ]
+                [ H.text <| Debug.toString ( kind, count ) ]
 
         playerNameView : Html FrontendMsg
         playerNameView =
@@ -1174,10 +1163,10 @@ townStoreView { vendor, barter } location _ player =
                   , confirmBtn
                   , playerNameView
                   , vendorNameView
-                  , playerKeptCapsView
-                  , vendorKeptCapsView
-                  , playerTradedCapsView
-                  , vendorTradedCapsView
+                  , capsView "player-kept-caps" playerKeptCaps
+                  , capsView "vendor-kept-caps" vendorKeptCaps
+                  , capsView "player-traded-caps" playerTradedCaps
+                  , capsView "vendor-traded-caps" vendorTradedCaps
                   , playerTradedValueView
                   , vendorTradedValueView
                   ]
