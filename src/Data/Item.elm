@@ -9,6 +9,7 @@ module Data.Item exposing
     , encode
     , encodeKind
     , kindDecoder
+    , name
     )
 
 import AssocList as Dict_
@@ -91,3 +92,10 @@ kindDecoder =
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
             )
+
+
+name : Kind -> String
+name kind =
+    case kind of
+        Stimpak ->
+            "Stimpak"
