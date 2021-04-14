@@ -17,6 +17,7 @@ import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
+import Random.Float
 import Random.List
 
 
@@ -30,6 +31,13 @@ type alias Vendor =
 
 type alias Vendors =
     { klamath : Vendor
+    }
+
+
+type alias VendorSpec =
+    { avgCaps : Int
+    , maxCapsDeviation : Int
+    , stock : List { kind : Item.Kind, maxCount : Int }
     }
 
 
@@ -48,21 +56,23 @@ emptyVendor barterSkill =
     }
 
 
-type alias Stock =
-    List { kind : Item.Kind, maxCount : Int }
+capsGenerator : VendorSpec -> Generator Int
+capsGenerator { avgCaps, maxCapsDeviation } =
+    Random.Float.standardNormal
+        |> Random.map (\dev -> avgCaps + round ((2 * dev - 1) * toFloat maxCapsDeviation))
 
 
-stockGenerator : Stock -> Generator (List ( Item.Kind, Int ))
-stockGenerator list =
+stockGenerator : VendorSpec -> Generator (List ( Item.Kind, Int ))
+stockGenerator { stock } =
     let
         listLength =
-            List.length list
+            List.length stock
 
         halfOrMore n =
             Random.int (max 1 (n // 2)) n
     in
     halfOrMore listLength
-        |> Random.andThen (\count -> Random.List.choices count list)
+        |> Random.andThen (\count -> Random.List.choices count stock)
         |> Random.andThen
             (\( chosen, _ ) ->
                 chosen
@@ -78,15 +88,22 @@ stockGenerator list =
 restockVendors : Vendors -> Generator Vendors
 restockVendors vendors =
     let
-        restockVendor : Stock -> Vendor -> Generator Vendor
-        restockVendor stock vendor =
-            stockGenerator stock
-                |> Random.map (\newStock -> { vendor | stockItems = Dict_.fromList newStock })
+        restockVendor : VendorSpec -> Vendor -> Generator Vendor
+        restockVendor spec vendor =
+            Random.map2
+                (\newCaps newStock ->
+                    { vendor
+                        | caps = newCaps
+                        , stockItems = Dict_.fromList newStock
+                    }
+                )
+                (capsGenerator spec)
+                (stockGenerator spec)
     in
     {- TODO perhaps it's better to have VendorNpc = KlamathMaidaBuckner | ...
        than this (<|) magic?
     -}
-    [ restockVendor klamathStock vendors.klamath
+    [ restockVendor klamathSpec vendors.klamath
         |> Random.map (\v vs -> { vs | klamath = v })
     ]
         |> Random.Extra.sequence
@@ -125,6 +142,9 @@ decoder =
         |> JD.andMap (JD.field "barterSkill" JD.int)
 
 
-klamathStock : Stock
-klamathStock =
-    [ { kind = Item.Stimpak, maxCount = 4 } ]
+klamathSpec : VendorSpec
+klamathSpec =
+    { avgCaps = 1000
+    , maxCapsDeviation = 500
+    , stock = [ { kind = Item.Stimpak, maxCount = 4 } ]
+    }
