@@ -7,6 +7,7 @@
   --fg01: #3CF800;
   --fg-highlight: #FCFD7D;
 
+  --bg02-half-transparent: rgba(16,36,12,0.5);
   --fg01-half-transparent: rgba(60,248,0,0.5);
   --fg01-fully-transparent: rgba(60,248,0,0);
   --fg-highlight-transparent: rgba(252,253,125,0.25);
@@ -680,17 +681,15 @@ table tbody tr:hover td {
 
 #town-store-grid-player-traded-bg {
   grid-area: 2 / 2 / 5 / 3; 
-  background-color: var(--bg02);
-  border-right: 1px solid var(--fg03);
-  opacity: 0.5;
+  background-color: var(--bg02-half-transparent);
+  border-right: 1px solid var(--bg02);
   pointer-events: none;
 }
 
 #town-store-grid-vendor-traded-bg {
   grid-area: 2 / 3 / 5 / 4; 
-  background-color: var(--bg02);
-  border-left: 1px solid var(--fg03);
-  opacity: 0.5;
+  background-color: var(--bg02-half-transparent);
+  border-left: 1px solid var(--bg02);
   pointer-events: none;
 }
 
@@ -716,10 +715,12 @@ table tbody tr:hover td {
 #town-store-player-traded-value {
   grid-area: player-traded-value;
   color: var(--fg01);
+  text-align: center;
 }
 #town-store-vendor-traded-value {
   grid-area: vendor-traded-value;
   color: var(--fg01);
+  text-align: center;
 }
 .town-store-transfer-btn {
   padding: 2px 4px;
