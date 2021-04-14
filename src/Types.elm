@@ -88,9 +88,13 @@ type BarterMsg
     = AddPlayerItem Item.Id Int
     | AddVendorPlayerItem Item.Id Int
     | AddVendorStockItem Item.Kind Int
+    | AddPlayerCaps Int
+    | AddVendorCaps Int
     | RemovePlayerItem Item.Id Int
     | RemoveVendorPlayerItem Item.Id Int
     | RemoveVendorStockItem Item.Kind Int
+    | RemovePlayerCaps Int
+    | RemoveVendorCaps Int
     | ResetBarter
     | ConfirmBarter
 

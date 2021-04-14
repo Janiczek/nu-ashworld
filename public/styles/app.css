@@ -271,6 +271,10 @@ ul {
 
 #content {
   padding: 32px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-items: flex-start;
 }
 
 #page-title {
@@ -663,6 +667,8 @@ table tbody tr:hover td {
 }
 
 #town-store-grid {
+  margin-top: 40px;
+  align-self: stretch;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-areas: 
@@ -670,6 +676,22 @@ table tbody tr:hover td {
     "player-kept-caps  player-traded-caps  vendor-traded-caps  vendor-kept-caps"
     "player-kept-items player-traded-items vendor-traded-items vendor-kept-items"
     "barter-reset-btn  player-traded-value vendor-traded-value barter-confirm-btn";
+}
+
+#town-store-grid-player-traded-bg {
+  grid-area: 2 / 2 / 5 / 3; 
+  background-color: var(--bg02);
+  border-right: 1px solid var(--fg03);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+#town-store-grid-vendor-traded-bg {
+  grid-area: 2 / 3 / 5 / 4; 
+  background-color: var(--bg02);
+  border-left: 1px solid var(--fg03);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 #town-store-reset-btn {
@@ -680,20 +702,16 @@ table tbody tr:hover td {
 }
 #town-store-player-name {
   grid-area: player-name;
+  padding: 8px;
 }
 #town-store-vendor-name {
   grid-area: vendor-name;
   text-align: right;
+  padding: 8px;
 }
 #town-store-player-name,
 #town-store-vendor-name {
   border-bottom: 2px solid var(--bg02);
-}
-#town-store-player-name,
-.player-traded-caps,
-.player-traded-item,
-#town-store-player-traded-value {
-  border-right: 2px solid var(--bg02);
 }
 #town-store-player-traded-value {
   grid-area: player-traded-value;
@@ -703,13 +721,53 @@ table tbody tr:hover td {
   grid-area: vendor-traded-value;
   color: var(--fg01);
 }
-.town-store-item {}
+.town-store-transfer-btn {
+  padding: 2px 4px;
+  margin: 0 4px;
+  background: var(--bg02);
+  color: var(--fg02);
+}
+.town-store-transfer-btn:disabled {
+  color: var(--fg03);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.town-store-transfer-btn:not(:disabled):hover {
+  background: var(--fg03);
+  color: var(--fg01);
+}
+
+.town-store-item {
+  display: flex;
+  align-items: center;
+}
+
+.town-store-item-label {
+  flex: 1;
+}
+
+.player-traded-caps .town-store-item-label,
+.vendor-kept-caps .town-store-item-label,
+.vendor-kept-item .town-store-item-label,
+.player-traded-item .town-store-item-label {
+  margin-left: 4px;
+}
+
+.town-store-item,
+#town-store-player-traded-value,
+#town-store-vendor-traded-value {
+  padding: 8px;
+}
 
 .town-store-item.player-kept-caps   { grid-area: player-kept-caps; }
 .town-store-item.player-traded-caps { grid-area: player-traded-caps; }
 .town-store-item.vendor-kept-caps   { grid-area: vendor-kept-caps; }
 .town-store-item.vendor-traded-caps { grid-area: vendor-traded-caps; }
 
+.town-store-caps {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
 .town-store-caps[data-caps="0"] {
   color: var(--fg03);
 }

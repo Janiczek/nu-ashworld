@@ -305,11 +305,15 @@ update msg model =
 
 updateBarter : BarterMsg -> Model -> ( Model, Cmd FrontendMsg )
 updateBarter msg model =
-    case msg of
-        ResetBarter ->
-            ( { model | route = resetBarter model.route }
+    let
+        updateRoute fn =
+            ( { model | route = Route.mapBarterState fn model.route }
             , Cmd.none
             )
+    in
+    case msg of
+        ResetBarter ->
+            updateRoute (always Barter.empty)
 
         ConfirmBarter ->
             Route.barterState model.route
@@ -322,32 +326,34 @@ updateBarter msg model =
                 |> Maybe.withDefault ( model, Cmd.none )
 
         AddPlayerItem itemId count ->
-            Debug.todo "barter msg 1"
+            updateRoute (Barter.addPlayerItem itemId count)
 
         AddVendorPlayerItem itemId count ->
-            Debug.todo "barter msg 2"
+            updateRoute (Barter.addVendorPlayerItem itemId count)
 
         AddVendorStockItem itemKind count ->
-            Debug.todo "barter msg 3"
+            updateRoute (Barter.addVendorStockItem itemKind count)
+
+        AddPlayerCaps amount ->
+            updateRoute (Barter.addPlayerCaps amount)
+
+        AddVendorCaps amount ->
+            updateRoute (Barter.addVendorCaps amount)
 
         RemovePlayerItem itemId count ->
-            Debug.todo "barter msg 4"
+            updateRoute (Barter.removePlayerItem itemId count)
 
         RemoveVendorPlayerItem itemId count ->
-            Debug.todo "barter msg 5"
+            updateRoute (Barter.removeVendorPlayerItem itemId count)
 
         RemoveVendorStockItem itemKind count ->
-            Debug.todo "barter msg 6"
+            updateRoute (Barter.removeVendorStockItem itemKind count)
 
+        RemovePlayerCaps amount ->
+            updateRoute (Barter.removePlayerCaps amount)
 
-resetBarter : Route -> Route
-resetBarter route =
-    case route of
-        Route.Town (Route.Store r) ->
-            Route.Town (Route.Store { r | barter = Barter.empty })
-
-        _ ->
-            route
+        RemoveVendorCaps amount ->
+            updateRoute (Barter.removeVendorCaps amount)
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -1014,13 +1020,55 @@ townStoreView { vendor, barter } location _ player =
         vendorTradedCaps =
             barter.vendorCaps
 
+        playerTradedItemsValue : Int
+        playerTradedItemsValue =
+            playerTradedItems
+                |> List.filterMap
+                    (\( id, count ) ->
+                        Dict.get id player.items
+                            |> Maybe.map (\{ kind } -> Item.basePrice kind * count)
+                    )
+                |> List.sum
+
         playerTradedValue : Int
         playerTradedValue =
-            -1
+            barter.playerCaps + playerTradedItemsValue
+
+        vendorTradedPlayerValue : Int
+        vendorTradedPlayerValue =
+            vendorTradedPlayerItems
+                |> List.filterMap
+                    (\( id, count ) ->
+                        Dict.get id vendor.playerItems
+                            |> Maybe.map
+                                (\{ kind } ->
+                                    Logic.price
+                                        { itemCount = count
+                                        , itemKind = kind
+                                        , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                        , traderBarterSkill = vendor.barterSkill
+                                        }
+                                )
+                    )
+                |> List.sum
+
+        vendorTradedStockValue : Int
+        vendorTradedStockValue =
+            vendorTradedStockItems
+                |> List.map
+                    (\( kind, count ) ->
+                        Logic.price
+                            { itemCount = count
+                            , itemKind = kind
+                            , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                            , traderBarterSkill = vendor.barterSkill
+                            }
+                    )
+                |> List.sum
 
         vendorTradedValue : Int
         vendorTradedValue =
-            -1
+            barter.vendorCaps + vendorTradedPlayerValue + vendorTradedStockValue
 
         playerKeptItems : List ( Item.Id, Int )
         playerKeptItems =
@@ -1113,20 +1161,72 @@ townStoreView { vendor, barter } location _ player =
                 ]
                 [ H.text "[Confirm]" ]
 
-        capsView : String -> Int -> Html FrontendMsg
-        capsView class caps =
+        capsView :
+            { class : String
+            , transfer : Int -> FrontendMsg
+            , arrowsDirection : BarterArrowsDirection
+            }
+            -> Int
+            -> Html FrontendMsg
+        capsView { class, transfer, arrowsDirection } caps =
             let
                 capsString : String
                 capsString =
-                    String.fromInt vendorTradedCaps
+                    String.fromInt caps
+
+                transferOneView =
+                    H.button
+                        [ HE.onClick <| transfer 1
+                        , HA.disabled <| caps <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
+                        [ H.text <|
+                            case arrowsDirection of
+                                BarterArrowLeft ->
+                                    "‹"
+
+                                BarterArrowRight ->
+                                    "›"
+                        ]
+
+                transferAllView =
+                    H.button
+                        [ HE.onClick <| transfer caps
+                        , HA.disabled <| caps <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
+                        [ H.text <|
+                            case arrowsDirection of
+                                BarterArrowLeft ->
+                                    "«"
+
+                                BarterArrowRight ->
+                                    "»"
+                        ]
+
+                itemView =
+                    H.span
+                        [ HA.class "town-store-item-label" ]
+                        [ H.text <| "Caps: $" ++ capsString ]
             in
             H.div
-                [ HA.class <| "town-store-caps town-store-item " ++ class
+                [ HA.class <| "town-store-item town-store-caps " ++ class
                 , HA.attribute "data-caps" capsString
                 ]
-                [ H.text <| "$" ++ capsString ]
+            <|
+                case arrowsDirection of
+                    BarterArrowLeft ->
+                        [ transferAllView
+                        , transferOneView
+                        , itemView
+                        ]
 
-        -- TODO the modal for transfering N
+                    BarterArrowRight ->
+                        [ itemView
+                        , transferOneView
+                        , transferAllView
+                        ]
+
         playerItemView :
             { items : Dict Item.Id Item
             , class : String
@@ -1147,7 +1247,10 @@ townStoreView { vendor, barter } location _ player =
 
                 transferOneView =
                     H.button
-                        [ HE.onClick <| transfer id 1 ]
+                        [ HE.onClick <| transfer id 1
+                        , HA.disabled <| count <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
                         [ H.text <|
                             case arrowsDirection of
                                 BarterArrowLeft ->
@@ -1159,7 +1262,10 @@ townStoreView { vendor, barter } location _ player =
 
                 transferAllView =
                     H.button
-                        [ HE.onClick <| transfer id count ]
+                        [ HE.onClick <| transfer id count
+                        , HA.disabled <| count <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
                         [ H.text <|
                             case arrowsDirection of
                                 BarterArrowLeft ->
@@ -1170,7 +1276,9 @@ townStoreView { vendor, barter } location _ player =
                         ]
 
                 itemView =
-                    H.text <| String.fromInt count ++ "x " ++ itemName
+                    H.span
+                        [ HA.class "town-store-item-label" ]
+                        [ H.text <| String.fromInt count ++ "x " ++ itemName ]
             in
             H.div [ HA.class <| "town-store-item " ++ class ] <|
                 case arrowsDirection of
@@ -1198,7 +1306,10 @@ townStoreView { vendor, barter } location _ player =
             let
                 transferOneView =
                     H.button
-                        [ HE.onClick <| transfer kind 1 ]
+                        [ HE.onClick <| transfer kind 1
+                        , HA.disabled <| count <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
                         [ H.text <|
                             case arrowsDirection of
                                 BarterArrowLeft ->
@@ -1210,7 +1321,10 @@ townStoreView { vendor, barter } location _ player =
 
                 transferAllView =
                     H.button
-                        [ HE.onClick <| transfer kind count ]
+                        [ HE.onClick <| transfer kind count
+                        , HA.disabled <| count <= 0
+                        , HA.class "town-store-transfer-btn"
+                        ]
                         [ H.text <|
                             case arrowsDirection of
                                 BarterArrowLeft ->
@@ -1221,7 +1335,9 @@ townStoreView { vendor, barter } location _ player =
                         ]
 
                 itemView =
-                    H.text <| String.fromInt count ++ "x " ++ Item.name kind
+                    H.span
+                        [ HA.class "town-store-item-label" ]
+                        [ H.text <| String.fromInt count ++ "x " ++ Item.name kind ]
             in
             H.div [ HA.class <| "town-store-item " ++ class ] <|
                 case arrowsDirection of
@@ -1253,13 +1369,13 @@ townStoreView { vendor, barter } location _ player =
         playerTradedValueView =
             H.div
                 [ HA.id "town-store-player-traded-value" ]
-                [ H.text <| "$" ++ String.fromInt playerTradedValue ]
+                [ H.text <| "Value: $" ++ String.fromInt playerTradedValue ]
 
         vendorTradedValueView : Html FrontendMsg
         vendorTradedValueView =
             H.div
                 [ HA.id "town-store-vendor-traded-value" ]
-                [ H.text <| "$" ++ String.fromInt vendorTradedValue ]
+                [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
 
         playerKeptItemsView : List (Html FrontendMsg)
         playerKeptItemsView =
@@ -1333,17 +1449,63 @@ townStoreView { vendor, barter } location _ player =
                 )
                 vendorTradedStockItems
 
+        playerTradedBackgroundView : Html FrontendMsg
+        playerTradedBackgroundView =
+            H.div [ HA.id "town-store-grid-player-traded-bg" ] []
+
+        vendorTradedBackgroundView : Html FrontendMsg
+        vendorTradedBackgroundView =
+            H.div [ HA.id "town-store-grid-vendor-traded-bg" ] []
+
+        playerKeptCapsView : Html FrontendMsg
+        playerKeptCapsView =
+            capsView
+                { class = "player-kept-caps"
+                , transfer = BarterMsg << AddPlayerCaps
+                , arrowsDirection = BarterArrowRight
+                }
+                playerKeptCaps
+
+        playerTradedCapsView : Html FrontendMsg
+        playerTradedCapsView =
+            capsView
+                { class = "player-traded-caps"
+                , transfer = BarterMsg << RemovePlayerCaps
+                , arrowsDirection = BarterArrowLeft
+                }
+                playerTradedCaps
+
+        vendorKeptCapsView : Html FrontendMsg
+        vendorKeptCapsView =
+            capsView
+                { class = "vendor-kept-caps"
+                , transfer = BarterMsg << AddVendorCaps
+                , arrowsDirection = BarterArrowLeft
+                }
+                vendorKeptCaps
+
+        vendorTradedCapsView : Html FrontendMsg
+        vendorTradedCapsView =
+            capsView
+                { class = "vendor-traded-caps"
+                , transfer = BarterMsg << RemoveVendorCaps
+                , arrowsDirection = BarterArrowRight
+                }
+                vendorTradedCaps
+
         gridContents : List (Html FrontendMsg)
         gridContents =
             List.concat
-                [ [ resetBtn
+                [ [ playerTradedBackgroundView
+                  , vendorTradedBackgroundView
+                  , resetBtn
                   , confirmBtn
                   , playerNameView
                   , vendorNameView
-                  , capsView "player-kept-caps" playerKeptCaps
-                  , capsView "vendor-kept-caps" vendorKeptCaps
-                  , capsView "player-traded-caps" playerTradedCaps
-                  , capsView "vendor-traded-caps" vendorTradedCaps
+                  , playerKeptCapsView
+                  , vendorKeptCapsView
+                  , playerTradedCapsView
+                  , vendorTradedCapsView
                   , playerTradedValueView
                   , vendorTradedValueView
                   ]
@@ -1356,10 +1518,10 @@ townStoreView { vendor, barter } location _ player =
                 ]
     in
     [ pageTitleView <| "Store: " ++ Location.name location
-    , H.div [ HA.id "town-store-grid" ] gridContents
     , H.button
         [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]
         [ H.text "[Back]" ]
+    , H.div [ HA.id "town-store-grid" ] gridContents
     ]
 
 

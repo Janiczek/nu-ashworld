@@ -4,6 +4,7 @@ module Frontend.Route exposing
     , TownRoute(..)
     , barterState
     , loggedOut
+    , mapBarterState
     , needsAdmin
     , needsLogin
     , setImportValue
@@ -121,3 +122,13 @@ barterState route =
 
         _ ->
             Nothing
+
+
+mapBarterState : (Barter.State -> Barter.State) -> Route -> Route
+mapBarterState fn route =
+    case route of
+        Town (Store r) ->
+            Town (Store { r | barter = fn r.barter })
+
+        _ ->
+            route
