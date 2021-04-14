@@ -58,6 +58,8 @@ emptyVendor barterSkill =
 
 capsGenerator : VendorSpec -> Generator Int
 capsGenerator { avgCaps, maxCapsDeviation } =
+    -- dev/3 == 99.7% chance the value will fall inside the range
+    -- we'll just clamp the remaining 0.3%
     Random.Float.normal (toFloat avgCaps) (toFloat maxCapsDeviation / 3)
         |> Random.map
             (\n ->
