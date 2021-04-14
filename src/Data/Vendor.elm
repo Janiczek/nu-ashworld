@@ -58,8 +58,14 @@ emptyVendor barterSkill =
 
 capsGenerator : VendorSpec -> Generator Int
 capsGenerator { avgCaps, maxCapsDeviation } =
-    Random.Float.standardNormal
-        |> Random.map (\dev -> avgCaps + round ((2 * dev - 1) * toFloat maxCapsDeviation))
+    Random.Float.normal (toFloat avgCaps) (toFloat maxCapsDeviation / 3)
+        |> Random.map
+            (\n ->
+                clamp
+                    (avgCaps - maxCapsDeviation)
+                    (avgCaps + maxCapsDeviation)
+                    (round n)
+            )
 
 
 stockGenerator : VendorSpec -> Generator (List ( Item.Kind, Int ))
