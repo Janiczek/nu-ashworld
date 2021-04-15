@@ -4,16 +4,14 @@ module Data.Barter exposing
     , addPlayerCaps
     , addPlayerItem
     , addVendorCaps
-    , addVendorPlayerItem
-    , addVendorStockItem
+    , addVendorItem
     , dismissProblem
     , empty
     , problemText
     , removePlayerCaps
     , removePlayerItem
     , removeVendorCaps
-    , removeVendorPlayerItem
-    , removeVendorStockItem
+    , removeVendorItem
     , setProblem
     )
 
@@ -29,9 +27,8 @@ type Problem
 
 type alias State =
     { playerItems : Dict Item.Id Int
+    , vendorItems : Dict Item.Id Int
     , playerCaps : Int
-    , vendorPlayerItems : Dict Item.Id Int
-    , vendorStockItems : Dict_.Dict Item.Kind Int
     , vendorCaps : Int
     , lastProblem : Maybe Problem
     }
@@ -40,61 +37,18 @@ type alias State =
 empty : State
 empty =
     { playerItems = Dict.empty
+    , vendorItems = Dict.empty
     , playerCaps = 0
-    , vendorPlayerItems = Dict.empty
-    , vendorStockItems = Dict_.empty
     , vendorCaps = 0
     , lastProblem = Nothing
     }
 
 
-addVendorStockItem : Item.Kind -> Int -> State -> State
-addVendorStockItem kind count state =
+addVendorItem : Item.Id -> Int -> State -> State
+addVendorItem id count state =
     { state
-        | vendorStockItems =
-            state.vendorStockItems
-                |> Dict_.update kind
-                    (\maybeExistingCount ->
-                        case maybeExistingCount of
-                            Nothing ->
-                                Just count
-
-                            Just existingCount ->
-                                Just <| existingCount + count
-                    )
-    }
-
-
-removeVendorStockItem : Item.Kind -> Int -> State -> State
-removeVendorStockItem kind count state =
-    { state
-        | vendorStockItems =
-            state.vendorStockItems
-                |> Dict_.update kind
-                    (\maybeExistingCount ->
-                        case maybeExistingCount of
-                            Nothing ->
-                                Nothing
-
-                            Just existingCount ->
-                                let
-                                    newCount =
-                                        existingCount - count
-                                in
-                                if newCount <= 0 then
-                                    Nothing
-
-                                else
-                                    Just newCount
-                    )
-    }
-
-
-addVendorPlayerItem : Item.Id -> Int -> State -> State
-addVendorPlayerItem id count state =
-    { state
-        | vendorPlayerItems =
-            state.vendorPlayerItems
+        | vendorItems =
+            state.vendorItems
                 |> Dict.update id
                     (\maybeExistingCount ->
                         case maybeExistingCount of
@@ -149,11 +103,11 @@ removePlayerItem id count state =
     }
 
 
-removeVendorPlayerItem : Item.Id -> Int -> State -> State
-removeVendorPlayerItem id count state =
+removeVendorItem : Item.Id -> Int -> State -> State
+removeVendorItem id count state =
     { state
-        | vendorPlayerItems =
-            state.vendorPlayerItems
+        | vendorItems =
+            state.vendorItems
                 |> Dict.update id
                     (\maybeExistingCount ->
                         case maybeExistingCount of

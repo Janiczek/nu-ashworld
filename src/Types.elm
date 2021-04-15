@@ -87,13 +87,11 @@ type FrontendMsg
 
 type BarterMsg
     = AddPlayerItem Item.Id Int
-    | AddVendorPlayerItem Item.Id Int
-    | AddVendorStockItem Item.Kind Int
+    | AddVendorItem Item.Id Int
     | AddPlayerCaps Int
     | AddVendorCaps Int
     | RemovePlayerItem Item.Id Int
-    | RemoveVendorPlayerItem Item.Id Int
-    | RemoveVendorStockItem Item.Kind Int
+    | RemoveVendorItem Item.Id Int
     | RemovePlayerCaps Int
     | RemoveVendorCaps Int
     | ResetBarter
@@ -131,7 +129,7 @@ type BackendMsg
         , finalTarget : SPlayer
         , fightInfo : FightInfo
         }
-    | GeneratedNewVendorsStock Vendors
+    | GeneratedNewVendorsStock ( Vendors, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
 

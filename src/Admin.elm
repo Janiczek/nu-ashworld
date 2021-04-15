@@ -78,7 +78,7 @@ backendModelDecoderV2 =
                 lastVendorsItemId =
                     vendors
                         |> Vendor.listVendors
-                        |> List.concatMap (.playerItems >> Dict.keys)
+                        |> List.concatMap (.items >> Dict.keys)
                         |> List.maximum
                         |> Maybe.withDefault 0
 

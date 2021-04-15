@@ -83,7 +83,7 @@ init =
     , Cmd.batch
         [ Task.perform Tick Time.now
         , Random.generate GeneratedNewVendorsStock
-            (Vendor.restockVendors model.vendors)
+            (Vendor.restockVendors model.lastItemId model.vendors)
         ]
     )
 
@@ -223,8 +223,11 @@ update msg model =
         CreateNewCharWithTime clientId newChar time ->
             withLoggedInPlayer clientId (createNewCharWithTime newChar time)
 
-        GeneratedNewVendorsStock vendors ->
-            ( { model | vendors = vendors }
+        GeneratedNewVendorsStock ( vendors, newLastItemId ) ->
+            ( { model
+                | vendors = vendors
+                , lastItemId = newLastItemId
+              }
             , Cmd.none
             )
 
@@ -492,15 +495,6 @@ barter barterState clientId location player model =
                 barterNotEmpty =
                     barterState /= Barter.empty
 
-                vendorHasStockItem : Item.Kind -> Int -> Bool
-                vendorHasStockItem itemKind neededQuantity =
-                    case Dict_.get itemKind vendor.stockItems of
-                        Nothing ->
-                            False
-
-                        Just availableQuantity ->
-                            neededQuantity <= availableQuantity
-
                 hasItem : Dict Item.Id Item -> Item.Id -> Int -> Bool
                 hasItem ownedItems itemId neededQuantity =
                     case Dict.get itemId ownedItems of
@@ -510,13 +504,9 @@ barter barterState clientId location player model =
                         Just { count } ->
                             neededQuantity <= count
 
-                vendorHasEnoughStockItems : Bool
-                vendorHasEnoughStockItems =
-                    Dict_.all vendorHasStockItem barterState.vendorStockItems
-
-                vendorHasEnoughPlayerItems : Bool
-                vendorHasEnoughPlayerItems =
-                    Dict.all (hasItem vendor.playerItems) barterState.vendorPlayerItems
+                vendorHasEnoughItems : Bool
+                vendorHasEnoughItems =
+                    Dict.all (hasItem vendor.items) barterState.vendorItems
 
                 playerHasEnoughItems : Bool
                 playerHasEnoughItems =
@@ -545,13 +535,13 @@ barter barterState clientId location player model =
                             )
                         |> List.sum
 
-                vendorPlayerItemsPrice : Int
-                vendorPlayerItemsPrice =
-                    barterState.vendorPlayerItems
+                vendorItemsPrice : Int
+                vendorItemsPrice =
+                    barterState.vendorItems
                         |> Dict.toList
                         |> List.filterMap
                             (\( itemId, count ) ->
-                                Dict.get itemId vendor.playerItems
+                                Dict.get itemId vendor.items
                                     |> Maybe.map
                                         (\item ->
                                             Logic.price
@@ -564,17 +554,6 @@ barter barterState clientId location player model =
                             )
                         |> List.sum
 
-                vendorStockItemsPrice : Int
-                vendorStockItemsPrice =
-                    barterState.vendorStockItems
-                        |> Dict_.toList
-                        |> List.map (\( itemKind, count ) -> Item.basePrice itemKind * count)
-                        |> List.sum
-
-                vendorItemsPrice : Int
-                vendorItemsPrice =
-                    vendorPlayerItemsPrice + vendorStockItemsPrice
-
                 playerOfferValuableEnough : Bool
                 playerOfferValuableEnough =
                     (playerItemsPrice + barterState.playerCaps)
@@ -584,10 +563,9 @@ barter barterState clientId location player model =
                 List.all identity
                     [ barterNotEmpty
                     , capsNonnegative
-                    , vendorHasEnoughStockItems
-                    , vendorHasEnoughPlayerItems
-                    , vendorHasEnoughCaps
+                    , vendorHasEnoughItems
                     , playerHasEnoughItems
+                    , vendorHasEnoughCaps
                     , playerHasEnoughCaps
                     , playerOfferValuableEnough
                     ]
@@ -657,19 +635,7 @@ barterAfterValidation barterState clientId vendor location player model =
                 |> Dict.foldl
                     (\id count accModel ->
                         updateVendor
-                            (Vendor.removePlayerItem id count)
-                            location
-                            accModel
-                    )
-                    model_
-
-        removeVendorStockItems : Dict_.Dict Item.Kind Int -> Model -> Model
-        removeVendorStockItems items model_ =
-            items
-                |> Dict_.foldl
-                    (\kind count accModel ->
-                        updateVendor
-                            (Vendor.removeStockItem kind count)
+                            (Vendor.removeItem id count)
                             location
                             accModel
                     )
@@ -689,7 +655,7 @@ barterAfterValidation barterState clientId vendor location player model =
 
                             Just item ->
                                 updateVendor
-                                    (Vendor.addPlayerItem { item | count = count })
+                                    (Vendor.addItem { item | count = count })
                                     location
                                     accModel
                     )
@@ -700,7 +666,7 @@ barterAfterValidation barterState clientId vendor location player model =
             items
                 |> Dict.foldl
                     (\id count accModel ->
-                        case Dict.get id vendor.playerItems of
+                        case Dict.get id vendor.items of
                             Nothing ->
                                 -- weird: vendor was supposed to have this player item
                                 -- we can't get the Item definition
@@ -714,26 +680,6 @@ barterAfterValidation barterState clientId vendor location player model =
                                     accModel
                     )
                     model_
-
-        createAndAddPlayerItems : Dict_.Dict Item.Kind Int -> Model -> Model
-        createAndAddPlayerItems items model_ =
-            items
-                |> Dict_.foldl
-                    (\kind count accModel ->
-                        let
-                            ( item, modelAfterCreation ) =
-                                createItem
-                                    { kind = kind
-                                    , count = count
-                                    }
-                                    accModel
-                        in
-                        updatePlayer
-                            (SPlayer.addItem item)
-                            player.name
-                            modelAfterCreation
-                    )
-                    model_
     in
     model
         -- player caps:
@@ -745,12 +691,9 @@ barterAfterValidation barterState clientId vendor location player model =
         -- player items:
         |> removePlayerItems barterState.playerItems
         |> addVendorPlayerItems barterState.playerItems
-        -- vendor player items:
-        |> removeVendorPlayerItems barterState.vendorPlayerItems
-        |> addPlayerItems barterState.vendorPlayerItems
-        -- vendor stock items:
-        |> removeVendorStockItems barterState.vendorStockItems
-        |> createAndAddPlayerItems barterState.vendorStockItems
+        -- vendor items:
+        |> removeVendorPlayerItems barterState.vendorItems
+        |> addPlayerItems barterState.vendorItems
 
 
 readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -984,13 +927,13 @@ updateVendor fn location model =
     { model | vendors = Location.mapVendor fn location model.vendors }
 
 
-createItem : { kind : Item.Kind, count : Int } -> Model -> ( Item, Model )
-createItem { kind, count } model =
+createItem : { uniqueKey : Item.UniqueKey, count : Int } -> Model -> ( Item, Model )
+createItem { uniqueKey, count } model =
     let
         ( item, newLastId ) =
             Item.create
                 { lastId = model.lastItemId
-                , kind = kind
+                , uniqueKey = uniqueKey
                 , count = count
                 }
     in

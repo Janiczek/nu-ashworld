@@ -2,17 +2,21 @@ module Data.Item exposing
     ( Id
     , Item
     , Kind(..)
+    , UniqueKey
     , basePrice
     , create
     , decoder
     , encode
     , encodeKind
+    , findMergeableId
     , kindDecoder
     , name
     )
 
 import AssocList as Dict_
 import AssocList.Extra as Dict_
+import Dict exposing (Dict)
+import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
@@ -92,11 +96,11 @@ name kind =
 
 create :
     { lastId : Int
-    , kind : Kind
+    , uniqueKey : UniqueKey
     , count : Int
     }
     -> ( Item, Int )
-create { lastId, kind, count } =
+create { lastId, uniqueKey, count } =
     let
         newLastId : Int
         newLastId =
@@ -105,8 +109,39 @@ create { lastId, kind, count } =
         item : Item
         item =
             { id = newLastId
-            , kind = kind
+            , kind = uniqueKey.kind
             , count = count
             }
     in
     ( item, newLastId )
+
+
+{-| This identifies item. Right now this is just the item Kind (eg.
+HuntingRifle) but later when we add Mods, UniqueKey will also contain them and
+so you will be able to differentiate between (HuntingRifle, []) and
+(HuntingRifle, [HuntingRifleUpgrade]) or
+(HuntingRifle, [HasAmmo (24, Ammo223FMJ)]) or something.
+
+This hopefully will prevent bugs like player with upgraded weapon buying a
+non-upgraded one and it becoming automatically (wrongly) upgraded too.
+
+-}
+type alias UniqueKey =
+    { kind : Kind }
+
+
+getUniqueKey : Item -> UniqueKey
+getUniqueKey item =
+    { kind = item.kind }
+
+
+findMergeableId : Item -> Dict Id Item -> Maybe Id
+findMergeableId item items =
+    let
+        uniqueKey : UniqueKey
+        uniqueKey =
+            getUniqueKey item
+    in
+    items
+        |> Dict.find (\_ item_ -> getUniqueKey item_ == uniqueKey)
+        |> Maybe.map Tuple.first

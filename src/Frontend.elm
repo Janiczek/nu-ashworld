@@ -340,11 +340,8 @@ updateBarter msg model =
             AddPlayerItem itemId count ->
                 mapBarter (Barter.addPlayerItem itemId count) model
 
-            AddVendorPlayerItem itemId count ->
-                mapBarter (Barter.addVendorPlayerItem itemId count) model
-
-            AddVendorStockItem itemKind count ->
-                mapBarter (Barter.addVendorStockItem itemKind count) model
+            AddVendorItem itemId count ->
+                mapBarter (Barter.addVendorItem itemId count) model
 
             AddPlayerCaps amount ->
                 mapBarter (Barter.addPlayerCaps amount) model
@@ -355,11 +352,8 @@ updateBarter msg model =
             RemovePlayerItem itemId count ->
                 mapBarter (Barter.removePlayerItem itemId count) model
 
-            RemoveVendorPlayerItem itemId count ->
-                mapBarter (Barter.removeVendorPlayerItem itemId count) model
-
-            RemoveVendorStockItem itemKind count ->
-                mapBarter (Barter.removeVendorStockItem itemKind count) model
+            RemoveVendorItem itemId count ->
+                mapBarter (Barter.removeVendorItem itemId count) model
 
             RemovePlayerCaps amount ->
                 mapBarter (Barter.removePlayerCaps amount) model
@@ -1046,12 +1040,12 @@ townStoreView barter location world player =
                 playerTradedValue =
                     barter.playerCaps + playerTradedItemsValue
 
-                vendorTradedPlayerValue : Int
-                vendorTradedPlayerValue =
-                    vendorTradedPlayerItems
+                vendorTradedItemsValue : Int
+                vendorTradedItemsValue =
+                    vendorTradedItems
                         |> List.filterMap
                             (\( id, count ) ->
-                                Dict.get id vendor.playerItems
+                                Dict.get id vendor.items
                                     |> Maybe.map
                                         (\{ kind } ->
                                             Logic.price
@@ -1064,23 +1058,9 @@ townStoreView barter location world player =
                             )
                         |> List.sum
 
-                vendorTradedStockValue : Int
-                vendorTradedStockValue =
-                    vendorTradedStockItems
-                        |> List.map
-                            (\( kind, count ) ->
-                                Logic.price
-                                    { itemCount = count
-                                    , itemKind = kind
-                                    , playerBarterSkill = Logic.temporaryBarterSkill player.special
-                                    , traderBarterSkill = vendor.barterSkill
-                                    }
-                            )
-                        |> List.sum
-
                 vendorTradedValue : Int
                 vendorTradedValue =
-                    barter.vendorCaps + vendorTradedPlayerValue + vendorTradedStockValue
+                    barter.vendorCaps + vendorTradedItemsValue
 
                 playerKeptItems : List ( Item.Id, Int )
                 playerKeptItems =
@@ -1103,12 +1083,12 @@ townStoreView barter location world player =
                             )
                         |> Dict.toList
 
-                vendorKeptPlayerItems : List ( Item.Id, Int )
-                vendorKeptPlayerItems =
-                    vendor.playerItems
+                vendorKeptItems : List ( Item.Id, Int )
+                vendorKeptItems =
+                    vendor.items
                         |> Dict.filterMap
                             (\itemId item ->
-                                case Dict.get itemId barter.vendorPlayerItems of
+                                case Dict.get itemId barter.vendorItems of
                                     Nothing ->
                                         -- vendor is not trading this item at all
                                         Just item.count
@@ -1124,38 +1104,13 @@ townStoreView barter location world player =
                             )
                         |> Dict.toList
 
-                vendorKeptStockItems : List ( Item.Kind, Int )
-                vendorKeptStockItems =
-                    vendor.stockItems
-                        |> Dict_.filterMap
-                            (\itemKind count ->
-                                case Dict_.get itemKind barter.vendorStockItems of
-                                    Nothing ->
-                                        -- vendor is not trading this item at all
-                                        Just count
-
-                                    Just tradedCount ->
-                                        if tradedCount >= count then
-                                            -- vendor is trading it all!
-                                            Nothing
-
-                                        else
-                                            -- what amount does vendor have left in the inventory
-                                            Just <| count - tradedCount
-                            )
-                        |> Dict_.toList
-
                 playerTradedItems : List ( Item.Id, Int )
                 playerTradedItems =
                     Dict.toList barter.playerItems
 
-                vendorTradedPlayerItems : List ( Item.Id, Int )
-                vendorTradedPlayerItems =
-                    Dict.toList barter.vendorPlayerItems
-
-                vendorTradedStockItems : List ( Item.Kind, Int )
-                vendorTradedStockItems =
-                    Dict_.toList barter.vendorStockItems
+                vendorTradedItems : List ( Item.Id, Int )
+                vendorTradedItems =
+                    Dict.toList barter.vendorItems
 
                 resetBtn : Html FrontendMsg
                 resetBtn =
@@ -1422,22 +1377,13 @@ townStoreView barter location world player =
                     H.div [ HA.id "town-store-vendor-kept-items" ]
                         (List.map
                             (playerItemView
-                                { items = vendor.playerItems
+                                { items = vendor.items
                                 , class = "vendor-kept-item"
                                 , arrowsDirection = BarterArrowLeft
-                                , transfer = \id count -> BarterMsg <| AddVendorPlayerItem id count
+                                , transfer = \id count -> BarterMsg <| AddVendorItem id count
                                 }
                             )
-                            vendorKeptPlayerItems
-                            ++ List.map
-                                (stockItemView
-                                    { items = vendor.stockItems
-                                    , class = "vendor-kept-item"
-                                    , arrowsDirection = BarterArrowLeft
-                                    , transfer = \kind count -> BarterMsg <| AddVendorStockItem kind count
-                                    }
-                                )
-                                vendorKeptStockItems
+                            vendorKeptItems
                         )
 
                 vendorTradedItemsView : Html FrontendMsg
@@ -1445,22 +1391,13 @@ townStoreView barter location world player =
                     H.div [ HA.id "town-store-vendor-traded-items" ]
                         (List.map
                             (playerItemView
-                                { items = vendor.playerItems
+                                { items = vendor.items
                                 , class = "vendor-traded-item"
                                 , arrowsDirection = BarterArrowRight
-                                , transfer = \id count -> BarterMsg <| RemoveVendorPlayerItem id count
+                                , transfer = \id count -> BarterMsg <| RemoveVendorItem id count
                                 }
                             )
-                            vendorTradedPlayerItems
-                            ++ List.map
-                                (stockItemView
-                                    { items = vendor.stockItems
-                                    , class = "vendor-traded-item"
-                                    , arrowsDirection = BarterArrowRight
-                                    , transfer = \kind count -> BarterMsg <| RemoveVendorStockItem kind count
-                                    }
-                                )
-                                vendorTradedStockItems
+                            vendorTradedItems
                         )
 
                 playerKeptCapsView : Html FrontendMsg

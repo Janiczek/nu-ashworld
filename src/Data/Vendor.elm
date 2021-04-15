@@ -2,12 +2,11 @@ module Data.Vendor exposing
     ( Vendor
     , Vendors
     , addCaps
-    , addPlayerItem
+    , addItem
     , emptyVendors
     , encodeVendors
     , listVendors
-    , removePlayerItem
-    , removeStockItem
+    , removeItem
     , restockVendors
     , subtractCaps
     , vendorsDecoder
@@ -28,8 +27,7 @@ import Random.List
 
 
 type alias Vendor =
-    { playerItems : Dict Item.Id Item
-    , stockItems : Dict_.Dict Item.Kind Int
+    { items : Dict Item.Id Item
     , caps : Int
     , barterSkill : Int
     }
@@ -50,7 +48,7 @@ listVendors vendors =
 type alias VendorSpec =
     { avgCaps : Int
     , maxCapsDeviation : Int
-    , stock : List { kind : Item.Kind, maxCount : Int }
+    , stock : List { uniqueKey : Item.UniqueKey, maxCount : Int }
     }
 
 
@@ -62,8 +60,7 @@ emptyVendors =
 
 emptyVendor : Int -> Vendor
 emptyVendor barterSkill =
-    { playerItems = Dict.empty
-    , stockItems = Dict_.empty
+    { items = Dict.empty
     , caps = 0
     , barterSkill = barterSkill
     }
@@ -83,7 +80,7 @@ capsGenerator { avgCaps, maxCapsDeviation } =
             )
 
 
-stockGenerator : VendorSpec -> Generator (List ( Item.Kind, Int ))
+stockGenerator : VendorSpec -> Generator (List ( Item.UniqueKey, Int ))
 stockGenerator { stock } =
     let
         listLength =
@@ -98,37 +95,55 @@ stockGenerator { stock } =
             (\( chosen, _ ) ->
                 chosen
                     |> List.map
-                        (\{ kind, maxCount } ->
+                        (\{ uniqueKey, maxCount } ->
                             halfOrMore maxCount
-                                |> Random.map (Tuple.pair kind)
+                                |> Random.map (Tuple.pair uniqueKey)
                         )
                     |> Random.Extra.sequence
             )
 
 
-restockVendors : Vendors -> Generator Vendors
-restockVendors vendors =
+restockVendors : Int -> Vendors -> Generator ( Vendors, Int )
+restockVendors lastItemId vendors =
     let
-        restockVendor : VendorSpec -> Vendor -> Generator Vendor
-        restockVendor spec vendor =
+        restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
+        restockVendor lastItemId_ spec vendor =
             Random.map2
                 (\newCaps newStock ->
-                    { vendor
+                    let
+                        ( items, newLastId ) =
+                            newStock
+                                |> List.foldl
+                                    (\( uniqueKey, count ) ( accItems, accItemId ) ->
+                                        let
+                                            ( item, incrementedId ) =
+                                                Item.create
+                                                    { lastId = accItemId
+                                                    , uniqueKey = uniqueKey
+                                                    , count = count
+                                                    }
+                                        in
+                                        ( item :: accItems, incrementedId )
+                                    )
+                                    ( [], lastItemId_ )
+                    in
+                    ( { vendor
                         | caps = newCaps
-                        , stockItems = Dict_.fromList newStock
-                    }
+                        , items = Dict.fromList <| List.map (\i -> ( i.id, i )) items
+                      }
+                    , newLastId
+                    )
                 )
                 (capsGenerator spec)
                 (stockGenerator spec)
     in
-    {- TODO perhaps it's better to have VendorNpc = KlamathMaidaBuckner | ...
-       than this (<|) magic?
-    -}
-    [ restockVendor klamathSpec vendors.klamath
-        |> Random.map (\v vs -> { vs | klamath = v })
-    ]
-        |> Random.Extra.sequence
-        |> Random.map (List.foldl (<|) vendors)
+    restockVendor lastItemId klamathSpec vendors.klamath
+        |> Random.map
+            (\( restockedKlamath, idAfterKlamath ) ->
+                ( { vendors | klamath = restockedKlamath }
+                , idAfterKlamath
+                )
+            )
 
 
 encodeVendors : Vendors -> JE.Value
@@ -147,8 +162,7 @@ vendorsDecoder =
 encode : Vendor -> JE.Value
 encode vendor =
     JE.object
-        [ ( "playerItems", Dict.encode JE.int Item.encode vendor.playerItems )
-        , ( "stockItems", Dict_.encode Item.encodeKind JE.int vendor.stockItems )
+        [ ( "items", Dict.encode JE.int Item.encode vendor.items )
         , ( "caps", JE.int vendor.caps )
         , ( "barterSkill", JE.int vendor.barterSkill )
         ]
@@ -157,8 +171,7 @@ encode vendor =
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
-        |> JD.andMap (JD.field "playerItems" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "stockItems" (Dict_.decoder Item.kindDecoder JD.int))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "caps" JD.int)
         |> JD.andMap (JD.field "barterSkill" JD.int)
 
@@ -167,7 +180,7 @@ klamathSpec : VendorSpec
 klamathSpec =
     { avgCaps = 1000
     , maxCapsDeviation = 500
-    , stock = [ { kind = Item.Stimpak, maxCount = 4 } ]
+    , stock = [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 } ]
     }
 
 
@@ -181,11 +194,11 @@ addCaps amount vendor =
     { vendor | caps = vendor.caps + amount }
 
 
-removePlayerItem : Item.Id -> Int -> Vendor -> Vendor
-removePlayerItem id removedCount vendor =
+removeItem : Item.Id -> Int -> Vendor -> Vendor
+removeItem id removedCount vendor =
     { vendor
-        | playerItems =
-            vendor.playerItems
+        | items =
+            vendor.items
                 |> Dict.update id
                     (\maybeItem ->
                         case maybeItem of
@@ -202,35 +215,17 @@ removePlayerItem id removedCount vendor =
     }
 
 
-removeStockItem : Item.Kind -> Int -> Vendor -> Vendor
-removeStockItem kind removedCount vendor =
+addItem : Item -> Vendor -> Vendor
+addItem item vendor =
+    let
+        id =
+            Item.findMergeableId item vendor.items
+                |> Maybe.withDefault item.id
+    in
     { vendor
-        | stockItems =
-            vendor.stockItems
-                |> Dict_.update kind
-                    (\maybeCount ->
-                        case maybeCount of
-                            Nothing ->
-                                Nothing
-
-                            Just oldCount ->
-                                if oldCount > removedCount then
-                                    Just <| oldCount - removedCount
-
-                                else
-                                    Nothing
-                    )
-    }
-
-
-addPlayerItem : Item -> Vendor -> Vendor
-addPlayerItem item vendor =
-    -- TODO merging same (kind,mods) items together?
-    -- TODO findMergeableId : (Item.Kind, ...) -> Dict Item.Id Item -> Maybe Item.Id
-    { vendor
-        | playerItems =
-            vendor.playerItems
-                |> Dict.update item.id
+        | items =
+            vendor.items
+                |> Dict.update id
                     (\maybeCount ->
                         case maybeCount of
                             Nothing ->

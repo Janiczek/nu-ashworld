@@ -204,10 +204,15 @@ removeMessage messageToRemove player =
 
 addItem : Item -> SPlayer -> SPlayer
 addItem item player =
+    let
+        id =
+            Item.findMergeableId item player.items
+                |> Maybe.withDefault item.id
+    in
     { player
         | items =
             player.items
-                |> Dict.update item.id
+                |> Dict.update id
                     (\maybeItem ->
                         case maybeItem of
                             Nothing ->
