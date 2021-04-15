@@ -3,6 +3,7 @@ module Data.Item exposing
     , Item
     , Kind(..)
     , basePrice
+    , create
     , decoder
     , encode
     , encodeKind
@@ -40,7 +41,8 @@ basePrice : Kind -> Int
 basePrice kind =
     case kind of
         Stimpak ->
-            175
+            -- TODO change this back to 175
+            50
 
 
 encode : Item -> JE.Value
@@ -86,3 +88,25 @@ name kind =
     case kind of
         Stimpak ->
             "Stimpak"
+
+
+create :
+    { lastId : Int
+    , kind : Kind
+    , count : Int
+    }
+    -> ( Item, Int )
+create { lastId, kind, count } =
+    let
+        newLastId : Int
+        newLastId =
+            lastId + 1
+
+        item : Item
+        item =
+            { id = newLastId
+            , kind = kind
+            , count = count
+            }
+    in
+    ( item, newLastId )

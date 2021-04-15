@@ -52,6 +52,7 @@ type alias BackendModel =
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , time : Posix
     , vendors : Vendors
+    , lastItemId : Int
     }
 
 
@@ -147,3 +148,5 @@ type ToFrontend
     | AlertMessage String
     | YoureLoggedInAsAdmin AdminData
     | JsonExportDone String
+    | BarterDone WorldLoggedInData
+    | BarterProblem Barter.Problem

@@ -1,21 +1,30 @@
 module Data.Barter exposing
-    ( State
+    ( Problem(..)
+    , State
     , addPlayerCaps
     , addPlayerItem
     , addVendorCaps
     , addVendorPlayerItem
     , addVendorStockItem
+    , dismissProblem
     , empty
+    , problemText
     , removePlayerCaps
     , removePlayerItem
     , removeVendorCaps
     , removeVendorPlayerItem
     , removeVendorStockItem
+    , setProblem
     )
 
 import AssocList as Dict_
 import Data.Item as Item
 import Dict exposing (Dict)
+
+
+type Problem
+    = BarterIsEmpty
+    | PlayerOfferNotValuableEnough
 
 
 type alias State =
@@ -24,6 +33,7 @@ type alias State =
     , vendorPlayerItems : Dict Item.Id Int
     , vendorStockItems : Dict_.Dict Item.Kind Int
     , vendorCaps : Int
+    , lastProblem : Maybe Problem
     }
 
 
@@ -34,6 +44,7 @@ empty =
     , vendorPlayerItems = Dict.empty
     , vendorStockItems = Dict_.empty
     , vendorCaps = 0
+    , lastProblem = Nothing
     }
 
 
@@ -181,3 +192,23 @@ addVendorCaps amount state =
 removeVendorCaps : Int -> State -> State
 removeVendorCaps amount state =
     { state | vendorCaps = state.vendorCaps - amount }
+
+
+setProblem : Problem -> State -> State
+setProblem problem state =
+    { state | lastProblem = Just problem }
+
+
+dismissProblem : State -> State
+dismissProblem state =
+    { state | lastProblem = Nothing }
+
+
+problemText : Problem -> String
+problemText problem =
+    case problem of
+        BarterIsEmpty ->
+            "You didn't yet say what you want to trade."
+
+        PlayerOfferNotValuableEnough ->
+            "You didn't offer enough value for what you request."

@@ -76,6 +76,7 @@ init =
             , adminLoggedIn = Nothing
             , time = Time.millisToPosix 0
             , vendors = Vendor.emptyVendors
+            , lastItemId = 0
             }
     in
     ( model
@@ -593,23 +594,34 @@ barter barterState clientId location player model =
             then
                 let
                     newModel =
-                        barterAfterValidation barterState clientId location player model
+                        barterAfterValidation barterState clientId vendor location player model
                 in
                 getWorldLoggedIn player.name newModel
                     |> Maybe.map
                         (\world ->
                             ( newModel
-                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                            , Lamdera.sendToFrontend clientId <| BarterDone world
                             )
                         )
                     |> Maybe.withDefault ( model, Cmd.none )
 
             else
-                ( model, Cmd.none )
+                ( model
+                , -- TODO somehow generate and filter this during all the checks above?
+                  if not barterNotEmpty then
+                    Lamdera.sendToFrontend clientId <| BarterProblem Barter.BarterIsEmpty
+
+                  else if not playerOfferValuableEnough then
+                    Lamdera.sendToFrontend clientId <| BarterProblem Barter.PlayerOfferNotValuableEnough
+
+                  else
+                    -- silent error ... somebody's trying to hack probably
+                    Cmd.none
+                )
 
 
-barterAfterValidation : Barter.State -> ClientId -> Location -> SPlayer -> Model -> Model
-barterAfterValidation barterState clientId location player model =
+barterAfterValidation : Barter.State -> ClientId -> Vendor -> Location -> SPlayer -> Model -> Model
+barterAfterValidation barterState clientId vendor location player model =
     let
         removePlayerCaps : Int -> Model -> Model
         removePlayerCaps amount =
@@ -670,6 +682,9 @@ barterAfterValidation barterState clientId location player model =
                     (\id count accModel ->
                         case Dict.get id player.items of
                             Nothing ->
+                                -- weird: player was supposed to have this item
+                                -- we can't get the Item definition
+                                -- anyways, other checks make sure we can't get here
                                 accModel
 
                             Just item ->
@@ -679,23 +694,63 @@ barterAfterValidation barterState clientId location player model =
                                     accModel
                     )
                     model_
+
+        addPlayerItems : Dict Item.Id Int -> Model -> Model
+        addPlayerItems items model_ =
+            items
+                |> Dict.foldl
+                    (\id count accModel ->
+                        case Dict.get id vendor.playerItems of
+                            Nothing ->
+                                -- weird: vendor was supposed to have this player item
+                                -- we can't get the Item definition
+                                -- anyways, other checks make sure we can't get here
+                                accModel
+
+                            Just item ->
+                                updatePlayer
+                                    (SPlayer.addItem { item | count = count })
+                                    player.name
+                                    accModel
+                    )
+                    model_
+
+        createAndAddPlayerItems : Dict_.Dict Item.Kind Int -> Model -> Model
+        createAndAddPlayerItems items model_ =
+            items
+                |> Dict_.foldl
+                    (\kind count accModel ->
+                        let
+                            ( item, modelAfterCreation ) =
+                                createItem
+                                    { kind = kind
+                                    , count = count
+                                    }
+                                    accModel
+                        in
+                        updatePlayer
+                            (SPlayer.addItem item)
+                            player.name
+                            modelAfterCreation
+                    )
+                    model_
     in
     model
         -- player caps:
         |> removePlayerCaps barterState.playerCaps
-        |> addVendorCaps location barterState.playerCaps
+        |> addVendorCaps barterState.playerCaps
         -- vendor caps:
-        |> removeVendorCaps location barterState.vendorCaps
+        |> removeVendorCaps barterState.vendorCaps
         |> addPlayerCaps barterState.vendorCaps
         -- player items:
         |> removePlayerItems barterState.playerItems
-        |> addVendorPlayerItems location barterState.playerItems
+        |> addVendorPlayerItems barterState.playerItems
         -- vendor player items:
-        |> removeVendorPlayerItems location barterState.vendorPlayerItems
+        |> removeVendorPlayerItems barterState.vendorPlayerItems
         |> addPlayerItems barterState.vendorPlayerItems
         -- vendor stock items:
-        |> removeVendorStockItems location barterState.vendorStockItems
-        |> addPlayerItems {- TODO rather createAndAdd? -} barterState.vendorStockItems
+        |> removeVendorStockItems barterState.vendorStockItems
+        |> createAndAddPlayerItems barterState.vendorStockItems
 
 
 readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -927,3 +982,18 @@ updatePlayer fn playerName model =
 updateVendor : (Vendor -> Vendor) -> Location -> Model -> Model
 updateVendor fn location model =
     { model | vendors = Location.mapVendor fn location model.vendors }
+
+
+createItem : { kind : Item.Kind, count : Int } -> Model -> ( Item, Model )
+createItem { kind, count } model =
+    let
+        ( item, newLastId ) =
+            Item.create
+                { lastId = model.lastItemId
+                , kind = kind
+                , count = count
+                }
+    in
+    ( item
+    , { model | lastItemId = newLastId }
+    )

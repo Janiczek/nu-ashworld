@@ -780,3 +780,8 @@ table tbody tr:hover td {
 
 #town-store-player-traded-value { grid-area: player-traded-value; }
 #town-store-vendor-traded-value { grid-area: vendor-traded-value; }
+
+#town-store-barter-problem {
+  margin-top: 40px;
+  color: var(--fg-highlight);
+}

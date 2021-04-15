@@ -303,57 +303,69 @@ update msg model =
             updateBarter barterMsg model
 
 
+mapBarter_ : (Barter.State -> Barter.State) -> Model -> Model
+mapBarter_ fn model =
+    { model | route = Route.mapBarterState fn model.route }
+
+
+mapBarter : (Barter.State -> Barter.State) -> Model -> ( Model, Cmd FrontendMsg )
+mapBarter fn model =
+    ( mapBarter_ fn model
+    , Cmd.none
+    )
+
+
+resetBarter : Model -> ( Model, Cmd FrontendMsg )
+resetBarter model =
+    mapBarter (always Barter.empty) model
+
+
 updateBarter : BarterMsg -> Model -> ( Model, Cmd FrontendMsg )
 updateBarter msg model =
-    let
-        updateRoute fn =
-            ( { model | route = Route.mapBarterState fn model.route }
-            , Cmd.none
-            )
-    in
-    case msg of
-        ResetBarter ->
-            updateRoute (always Barter.empty)
+    Tuple.mapFirst (mapBarter_ Barter.dismissProblem) <|
+        case msg of
+            ResetBarter ->
+                resetBarter model
 
-        ConfirmBarter ->
-            Route.barterState model.route
-                |> Maybe.map
-                    (\barterState ->
-                        ( model
-                        , Lamdera.sendToBackend <| Barter barterState
+            ConfirmBarter ->
+                Route.barterState model.route
+                    |> Maybe.map
+                        (\barterState ->
+                            ( model
+                            , Lamdera.sendToBackend <| Barter barterState
+                            )
                         )
-                    )
-                |> Maybe.withDefault ( model, Cmd.none )
+                    |> Maybe.withDefault ( model, Cmd.none )
 
-        AddPlayerItem itemId count ->
-            updateRoute (Barter.addPlayerItem itemId count)
+            AddPlayerItem itemId count ->
+                mapBarter (Barter.addPlayerItem itemId count) model
 
-        AddVendorPlayerItem itemId count ->
-            updateRoute (Barter.addVendorPlayerItem itemId count)
+            AddVendorPlayerItem itemId count ->
+                mapBarter (Barter.addVendorPlayerItem itemId count) model
 
-        AddVendorStockItem itemKind count ->
-            updateRoute (Barter.addVendorStockItem itemKind count)
+            AddVendorStockItem itemKind count ->
+                mapBarter (Barter.addVendorStockItem itemKind count) model
 
-        AddPlayerCaps amount ->
-            updateRoute (Barter.addPlayerCaps amount)
+            AddPlayerCaps amount ->
+                mapBarter (Barter.addPlayerCaps amount) model
 
-        AddVendorCaps amount ->
-            updateRoute (Barter.addVendorCaps amount)
+            AddVendorCaps amount ->
+                mapBarter (Barter.addVendorCaps amount) model
 
-        RemovePlayerItem itemId count ->
-            updateRoute (Barter.removePlayerItem itemId count)
+            RemovePlayerItem itemId count ->
+                mapBarter (Barter.removePlayerItem itemId count) model
 
-        RemoveVendorPlayerItem itemId count ->
-            updateRoute (Barter.removeVendorPlayerItem itemId count)
+            RemoveVendorPlayerItem itemId count ->
+                mapBarter (Barter.removeVendorPlayerItem itemId count) model
 
-        RemoveVendorStockItem itemKind count ->
-            updateRoute (Barter.removeVendorStockItem itemKind count)
+            RemoveVendorStockItem itemKind count ->
+                mapBarter (Barter.removeVendorStockItem itemKind count) model
 
-        RemovePlayerCaps amount ->
-            updateRoute (Barter.removePlayerCaps amount)
+            RemovePlayerCaps amount ->
+                mapBarter (Barter.removePlayerCaps amount) model
 
-        RemoveVendorCaps amount ->
-            updateRoute (Barter.removeVendorCaps amount)
+            RemoveVendorCaps amount ->
+                mapBarter (Barter.removeVendorCaps amount) model
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -446,6 +458,13 @@ updateFromBackend msg model =
                 "application/json"
                 json
             )
+
+        BarterDone world ->
+            { model | world = WorldLoggedIn world }
+                |> resetBarter
+
+        BarterProblem problem ->
+            mapBarter (Barter.setProblem problem) model
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -581,7 +600,7 @@ contentView model =
                 |> Player.getPlayerData
                 |> Maybe.andThen (.location >> Location.location)
                 |> Maybe.map (\loc -> withCreatedPlayer world (fn loc))
-                |> Maybe.withDefault contentUnavailableWhenNotInTown
+                |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
@@ -632,8 +651,8 @@ contentView model =
             ( Route.Town Route.MainSquare, WorldLoggedIn world ) ->
                 withLocation world townMainSquareView
 
-            ( Route.Town (Route.Store r), WorldLoggedIn world ) ->
-                withLocation world (townStoreView r)
+            ( Route.Town (Route.Store { barter }), WorldLoggedIn world ) ->
+                withLocation world (townStoreView barter)
 
             ( Route.Town _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -973,17 +992,7 @@ townMainSquareView location { vendors } player =
         Just vendor ->
             H.div []
                 [ H.button
-                    [ HE.onClick
-                        (GoToRoute
-                            (Route.Town
-                                (Route.Store
-                                    { vendor = vendor
-                                    , barter = Barter.empty
-                                    }
-                                )
-                            )
-                        )
-                    ]
+                    [ HE.onClick (GoToRoute (Route.Town (Route.Store { barter = Barter.empty }))) ]
                     [ H.text "[Visit store]" ]
                 ]
     ]
@@ -995,534 +1004,544 @@ type BarterArrowsDirection
 
 
 townStoreView :
-    { vendor : Vendor
-    , barter : Barter.State
-    }
+    Barter.State
     -> Location
     -> WorldLoggedInData
     -> CPlayer
     -> List (Html FrontendMsg)
-townStoreView { vendor, barter } location _ player =
-    let
-        playerKeptCaps : Int
-        playerKeptCaps =
-            player.caps - barter.playerCaps
+townStoreView barter location world player =
+    case Location.getVendor location world.vendors of
+        Nothing ->
+            contentUnavailableWhenNotInTownView
 
-        vendorKeptCaps : Int
-        vendorKeptCaps =
-            vendor.caps - barter.vendorCaps
+        Just vendor ->
+            let
+                playerKeptCaps : Int
+                playerKeptCaps =
+                    player.caps - barter.playerCaps
 
-        playerTradedCaps : Int
-        playerTradedCaps =
-            barter.playerCaps
+                vendorKeptCaps : Int
+                vendorKeptCaps =
+                    vendor.caps - barter.vendorCaps
 
-        vendorTradedCaps : Int
-        vendorTradedCaps =
-            barter.vendorCaps
+                playerTradedCaps : Int
+                playerTradedCaps =
+                    barter.playerCaps
 
-        playerTradedItemsValue : Int
-        playerTradedItemsValue =
-            playerTradedItems
-                |> List.filterMap
-                    (\( id, count ) ->
-                        Dict.get id player.items
-                            |> Maybe.map (\{ kind } -> Item.basePrice kind * count)
-                    )
-                |> List.sum
+                vendorTradedCaps : Int
+                vendorTradedCaps =
+                    barter.vendorCaps
 
-        playerTradedValue : Int
-        playerTradedValue =
-            barter.playerCaps + playerTradedItemsValue
+                playerTradedItemsValue : Int
+                playerTradedItemsValue =
+                    playerTradedItems
+                        |> List.filterMap
+                            (\( id, count ) ->
+                                Dict.get id player.items
+                                    |> Maybe.map (\{ kind } -> Item.basePrice kind * count)
+                            )
+                        |> List.sum
 
-        vendorTradedPlayerValue : Int
-        vendorTradedPlayerValue =
-            vendorTradedPlayerItems
-                |> List.filterMap
-                    (\( id, count ) ->
-                        Dict.get id vendor.playerItems
-                            |> Maybe.map
-                                (\{ kind } ->
-                                    Logic.price
-                                        { itemCount = count
-                                        , itemKind = kind
-                                        , playerBarterSkill = Logic.temporaryBarterSkill player.special
-                                        , traderBarterSkill = vendor.barterSkill
-                                        }
-                                )
-                    )
-                |> List.sum
+                playerTradedValue : Int
+                playerTradedValue =
+                    barter.playerCaps + playerTradedItemsValue
 
-        vendorTradedStockValue : Int
-        vendorTradedStockValue =
-            vendorTradedStockItems
-                |> List.map
-                    (\( kind, count ) ->
-                        Logic.price
-                            { itemCount = count
-                            , itemKind = kind
-                            , playerBarterSkill = Logic.temporaryBarterSkill player.special
-                            , traderBarterSkill = vendor.barterSkill
+                vendorTradedPlayerValue : Int
+                vendorTradedPlayerValue =
+                    vendorTradedPlayerItems
+                        |> List.filterMap
+                            (\( id, count ) ->
+                                Dict.get id vendor.playerItems
+                                    |> Maybe.map
+                                        (\{ kind } ->
+                                            Logic.price
+                                                { itemCount = count
+                                                , itemKind = kind
+                                                , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                                , traderBarterSkill = vendor.barterSkill
+                                                }
+                                        )
+                            )
+                        |> List.sum
+
+                vendorTradedStockValue : Int
+                vendorTradedStockValue =
+                    vendorTradedStockItems
+                        |> List.map
+                            (\( kind, count ) ->
+                                Logic.price
+                                    { itemCount = count
+                                    , itemKind = kind
+                                    , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                    , traderBarterSkill = vendor.barterSkill
+                                    }
+                            )
+                        |> List.sum
+
+                vendorTradedValue : Int
+                vendorTradedValue =
+                    barter.vendorCaps + vendorTradedPlayerValue + vendorTradedStockValue
+
+                playerKeptItems : List ( Item.Id, Int )
+                playerKeptItems =
+                    player.items
+                        |> Dict.filterMap
+                            (\itemId item ->
+                                case Dict.get itemId barter.playerItems of
+                                    Nothing ->
+                                        -- player is not trading this item at all
+                                        Just item.count
+
+                                    Just tradedCount ->
+                                        if tradedCount >= item.count then
+                                            -- player is trading it all!
+                                            Nothing
+
+                                        else
+                                            -- what amount does player have left in the inventory
+                                            Just <| item.count - tradedCount
+                            )
+                        |> Dict.toList
+
+                vendorKeptPlayerItems : List ( Item.Id, Int )
+                vendorKeptPlayerItems =
+                    vendor.playerItems
+                        |> Dict.filterMap
+                            (\itemId item ->
+                                case Dict.get itemId barter.vendorPlayerItems of
+                                    Nothing ->
+                                        -- vendor is not trading this item at all
+                                        Just item.count
+
+                                    Just tradedCount ->
+                                        if tradedCount >= item.count then
+                                            -- vendor is trading it all!
+                                            Nothing
+
+                                        else
+                                            -- what amount does vendor have left in the inventory
+                                            Just <| item.count - tradedCount
+                            )
+                        |> Dict.toList
+
+                vendorKeptStockItems : List ( Item.Kind, Int )
+                vendorKeptStockItems =
+                    vendor.stockItems
+                        |> Dict_.filterMap
+                            (\itemKind count ->
+                                case Dict_.get itemKind barter.vendorStockItems of
+                                    Nothing ->
+                                        -- vendor is not trading this item at all
+                                        Just count
+
+                                    Just tradedCount ->
+                                        if tradedCount >= count then
+                                            -- vendor is trading it all!
+                                            Nothing
+
+                                        else
+                                            -- what amount does vendor have left in the inventory
+                                            Just <| count - tradedCount
+                            )
+                        |> Dict_.toList
+
+                playerTradedItems : List ( Item.Id, Int )
+                playerTradedItems =
+                    Dict.toList barter.playerItems
+
+                vendorTradedPlayerItems : List ( Item.Id, Int )
+                vendorTradedPlayerItems =
+                    Dict.toList barter.vendorPlayerItems
+
+                vendorTradedStockItems : List ( Item.Kind, Int )
+                vendorTradedStockItems =
+                    Dict_.toList barter.vendorStockItems
+
+                resetBtn : Html FrontendMsg
+                resetBtn =
+                    H.button
+                        [ HA.id "town-store-reset-btn"
+                        , HE.onClick <| BarterMsg ResetBarter
+                        ]
+                        [ H.text "[Reset]" ]
+
+                confirmBtn : Html FrontendMsg
+                confirmBtn =
+                    H.button
+                        [ HA.id "town-store-confirm-btn"
+                        , HE.onClick <| BarterMsg ConfirmBarter
+                        ]
+                        [ H.text "[Confirm]" ]
+
+                capsView :
+                    { class : String
+                    , transfer : Int -> FrontendMsg
+                    , arrowsDirection : BarterArrowsDirection
+                    }
+                    -> Int
+                    -> Html FrontendMsg
+                capsView { class, transfer, arrowsDirection } caps =
+                    let
+                        capsString : String
+                        capsString =
+                            String.fromInt caps
+
+                        transferOneView =
+                            H.button
+                                [ HE.onClick <| transfer 1
+                                , HA.disabled <| caps <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "‹"
+
+                                        BarterArrowRight ->
+                                            "›"
+                                ]
+
+                        transferAllView =
+                            H.button
+                                [ HE.onClick <| transfer caps
+                                , HA.disabled <| caps <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "«"
+
+                                        BarterArrowRight ->
+                                            "»"
+                                ]
+
+                        itemView =
+                            H.span
+                                [ HA.class "town-store-item-label" ]
+                                [ H.text <| "Caps: $" ++ capsString ]
+                    in
+                    H.div
+                        [ HA.class <| "town-store-item town-store-caps " ++ class
+                        , HA.attribute "data-caps" capsString
+                        ]
+                    <|
+                        case arrowsDirection of
+                            BarterArrowLeft ->
+                                [ transferAllView
+                                , transferOneView
+                                , itemView
+                                ]
+
+                            BarterArrowRight ->
+                                [ itemView
+                                , transferOneView
+                                , transferAllView
+                                ]
+
+                playerItemView :
+                    { items : Dict Item.Id Item
+                    , class : String
+                    , transfer : Item.Id -> Int -> FrontendMsg
+                    , arrowsDirection : BarterArrowsDirection
+                    }
+                    -> ( Item.Id, Int )
+                    -> Html FrontendMsg
+                playerItemView { items, class, transfer, arrowsDirection } ( id, count ) =
+                    let
+                        itemName =
+                            case Dict.get id items of
+                                Nothing ->
+                                    "<BUG>"
+
+                                Just item ->
+                                    Item.name item.kind
+
+                        transferOneView =
+                            H.button
+                                [ HE.onClick <| transfer id 1
+                                , HA.disabled <| count <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "‹"
+
+                                        BarterArrowRight ->
+                                            "›"
+                                ]
+
+                        transferAllView =
+                            H.button
+                                [ HE.onClick <| transfer id count
+                                , HA.disabled <| count <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "«"
+
+                                        BarterArrowRight ->
+                                            "»"
+                                ]
+
+                        itemView =
+                            H.span
+                                [ HA.class "town-store-item-label" ]
+                                [ H.text <| String.fromInt count ++ "x " ++ itemName ]
+                    in
+                    H.div [ HA.class <| "town-store-item " ++ class ] <|
+                        case arrowsDirection of
+                            BarterArrowLeft ->
+                                [ transferAllView
+                                , transferOneView
+                                , itemView
+                                ]
+
+                            BarterArrowRight ->
+                                [ itemView
+                                , transferOneView
+                                , transferAllView
+                                ]
+
+                stockItemView :
+                    { items : Dict_.Dict Item.Kind Int
+                    , class : String
+                    , transfer : Item.Kind -> Int -> FrontendMsg
+                    , arrowsDirection : BarterArrowsDirection
+                    }
+                    -> ( Item.Kind, Int )
+                    -> Html FrontendMsg
+                stockItemView { items, class, transfer, arrowsDirection } ( kind, count ) =
+                    let
+                        transferOneView =
+                            H.button
+                                [ HE.onClick <| transfer kind 1
+                                , HA.disabled <| count <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "‹"
+
+                                        BarterArrowRight ->
+                                            "›"
+                                ]
+
+                        transferAllView =
+                            H.button
+                                [ HE.onClick <| transfer kind count
+                                , HA.disabled <| count <= 0
+                                , HA.class "town-store-transfer-btn"
+                                ]
+                                [ H.text <|
+                                    case arrowsDirection of
+                                        BarterArrowLeft ->
+                                            "«"
+
+                                        BarterArrowRight ->
+                                            "»"
+                                ]
+
+                        itemView =
+                            H.span
+                                [ HA.class "town-store-item-label" ]
+                                [ H.text <| String.fromInt count ++ "x " ++ Item.name kind ]
+                    in
+                    H.div [ HA.class <| "town-store-item " ++ class ] <|
+                        case arrowsDirection of
+                            BarterArrowLeft ->
+                                [ transferAllView
+                                , transferOneView
+                                , itemView
+                                ]
+
+                            BarterArrowRight ->
+                                [ itemView
+                                , transferOneView
+                                , transferAllView
+                                ]
+
+                playerNameView : Html FrontendMsg
+                playerNameView =
+                    H.div
+                        [ HA.id "town-store-player-name" ]
+                        [ H.text <| "Player: " ++ player.name ]
+
+                vendorNameView : Html FrontendMsg
+                vendorNameView =
+                    H.div
+                        [ HA.id "town-store-vendor-name" ]
+                        [ H.text "Vendor" ]
+
+                playerTradedValueView : Html FrontendMsg
+                playerTradedValueView =
+                    H.div
+                        [ HA.id "town-store-player-traded-value" ]
+                        [ H.text <| "Value: $" ++ String.fromInt playerTradedValue ]
+
+                vendorTradedValueView : Html FrontendMsg
+                vendorTradedValueView =
+                    H.div
+                        [ HA.id "town-store-vendor-traded-value" ]
+                        [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
+
+                playerKeptItemsView : List (Html FrontendMsg)
+                playerKeptItemsView =
+                    List.map
+                        (playerItemView
+                            { items = player.items
+                            , class = "player-kept-item"
+                            , arrowsDirection = BarterArrowRight
+                            , transfer = \id count -> BarterMsg <| AddPlayerItem id count
                             }
-                    )
-                |> List.sum
+                        )
+                        playerKeptItems
 
-        vendorTradedValue : Int
-        vendorTradedValue =
-            barter.vendorCaps + vendorTradedPlayerValue + vendorTradedStockValue
+                playerTradedItemsView : List (Html FrontendMsg)
+                playerTradedItemsView =
+                    List.map
+                        (playerItemView
+                            { items = player.items
+                            , class = "player-traded-item"
+                            , arrowsDirection = BarterArrowLeft
+                            , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
+                            }
+                        )
+                        playerTradedItems
 
-        playerKeptItems : List ( Item.Id, Int )
-        playerKeptItems =
-            player.items
-                |> Dict.filterMap
-                    (\itemId item ->
-                        case Dict.get itemId barter.playerItems of
-                            Nothing ->
-                                -- player is not trading this item at all
-                                Just item.count
+                vendorKeptPlayerItemsView : List (Html FrontendMsg)
+                vendorKeptPlayerItemsView =
+                    List.map
+                        (playerItemView
+                            { items = vendor.playerItems
+                            , class = "vendor-kept-item"
+                            , arrowsDirection = BarterArrowLeft
+                            , transfer = \id count -> BarterMsg <| AddVendorPlayerItem id count
+                            }
+                        )
+                        vendorKeptPlayerItems
 
-                            Just tradedCount ->
-                                if tradedCount >= item.count then
-                                    -- player is trading it all!
-                                    Nothing
+                vendorTradedPlayerItemsView : List (Html FrontendMsg)
+                vendorTradedPlayerItemsView =
+                    List.map
+                        (playerItemView
+                            { items = vendor.playerItems
+                            , class = "vendor-traded-item"
+                            , arrowsDirection = BarterArrowRight
+                            , transfer = \id count -> BarterMsg <| RemoveVendorPlayerItem id count
+                            }
+                        )
+                        vendorTradedPlayerItems
 
-                                else
-                                    -- what amount does player have left in the inventory
-                                    Just <| item.count - tradedCount
-                    )
-                |> Dict.toList
+                vendorKeptStockItemsView : List (Html FrontendMsg)
+                vendorKeptStockItemsView =
+                    List.map
+                        (stockItemView
+                            { items = vendor.stockItems
+                            , class = "vendor-kept-item"
+                            , arrowsDirection = BarterArrowLeft
+                            , transfer = \kind count -> BarterMsg <| AddVendorStockItem kind count
+                            }
+                        )
+                        vendorKeptStockItems
 
-        vendorKeptPlayerItems : List ( Item.Id, Int )
-        vendorKeptPlayerItems =
-            vendor.playerItems
-                |> Dict.filterMap
-                    (\itemId item ->
-                        case Dict.get itemId barter.vendorPlayerItems of
-                            Nothing ->
-                                -- vendor is not trading this item at all
-                                Just item.count
+                vendorTradedStockItemsView : List (Html FrontendMsg)
+                vendorTradedStockItemsView =
+                    List.map
+                        (stockItemView
+                            { items = vendor.stockItems
+                            , class = "vendor-traded-item"
+                            , arrowsDirection = BarterArrowRight
+                            , transfer = \kind count -> BarterMsg <| RemoveVendorStockItem kind count
+                            }
+                        )
+                        vendorTradedStockItems
 
-                            Just tradedCount ->
-                                if tradedCount >= item.count then
-                                    -- vendor is trading it all!
-                                    Nothing
+                playerTradedBackgroundView : Html FrontendMsg
+                playerTradedBackgroundView =
+                    H.div [ HA.id "town-store-grid-player-traded-bg" ] []
 
-                                else
-                                    -- what amount does vendor have left in the inventory
-                                    Just <| item.count - tradedCount
-                    )
-                |> Dict.toList
+                vendorTradedBackgroundView : Html FrontendMsg
+                vendorTradedBackgroundView =
+                    H.div [ HA.id "town-store-grid-vendor-traded-bg" ] []
 
-        vendorKeptStockItems : List ( Item.Kind, Int )
-        vendorKeptStockItems =
-            vendor.stockItems
-                |> Dict_.filterMap
-                    (\itemKind count ->
-                        case Dict_.get itemKind barter.vendorStockItems of
-                            Nothing ->
-                                -- vendor is not trading this item at all
-                                Just count
+                playerKeptCapsView : Html FrontendMsg
+                playerKeptCapsView =
+                    capsView
+                        { class = "player-kept-caps"
+                        , transfer = BarterMsg << AddPlayerCaps
+                        , arrowsDirection = BarterArrowRight
+                        }
+                        playerKeptCaps
 
-                            Just tradedCount ->
-                                if tradedCount >= count then
-                                    -- vendor is trading it all!
-                                    Nothing
+                playerTradedCapsView : Html FrontendMsg
+                playerTradedCapsView =
+                    capsView
+                        { class = "player-traded-caps"
+                        , transfer = BarterMsg << RemovePlayerCaps
+                        , arrowsDirection = BarterArrowLeft
+                        }
+                        playerTradedCaps
 
-                                else
-                                    -- what amount does vendor have left in the inventory
-                                    Just <| count - tradedCount
-                    )
-                |> Dict_.toList
+                vendorKeptCapsView : Html FrontendMsg
+                vendorKeptCapsView =
+                    capsView
+                        { class = "vendor-kept-caps"
+                        , transfer = BarterMsg << AddVendorCaps
+                        , arrowsDirection = BarterArrowLeft
+                        }
+                        vendorKeptCaps
 
-        playerTradedItems : List ( Item.Id, Int )
-        playerTradedItems =
-            Dict.toList barter.playerItems
+                vendorTradedCapsView : Html FrontendMsg
+                vendorTradedCapsView =
+                    capsView
+                        { class = "vendor-traded-caps"
+                        , transfer = BarterMsg << RemoveVendorCaps
+                        , arrowsDirection = BarterArrowRight
+                        }
+                        vendorTradedCaps
 
-        vendorTradedPlayerItems : List ( Item.Id, Int )
-        vendorTradedPlayerItems =
-            Dict.toList barter.vendorPlayerItems
-
-        vendorTradedStockItems : List ( Item.Kind, Int )
-        vendorTradedStockItems =
-            Dict_.toList barter.vendorStockItems
-
-        resetBtn : Html FrontendMsg
-        resetBtn =
-            H.button
-                [ HA.id "town-store-reset-btn"
-                , HE.onClick <| BarterMsg ResetBarter
-                ]
-                [ H.text "[Reset]" ]
-
-        confirmBtn : Html FrontendMsg
-        confirmBtn =
-            H.button
-                [ HA.id "town-store-confirm-btn"
-                , HE.onClick <| BarterMsg ConfirmBarter
-                ]
-                [ H.text "[Confirm]" ]
-
-        capsView :
-            { class : String
-            , transfer : Int -> FrontendMsg
-            , arrowsDirection : BarterArrowsDirection
-            }
-            -> Int
-            -> Html FrontendMsg
-        capsView { class, transfer, arrowsDirection } caps =
-            let
-                capsString : String
-                capsString =
-                    String.fromInt caps
-
-                transferOneView =
-                    H.button
-                        [ HE.onClick <| transfer 1
-                        , HA.disabled <| caps <= 0
-                        , HA.class "town-store-transfer-btn"
+                gridContents : List (Html FrontendMsg)
+                gridContents =
+                    List.concat
+                        [ [ playerTradedBackgroundView
+                          , vendorTradedBackgroundView
+                          , resetBtn
+                          , confirmBtn
+                          , playerNameView
+                          , vendorNameView
+                          , playerKeptCapsView
+                          , vendorKeptCapsView
+                          , playerTradedCapsView
+                          , vendorTradedCapsView
+                          , playerTradedValueView
+                          , vendorTradedValueView
+                          ]
+                        , playerKeptItemsView
+                        , playerTradedItemsView
+                        , vendorKeptPlayerItemsView
+                        , vendorTradedPlayerItemsView
+                        , vendorKeptStockItemsView
+                        , vendorTradedStockItemsView
                         ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "‹"
-
-                                BarterArrowRight ->
-                                    "›"
-                        ]
-
-                transferAllView =
-                    H.button
-                        [ HE.onClick <| transfer caps
-                        , HA.disabled <| caps <= 0
-                        , HA.class "town-store-transfer-btn"
-                        ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "«"
-
-                                BarterArrowRight ->
-                                    "»"
-                        ]
-
-                itemView =
-                    H.span
-                        [ HA.class "town-store-item-label" ]
-                        [ H.text <| "Caps: $" ++ capsString ]
             in
-            H.div
-                [ HA.class <| "town-store-item town-store-caps " ++ class
-                , HA.attribute "data-caps" capsString
-                ]
-            <|
-                case arrowsDirection of
-                    BarterArrowLeft ->
-                        [ transferAllView
-                        , transferOneView
-                        , itemView
-                        ]
-
-                    BarterArrowRight ->
-                        [ itemView
-                        , transferOneView
-                        , transferAllView
-                        ]
-
-        playerItemView :
-            { items : Dict Item.Id Item
-            , class : String
-            , transfer : Item.Id -> Int -> FrontendMsg
-            , arrowsDirection : BarterArrowsDirection
-            }
-            -> ( Item.Id, Int )
-            -> Html FrontendMsg
-        playerItemView { items, class, transfer, arrowsDirection } ( id, count ) =
-            let
-                itemName =
-                    case Dict.get id items of
-                        Nothing ->
-                            "<BUG>"
-
-                        Just item ->
-                            Item.name item.kind
-
-                transferOneView =
-                    H.button
-                        [ HE.onClick <| transfer id 1
-                        , HA.disabled <| count <= 0
-                        , HA.class "town-store-transfer-btn"
-                        ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "‹"
-
-                                BarterArrowRight ->
-                                    "›"
-                        ]
-
-                transferAllView =
-                    H.button
-                        [ HE.onClick <| transfer id count
-                        , HA.disabled <| count <= 0
-                        , HA.class "town-store-transfer-btn"
-                        ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "«"
-
-                                BarterArrowRight ->
-                                    "»"
-                        ]
-
-                itemView =
-                    H.span
-                        [ HA.class "town-store-item-label" ]
-                        [ H.text <| String.fromInt count ++ "x " ++ itemName ]
-            in
-            H.div [ HA.class <| "town-store-item " ++ class ] <|
-                case arrowsDirection of
-                    BarterArrowLeft ->
-                        [ transferAllView
-                        , transferOneView
-                        , itemView
-                        ]
-
-                    BarterArrowRight ->
-                        [ itemView
-                        , transferOneView
-                        , transferAllView
-                        ]
-
-        stockItemView :
-            { items : Dict_.Dict Item.Kind Int
-            , class : String
-            , transfer : Item.Kind -> Int -> FrontendMsg
-            , arrowsDirection : BarterArrowsDirection
-            }
-            -> ( Item.Kind, Int )
-            -> Html FrontendMsg
-        stockItemView { items, class, transfer, arrowsDirection } ( kind, count ) =
-            let
-                transferOneView =
-                    H.button
-                        [ HE.onClick <| transfer kind 1
-                        , HA.disabled <| count <= 0
-                        , HA.class "town-store-transfer-btn"
-                        ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "‹"
-
-                                BarterArrowRight ->
-                                    "›"
-                        ]
-
-                transferAllView =
-                    H.button
-                        [ HE.onClick <| transfer kind count
-                        , HA.disabled <| count <= 0
-                        , HA.class "town-store-transfer-btn"
-                        ]
-                        [ H.text <|
-                            case arrowsDirection of
-                                BarterArrowLeft ->
-                                    "«"
-
-                                BarterArrowRight ->
-                                    "»"
-                        ]
-
-                itemView =
-                    H.span
-                        [ HA.class "town-store-item-label" ]
-                        [ H.text <| String.fromInt count ++ "x " ++ Item.name kind ]
-            in
-            H.div [ HA.class <| "town-store-item " ++ class ] <|
-                case arrowsDirection of
-                    BarterArrowLeft ->
-                        [ transferAllView
-                        , transferOneView
-                        , itemView
-                        ]
-
-                    BarterArrowRight ->
-                        [ itemView
-                        , transferOneView
-                        , transferAllView
-                        ]
-
-        playerNameView : Html FrontendMsg
-        playerNameView =
-            H.div
-                [ HA.id "town-store-player-name" ]
-                [ H.text <| "Player: " ++ player.name ]
-
-        vendorNameView : Html FrontendMsg
-        vendorNameView =
-            H.div
-                [ HA.id "town-store-vendor-name" ]
-                [ H.text "Vendor" ]
-
-        playerTradedValueView : Html FrontendMsg
-        playerTradedValueView =
-            H.div
-                [ HA.id "town-store-player-traded-value" ]
-                [ H.text <| "Value: $" ++ String.fromInt playerTradedValue ]
-
-        vendorTradedValueView : Html FrontendMsg
-        vendorTradedValueView =
-            H.div
-                [ HA.id "town-store-vendor-traded-value" ]
-                [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
-
-        playerKeptItemsView : List (Html FrontendMsg)
-        playerKeptItemsView =
-            List.map
-                (playerItemView
-                    { items = player.items
-                    , class = "player-kept-item"
-                    , arrowsDirection = BarterArrowRight
-                    , transfer = \id count -> BarterMsg <| AddPlayerItem id count
-                    }
+            [ pageTitleView <| "Store: " ++ Location.name location
+            , H.button
+                [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]
+                [ H.text "[Back]" ]
+            , H.div [ HA.id "town-store-grid" ] gridContents
+            , H.viewMaybe
+                (\problem ->
+                    H.div
+                        [ HA.id "town-store-barter-problem" ]
+                        [ H.text <| Barter.problemText problem ]
                 )
-                playerKeptItems
-
-        playerTradedItemsView : List (Html FrontendMsg)
-        playerTradedItemsView =
-            List.map
-                (playerItemView
-                    { items = player.items
-                    , class = "player-traded-item"
-                    , arrowsDirection = BarterArrowLeft
-                    , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
-                    }
-                )
-                playerTradedItems
-
-        vendorKeptPlayerItemsView : List (Html FrontendMsg)
-        vendorKeptPlayerItemsView =
-            List.map
-                (playerItemView
-                    { items = vendor.playerItems
-                    , class = "vendor-kept-item"
-                    , arrowsDirection = BarterArrowLeft
-                    , transfer = \id count -> BarterMsg <| AddVendorPlayerItem id count
-                    }
-                )
-                vendorKeptPlayerItems
-
-        vendorTradedPlayerItemsView : List (Html FrontendMsg)
-        vendorTradedPlayerItemsView =
-            List.map
-                (playerItemView
-                    { items = vendor.playerItems
-                    , class = "vendor-traded-item"
-                    , arrowsDirection = BarterArrowRight
-                    , transfer = \id count -> BarterMsg <| RemoveVendorPlayerItem id count
-                    }
-                )
-                vendorTradedPlayerItems
-
-        vendorKeptStockItemsView : List (Html FrontendMsg)
-        vendorKeptStockItemsView =
-            List.map
-                (stockItemView
-                    { items = vendor.stockItems
-                    , class = "vendor-kept-item"
-                    , arrowsDirection = BarterArrowLeft
-                    , transfer = \kind count -> BarterMsg <| AddVendorStockItem kind count
-                    }
-                )
-                vendorKeptStockItems
-
-        vendorTradedStockItemsView : List (Html FrontendMsg)
-        vendorTradedStockItemsView =
-            List.map
-                (stockItemView
-                    { items = vendor.stockItems
-                    , class = "vendor-traded-item"
-                    , arrowsDirection = BarterArrowRight
-                    , transfer = \kind count -> BarterMsg <| RemoveVendorStockItem kind count
-                    }
-                )
-                vendorTradedStockItems
-
-        playerTradedBackgroundView : Html FrontendMsg
-        playerTradedBackgroundView =
-            H.div [ HA.id "town-store-grid-player-traded-bg" ] []
-
-        vendorTradedBackgroundView : Html FrontendMsg
-        vendorTradedBackgroundView =
-            H.div [ HA.id "town-store-grid-vendor-traded-bg" ] []
-
-        playerKeptCapsView : Html FrontendMsg
-        playerKeptCapsView =
-            capsView
-                { class = "player-kept-caps"
-                , transfer = BarterMsg << AddPlayerCaps
-                , arrowsDirection = BarterArrowRight
-                }
-                playerKeptCaps
-
-        playerTradedCapsView : Html FrontendMsg
-        playerTradedCapsView =
-            capsView
-                { class = "player-traded-caps"
-                , transfer = BarterMsg << RemovePlayerCaps
-                , arrowsDirection = BarterArrowLeft
-                }
-                playerTradedCaps
-
-        vendorKeptCapsView : Html FrontendMsg
-        vendorKeptCapsView =
-            capsView
-                { class = "vendor-kept-caps"
-                , transfer = BarterMsg << AddVendorCaps
-                , arrowsDirection = BarterArrowLeft
-                }
-                vendorKeptCaps
-
-        vendorTradedCapsView : Html FrontendMsg
-        vendorTradedCapsView =
-            capsView
-                { class = "vendor-traded-caps"
-                , transfer = BarterMsg << RemoveVendorCaps
-                , arrowsDirection = BarterArrowRight
-                }
-                vendorTradedCaps
-
-        gridContents : List (Html FrontendMsg)
-        gridContents =
-            List.concat
-                [ [ playerTradedBackgroundView
-                  , vendorTradedBackgroundView
-                  , resetBtn
-                  , confirmBtn
-                  , playerNameView
-                  , vendorNameView
-                  , playerKeptCapsView
-                  , vendorKeptCapsView
-                  , playerTradedCapsView
-                  , vendorTradedCapsView
-                  , playerTradedValueView
-                  , vendorTradedValueView
-                  ]
-                , playerKeptItemsView
-                , playerTradedItemsView
-                , vendorKeptPlayerItemsView
-                , vendorTradedPlayerItemsView
-                , vendorKeptStockItemsView
-                , vendorTradedStockItemsView
-                ]
-    in
-    [ pageTitleView <| "Store: " ++ Location.name location
-    , H.button
-        [ HE.onClick (GoToRoute (Route.Town Route.MainSquare)) ]
-        [ H.text "[Back]" ]
-    , H.div [ HA.id "town-store-grid" ] gridContents
-    ]
+                barter.lastProblem
+            ]
 
 
 settingsView : List (Html FrontendMsg)
@@ -2025,9 +2044,14 @@ contentUnavailableToLoggedOutView =
     contentUnavailableView "you're not logged in"
 
 
-contentUnavailableWhenNotInTown : List (Html FrontendMsg)
-contentUnavailableWhenNotInTown =
+contentUnavailableWhenNotInTownView : List (Html FrontendMsg)
+contentUnavailableWhenNotInTownView =
     contentUnavailableView "you're not in a town or another location"
+
+
+contentUnavailableWhenNoVendorView : List (Html FrontendMsg)
+contentUnavailableWhenNoVendorView =
+    contentUnavailableView "you're not in a town that has a vendor"
 
 
 contentUnavailableToNonAdminView : List (Html FrontendMsg)

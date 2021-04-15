@@ -44,6 +44,7 @@ backendModelDecoderV1 =
             , adminLoggedIn = Nothing
             , time = Time.millisToPosix 0
             , vendors = Vendor.emptyVendors
+            , lastItemId = 0
             }
         )
         (JD.field "players"
@@ -63,12 +64,35 @@ backendModelDecoderV2 : Decoder BackendModel
 backendModelDecoderV2 =
     JD.map3
         (\players nextWantedTick vendors ->
+            let
+                lastPlayersItemId : Int
+                lastPlayersItemId =
+                    players
+                        |> Dict.values
+                        |> List.filterMap Player.getPlayerData
+                        |> List.concatMap (.items >> Dict.keys)
+                        |> List.maximum
+                        |> Maybe.withDefault 0
+
+                lastVendorsItemId : Int
+                lastVendorsItemId =
+                    vendors
+                        |> Vendor.listVendors
+                        |> List.concatMap (.playerItems >> Dict.keys)
+                        |> List.maximum
+                        |> Maybe.withDefault 0
+
+                lastItemId : Int
+                lastItemId =
+                    max lastPlayersItemId lastVendorsItemId
+            in
             { players = players
             , loggedInPlayers = Dict.empty
             , nextWantedTick = nextWantedTick
             , adminLoggedIn = Nothing
             , time = Time.millisToPosix 0
             , vendors = vendors
+            , lastItemId = lastItemId
             }
         )
         (JD.field "players"

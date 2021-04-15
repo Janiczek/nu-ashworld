@@ -13,7 +13,6 @@ module Frontend.Route exposing
 import Data.Barter as Barter
 import Data.Fight exposing (FightInfo)
 import Data.Message exposing (Message)
-import Data.Vendor exposing (Vendor)
 
 
 type Route
@@ -33,10 +32,7 @@ type Route
 
 type TownRoute
     = MainSquare
-    | Store
-        { vendor : Vendor
-        , barter : Barter.State
-        }
+    | Store { barter : Barter.State }
 
 
 type AdminRoute

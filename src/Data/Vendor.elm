@@ -5,6 +5,7 @@ module Data.Vendor exposing
     , addPlayerItem
     , emptyVendors
     , encodeVendors
+    , listVendors
     , removePlayerItem
     , removeStockItem
     , restockVendors
@@ -37,6 +38,13 @@ type alias Vendor =
 type alias Vendors =
     { klamath : Vendor
     }
+
+
+listVendors : Vendors -> List Vendor
+listVendors vendors =
+    -- TODO perhaps this would be better as a dict really...
+    [ vendors.klamath
+    ]
 
 
 type alias VendorSpec =
