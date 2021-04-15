@@ -361,6 +361,15 @@ updateBarter msg model =
             RemoveVendorCaps amount ->
                 mapBarter (Barter.removeVendorCaps amount) model
 
+            SetTransferNInput position string ->
+                mapBarter (Barter.setTransferNInput position string) model
+
+            SetTransferNHover position ->
+                mapBarter (Barter.setTransferNHover position) model
+
+            UnsetTransferNHover ->
+                mapBarter Barter.unsetTransferNHover model
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -992,11 +1001,6 @@ townMainSquareView location { vendors } player =
     ]
 
 
-type BarterArrowsDirection
-    = BarterArrowLeft
-    | BarterArrowRight
-
-
 townStoreView :
     Barter.State
     -> Location
@@ -1131,45 +1135,90 @@ townStoreView barter location world player =
                 capsView :
                     { class : String
                     , transfer : Int -> FrontendMsg
-                    , arrowsDirection : BarterArrowsDirection
+                    , transferNPosition : Barter.TransferNPosition
                     }
                     -> Int
                     -> Html FrontendMsg
-                capsView { class, transfer, arrowsDirection } caps =
+                capsView { class, transfer, transferNPosition } caps =
                     let
                         capsString : String
                         capsString =
                             String.fromInt caps
 
+                        arrowsDirection : Barter.ArrowsDirection
+                        arrowsDirection =
+                            Barter.arrowsDirection transferNPosition
+
+                        transferNValue : String
+                        transferNValue =
+                            Dict_.get transferNPosition barter.transferNInputs
+                                |> Maybe.withDefault Barter.defaultTransferN
+
+                        isNHovered : Bool
+                        isNHovered =
+                            barter.transferNHover == Just transferNPosition
+
+                        transferNView =
+                            H.div
+                                [ HA.class "town-store-transfer-n-area"
+                                , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
+                                , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
+                                ]
+                                [ H.button
+                                    [ HA.class "town-store-transfer-btn before-hover"
+                                    , HA.disabled <| caps <= 0
+                                    , HA.title "Transfer N items"
+                                    ]
+                                    [ H.text "N" ]
+                                , H.input
+                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                    , HA.value transferNValue
+                                    , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
+                                    , HA.title "Transfer N items"
+                                    ]
+                                    []
+                                , case String.toInt transferNValue of
+                                    Nothing ->
+                                        H.button
+                                            [ HA.disabled True
+                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.title "Transfer N items"
+                                            ]
+                                            [ H.text "OK" ]
+
+                                    Just n ->
+                                        H.button
+                                            [ HE.onClick <| transfer n
+                                            , HA.disabled <| n <= 0 || n > caps
+                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.title "Transfer N items"
+                                            ]
+                                            [ H.text "OK" ]
+                                ]
+
                         transferOneView =
                             H.button
                                 [ HE.onClick <| transfer 1
                                 , HA.disabled <| caps <= 0
-                                , HA.class "town-store-transfer-btn"
+                                , HA.classList
+                                    [ ( "town-store-transfer-btn", True )
+                                    , ( "hidden", isNHovered )
+                                    ]
+                                , HA.title "Transfer 1 item"
                                 ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "‹"
-
-                                        BarterArrowRight ->
-                                            "›"
-                                ]
+                                [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
                             H.button
                                 [ HE.onClick <| transfer caps
                                 , HA.disabled <| caps <= 0
-                                , HA.class "town-store-transfer-btn"
+                                , HA.classList
+                                    [ ( "town-store-transfer-btn", True )
+                                    , ( "hidden", isNHovered )
+                                    ]
+                                , HA.title "Transfer all items"
                                 ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "«"
-
-                                        BarterArrowRight ->
-                                            "»"
-                                ]
+                                [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
@@ -1182,15 +1231,17 @@ townStoreView barter location world player =
                         ]
                     <|
                         case arrowsDirection of
-                            BarterArrowLeft ->
+                            Barter.ArrowLeft ->
                                 [ transferAllView
+                                , transferNView
                                 , transferOneView
                                 , itemView
                                 ]
 
-                            BarterArrowRight ->
+                            Barter.ArrowRight ->
                                 [ itemView
                                 , transferOneView
+                                , transferNView
                                 , transferAllView
                                 ]
 
@@ -1198,11 +1249,11 @@ townStoreView barter location world player =
                     { items : Dict Item.Id Item
                     , class : String
                     , transfer : Item.Id -> Int -> FrontendMsg
-                    , arrowsDirection : BarterArrowsDirection
+                    , transferNPosition : Item.Id -> Barter.TransferNPosition
                     }
                     -> ( Item.Id, Int )
                     -> Html FrontendMsg
-                playerItemView { items, class, transfer, arrowsDirection } ( id, count ) =
+                playerItemView { items, class, transfer, transferNPosition } ( id, count ) =
                     let
                         itemName =
                             case Dict.get id items of
@@ -1212,35 +1263,84 @@ townStoreView barter location world player =
                                 Just item ->
                                     Item.name item.kind
 
+                        position : Barter.TransferNPosition
+                        position =
+                            transferNPosition id
+
+                        arrowsDirection : Barter.ArrowsDirection
+                        arrowsDirection =
+                            Barter.arrowsDirection position
+
+                        transferNValue : String
+                        transferNValue =
+                            Dict_.get position barter.transferNInputs
+                                |> Maybe.withDefault Barter.defaultTransferN
+
+                        isNHovered : Bool
+                        isNHovered =
+                            barter.transferNHover == Just position
+
+                        transferNView =
+                            H.div
+                                [ HA.class "town-store-transfer-n-area"
+                                , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
+                                , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
+                                ]
+                                [ H.button
+                                    [ HA.class "town-store-transfer-btn before-hover"
+                                    , HA.disabled <| count <= 0
+                                    , HA.title "Transfer N items"
+                                    ]
+                                    [ H.text "N" ]
+                                , H.input
+                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                    , HA.value transferNValue
+                                    , HE.onInput <| BarterMsg << SetTransferNInput position
+                                    , HA.title "Transfer N items"
+                                    ]
+                                    []
+                                , case String.toInt transferNValue of
+                                    Nothing ->
+                                        H.button
+                                            [ HA.disabled True
+                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.title "Transfer N items"
+                                            ]
+                                            [ H.text "OK" ]
+
+                                    Just n ->
+                                        H.button
+                                            [ HE.onClick <| transfer id n
+                                            , HA.disabled <| n <= 0 || n > count
+                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.title "Transfer N items"
+                                            ]
+                                            [ H.text "OK" ]
+                                ]
+
                         transferOneView =
                             H.button
                                 [ HE.onClick <| transfer id 1
                                 , HA.disabled <| count <= 0
-                                , HA.class "town-store-transfer-btn"
+                                , HA.classList
+                                    [ ( "town-store-transfer-btn", True )
+                                    , ( "hidden", isNHovered )
+                                    ]
+                                , HA.title "Transfer 1 item"
                                 ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "‹"
-
-                                        BarterArrowRight ->
-                                            "›"
-                                ]
+                                [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
                             H.button
                                 [ HE.onClick <| transfer id count
                                 , HA.disabled <| count <= 0
-                                , HA.class "town-store-transfer-btn"
+                                , HA.classList
+                                    [ ( "town-store-transfer-btn", True )
+                                    , ( "hidden", isNHovered )
+                                    ]
+                                , HA.title "Transfer all items"
                                 ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "«"
-
-                                        BarterArrowRight ->
-                                            "»"
-                                ]
+                                [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
@@ -1249,74 +1349,17 @@ townStoreView barter location world player =
                     in
                     H.div [ HA.class <| "town-store-item " ++ class ] <|
                         case arrowsDirection of
-                            BarterArrowLeft ->
+                            Barter.ArrowLeft ->
                                 [ transferAllView
+                                , transferNView
                                 , transferOneView
                                 , itemView
                                 ]
 
-                            BarterArrowRight ->
+                            Barter.ArrowRight ->
                                 [ itemView
                                 , transferOneView
-                                , transferAllView
-                                ]
-
-                stockItemView :
-                    { items : Dict_.Dict Item.Kind Int
-                    , class : String
-                    , transfer : Item.Kind -> Int -> FrontendMsg
-                    , arrowsDirection : BarterArrowsDirection
-                    }
-                    -> ( Item.Kind, Int )
-                    -> Html FrontendMsg
-                stockItemView { items, class, transfer, arrowsDirection } ( kind, count ) =
-                    let
-                        transferOneView =
-                            H.button
-                                [ HE.onClick <| transfer kind 1
-                                , HA.disabled <| count <= 0
-                                , HA.class "town-store-transfer-btn"
-                                ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "‹"
-
-                                        BarterArrowRight ->
-                                            "›"
-                                ]
-
-                        transferAllView =
-                            H.button
-                                [ HE.onClick <| transfer kind count
-                                , HA.disabled <| count <= 0
-                                , HA.class "town-store-transfer-btn"
-                                ]
-                                [ H.text <|
-                                    case arrowsDirection of
-                                        BarterArrowLeft ->
-                                            "«"
-
-                                        BarterArrowRight ->
-                                            "»"
-                                ]
-
-                        itemView =
-                            H.span
-                                [ HA.class "town-store-item-label" ]
-                                [ H.text <| String.fromInt count ++ "x " ++ Item.name kind ]
-                    in
-                    H.div [ HA.class <| "town-store-item " ++ class ] <|
-                        case arrowsDirection of
-                            BarterArrowLeft ->
-                                [ transferAllView
-                                , transferOneView
-                                , itemView
-                                ]
-
-                            BarterArrowRight ->
-                                [ itemView
-                                , transferOneView
+                                , transferNView
                                 , transferAllView
                                 ]
 
@@ -1351,8 +1394,8 @@ townStoreView barter location world player =
                             (playerItemView
                                 { items = player.items
                                 , class = "player-kept-item"
-                                , arrowsDirection = BarterArrowRight
                                 , transfer = \id count -> BarterMsg <| AddPlayerItem id count
+                                , transferNPosition = Barter.PlayerKeptItem
                                 }
                             )
                             playerKeptItems
@@ -1365,8 +1408,8 @@ townStoreView barter location world player =
                             (playerItemView
                                 { items = player.items
                                 , class = "player-traded-item"
-                                , arrowsDirection = BarterArrowLeft
                                 , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
+                                , transferNPosition = Barter.PlayerTradedItem
                                 }
                             )
                             playerTradedItems
@@ -1379,8 +1422,8 @@ townStoreView barter location world player =
                             (playerItemView
                                 { items = vendor.items
                                 , class = "vendor-kept-item"
-                                , arrowsDirection = BarterArrowLeft
                                 , transfer = \id count -> BarterMsg <| AddVendorItem id count
+                                , transferNPosition = Barter.VendorKeptItem
                                 }
                             )
                             vendorKeptItems
@@ -1393,8 +1436,8 @@ townStoreView barter location world player =
                             (playerItemView
                                 { items = vendor.items
                                 , class = "vendor-traded-item"
-                                , arrowsDirection = BarterArrowRight
                                 , transfer = \id count -> BarterMsg <| RemoveVendorItem id count
+                                , transferNPosition = Barter.VendorTradedItem
                                 }
                             )
                             vendorTradedItems
@@ -1405,7 +1448,7 @@ townStoreView barter location world player =
                     capsView
                         { class = "player-kept-caps"
                         , transfer = BarterMsg << AddPlayerCaps
-                        , arrowsDirection = BarterArrowRight
+                        , transferNPosition = Barter.PlayerKeptCaps
                         }
                         playerKeptCaps
 
@@ -1414,7 +1457,7 @@ townStoreView barter location world player =
                     capsView
                         { class = "player-traded-caps"
                         , transfer = BarterMsg << RemovePlayerCaps
-                        , arrowsDirection = BarterArrowLeft
+                        , transferNPosition = Barter.PlayerTradedCaps
                         }
                         playerTradedCaps
 
@@ -1423,7 +1466,7 @@ townStoreView barter location world player =
                     capsView
                         { class = "vendor-kept-caps"
                         , transfer = BarterMsg << AddVendorCaps
-                        , arrowsDirection = BarterArrowLeft
+                        , transferNPosition = Barter.VendorKeptCaps
                         }
                         vendorKeptCaps
 
@@ -1432,7 +1475,7 @@ townStoreView barter location world player =
                     capsView
                         { class = "vendor-traded-caps"
                         , transfer = BarterMsg << RemoveVendorCaps
-                        , arrowsDirection = BarterArrowRight
+                        , transferNPosition = Barter.VendorTradedCaps
                         }
                         vendorTradedCaps
 

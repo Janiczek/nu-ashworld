@@ -727,6 +727,9 @@ table tbody tr:hover td {
   background: var(--fg03);
   color: var(--fg01);
 }
+.town-store-transfer-btn.hidden {
+  display: none;
+}
 
 .town-store-item {
   display: flex;
@@ -785,4 +788,17 @@ table tbody tr:hover td {
 #town-store-barter-problem {
   margin-top: 40px;
   color: var(--fg-highlight);
+}
+
+.town-store-transfer-n-area {
+  display: flex;
+}
+.town-store-transfer-n-area       .after-hover  { display: none; }
+.town-store-transfer-n-area:hover .after-hover  { display: block; }
+.town-store-transfer-n-area       .before-hover { display: block; }
+.town-store-transfer-n-area:hover .before-hover { display: none; }
+.town-store-transfer-n-input {
+  width: 5.5ch;
+  background-color: var(--bg02);
+  padding-left: 6px;
 }

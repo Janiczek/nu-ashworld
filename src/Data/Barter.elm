@@ -1,11 +1,16 @@
 module Data.Barter exposing
-    ( Problem(..)
+    ( ArrowsDirection(..)
+    , Problem(..)
     , State
+    , TransferNPosition(..)
     , addPlayerCaps
     , addPlayerItem
     , addVendorCaps
     , addVendorItem
+    , arrowsDirection
+    , defaultTransferN
     , dismissProblem
+    , doubleArrow
     , empty
     , problemText
     , removePlayerCaps
@@ -13,6 +18,10 @@ module Data.Barter exposing
     , removeVendorCaps
     , removeVendorItem
     , setProblem
+    , setTransferNHover
+    , setTransferNInput
+    , singleArrow
+    , unsetTransferNHover
     )
 
 import AssocList as Dict_
@@ -25,12 +34,25 @@ type Problem
     | PlayerOfferNotValuableEnough
 
 
+type TransferNPosition
+    = PlayerKeptItem Item.Id
+    | VendorKeptItem Item.Id
+    | PlayerTradedItem Item.Id
+    | VendorTradedItem Item.Id
+    | PlayerKeptCaps
+    | VendorKeptCaps
+    | PlayerTradedCaps
+    | VendorTradedCaps
+
+
 type alias State =
     { playerItems : Dict Item.Id Int
     , vendorItems : Dict Item.Id Int
     , playerCaps : Int
     , vendorCaps : Int
     , lastProblem : Maybe Problem
+    , transferNInputs : Dict_.Dict TransferNPosition String
+    , transferNHover : Maybe TransferNPosition
     }
 
 
@@ -41,6 +63,8 @@ empty =
     , playerCaps = 0
     , vendorCaps = 0
     , lastProblem = Nothing
+    , transferNInputs = Dict_.empty
+    , transferNHover = Nothing
     }
 
 
@@ -166,3 +190,76 @@ problemText problem =
 
         PlayerOfferNotValuableEnough ->
             "You didn't offer enough value for what you request."
+
+
+defaultTransferN : String
+defaultTransferN =
+    "10"
+
+
+type ArrowsDirection
+    = ArrowLeft
+    | ArrowRight
+
+
+arrowsDirection : TransferNPosition -> ArrowsDirection
+arrowsDirection position =
+    case position of
+        PlayerKeptItem _ ->
+            ArrowRight
+
+        VendorKeptItem _ ->
+            ArrowLeft
+
+        PlayerTradedItem _ ->
+            ArrowLeft
+
+        VendorTradedItem _ ->
+            ArrowRight
+
+        PlayerKeptCaps ->
+            ArrowRight
+
+        VendorKeptCaps ->
+            ArrowLeft
+
+        PlayerTradedCaps ->
+            ArrowLeft
+
+        VendorTradedCaps ->
+            ArrowRight
+
+
+singleArrow : ArrowsDirection -> String
+singleArrow direction =
+    case direction of
+        ArrowLeft ->
+            "‹"
+
+        ArrowRight ->
+            "›"
+
+
+doubleArrow : ArrowsDirection -> String
+doubleArrow direction =
+    case direction of
+        ArrowLeft ->
+            "«"
+
+        ArrowRight ->
+            "»"
+
+
+setTransferNInput : TransferNPosition -> String -> State -> State
+setTransferNInput position string state =
+    { state | transferNInputs = Dict_.insert position string state.transferNInputs }
+
+
+setTransferNHover : TransferNPosition -> State -> State
+setTransferNHover position state =
+    { state | transferNHover = Just position }
+
+
+unsetTransferNHover : State -> State
+unsetTransferNHover state =
+    { state | transferNHover = Nothing }

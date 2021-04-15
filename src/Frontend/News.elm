@@ -27,7 +27,7 @@ one and only [Maida Buckner](https://fallout.fandom.com/wiki/Maida_Buckner).
 
 The stores will, in general, restock periodically each tick.
 
-Note that this feature makes use of the **Charisma skill**, since Charisma
+Note that this feature makes use of the **Charisma attribute**, since Charisma
 affects your Barter skill, and that affects the prices you'll be getting when
 trading with NPCs.
 

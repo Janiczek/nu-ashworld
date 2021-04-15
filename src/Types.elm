@@ -96,6 +96,9 @@ type BarterMsg
     | RemoveVendorCaps Int
     | ResetBarter
     | ConfirmBarter
+    | SetTransferNInput Barter.TransferNPosition String
+    | SetTransferNHover Barter.TransferNPosition
+    | UnsetTransferNHover
 
 
 type ToBackend
