@@ -42,7 +42,7 @@ basePrice kind =
     case kind of
         Stimpak ->
             -- TODO change this back to 175
-            50
+            1
 
 
 encode : Item -> JE.Value

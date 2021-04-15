@@ -1389,85 +1389,79 @@ townStoreView barter location world player =
                         [ HA.id "town-store-vendor-traded-value" ]
                         [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
 
-                playerKeptItemsView : List (Html FrontendMsg)
+                playerKeptItemsView : Html FrontendMsg
                 playerKeptItemsView =
-                    List.map
-                        (playerItemView
-                            { items = player.items
-                            , class = "player-kept-item"
-                            , arrowsDirection = BarterArrowRight
-                            , transfer = \id count -> BarterMsg <| AddPlayerItem id count
-                            }
+                    H.div [ HA.id "town-store-player-kept-items" ]
+                        (List.map
+                            (playerItemView
+                                { items = player.items
+                                , class = "player-kept-item"
+                                , arrowsDirection = BarterArrowRight
+                                , transfer = \id count -> BarterMsg <| AddPlayerItem id count
+                                }
+                            )
+                            playerKeptItems
                         )
-                        playerKeptItems
 
-                playerTradedItemsView : List (Html FrontendMsg)
+                playerTradedItemsView : Html FrontendMsg
                 playerTradedItemsView =
-                    List.map
-                        (playerItemView
-                            { items = player.items
-                            , class = "player-traded-item"
-                            , arrowsDirection = BarterArrowLeft
-                            , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
-                            }
+                    H.div [ HA.id "town-store-player-traded-items" ]
+                        (List.map
+                            (playerItemView
+                                { items = player.items
+                                , class = "player-traded-item"
+                                , arrowsDirection = BarterArrowLeft
+                                , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
+                                }
+                            )
+                            playerTradedItems
                         )
-                        playerTradedItems
 
-                vendorKeptPlayerItemsView : List (Html FrontendMsg)
-                vendorKeptPlayerItemsView =
-                    List.map
-                        (playerItemView
-                            { items = vendor.playerItems
-                            , class = "vendor-kept-item"
-                            , arrowsDirection = BarterArrowLeft
-                            , transfer = \id count -> BarterMsg <| AddVendorPlayerItem id count
-                            }
+                vendorKeptItemsView : Html FrontendMsg
+                vendorKeptItemsView =
+                    H.div [ HA.id "town-store-vendor-kept-items" ]
+                        (List.map
+                            (playerItemView
+                                { items = vendor.playerItems
+                                , class = "vendor-kept-item"
+                                , arrowsDirection = BarterArrowLeft
+                                , transfer = \id count -> BarterMsg <| AddVendorPlayerItem id count
+                                }
+                            )
+                            vendorKeptPlayerItems
+                            ++ List.map
+                                (stockItemView
+                                    { items = vendor.stockItems
+                                    , class = "vendor-kept-item"
+                                    , arrowsDirection = BarterArrowLeft
+                                    , transfer = \kind count -> BarterMsg <| AddVendorStockItem kind count
+                                    }
+                                )
+                                vendorKeptStockItems
                         )
-                        vendorKeptPlayerItems
 
-                vendorTradedPlayerItemsView : List (Html FrontendMsg)
-                vendorTradedPlayerItemsView =
-                    List.map
-                        (playerItemView
-                            { items = vendor.playerItems
-                            , class = "vendor-traded-item"
-                            , arrowsDirection = BarterArrowRight
-                            , transfer = \id count -> BarterMsg <| RemoveVendorPlayerItem id count
-                            }
+                vendorTradedItemsView : Html FrontendMsg
+                vendorTradedItemsView =
+                    H.div [ HA.id "town-store-vendor-traded-items" ]
+                        (List.map
+                            (playerItemView
+                                { items = vendor.playerItems
+                                , class = "vendor-traded-item"
+                                , arrowsDirection = BarterArrowRight
+                                , transfer = \id count -> BarterMsg <| RemoveVendorPlayerItem id count
+                                }
+                            )
+                            vendorTradedPlayerItems
+                            ++ List.map
+                                (stockItemView
+                                    { items = vendor.stockItems
+                                    , class = "vendor-traded-item"
+                                    , arrowsDirection = BarterArrowRight
+                                    , transfer = \kind count -> BarterMsg <| RemoveVendorStockItem kind count
+                                    }
+                                )
+                                vendorTradedStockItems
                         )
-                        vendorTradedPlayerItems
-
-                vendorKeptStockItemsView : List (Html FrontendMsg)
-                vendorKeptStockItemsView =
-                    List.map
-                        (stockItemView
-                            { items = vendor.stockItems
-                            , class = "vendor-kept-item"
-                            , arrowsDirection = BarterArrowLeft
-                            , transfer = \kind count -> BarterMsg <| AddVendorStockItem kind count
-                            }
-                        )
-                        vendorKeptStockItems
-
-                vendorTradedStockItemsView : List (Html FrontendMsg)
-                vendorTradedStockItemsView =
-                    List.map
-                        (stockItemView
-                            { items = vendor.stockItems
-                            , class = "vendor-traded-item"
-                            , arrowsDirection = BarterArrowRight
-                            , transfer = \kind count -> BarterMsg <| RemoveVendorStockItem kind count
-                            }
-                        )
-                        vendorTradedStockItems
-
-                playerTradedBackgroundView : Html FrontendMsg
-                playerTradedBackgroundView =
-                    H.div [ HA.id "town-store-grid-player-traded-bg" ] []
-
-                vendorTradedBackgroundView : Html FrontendMsg
-                vendorTradedBackgroundView =
-                    H.div [ HA.id "town-store-grid-vendor-traded-bg" ] []
 
                 playerKeptCapsView : Html FrontendMsg
                 playerKeptCapsView =
@@ -1505,29 +1499,33 @@ townStoreView barter location world player =
                         }
                         vendorTradedCaps
 
+                playerTradedBg : Html FrontendMsg
+                playerTradedBg =
+                    H.div [ HA.id "town-store-player-traded-bg" ] []
+
+                vendorTradedBg : Html FrontendMsg
+                vendorTradedBg =
+                    H.div [ HA.id "town-store-vendor-traded-bg" ] []
+
                 gridContents : List (Html FrontendMsg)
                 gridContents =
-                    List.concat
-                        [ [ playerTradedBackgroundView
-                          , vendorTradedBackgroundView
-                          , resetBtn
-                          , confirmBtn
-                          , playerNameView
-                          , vendorNameView
-                          , playerKeptCapsView
-                          , vendorKeptCapsView
-                          , playerTradedCapsView
-                          , vendorTradedCapsView
-                          , playerTradedValueView
-                          , vendorTradedValueView
-                          ]
-                        , playerKeptItemsView
-                        , playerTradedItemsView
-                        , vendorKeptPlayerItemsView
-                        , vendorTradedPlayerItemsView
-                        , vendorKeptStockItemsView
-                        , vendorTradedStockItemsView
-                        ]
+                    [ playerTradedBg
+                    , vendorTradedBg
+                    , resetBtn
+                    , confirmBtn
+                    , playerNameView
+                    , vendorNameView
+                    , playerKeptCapsView
+                    , vendorKeptCapsView
+                    , playerTradedCapsView
+                    , vendorTradedCapsView
+                    , playerTradedValueView
+                    , vendorTradedValueView
+                    , playerKeptItemsView
+                    , playerTradedItemsView
+                    , vendorKeptItemsView
+                    , vendorTradedItemsView
+                    ]
             in
             [ pageTitleView <| "Store: " ++ Location.name location
             , H.button
