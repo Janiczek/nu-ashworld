@@ -14,6 +14,7 @@ module Data.Vendor exposing
 
 import AssocList as Dict_
 import AssocList.ExtraExtra as Dict_
+import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
@@ -108,6 +109,13 @@ restockVendors lastItemId vendors =
     let
         restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
         restockVendor lastItemId_ spec vendor =
+            let
+                stockKeys : Set_.Set Item.UniqueKey
+                stockKeys =
+                    spec.stock
+                        |> List.map .uniqueKey
+                        |> Set_.fromList
+            in
             Random.map2
                 (\newCaps newStock ->
                     let
@@ -126,10 +134,19 @@ restockVendors lastItemId vendors =
                                         ( item :: accItems, incrementedId )
                                     )
                                     ( [], lastItemId_ )
+
+                        newStockItems : Dict Item.Id Item
+                        newStockItems =
+                            Dict.fromList <| List.map (\i -> ( i.id, i )) items
+
+                        nonStockItems : Dict Item.Id Item
+                        nonStockItems =
+                            vendor.items
+                                |> Dict.filter (\_ item -> not <| Set_.member (Item.getUniqueKey item) stockKeys)
                     in
                     ( { vendor
                         | caps = newCaps
-                        , items = Dict.fromList <| List.map (\i -> ( i.id, i )) items
+                        , items = Dict.union nonStockItems newStockItems
                       }
                     , newLastId
                     )

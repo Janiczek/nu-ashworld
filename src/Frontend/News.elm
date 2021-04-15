@@ -16,28 +16,36 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 0
+    [ { date = 1618521323
       , title = "Beginnings of economy"
       , text = """
 A big change just landed in NuAshworld:
 
-* you now have an **inventory**, and
-* there is now a **store** in Klamath where you'll be able to barter with the one and only Maida Buckner.
+* you now have an **inventory** (visible on the Character page), and
+* there is now a **store** in Klamath where you'll be able to barter with the
+one and only [Maida Buckner](https://fallout.fandom.com/wiki/Maida_Buckner).
 
-**TODO TODO TODO actually implement this instead of talking about the caveats**
+The stores will, in general, restock periodically each tick.
 
-A few caveats:
+Note that this feature makes use of the **Charisma skill**, since Charisma
+affects your Barter skill, and that affects the prices you'll be getting when
+trading with NPCs.
 
-* Stores currently don't restock periodically. They might ocassionally restock
-as I deploy new versions of the game, but for the most part you'll have to wait
-till I finish implementing the restocking mechanism :)
+There is currently only one item available in the game:
+the healing item
+[Stimpak](https://fallout.fandom.com/wiki/Stimpak_%28Fallout%29).
 
-* The only item currently implemented is the **Stimpak**, and it can't be used
-yet. I plan for you to be able to use it immediately to heal yourself (and save
-your valuable ticks that only generate with time), and to set up some rules for
-fights: "use it whenever my HP drops below 30%" and so on.
+A caveat: it doesn't currently do anything yet (this is a huge update as it
+is!), but later you'll be able to:
 
-Good stuff coming soon!
+* use it to **heal yourself manually** (thus saving ticks), and
+* **set automatic rules for your fights** ("heal whenever my HP drops below
+30%" and so on).
+
+For trade to be truly useful, I'll have to add **NPC fights** as the next
+thing, so that you can farm some caps.
+
+Stay tuned, good stuff coming soon!
 
 ~janiczek
 """

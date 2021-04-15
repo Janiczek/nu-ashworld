@@ -9,6 +9,7 @@ module Data.Item exposing
     , encode
     , encodeKind
     , findMergeableId
+    , getUniqueKey
     , kindDecoder
     , name
     )
@@ -45,8 +46,7 @@ basePrice : Kind -> Int
 basePrice kind =
     case kind of
         Stimpak ->
-            -- TODO change this back to 175
-            1
+            175
 
 
 encode : Item -> JE.Value

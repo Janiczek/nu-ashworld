@@ -82,10 +82,16 @@ init =
     ( model
     , Cmd.batch
         [ Task.perform Tick Time.now
-        , Random.generate GeneratedNewVendorsStock
-            (Vendor.restockVendors model.lastItemId model.vendors)
+        , restockVendors model
         ]
     )
+
+
+restockVendors : Model -> Cmd BackendMsg
+restockVendors model =
+    Random.generate
+        GeneratedNewVendorsStock
+        (Vendor.restockVendors model.lastItemId model.vendors)
 
 
 getAdminData : Model -> AdminData
@@ -190,13 +196,11 @@ update msg model =
                             { nextTick } =
                                 Tick.nextTick currentTime
                         in
-                        ( { model
+                        { model
                             | nextWantedTick = Just nextTick
                             , time = currentTime
-                          }
+                        }
                             |> processTick
-                        , Cmd.none
-                        )
 
                     else
                         ( { model | time = currentTime }
@@ -232,10 +236,12 @@ update msg model =
             )
 
 
-processTick : Model -> Model
+processTick : Model -> ( Model, Cmd BackendMsg )
 processTick model =
     -- TODO refresh the affected users that are logged-in
-    { model | players = Dict.map (always (Player.map SPlayer.tick)) model.players }
+    ( { model | players = Dict.map (always (Player.map SPlayer.tick)) model.players }
+    , restockVendors model
+    )
 
 
 withLoggedInPlayer_ : Model -> ClientId -> (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
