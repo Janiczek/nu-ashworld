@@ -1499,12 +1499,12 @@ charCreationView newChar =
             in
             H.tr
                 [ HA.classList
-                    [ ( "character-special-item", True )
+                    [ ( "character-special-attribute", True )
                     , ( "not-useful", not isUseful )
                     ]
                 ]
                 [ H.td
-                    [ HA.class "character-special-item-dec" ]
+                    [ HA.class "character-special-attribute-dec" ]
                     [ H.button
                         [ HE.onClick <| NewCharDecSpecial type_
                         , HA.disabled <|
@@ -1516,15 +1516,15 @@ charCreationView newChar =
                         [ H.text "[-]" ]
                     ]
                 , H.td
-                    [ HA.class "character-special-item-label"
+                    [ HA.class "character-special-attribute-label"
                     , HA.attributeIf (not isUseful) skillNotUseful
                     ]
                     [ H.text <| Special.label type_ ]
                 , H.td
-                    [ HA.class "character-special-item-value" ]
+                    [ HA.class "character-special-attribute-value" ]
                     [ H.text <| String.fromInt value ]
                 , H.td
-                    [ HA.class "character-special-item-inc" ]
+                    [ HA.class "character-special-attribute-inc" ]
                     [ H.button
                         [ HE.onClick <| NewCharIncSpecial type_
                         , HA.disabled <|
@@ -1597,7 +1597,7 @@ skillNotUseful =
 characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 characterView _ player =
     let
-        specialItemView type_ =
+        specialAttributeView type_ =
             let
                 value =
                     Special.get type_ player.special
@@ -1607,20 +1607,20 @@ characterView _ player =
             in
             H.tr
                 [ HA.classList
-                    [ ( "character-special-item", True )
+                    [ ( "character-special-attribute", True )
                     , ( "not-useful", not isUseful )
                     ]
                 ]
                 [ H.td
-                    [ HA.class "character-special-item-label"
+                    [ HA.class "character-special-attribute-label"
                     , HA.attributeIf (not isUseful) skillNotUseful
                     ]
                     [ H.text <| Special.label type_ ]
                 , H.td
-                    [ HA.class "character-special-item-value" ]
+                    [ HA.class "character-special-attribute-value" ]
                     [ H.text <| String.fromInt value ]
                 , H.td
-                    [ HA.class "character-special-item-inc" ]
+                    [ HA.class "character-special-attribute-inc" ]
                     [ H.button
                         [ HE.onClick <| AskToIncSpecial type_
                         , HA.disabled <|
@@ -1664,7 +1664,7 @@ characterView _ player =
             [ H.text "SPECIAL" ]
         , H.table
             [ HA.id "character-special-table" ]
-            (List.map specialItemView Special.all)
+            (List.map specialAttributeView Special.all)
         , H.div
             [ HA.class "character-special-available" ]
             [ H.span
@@ -1698,7 +1698,28 @@ characterView _ player =
       ]
         |> List.map itemView
         |> H.ul [ HA.id "character-stats-list" ]
+    , inventoryView player
     ]
+
+
+inventoryView : CPlayer -> Html FrontendMsg
+inventoryView player =
+    let
+        itemView : Item -> Html FrontendMsg
+        itemView item =
+            H.li
+                [ HA.class "character-inventory-item" ]
+                [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
+    in
+    H.div
+        [ HA.id "character-inventory" ]
+        [ H.h3
+            [ HA.id "character-special-title" ]
+            [ H.text "Inventory" ]
+        , H.ul
+            [ HA.id "character-inventory-list" ]
+            (List.map itemView <| Dict.values player.items)
+        ]
 
 
 messagesView : Posix -> Time.Zone -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
