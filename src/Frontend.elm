@@ -966,7 +966,7 @@ mapLoggedOutView =
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView location { vendors } player =
     [ pageTitleView <| "Town: " ++ Location.name location
-    , case Location.vendor vendors location of
+    , case Location.getVendor location vendors of
         Nothing ->
             H.div [] [ H.text "No vendor in this town..." ]
 

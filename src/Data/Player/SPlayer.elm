@@ -10,6 +10,7 @@ module Data.Player.SPlayer exposing
     , incWins
     , readMessage
     , recalculateHp
+    , removeItem
     , removeMessage
     , setLocation
     , subtractCaps
@@ -201,6 +202,39 @@ removeMessage messageToRemove player =
     { player | messages = List.filter ((/=) messageToRemove) player.messages }
 
 
-addItem : Item.Id -> Item -> SPlayer -> SPlayer
-addItem id item player =
-    { player | items = Dict.insert id item player.items }
+addItem : Item -> SPlayer -> SPlayer
+addItem item player =
+    { player
+        | items =
+            player.items
+                |> Dict.update item.id
+                    (\maybeItem ->
+                        case maybeItem of
+                            Nothing ->
+                                Just item
+
+                            Just oldItem ->
+                                Just { oldItem | count = oldItem.count + item.count }
+                    )
+    }
+
+
+removeItem : Item.Id -> Int -> SPlayer -> SPlayer
+removeItem id removedCount player =
+    { player
+        | items =
+            player.items
+                |> Dict.update id
+                    (\maybeItem ->
+                        case maybeItem of
+                            Nothing ->
+                                Nothing
+
+                            Just oldItem ->
+                                if oldItem.count > removedCount then
+                                    Just { oldItem | count = oldItem.count - removedCount }
+
+                                else
+                                    Nothing
+                    )
+    }

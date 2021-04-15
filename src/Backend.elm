@@ -29,7 +29,7 @@ import Data.Player.SPlayer as SPlayer
 import Data.Special as Special exposing (SpecialType)
 import Data.Special.Perception as Perception
 import Data.Tick as Tick
-import Data.Vendor as Vendor
+import Data.Vendor as Vendor exposing (Vendor)
 import Data.World
     exposing
         ( AdminData
@@ -481,7 +481,7 @@ isAdmin sessionId clientId { adminLoggedIn } =
 
 barter : Barter.State -> ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 barter barterState clientId location player model =
-    case Location.vendor model.vendors location of
+    case Location.getVendor location model.vendors of
         Nothing ->
             ( model, Cmd.none )
 
@@ -520,6 +520,18 @@ barter barterState clientId location player model =
                 playerHasEnoughItems : Bool
                 playerHasEnoughItems =
                     Dict.all (hasItem player.items) barterState.playerItems
+
+                vendorHasEnoughCaps : Bool
+                vendorHasEnoughCaps =
+                    barterState.vendorCaps <= vendor.caps
+
+                playerHasEnoughCaps : Bool
+                playerHasEnoughCaps =
+                    barterState.playerCaps <= player.caps
+
+                capsNonnegative : Bool
+                capsNonnegative =
+                    barterState.playerCaps >= 0 && barterState.vendorCaps >= 0
 
                 playerItemsPrice : Int
                 playerItemsPrice =
@@ -570,24 +582,120 @@ barter barterState clientId location player model =
             if
                 List.all identity
                     [ barterNotEmpty
+                    , capsNonnegative
                     , vendorHasEnoughStockItems
                     , vendorHasEnoughPlayerItems
+                    , vendorHasEnoughCaps
                     , playerHasEnoughItems
+                    , playerHasEnoughCaps
                     , playerOfferValuableEnough
                     ]
             then
                 let
-                    _ =
-                        Debug.log "TODO woohoo!" ( barterState, vendorItemsPrice, playerItemsPrice )
+                    newModel =
+                        barterAfterValidation barterState clientId location player model
                 in
-                -- TODO do: remove the vendor's PlayerItems from their list
-                -- TODO do: remove the vendor's Stock items from their list
-                -- TODO do: assign new Items created from the Stock items to the user
-                -- TODO do: assign the PlayerItems to the user
-                ( model, Cmd.none )
+                getWorldLoggedIn player.name newModel
+                    |> Maybe.map
+                        (\world ->
+                            ( newModel
+                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                            )
+                        )
+                    |> Maybe.withDefault ( model, Cmd.none )
 
             else
                 ( model, Cmd.none )
+
+
+barterAfterValidation : Barter.State -> ClientId -> Location -> SPlayer -> Model -> Model
+barterAfterValidation barterState clientId location player model =
+    let
+        removePlayerCaps : Int -> Model -> Model
+        removePlayerCaps amount =
+            updatePlayer (SPlayer.subtractCaps amount) player.name
+
+        addPlayerCaps : Int -> Model -> Model
+        addPlayerCaps amount =
+            updatePlayer (SPlayer.addCaps amount) player.name
+
+        removeVendorCaps : Int -> Model -> Model
+        removeVendorCaps amount =
+            updateVendor (Vendor.subtractCaps amount) location
+
+        addVendorCaps : Int -> Model -> Model
+        addVendorCaps amount =
+            updateVendor (Vendor.addCaps amount) location
+
+        removePlayerItems : Dict Item.Id Int -> Model -> Model
+        removePlayerItems items model_ =
+            items
+                |> Dict.foldl
+                    (\id count accModel ->
+                        updatePlayer
+                            (SPlayer.removeItem id count)
+                            player.name
+                            accModel
+                    )
+                    model_
+
+        removeVendorPlayerItems : Dict Item.Id Int -> Model -> Model
+        removeVendorPlayerItems items model_ =
+            items
+                |> Dict.foldl
+                    (\id count accModel ->
+                        updateVendor
+                            (Vendor.removePlayerItem id count)
+                            location
+                            accModel
+                    )
+                    model_
+
+        removeVendorStockItems : Dict_.Dict Item.Kind Int -> Model -> Model
+        removeVendorStockItems items model_ =
+            items
+                |> Dict_.foldl
+                    (\kind count accModel ->
+                        updateVendor
+                            (Vendor.removeStockItem kind count)
+                            location
+                            accModel
+                    )
+                    model_
+
+        addVendorPlayerItems : Dict Item.Id Int -> Model -> Model
+        addVendorPlayerItems items model_ =
+            items
+                |> Dict.foldl
+                    (\id count accModel ->
+                        case Dict.get id player.items of
+                            Nothing ->
+                                accModel
+
+                            Just item ->
+                                updateVendor
+                                    (Vendor.addPlayerItem { item | count = count })
+                                    location
+                                    accModel
+                    )
+                    model_
+    in
+    model
+        -- player caps:
+        |> removePlayerCaps barterState.playerCaps
+        |> addVendorCaps location barterState.playerCaps
+        -- vendor caps:
+        |> removeVendorCaps location barterState.vendorCaps
+        |> addPlayerCaps barterState.vendorCaps
+        -- player items:
+        |> removePlayerItems barterState.playerItems
+        |> addVendorPlayerItems location barterState.playerItems
+        -- vendor player items:
+        |> removeVendorPlayerItems location barterState.vendorPlayerItems
+        |> addPlayerItems barterState.vendorPlayerItems
+        -- vendor stock items:
+        |> removeVendorStockItems location barterState.vendorStockItems
+        |> addPlayerItems {- TODO rather createAndAdd? -} barterState.vendorStockItems
 
 
 readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -814,3 +922,8 @@ savePlayer newPlayer model =
 updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model
 updatePlayer fn playerName model =
     { model | players = Dict.update playerName (Maybe.map (Player.map fn)) model.players }
+
+
+updateVendor : (Vendor -> Vendor) -> Location -> Model -> Model
+updateVendor fn location model =
+    { model | vendors = Location.mapVendor fn location model.vendors }

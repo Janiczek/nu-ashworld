@@ -1,10 +1,8 @@
 module Data.Item exposing
-    ( Category(..)
-    , Id
+    ( Id
     , Item
     , Kind(..)
     , basePrice
-    , category
     , decoder
     , encode
     , encodeKind
@@ -34,10 +32,6 @@ type alias Id =
     Int
 
 
-type Category
-    = Consumable
-
-
 type Kind
     = Stimpak
 
@@ -47,13 +41,6 @@ basePrice kind =
     case kind of
         Stimpak ->
             175
-
-
-category : Kind -> Category
-category kind =
-    case kind of
-        Stimpak ->
-            Consumable
 
 
 encode : Item -> JE.Value

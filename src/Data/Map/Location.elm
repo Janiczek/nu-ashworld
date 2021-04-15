@@ -4,10 +4,11 @@ module Data.Map.Location exposing
     , allLocations
     , coords
     , default
+    , getVendor
     , location
+    , mapVendor
     , name
     , size
-    , vendor
     )
 
 import Data.Map as Map exposing (TileCoords, TileNum)
@@ -432,14 +433,24 @@ name loc =
             "Village"
 
 
-vendor : Vendors -> Location -> Maybe Vendor
-vendor vendors loc =
+getVendor : Location -> Vendors -> Maybe Vendor
+getVendor loc vendors =
     case loc of
         Klamath ->
             Just vendors.klamath
 
         _ ->
             Nothing
+
+
+mapVendor : (Vendor -> Vendor) -> Location -> Vendors -> Vendors
+mapVendor fn loc vendors =
+    case loc of
+        Klamath ->
+            { vendors | klamath = fn vendors.klamath }
+
+        _ ->
+            vendors
 
 
 dict : Dict TileNum Location

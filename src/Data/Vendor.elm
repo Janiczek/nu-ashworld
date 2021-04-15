@@ -1,9 +1,14 @@
 module Data.Vendor exposing
     ( Vendor
     , Vendors
+    , addCaps
+    , addPlayerItem
     , emptyVendors
     , encodeVendors
+    , removePlayerItem
+    , removeStockItem
     , restockVendors
+    , subtractCaps
     , vendorsDecoder
     )
 
@@ -155,4 +160,75 @@ klamathSpec =
     { avgCaps = 1000
     , maxCapsDeviation = 500
     , stock = [ { kind = Item.Stimpak, maxCount = 4 } ]
+    }
+
+
+subtractCaps : Int -> Vendor -> Vendor
+subtractCaps amount vendor =
+    { vendor | caps = max 0 <| vendor.caps - amount }
+
+
+addCaps : Int -> Vendor -> Vendor
+addCaps amount vendor =
+    { vendor | caps = vendor.caps + amount }
+
+
+removePlayerItem : Item.Id -> Int -> Vendor -> Vendor
+removePlayerItem id removedCount vendor =
+    { vendor
+        | playerItems =
+            vendor.playerItems
+                |> Dict.update id
+                    (\maybeItem ->
+                        case maybeItem of
+                            Nothing ->
+                                Nothing
+
+                            Just oldItem ->
+                                if oldItem.count > removedCount then
+                                    Just { oldItem | count = oldItem.count - removedCount }
+
+                                else
+                                    Nothing
+                    )
+    }
+
+
+removeStockItem : Item.Kind -> Int -> Vendor -> Vendor
+removeStockItem kind removedCount vendor =
+    { vendor
+        | stockItems =
+            vendor.stockItems
+                |> Dict_.update kind
+                    (\maybeCount ->
+                        case maybeCount of
+                            Nothing ->
+                                Nothing
+
+                            Just oldCount ->
+                                if oldCount > removedCount then
+                                    Just <| oldCount - removedCount
+
+                                else
+                                    Nothing
+                    )
+    }
+
+
+addPlayerItem : Item -> Vendor -> Vendor
+addPlayerItem item vendor =
+    -- TODO merging same (kind,mods) items together?
+    -- TODO findMergeableId : (Item.Kind, ...) -> Dict Item.Id Item -> Maybe Item.Id
+    { vendor
+        | playerItems =
+            vendor.playerItems
+                |> Dict.update item.id
+                    (\maybeCount ->
+                        case maybeCount of
+                            Nothing ->
+                                Just item
+
+                            Just oldItem ->
+                                Just <| { oldItem | count = oldItem.count + item.count }
+                    )
     }
