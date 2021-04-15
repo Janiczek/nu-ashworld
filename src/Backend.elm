@@ -629,8 +629,8 @@ barterAfterValidation barterState clientId vendor location player model =
                     )
                     model_
 
-        removeVendorPlayerItems : Dict Item.Id Int -> Model -> Model
-        removeVendorPlayerItems items model_ =
+        removeVendorItems : Dict Item.Id Int -> Model -> Model
+        removeVendorItems items model_ =
             items
                 |> Dict.foldl
                     (\id count accModel ->
@@ -641,8 +641,8 @@ barterAfterValidation barterState clientId vendor location player model =
                     )
                     model_
 
-        addVendorPlayerItems : Dict Item.Id Int -> Model -> Model
-        addVendorPlayerItems items model_ =
+        addVendorItems : Dict Item.Id Int -> Model -> Model
+        addVendorItems items model_ =
             items
                 |> Dict.foldl
                     (\id count accModel ->
@@ -690,9 +690,9 @@ barterAfterValidation barterState clientId vendor location player model =
         |> addPlayerCaps barterState.vendorCaps
         -- player items:
         |> removePlayerItems barterState.playerItems
-        |> addVendorPlayerItems barterState.playerItems
+        |> addVendorItems barterState.playerItems
         -- vendor items:
-        |> removeVendorPlayerItems barterState.vendorItems
+        |> removeVendorItems barterState.vendorItems
         |> addPlayerItems barterState.vendorItems
 
 
