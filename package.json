@@ -1,6 +1,6 @@
 {
   "license": "UNLICENSED",
   "devDependencies": {
-    "elm-review": "^2.4.6"
+    "elm-review": "^2.5.0"
   }
 }
