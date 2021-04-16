@@ -155,7 +155,7 @@ recalculateHp player =
 tick : SPlayer -> SPlayer
 tick player =
     player
-        |> addTicks Tick.ticksAddedPerInterval
+        |> addTicks (Tick.ticksAddedPerInterval player.ticks)
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp (Logic.healingRate player.special)

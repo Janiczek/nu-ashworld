@@ -23,6 +23,16 @@ tickFrequency =
     Time.Hour
 
 
-ticksAddedPerInterval : Int
-ticksAddedPerInterval =
-    2
+ticksAddedPerInterval : Int -> Int
+ticksAddedPerInterval currentTicks =
+    if currentTicks < 50 then
+        -- 0-50 will take ~1 day to fill
+        2
+
+    else if currentTicks < 200 then
+        -- 50-200 will take ~6 days to fill
+        1
+
+    else
+        -- hard cap at 200 = takes 175 hours to max = ~week
+        0
