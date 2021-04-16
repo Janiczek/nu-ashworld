@@ -8,14 +8,11 @@ module Data.Fight exposing
     , theOther
     )
 
-import Data.Fight.ShotType as ShotType exposing (ShotType(..))
-import Data.Perk as Perk
+import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Xp as Xp
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
-import Logic
 
 
 type alias FightInfo =

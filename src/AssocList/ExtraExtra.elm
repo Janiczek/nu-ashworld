@@ -1,6 +1,5 @@
 module AssocList.ExtraExtra exposing
-    ( all
-    , decoder
+    ( decoder
     , encode
     )
 
@@ -35,10 +34,3 @@ decoder keyDecoder valueDecoder =
     in
     JD.list tupleDecoder
         |> JD.map AssocList.fromList
-
-
-all : (k -> v -> Bool) -> AssocList.Dict k v -> Bool
-all fn dict =
-    dict
-        |> AssocList.toList
-        |> List.all (\( k, v ) -> fn k v)

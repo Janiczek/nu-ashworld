@@ -12,8 +12,6 @@ module Data.Vendor exposing
     , vendorsDecoder
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
 import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Dict exposing (Dict)
@@ -249,6 +247,6 @@ addItem item vendor =
                                 Just item
 
                             Just oldItem ->
-                                Just <| { oldItem | count = oldItem.count + item.count }
+                                Just { oldItem | count = oldItem.count + item.count }
                     )
     }

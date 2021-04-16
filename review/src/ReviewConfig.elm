@@ -21,6 +21,8 @@ config =
             ]
     , NoUnused.Dependencies.rule
     , NoUnused.Exports.rule
+        -- fastConcat
+        |> Rule.ignoreErrorsForFiles [ "src/List/ExtraExtra.elm" ]
     , NoUnused.Modules.rule
         |> Rule.ignoreErrorsForFiles [ "src/Env.elm" ]
     , NoUnused.Parameters.rule

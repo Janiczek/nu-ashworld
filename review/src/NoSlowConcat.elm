@@ -1,6 +1,6 @@
 module NoSlowConcat exposing (rule)
 
-{-| Make sure we use Gwi.List.fastConcat and Gwi.List.fastConcatMap instead of
+{-| Make sure we use List.ExtraExtra.fastConcat and List.ExtraExtra.fastConcatMap instead of
 List.concat and List.concatMap.
 
 To be used with <https://package.elm-lang.org/packages/jfmengels/elm-review/latest/>
@@ -8,7 +8,7 @@ To be used with <https://package.elm-lang.org/packages/jfmengels/elm-review/late
 TODO theoretically we could have an automatic fix:
 
   - replace (Node.range fn) with "List.fastConcat"
-  - somehow make sure Gwi.List is imported as List
+  - somehow make sure List.ExtraExtra is imported as List
 
 
 # Rule
@@ -22,7 +22,7 @@ import Elm.Syntax.Node as Node exposing (Node)
 import Review.Rule as Rule exposing (Error, Rule)
 
 
-{-| Make sure we use Gwi.List.fastConcat and Gwi.List.fastConcatMap instead of
+{-| Make sure we use List.ExtraExtra.fastConcat and List.ExtraExtrafastConcatMap instead of
 List.concat and List.concatMap.
 If you want to use this rule, add it to `config : List Rule` in `review/ReviewConfig.elm`
 -}
@@ -42,8 +42,8 @@ expressionVisitor node =
                     [ Rule.error
                         { message = "Slow List.concat function used"
                         , details =
-                            [ "Please use Gwi.List.fastConcat instead!"
-                            , "Preferably `import Gwi.List as List` and then `List.fastConcat`"
+                            [ "Please use List.ExtraExtra.fastConcat instead!"
+                            , "Preferably `import List.ExtraExtra as List` and then `List.fastConcat`"
                             ]
                         }
                         (Node.range node)
@@ -53,8 +53,8 @@ expressionVisitor node =
                     [ Rule.error
                         { message = "Slow List.concatMap function used"
                         , details =
-                            [ "Please use Gwi.List.fastConcatMap instead!"
-                            , "Preferably `import Gwi.List as List` and then `List.fastConcatMap`"
+                            [ "Please use List.ExtraExtra.fastConcatMap instead!"
+                            , "Preferably `import List.ExtraExtra as List` and then `List.fastConcatMap`"
                             ]
                         }
                         (Node.range node)

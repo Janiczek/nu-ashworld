@@ -7,11 +7,7 @@ import Data.Fight
         , FightResult(..)
         , Who(..)
         )
-import Data.Fight.ShotType as ShotType
-    exposing
-        ( AimedShot(..)
-        , ShotType(..)
-        )
+import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Player.PlayerName exposing (PlayerName)
 import Html as H exposing (Html)
 import Html.Attributes as HA

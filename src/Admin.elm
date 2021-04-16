@@ -7,6 +7,7 @@ import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
+import List.ExtraExtra as List
 import Time
 import Types exposing (BackendModel)
 
@@ -70,7 +71,7 @@ backendModelDecoderV2 =
                     players
                         |> Dict.values
                         |> List.filterMap Player.getPlayerData
-                        |> List.concatMap (.items >> Dict.keys)
+                        |> List.fastConcatMap (.items >> Dict.keys)
                         |> List.maximum
                         |> Maybe.withDefault 0
 
@@ -78,7 +79,7 @@ backendModelDecoderV2 =
                 lastVendorsItemId =
                     vendors
                         |> Vendor.listVendors
-                        |> List.concatMap (.items >> Dict.keys)
+                        |> List.fastConcatMap (.items >> Dict.keys)
                         |> List.maximum
                         |> Maybe.withDefault 0
 

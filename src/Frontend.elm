@@ -1,13 +1,11 @@
 module Frontend exposing (..)
 
 import AssocList as Dict_
-import AssocList.Extra as Dict_
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
 import Data.Barter as Barter
-import Data.Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
-import Data.Fight.ShotType as ShotType exposing (ShotType(..))
+import Data.Fight exposing (FightInfo)
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
@@ -26,7 +24,6 @@ import Data.Player as Player
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
-import Data.Vendor exposing (Vendor)
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -53,15 +50,10 @@ import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
-import List.Extra
 import Logic
-import Markdown
 import Set exposing (Set)
-import Svg as S
-import Svg.Attributes as SA
 import Task
 import Time exposing (Posix)
-import Time.Extra as Time
 import Types exposing (..)
 import Url
 
@@ -969,13 +961,13 @@ mapLoggedOutView =
 
 
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-townMainSquareView location { vendors } player =
+townMainSquareView location { vendors } _ =
     [ pageTitleView <| "Town: " ++ Location.name location
     , case Location.getVendor location vendors of
         Nothing ->
             H.div [] [ H.text "No vendor in this town..." ]
 
-        Just vendor ->
+        Just _ ->
             H.div []
                 [ H.button
                     [ HE.onClick (GoToRoute (Route.Town (Route.Store { barter = Barter.empty }))) ]
@@ -1829,7 +1821,7 @@ messagesView currentTime zone _ player =
 
 
 messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-messageView zone message _ player =
+messageView zone message _ _ =
     [ pageTitleView "Message"
     , H.h3
         [ HA.id "message-summary" ]

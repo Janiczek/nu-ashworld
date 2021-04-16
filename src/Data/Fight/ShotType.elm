@@ -11,7 +11,6 @@ module Data.Fight.ShotType exposing
     )
 
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
 import Json.Encode as JE
 
 

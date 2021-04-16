@@ -13,7 +13,6 @@ import Data.Xp as Xp
 import Logic
 import Random exposing (Generator)
 import Random.Bool
-import Random.Extra as Random
 import Time exposing (Posix)
 
 

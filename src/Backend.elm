@@ -1,20 +1,15 @@
 module Backend exposing (..)
 
 import Admin
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
-import AssocSet as Set_
-import AssocSet.Extra as Set_
 import Data.Auth as Auth
     exposing
         ( Auth
         , Verified
         )
 import Data.Barter as Barter
-import Data.Fight as Fight exposing (FightResult(..))
 import Data.Fight.Generator as FightGen
 import Data.Item as Item exposing (Item)
-import Data.Map as Map exposing (TileCoords, TileNum)
+import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message exposing (Message)
@@ -36,9 +31,7 @@ import Data.World
         , WorldLoggedInData
         , WorldLoggedOutData
         )
-import Data.Xp as Xp
 import Dict exposing (Dict)
-import Dict.Extra as Dict
 import Dict.ExtraExtra as Dict
 import Json.Decode as JD
 import Json.Encode as JE
@@ -46,10 +39,8 @@ import Lamdera exposing (ClientId, SessionId)
 import Logic
 import Random
 import Set exposing (Set)
-import Set.Extra as Set
 import Task
 import Time exposing (Posix)
-import Time.Extra as Time
 import Types exposing (..)
 
 
@@ -578,7 +569,7 @@ barter barterState clientId location player model =
             then
                 let
                     newModel =
-                        barterAfterValidation barterState clientId vendor location player model
+                        barterAfterValidation barterState vendor location player model
                 in
                 getWorldLoggedIn player.name newModel
                     |> Maybe.map
@@ -604,8 +595,8 @@ barter barterState clientId location player model =
                 )
 
 
-barterAfterValidation : Barter.State -> ClientId -> Vendor -> Location -> SPlayer -> Model -> Model
-barterAfterValidation barterState clientId vendor location player model =
+barterAfterValidation : Barter.State -> Vendor -> Location -> SPlayer -> Model -> Model
+barterAfterValidation barterState vendor location player model =
     let
         removePlayerCaps : Int -> Model -> Model
         removePlayerCaps amount =
@@ -791,7 +782,7 @@ createNewChar newChar clientId player model =
         Player _ ->
             ( model, Cmd.none )
 
-        NeedsCharCreated auth ->
+        NeedsCharCreated _ ->
             ( model
             , Task.perform (CreateNewCharWithTime clientId newChar) Time.now
             )

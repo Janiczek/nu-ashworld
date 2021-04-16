@@ -7,15 +7,11 @@ module Data.Item exposing
     , create
     , decoder
     , encode
-    , encodeKind
     , findMergeableId
     , getUniqueKey
-    , kindDecoder
     , name
     )
 
-import AssocList as Dict_
-import AssocList.Extra as Dict_
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)

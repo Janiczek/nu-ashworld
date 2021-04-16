@@ -12,11 +12,7 @@ module Logic exposing
 
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Item as Item
-import Data.Special
-    exposing
-        ( Special
-        , SpecialType(..)
-        )
+import Data.Special exposing (Special)
 
 
 hitpoints :
