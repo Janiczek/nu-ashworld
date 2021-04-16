@@ -850,7 +850,7 @@ mapView mouseCoords _ player =
             , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
-        [ locationsView
+        [ locationsView (Just playerCoords)
         , mapMarkerView playerCoords
         , mouseEventCatcherView
         , H.viewMaybe mouseRelatedView mouseCoords
@@ -858,8 +858,8 @@ mapView mouseCoords _ player =
     ]
 
 
-locationView : Location -> Html FrontendMsg
-locationView location =
+locationView : Maybe TileCoords -> Location -> Html FrontendMsg
+locationView maybePlayer location =
     let
         ( x, y ) =
             Location.coords location
@@ -871,6 +871,14 @@ locationView location =
         name : String
         name =
             Location.name location
+
+        hasVendor : Bool
+        hasVendor =
+            Location.hasVendor location
+
+        isCurrent : Bool
+        isCurrent =
+            maybePlayer == Just ( x, y )
     in
     H.div
         [ HA.classList
@@ -879,6 +887,8 @@ locationView location =
             , ( "small", size == Location.Small )
             , ( "middle", size == Location.Middle )
             , ( "large", size == Location.Large )
+            , ( "has-vendor", hasVendor )
+            , ( "is-current", isCurrent )
             ]
         , HA.attribute "data-location-name" name
         , cssVars
@@ -889,10 +899,10 @@ locationView location =
         []
 
 
-locationsView : Html FrontendMsg
-locationsView =
+locationsView : Maybe TileCoords -> Html FrontendMsg
+locationsView maybePlayer =
     Location.allLocations
-        |> List.map locationView
+        |> List.map (locationView maybePlayer)
         |> H.div [ HA.id "map-locations" ]
 
 
@@ -956,7 +966,7 @@ mapLoggedOutView =
             , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
             ]
         ]
-        [ locationsView ]
+        [ locationsView Nothing ]
     ]
 
 

@@ -5,6 +5,7 @@ module Data.Map.Location exposing
     , coords
     , default
     , getVendor
+    , hasVendor
     , location
     , mapVendor
     , name
@@ -12,7 +13,7 @@ module Data.Map.Location exposing
     )
 
 import Data.Map as Map exposing (TileCoords, TileNum)
-import Data.Vendor exposing (Vendor, Vendors)
+import Data.Vendor as Vendor exposing (Vendor, Vendors)
 import Dict exposing (Dict)
 
 
@@ -29,310 +30,239 @@ type Size
 
 
 type Location
-    = AbandonedHouse
-    | Abbey
-    | Arroyo
+    = Arroyo
+      --| AbandonedHouse
+      --| Abbey
+      --| DenSlaveRun
+      --| EPA
+      --| FakeVault13
+      --| GhostFarm
+      --| Golgotha
+      --| HubologistStash
+      --| KlamathSafeHouse
+      --| Navarro
+      --| NewRenoSafeHouse
+      --| Raiders
+      --| ReddingSafeHouse
+      --| ShiSubmarine
+      --| SierraArmyDepot
+      --| SlaverCamp
+      --| Stables
+      --| ToxicCaves
+      --| UmbraTribe
+      --| Vault13
+      --| Vault15
+      --| VillageNearVaultCity
     | BrokenHills
     | Den
-    | DenSlaveRun
-    | EPA
     | EnclavePlatform
-    | FakeVault13
     | Gecko
-    | GhostFarm
-    | Golgotha
-    | HubologistStash
     | Klamath
-    | KlamathSafeHouse
     | MilitaryBase
     | Modoc
-    | Navarro
     | NewCaliforniaRepublic
     | NewReno
-    | NewRenoSafeHouse
-    | Raiders
     | Redding
-    | ReddingSafeHouse
     | SanFrancisco
-    | ShiSubmarine
-    | SierraArmyDepot
-    | SlaverCamp
-    | Stables
-    | ToxicCaves
-    | UmbraTribe
-    | Vault13
-    | Vault15
     | VaultCity
-    | VillageNearVaultCity
 
 
 allLocations : List Location
 allLocations =
-    [ AbandonedHouse
-    , Abbey
-    , Arroyo
+    [ Arroyo
+
+    --, AbandonedHouse
+    --, Abbey
+    --, DenSlaveRun
+    --, EPA
+    --, FakeVault13
+    --, GhostFarm
+    --, Golgotha
+    --, HubologistStash
+    --, KlamathSafeHouse
+    --, Navarro
+    --, NewRenoSafeHouse
+    --, Raiders
+    --, ReddingSafeHouse
+    --, ShiSubmarine
+    --, SierraArmyDepot
+    --, SlaverCamp
+    --, Stables
+    --, ToxicCaves
+    --, UmbraTribe
+    --, Vault13
+    --, Vault15
+    --, VillageNearVaultCity
     , BrokenHills
     , Den
-    , DenSlaveRun
-    , EPA
     , EnclavePlatform
-    , FakeVault13
     , Gecko
-    , GhostFarm
-    , Golgotha
-    , HubologistStash
     , Klamath
-    , KlamathSafeHouse
     , MilitaryBase
     , Modoc
-    , Navarro
     , NewCaliforniaRepublic
     , NewReno
-    , NewRenoSafeHouse
-    , Raiders
     , Redding
-    , ReddingSafeHouse
     , SanFrancisco
-    , ShiSubmarine
-    , SierraArmyDepot
-    , SlaverCamp
-    , Stables
-    , ToxicCaves
-    , UmbraTribe
-    , Vault13
-    , Vault15
     , VaultCity
-    , VillageNearVaultCity
     ]
 
 
 size : Location -> Size
 size loc =
     case loc of
+        --AbandonedHouse -> Small
+        --Abbey -> Middle
+        --DenSlaveRun -> Small
+        --EPA -> Middle
+        --FakeVault13 -> Small
+        --GhostFarm -> Small
+        --Golgotha -> Small
+        --HubologistStash -> Small
+        --KlamathSafeHouse -> Small
+        --Navarro -> Middle
+        --NewRenoSafeHouse -> Small
+        --Raiders -> Middle
+        --ReddingSafeHouse -> Small
+        --ShiSubmarine -> Small
+        --SierraArmyDepot -> Middle
+        --SlaverCamp -> Small
+        --Stables -> Small
+        --ToxicCaves -> Small
+        --UmbraTribe -> Middle
+        --Vault13 -> Middle
+        --Vault15 -> Middle
+        --VillageNearVaultCity -> Small
         Arroyo ->
             Middle
-
-        Klamath ->
-            Large
-
-        ToxicCaves ->
-            Small
-
-        KlamathSafeHouse ->
-            Small
-
-        Den ->
-            Large
-
-        DenSlaveRun ->
-            Small
-
-        Modoc ->
-            Large
-
-        GhostFarm ->
-            Small
-
-        Abbey ->
-            Middle
-
-        Gecko ->
-            Large
-
-        VillageNearVaultCity ->
-            Small
-
-        VaultCity ->
-            Large
-
-        SlaverCamp ->
-            Small
-
-        UmbraTribe ->
-            Middle
-
-        Redding ->
-            Large
-
-        Navarro ->
-            Middle
-
-        ReddingSafeHouse ->
-            Small
-
-        Raiders ->
-            Middle
-
-        EPA ->
-            Middle
-
-        SierraArmyDepot ->
-            Middle
-
-        Stables ->
-            Small
-
-        NewReno ->
-            Large
-
-        Golgotha ->
-            Small
-
-        NewRenoSafeHouse ->
-            Small
 
         BrokenHills ->
             Large
 
-        FakeVault13 ->
-            Small
+        Den ->
+            Large
 
         EnclavePlatform ->
             Large
 
-        ShiSubmarine ->
-            Small
-
-        SanFrancisco ->
+        Gecko ->
             Large
 
-        HubologistStash ->
-            Small
-
-        AbandonedHouse ->
-            Small
+        Klamath ->
+            Large
 
         MilitaryBase ->
             Large
 
-        Vault13 ->
-            Middle
+        Modoc ->
+            Large
 
         NewCaliforniaRepublic ->
             Large
 
-        Vault15 ->
-            Middle
+        NewReno ->
+            Large
+
+        Redding ->
+            Large
+
+        SanFrancisco ->
+            Large
+
+        VaultCity ->
+            Large
 
 
 coords : Location -> TileCoords
 coords loc =
     case loc of
+        --AbandonedHouse -> ( 10, 28 )
+        --Abbey -> ( 26, 0 )
+        --DenSlaveRun -> ( 11, 5 )
+        --EPA -> ( 12, 19 )
+        --FakeVault13 -> ( 21, 24 )
+        --GhostFarm -> ( 19, 4 )
+        --Golgotha -> ( 18, 19 )
+        --HubologistStash -> ( 9, 27 )
+        --KlamathSafeHouse -> ( 6, 3 )
+        --Navarro -> ( 3, 17 )
+        --NewRenoSafeHouse -> ( 20, 19 )
+        --Raiders -> ( 23, 13 )
+        --ReddingSafeHouse -> ( 11, 13 )
+        --ShiSubmarine -> ( 8, 26 )
+        --SierraArmyDepot -> ( 18, 16 )
+        --SlaverCamp -> ( 4, 7 )
+        --Stables -> ( 18, 17 )
+        --ToxicCaves -> ( 6, 1 )
+        --UmbraTribe -> ( 1, 10 )
+        --Vault13 -> ( 19, 28 )
+        --Vault15 -> ( 25, 28 )
+        --VillageNearVaultCity -> ( 24, 5 )
         Arroyo ->
             ( 3, 2 )
-
-        Klamath ->
-            ( 7, 2 )
-
-        ToxicCaves ->
-            ( 6, 1 )
-
-        KlamathSafeHouse ->
-            ( 6, 3 )
-
-        Den ->
-            ( 9, 5 )
-
-        DenSlaveRun ->
-            ( 11, 5 )
-
-        Modoc ->
-            ( 18, 5 )
-
-        GhostFarm ->
-            ( 19, 4 )
-
-        Abbey ->
-            ( 26, 0 )
-
-        Gecko ->
-            ( 25, 4 )
-
-        VillageNearVaultCity ->
-            ( 24, 5 )
-
-        VaultCity ->
-            ( 24, 6 )
-
-        SlaverCamp ->
-            ( 4, 7 )
-
-        UmbraTribe ->
-            ( 1, 10 )
-
-        Redding ->
-            ( 13, 10 )
-
-        Navarro ->
-            ( 3, 17 )
-
-        ReddingSafeHouse ->
-            ( 11, 13 )
-
-        Raiders ->
-            ( 23, 13 )
-
-        EPA ->
-            ( 12, 19 )
-
-        SierraArmyDepot ->
-            ( 18, 16 )
-
-        Stables ->
-            ( 18, 17 )
-
-        NewReno ->
-            ( 18, 18 )
-
-        Golgotha ->
-            ( 18, 19 )
-
-        NewRenoSafeHouse ->
-            ( 20, 19 )
 
         BrokenHills ->
             ( 23, 17 )
 
-        FakeVault13 ->
-            ( 21, 24 )
+        Den ->
+            ( 9, 5 )
 
         EnclavePlatform ->
             ( 0, 26 )
 
-        ShiSubmarine ->
-            ( 8, 26 )
+        Gecko ->
+            ( 25, 4 )
 
-        SanFrancisco ->
-            ( 9, 26 )
-
-        HubologistStash ->
-            ( 9, 27 )
-
-        AbandonedHouse ->
-            ( 10, 28 )
+        Klamath ->
+            ( 7, 2 )
 
         MilitaryBase ->
             ( 13, 28 )
 
-        Vault13 ->
-            ( 19, 28 )
+        Modoc ->
+            ( 18, 5 )
 
         NewCaliforniaRepublic ->
             ( 22, 28 )
 
-        Vault15 ->
-            ( 25, 28 )
+        NewReno ->
+            ( 18, 18 )
+
+        Redding ->
+            ( 13, 10 )
+
+        SanFrancisco ->
+            ( 9, 26 )
+
+        VaultCity ->
+            ( 24, 6 )
 
 
 name : Location -> String
 name loc =
     case loc of
-        AbandonedHouse ->
-            "Abandoned House"
-
-        Abbey ->
-            "Abbey"
-
+        --AbandonedHouse -> "Abandoned House"
+        --Abbey -> "Abbey"
+        --DenSlaveRun -> "Den Slave Run"
+        --EPA -> "EPA"
+        --FakeVault13 -> "Fake Vault 13"
+        --GhostFarm -> "Ghost Farm"
+        --Golgotha -> "Golgotha"
+        --HubologistStash -> "Hubologist Stash"
+        --KlamathSafeHouse -> "Safe House"
+        --Navarro -> "Navarro"
+        --NewRenoSafeHouse -> "Safe House"
+        --Raiders -> "Raiders"
+        --ReddingSafeHouse -> "Safe House"
+        --ShiSubmarine -> "Shi Submarine"
+        --SierraArmyDepot -> "Sierra Army Depot"
+        --SlaverCamp -> "Slaver Camp"
+        --Stables -> "Stables"
+        --ToxicCaves -> "Toxic Caves"
+        --UmbraTribe -> "Umbra Tribe"
+        --Vault13 -> "Vault 13"
+        --Vault15 -> "Vault 15"
+        --VillageNearVaultCity -> "Village"
         Arroyo ->
             "Arroyo"
 
@@ -342,35 +272,14 @@ name loc =
         Den ->
             "Den"
 
-        DenSlaveRun ->
-            "Den Slave Run"
-
-        EPA ->
-            "EPA"
-
         EnclavePlatform ->
             "Enclave Platform"
-
-        FakeVault13 ->
-            "Fake Vault 13"
 
         Gecko ->
             "Gecko"
 
-        GhostFarm ->
-            "Ghost Farm"
-
-        Golgotha ->
-            "Golgotha"
-
-        HubologistStash ->
-            "Hubologist Stash"
-
         Klamath ->
             "Klamath"
-
-        KlamathSafeHouse ->
-            "Safe House"
 
         MilitaryBase ->
             "Military Base"
@@ -378,59 +287,20 @@ name loc =
         Modoc ->
             "Modoc"
 
-        Navarro ->
-            "Navarro"
-
         NewCaliforniaRepublic ->
             "New California Republic"
 
         NewReno ->
             "New Reno"
 
-        NewRenoSafeHouse ->
-            "Safe House"
-
-        Raiders ->
-            "Raiders"
-
         Redding ->
             "Redding"
-
-        ReddingSafeHouse ->
-            "Safe House"
 
         SanFrancisco ->
             "San Francisco"
 
-        ShiSubmarine ->
-            "Shi Submarine"
-
-        SierraArmyDepot ->
-            "Sierra Army Depot"
-
-        SlaverCamp ->
-            "Slaver Camp"
-
-        Stables ->
-            "Stables"
-
-        ToxicCaves ->
-            "Toxic Caves"
-
-        UmbraTribe ->
-            "Umbra Tribe"
-
-        Vault13 ->
-            "Vault 13"
-
-        Vault15 ->
-            "Vault 15"
-
         VaultCity ->
             "Vault City"
-
-        VillageNearVaultCity ->
-            "Village"
 
 
 getVendor : Location -> Vendors -> Maybe Vendor
@@ -441,6 +311,11 @@ getVendor loc vendors =
 
         _ ->
             Nothing
+
+
+hasVendor : Location -> Bool
+hasVendor loc =
+    getVendor loc Vendor.emptyVendors /= Nothing
 
 
 mapVendor : (Vendor -> Vendor) -> Location -> Vendors -> Vendors

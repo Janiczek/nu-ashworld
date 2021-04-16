@@ -10,9 +10,8 @@
   --bg02-half-transparent: rgba(16,36,12,0.5);
   --fg01-half-transparent: rgba(60,248,0,0.5);
   --fg01-fully-transparent: rgba(60,248,0,0);
+  --fg03-half-transparent: rgba(0,124,0,0.5);
   --fg-highlight-transparent: rgba(252,253,125,0.25);
-
-  --table-border: rgba(0,124,0,0.5); /* fg03 with opacity 0.5 */
 
   /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
   --filter-fg02: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
@@ -288,17 +287,17 @@ table {
 }
 
 table tbody td {
-  border-left: 1px solid var(--table-border);
+  border-left: 1px solid var(--fg03-half-transparent);
   padding: 4px 8px;
 }
 
 table thead {
   color: var(--fg03);
-  border-bottom: 3px solid var(--table-border);
+  border-bottom: 3px solid var(--fg03-half-transparent);
 }
 
 table thead th {
-  border-left: 3px solid var(--table-border);
+  border-left: 3px solid var(--fg03-half-transparent);
   padding: 4px 8px;
   font-weight: normal;
 }
@@ -593,7 +592,11 @@ table tbody tr:hover td {
 
 .map-location {
   color: var(--fg01);
+  opacity: 0.5;
 }
+.map-location.has-vendor { opacity: 1; }
+.map-location.is-current { opacity: 1; }
+.map-location:hover { opacity: 1; }
 
 .map-location.small {
   --location-border-width: 1px;
@@ -623,7 +626,9 @@ table tbody tr:hover td {
   height: var(--location-size);
   border: var(--location-border-width) solid var(--fg01);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(60,248,0,0) 0%, rgba(60,248,0,0.5) 100%);
+  background: radial-gradient(circle, 
+                              var(--fg01-fully-transparent) 0%, 
+                              var(--fg01-half-transparent) 100%);
   transform: translate(-50%, -50%);
 }
 
