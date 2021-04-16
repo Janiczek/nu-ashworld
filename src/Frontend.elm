@@ -39,7 +39,9 @@ import DateFormat
 import DateFormat.Relative
 import Dict exposing (Dict)
 import Dict.Extra as Dict
+import File
 import File.Download
+import File.Select
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
@@ -180,6 +182,16 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
+        ImportButtonClicked ->
+            ( model
+            , File.Select.file [ "application/json" ] ImportFileSelected
+            )
+
+        ImportFileSelected file ->
+            ( model
+            , Task.perform AskToImport (File.toString file)
+            )
+
         AskToImport jsonString ->
             ( model
             , Lamdera.sendToBackend <| AdminToBackend <| ImportJson jsonString
@@ -217,14 +229,6 @@ update msg model =
                     World.mapAuth
                         (Auth.setPlaintextPassword newPassword)
                         model.world
-                , alertMessage = Nothing
-              }
-            , Cmd.none
-            )
-
-        SetImportValue newTextarea ->
-            ( { model
-                | route = Route.setImportValue newTextarea model.route
                 , alertMessage = Nothing
               }
             , Cmd.none
@@ -702,9 +706,6 @@ contentView model =
             ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
                 adminLoggedInView data
 
-            ( Route.Admin (Route.Import textarea), WorldAdmin _ ) ->
-                adminImportView textarea
-
             ( Route.Admin _, _ ) ->
                 contentUnavailableToNonAdminView
         )
@@ -741,24 +742,6 @@ adminLoggedInView data =
         data.loggedInPlayers
             |> List.map (\name -> H.li [] [ H.text name ])
             |> H.ul []
-    ]
-
-
-adminImportView : String -> List (Html FrontendMsg)
-adminImportView textarea =
-    [ pageTitleView "Admin :: Import"
-    , H.div []
-        [ H.textarea
-            [ HE.onInput SetImportValue
-            , HA.id "import-textarea"
-            ]
-            [ H.text textarea ]
-        ]
-    , H.button
-        [ HE.onClick <| AskToImport textarea
-        , HA.disabled <| String.isEmpty textarea
-        ]
-        [ H.text "[ IMPORT ]" ]
     ]
 
 
@@ -2316,7 +2299,7 @@ adminLinksView currentRoute =
             [ linkMsg "Refresh" Refresh Nothing False
             , linkIn "Players" (Route.Admin Route.Players) Nothing False
             , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
-            , linkIn "Import" (Route.Admin (Route.Import "")) Nothing False
+            , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
             , linkIn "Ladder" Route.Ladder Nothing False
             , linkMsg "Logout" Logout Nothing False

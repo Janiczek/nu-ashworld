@@ -7,7 +7,6 @@ module Frontend.Route exposing
     , mapBarterState
     , needsAdmin
     , needsLogin
-    , setImportValue
     )
 
 import Data.Barter as Barter
@@ -38,7 +37,6 @@ type TownRoute
 type AdminRoute
     = Players
     | LoggedIn
-    | Import String
 
 
 needsLogin : Route -> Bool
@@ -98,16 +96,6 @@ loggedOut route =
 
     else
         route
-
-
-setImportValue : String -> Route -> Route
-setImportValue newValue route =
-    case route of
-        Admin (Import _) ->
-            Admin (Import newValue)
-
-        _ ->
-            route
 
 
 barterState : Route -> Maybe Barter.State
