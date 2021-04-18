@@ -685,6 +685,12 @@ contentView model =
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
+            ( Route.Inventory, WorldLoggedIn world ) ->
+                withCreatedPlayer world inventoryView
+
+            ( Route.Inventory, _ ) ->
+                contentUnavailableToLoggedOutView
+
             ( Route.Map, WorldLoggedIn world ) ->
                 withCreatedPlayer world (mapView model.mapMouseCoords)
 
@@ -2244,24 +2250,24 @@ charPerksView perks =
         ]
 
 
-inventoryView : CPlayer -> Html FrontendMsg
-inventoryView player =
+inventoryView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+inventoryView _ player =
     let
         itemView : Item -> Html FrontendMsg
         itemView item =
             H.li
-                [ HA.class "character-inventory-item" ]
+                [ HA.class "inventory-item" ]
                 [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
     in
-    H.div
-        [ HA.id "character-inventory" ]
-        [ H.h3
-            [ HA.id "character-inventory-title" ]
-            [ H.text "Inventory" ]
-        , H.ul
-            [ HA.id "character-inventory-list" ]
+    [ pageTitleView "Inventory"
+    , if Dict.isEmpty player.items then
+        H.p [] [ H.text "You have no items!" ]
+
+      else
+        H.ul
+            [ HA.id "inventory-list" ]
             (List.map itemView <| Dict.values player.items)
-        ]
+    ]
 
 
 messagesView : Posix -> Time.Zone -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
@@ -2806,6 +2812,7 @@ loggedInLinksView player currentRoute =
                     [ linkMsg "Heal" AskToHeal healTooltip healDisabled
                     , linkMsg "Refresh" Refresh Nothing False
                     , linkIn "Character" Route.Character Nothing False
+                    , linkIn "Inventory" Route.Inventory Nothing False
                     , linkIn "Map" Route.Map Nothing False
                     , linkIn "Ladder" Route.Ladder Nothing False
                     , linkIn "Town" (Route.Town Route.MainSquare) Nothing False

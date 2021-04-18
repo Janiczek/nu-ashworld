@@ -16,6 +16,7 @@ import Data.Message exposing (Message)
 
 type Route
     = Character
+    | Inventory
     | Map
     | Ladder
     | Town TownRoute
@@ -42,6 +43,9 @@ needsLogin : Route -> Bool
 needsLogin route =
     case route of
         Character ->
+            True
+
+        Inventory ->
             True
 
         Map ->
