@@ -7,6 +7,7 @@ module Logic exposing
     , price
     , sequence
     , skillPointCost
+    , skillPointsPerLevel
     , special
     , totalTags
     , unarmedAttackStats

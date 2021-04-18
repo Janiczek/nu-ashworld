@@ -21,7 +21,6 @@ import Json.Encode as JE
 -- TODO conditions
 -- TODO Earlier Sequence (3x) + sequence
 -- TODO Tag (1x) + tag skill
--- TODO Educated (3x) + skill points at level up
 -- TODO BonusHthDamage (3x) + damage
 -- TODO MasterTrader (1x) + 25% discount for vendor prices
 
@@ -29,6 +28,7 @@ import Json.Encode as JE
 type Perk
     = EarlierSequence
     | Tag
+    | Educated
     | BonusHthDamage
     | MasterTrader
 
@@ -42,6 +42,9 @@ name perk =
         Tag ->
             "Tag!"
 
+        Educated ->
+            "Educated"
+
         BonusHthDamage ->
             "Bonus HtH Damage"
 
@@ -54,6 +57,7 @@ multipleRankPerks =
     -- https://fallout.fandom.com/wiki/Fallout_2_perks
     Dict_.fromList
         [ ( EarlierSequence, 3 )
+        , ( Educated, 3 )
         , ( BonusHthDamage, 3 )
         ]
 
@@ -74,6 +78,9 @@ encode perk =
             Tag ->
                 "tag"
 
+            Educated ->
+                "educated"
+
             BonusHthDamage ->
                 "bonus-hth-damage"
 
@@ -92,6 +99,9 @@ decoder =
 
                     "tag" ->
                         JD.succeed Tag
+
+                    "educated" ->
+                        JD.succeed Educated
 
                     "bonus-hth-damage" ->
                         JD.succeed BonusHthDamage

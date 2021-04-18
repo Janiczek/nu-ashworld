@@ -8,7 +8,6 @@ module Data.Player.SPlayer exposing
     , incSkill
     , incWins
     , readMessage
-    , recalculateHp
     , removeItem
     , removeMessage
     , setLocation
@@ -24,6 +23,7 @@ import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
+import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special, SpecialType)
@@ -77,8 +77,9 @@ addXp n currentTime player =
     in
     { player | xp = newXp }
         |> (if levelsDiff > 0 then
-                -- TODO later add skill points, perks, etc.
-                recalculateHp
+                -- TODO later add perks, etc.
+                recalculateHpOnLevelup
+                    >> addSkillPointsOnLevelup levelsDiff
                     >> addMessage
                         (Message.new
                             currentTime
@@ -120,8 +121,8 @@ setLocation tileNum player =
     { player | location = tileNum }
 
 
-recalculateHp : SPlayer -> SPlayer
-recalculateHp player =
+recalculateHpOnLevelup : SPlayer -> SPlayer
+recalculateHpOnLevelup player =
     let
         newMaxHp =
             Logic.hitpoints
@@ -151,6 +152,30 @@ recalculateHp player =
     player
         |> setMaxHp newMaxHp
         |> setHp newHp
+
+
+addSkillPointsOnLevelup : Int -> SPlayer -> SPlayer
+addSkillPointsOnLevelup levelsDiff player =
+    let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+    in
+    player
+        |> addSkillPoints
+            (Logic.skillPointsPerLevel
+                { hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSkilledTrait = Trait.isSelected Trait.Skilled player.traits
+                , educatedPerkRanks = Perk.rank Perk.Educated player.perks
+                , intelligence = special.intelligence
+                }
+            )
 
 
 tick : SPlayer -> SPlayer
@@ -312,3 +337,8 @@ incSkill skill player =
 
     else
         player
+
+
+addSkillPoints : Int -> SPlayer -> SPlayer
+addSkillPoints points player =
+    { player | availableSkillPoints = player.availableSkillPoints + points }
