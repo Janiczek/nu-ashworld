@@ -29,6 +29,7 @@ import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Trait as Trait exposing (Trait)
+import Data.Vendor as Vendor
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -1060,7 +1061,7 @@ mapLoggedOutView =
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView location { vendors } _ =
     [ pageTitleView <| "Town: " ++ Location.name location
-    , case Location.getVendor location vendors of
+    , case Location.getVendor location of
         Nothing ->
             H.div [] [ H.text "No vendor in this town..." ]
 
@@ -1080,7 +1081,7 @@ townStoreView :
     -> CPlayer
     -> List (Html FrontendMsg)
 townStoreView barter location world player =
-    case Location.getVendor location world.vendors of
+    case Maybe.map (Vendor.getFrom world.vendors) (Location.getVendor location) of
         Nothing ->
             contentUnavailableWhenNotInTownView
 
@@ -1456,7 +1457,7 @@ townStoreView barter location world player =
                 vendorNameView =
                     H.div
                         [ HA.id "town-store-vendor-name" ]
-                        [ H.text "Vendor" ]
+                        [ H.text <| "Vendor: " ++ Vendor.name vendor.name ]
 
                 playerTradedValueView : Html FrontendMsg
                 playerTradedValueView =

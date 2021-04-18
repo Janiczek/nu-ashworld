@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import Admin
+import AssocList as Dict_
 import AssocSet as Set_
 import Data.Auth as Auth
     exposing
@@ -518,7 +519,7 @@ isAdmin sessionId clientId { adminLoggedIn } =
 
 barter : Barter.State -> ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 barter barterState clientId location player model =
-    case Location.getVendor location model.vendors of
+    case Maybe.map (Vendor.getFrom model.vendors) (Location.getVendor location) of
         Nothing ->
             ( model, Cmd.none )
 
@@ -1025,7 +1026,15 @@ updatePlayer fn playerName model =
 
 updateVendor : (Vendor -> Vendor) -> Location -> Model -> Model
 updateVendor fn location model =
-    { model | vendors = Location.mapVendor fn location model.vendors }
+    { model
+        | vendors =
+            case Location.getVendor location of
+                Nothing ->
+                    model.vendors
+
+                Just vendorName ->
+                    Dict_.update vendorName (Maybe.map fn) model.vendors
+    }
 
 
 createItem : { uniqueKey : Item.UniqueKey, count : Int } -> Model -> ( Item, Model )

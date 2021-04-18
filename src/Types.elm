@@ -1,5 +1,6 @@
 module Types exposing (..)
 
+import AssocList as Dict_
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
@@ -18,7 +19,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (SpecialType)
 import Data.Trait exposing (Trait)
-import Data.Vendor exposing (Vendors)
+import Data.Vendor exposing (Vendor, VendorName)
 import Data.World
     exposing
         ( AdminData
@@ -53,7 +54,7 @@ type alias BackendModel =
     , nextWantedTick : Maybe Posix
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , time : Posix
-    , vendors : Vendors
+    , vendors : Dict_.Dict VendorName Vendor
     , lastItemId : Int
     }
 
@@ -139,7 +140,7 @@ type BackendMsg
         , finalTarget : SPlayer
         , fightInfo : FightInfo
         }
-    | GeneratedNewVendorsStock ( Vendors, Int )
+    | GeneratedNewVendorsStock ( Dict_.Dict VendorName Vendor, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
 

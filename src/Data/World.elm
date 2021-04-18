@@ -10,6 +10,7 @@ module Data.World exposing
     , mapAuth
     )
 
+import AssocList as Dict_
 import Data.Auth exposing (Auth, Plaintext)
 import Data.Ladder as Ladder
 import Data.Player as Player
@@ -20,7 +21,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Vendor exposing (Vendors)
+import Data.Vendor exposing (Vendor, VendorName)
 import Time exposing (Posix)
 
 
@@ -54,7 +55,7 @@ type alias WorldLoggedInData =
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
-    , vendors : Vendors
+    , vendors : Dict_.Dict VendorName Vendor
     }
 
 

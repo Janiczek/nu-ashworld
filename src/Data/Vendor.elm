@@ -1,17 +1,20 @@
 module Data.Vendor exposing
     ( Vendor
-    , Vendors
+    , VendorName(..)
     , addCaps
     , addItem
     , emptyVendors
     , encodeVendors
-    , listVendors
+    , getFrom
+    , name
     , removeItem
     , restockVendors
     , subtractCaps
     , vendorsDecoder
     )
 
+import AssocList as Dict_
+import AssocList.ExtraExtra as Dict_
 import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Dict exposing (Dict)
@@ -25,23 +28,16 @@ import Random.Float
 import Random.List
 
 
+type VendorName
+    = KlamathMaidaBuckner
+
+
 type alias Vendor =
-    { items : Dict Item.Id Item
+    { name : VendorName
+    , items : Dict Item.Id Item
     , caps : Int
     , barterSkill : Int
     }
-
-
-type alias Vendors =
-    { klamath : Vendor
-    }
-
-
-listVendors : Vendors -> List Vendor
-listVendors vendors =
-    -- TODO perhaps this would be better as a dict really...
-    [ vendors.klamath
-    ]
 
 
 type alias VendorSpec =
@@ -51,17 +47,44 @@ type alias VendorSpec =
     }
 
 
-emptyVendors : Vendors
+all : List VendorName
+all =
+    [ KlamathMaidaBuckner ]
+
+
+spec : VendorName -> VendorSpec
+spec name_ =
+    case name_ of
+        KlamathMaidaBuckner ->
+            klamathSpec
+
+
+barterSkill : VendorName -> Int
+barterSkill name_ =
+    case name_ of
+        KlamathMaidaBuckner ->
+            55
+
+
+getFrom : Dict_.Dict VendorName Vendor -> VendorName -> Vendor
+getFrom vendors name_ =
+    Dict_.get name_ vendors
+        |> Maybe.withDefault (emptyVendor name_)
+
+
+emptyVendors : Dict_.Dict VendorName Vendor
 emptyVendors =
-    { klamath = emptyVendor 55
-    }
+    all
+        |> List.map (\name_ -> ( name_, emptyVendor name_ ))
+        |> Dict_.fromList
 
 
-emptyVendor : Int -> Vendor
-emptyVendor barterSkill =
+emptyVendor : VendorName -> Vendor
+emptyVendor name_ =
     { items = Dict.empty
     , caps = 0
-    , barterSkill = barterSkill
+    , barterSkill = barterSkill name_
+    , name = name_
     }
 
 
@@ -102,15 +125,15 @@ stockGenerator { stock } =
             )
 
 
-restockVendors : Int -> Vendors -> Generator ( Vendors, Int )
+restockVendors : Int -> Dict_.Dict VendorName Vendor -> Generator ( Dict_.Dict VendorName Vendor, Int )
 restockVendors lastItemId vendors =
     let
         restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
-        restockVendor lastItemId_ spec vendor =
+        restockVendor lastItemId_ spec_ vendor =
             let
                 stockKeys : Set_.Set Item.UniqueKey
                 stockKeys =
-                    spec.stock
+                    spec_.stock
                         |> List.map .uniqueKey
                         |> Set_.fromList
             in
@@ -149,35 +172,67 @@ restockVendors lastItemId vendors =
                     , newLastId
                     )
                 )
-                (capsGenerator spec)
-                (stockGenerator spec)
+                (capsGenerator spec_)
+                (stockGenerator spec_)
     in
-    restockVendor lastItemId klamathSpec vendors.klamath
-        |> Random.map
-            (\( restockedKlamath, idAfterKlamath ) ->
-                ( { vendors | klamath = restockedKlamath }
-                , idAfterKlamath
-                )
+    all
+        |> List.foldl
+            (\name_ accGenerator ->
+                accGenerator
+                    |> Random.andThen
+                        (\( accVendors, lastItemId_ ) ->
+                            restockVendor
+                                lastItemId_
+                                (spec name_)
+                                (getFrom accVendors name_)
+                                |> Random.map
+                                    (\( restockedVendor, idAfterVendor ) ->
+                                        ( Dict_.insert name_ restockedVendor accVendors
+                                        , idAfterVendor
+                                        )
+                                    )
+                        )
             )
+            (Random.constant ( vendors, lastItemId ))
 
 
-encodeVendors : Vendors -> JE.Value
+encodeVendors : Dict_.Dict VendorName Vendor -> JE.Value
 encodeVendors vendors =
-    JE.object
-        [ ( "klamath", encode vendors.klamath )
-        ]
+    Dict_.encode encodeVendorName encode vendors
 
 
-vendorsDecoder : Decoder Vendors
+vendorsDecoder : Decoder (Dict_.Dict VendorName Vendor)
 vendorsDecoder =
-    JD.succeed Vendors
-        |> JD.andMap (JD.field "klamath" decoder)
+    Dict_.decoder vendorNameDecoder decoder
+
+
+encodeVendorName : VendorName -> JE.Value
+encodeVendorName name_ =
+    JE.string <|
+        case name_ of
+            KlamathMaidaBuckner ->
+                "klamath-maida-buckner"
+
+
+vendorNameDecoder : Decoder VendorName
+vendorNameDecoder =
+    JD.string
+        |> JD.andThen
+            (\name_ ->
+                case name_ of
+                    "klamath-maida-buckner" ->
+                        JD.succeed KlamathMaidaBuckner
+
+                    _ ->
+                        JD.fail <| "unknown VendorName: '" ++ name_ ++ "'"
+            )
 
 
 encode : Vendor -> JE.Value
 encode vendor =
     JE.object
-        [ ( "items", Dict.encode JE.int Item.encode vendor.items )
+        [ ( "name", encodeVendorName vendor.name )
+        , ( "items", Dict.encode JE.int Item.encode vendor.items )
         , ( "caps", JE.int vendor.caps )
         , ( "barterSkill", JE.int vendor.barterSkill )
         ]
@@ -186,6 +241,7 @@ encode vendor =
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
+        |> JD.andMap (JD.field "name" vendorNameDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "caps" JD.int)
         |> JD.andMap (JD.field "barterSkill" JD.int)
@@ -250,3 +306,10 @@ addItem item vendor =
                                 Just { oldItem | count = oldItem.count + item.count }
                     )
     }
+
+
+name : VendorName -> String
+name vendorName =
+    case vendorName of
+        KlamathMaidaBuckner ->
+            "Maida Buckner (Klamath)"

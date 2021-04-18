@@ -7,13 +7,13 @@ module Data.Map.Location exposing
     , getVendor
     , hasVendor
     , location
-    , mapVendor
     , name
     , size
     )
 
+import AssocList as Dict_
 import Data.Map as Map exposing (TileCoords, TileNum)
-import Data.Vendor as Vendor exposing (Vendor, Vendors)
+import Data.Vendor as Vendor exposing (Vendor, VendorName(..))
 import Dict exposing (Dict)
 
 
@@ -302,11 +302,11 @@ name loc =
             "Vault City"
 
 
-getVendor : Location -> Vendors -> Maybe Vendor
-getVendor loc vendors =
+getVendor : Location -> Maybe VendorName
+getVendor loc =
     case loc of
         Klamath ->
-            Just vendors.klamath
+            Just KlamathMaidaBuckner
 
         _ ->
             Nothing
@@ -314,17 +314,7 @@ getVendor loc vendors =
 
 hasVendor : Location -> Bool
 hasVendor loc =
-    getVendor loc Vendor.emptyVendors /= Nothing
-
-
-mapVendor : (Vendor -> Vendor) -> Location -> Vendors -> Vendors
-mapVendor fn loc vendors =
-    case loc of
-        Klamath ->
-            { vendors | klamath = fn vendors.klamath }
-
-        _ ->
-            vendors
+    getVendor loc /= Nothing
 
 
 dict : Dict TileNum Location

@@ -1,5 +1,6 @@
 module Admin exposing (backendModelDecoder, encodeBackendModel)
 
+import AssocList as Dict_
 import Data.Player as Player
 import Data.Vendor as Vendor
 import Dict
@@ -78,7 +79,7 @@ backendModelDecoderV2 =
                 lastVendorsItemId : Int
                 lastVendorsItemId =
                     vendors
-                        |> Vendor.listVendors
+                        |> Dict_.values
                         |> List.fastConcatMap (.items >> Dict.keys)
                         |> List.maximum
                         |> Maybe.withDefault 0
