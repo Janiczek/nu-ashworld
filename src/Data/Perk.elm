@@ -23,12 +23,14 @@ import Json.Encode as JE
 -- TODO Tag (1x) + tag skill
 -- TODO Educated (3x) + skill points at level up
 -- TODO BonusHthDamage (3x) + damage
+-- TODO MasterTrader (1x) + 25% discount for vendor prices
 
 
 type Perk
     = EarlierSequence
     | Tag
     | BonusHthDamage
+    | MasterTrader
 
 
 name : Perk -> String
@@ -42,6 +44,9 @@ name perk =
 
         BonusHthDamage ->
             "Bonus HtH Damage"
+
+        MasterTrader ->
+            "Master Trader"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -72,6 +77,9 @@ encode perk =
             BonusHthDamage ->
                 "bonus-hth-damage"
 
+            MasterTrader ->
+                "master-trader"
+
 
 decoder : Decoder Perk
 decoder =
@@ -87,6 +95,9 @@ decoder =
 
                     "bonus-hth-damage" ->
                         JD.succeed BonusHthDamage
+
+                    "master-trader" ->
+                        JD.succeed MasterTrader
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"

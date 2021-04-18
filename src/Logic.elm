@@ -273,19 +273,15 @@ price :
     , itemCount : Int
     , playerBarterSkill : Int
     , traderBarterSkill : Int
+    , hasMasterTraderPerk : Bool
     }
     -> Int
 price r =
     --  https://www.nma-fallout.com/threads/fallout-and-fallout-2-barter-formula.217810/#post-4329046
     let
-        hasMasterTraderPerk : Bool
-        hasMasterTraderPerk =
-            -- TODO Master Trader perk
-            False
-
         masterTraderDiscount : Int
         masterTraderDiscount =
-            if hasMasterTraderPerk then
+            if r.hasMasterTraderPerk then
                 25
 
             else

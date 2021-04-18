@@ -1139,6 +1139,7 @@ townStoreView barter location world player =
                                                 , itemKind = kind
                                                 , playerBarterSkill = Skill.get special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
+                                                , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
                                                 }
                                         )
                             )

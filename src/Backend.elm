@@ -592,6 +592,7 @@ barter barterState clientId location player model =
                                                 , itemKind = item.kind
                                                 , playerBarterSkill = Skill.get playerSpecial player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
+                                                , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
                                                 }
                                         )
                             )
