@@ -16,7 +16,27 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1618521323
+    [ { date = 1618787348
+      , title = "Skills and traits"
+      , text = """
+I've just revamped the **character creation screen** and added some initial
+**traits** and support for **tagged skills** there. This should all result in
+more interesting characters and meta.
+
+Since I'm resetting the ladder instead of
+attempting a complicated migration, you can try the new features out with new
+characters! :)
+
+I also have a basic **perk** support implemented under the hood, but the "pick
+a perk" screen is still TODO. 
+
+Next up, the PvM encounters that should pump some caps into the economy,
+finally!
+
+~janiczek
+"""
+      }
+    , { date = 1618521323
       , title = "Beginnings of economy"
       , text = """
 A big change just landed in NuAshworld:
