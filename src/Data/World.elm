@@ -13,7 +13,7 @@ module Data.World exposing
 import AssocList as Dict_
 import Data.Auth exposing (Auth, Plaintext)
 import Data.Ladder as Ladder
-import Data.Player as Player
+import Data.Player
     exposing
         ( COtherPlayer
         , CPlayer

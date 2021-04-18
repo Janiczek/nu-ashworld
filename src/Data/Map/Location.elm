@@ -11,9 +11,8 @@ module Data.Map.Location exposing
     , size
     )
 
-import AssocList as Dict_
 import Data.Map as Map exposing (TileCoords, TileNum)
-import Data.Vendor as Vendor exposing (Vendor, VendorName(..))
+import Data.Vendor exposing (VendorName(..))
 import Dict exposing (Dict)
 
 

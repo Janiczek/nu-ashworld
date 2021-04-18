@@ -26,7 +26,7 @@ import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
-import Data.Special as Special exposing (Special, SpecialType)
+import Data.Special exposing (Special)
 import Data.Tick as Tick
 import Data.Trait as Trait
 import Data.Xp as Xp
@@ -169,12 +169,13 @@ addSkillPointsOnLevelup levelsDiff player =
     in
     player
         |> addSkillPoints
-            (Logic.skillPointsPerLevel
-                { hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSkilledTrait = Trait.isSelected Trait.Skilled player.traits
-                , educatedPerkRanks = Perk.rank Perk.Educated player.perks
-                , intelligence = special.intelligence
-                }
+            (levelsDiff
+                * Logic.skillPointsPerLevel
+                    { hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                    , hasSkilledTrait = Trait.isSelected Trait.Skilled player.traits
+                    , educatedPerkRanks = Perk.rank Perk.Educated player.perks
+                    , intelligence = special.intelligence
+                    }
             )
 
 

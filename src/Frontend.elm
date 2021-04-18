@@ -1059,7 +1059,7 @@ mapLoggedOutView =
 
 
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-townMainSquareView location { vendors } _ =
+townMainSquareView location _ _ =
     [ pageTitleView <| "Town: " ++ Location.name location
     , case Location.getVendor location of
         Nothing ->

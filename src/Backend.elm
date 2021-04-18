@@ -16,7 +16,7 @@ import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message exposing (Message)
-import Data.NewChar as NewChar exposing (NewChar)
+import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk
 import Data.Player as Player
     exposing
@@ -26,7 +26,7 @@ import Data.Player as Player
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
 import Data.Skill as Skill exposing (Skill)
-import Data.Special as Special exposing (Special, SpecialType)
+import Data.Special exposing (Special)
 import Data.Special.Perception as Perception
 import Data.Tick as Tick
 import Data.Trait as Trait

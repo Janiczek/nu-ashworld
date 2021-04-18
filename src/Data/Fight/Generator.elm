@@ -7,7 +7,7 @@ import Data.Fight as Fight exposing (FightAction(..), FightInfo, FightResult(..)
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
-import Data.Player as Player exposing (SPlayer)
+import Data.Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
 import Data.Skill as Skill
 import Data.Trait as Trait
