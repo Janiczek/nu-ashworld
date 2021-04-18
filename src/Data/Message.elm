@@ -143,8 +143,8 @@ summary message =
                     "You were attacked by " ++ r.attacker ++ " and both stayed alive"
 
 
-content : List (Attribute msg) -> Message -> Html msg
-content attributes message =
+content : List (Attribute msg) -> Int -> Message -> Html msg
+content attributes perception message =
     case message.type_ of
         Welcome ->
             Markdown.toHtml attributes
@@ -161,6 +161,7 @@ Your current level is """
         YouWereAttacked r ->
             Html.div attributes
                 [ Data.Fight.View.view
+                    perception
                     r.fightInfo
                     r.fightInfo.targetName
                 ]

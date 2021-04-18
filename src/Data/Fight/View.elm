@@ -9,6 +9,7 @@ import Data.Fight
         )
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Special.Perception as Perception
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import List.Extra
@@ -52,12 +53,12 @@ addS verb =
         verb ++ "s"
 
 
-view : FightInfo -> PlayerName -> Html msg
-view fight playerName =
+view : Int -> FightInfo -> PlayerName -> Html msg
+view perception fight yourName =
     let
         youAreAttacker : Bool
         youAreAttacker =
-            fight.attackerName == playerName
+            fight.attackerName == yourName
 
         names : Name -> Names
         names name =
@@ -131,22 +132,30 @@ view fight playerName =
                                         action_ =
                                             case action of
                                                 Start { distanceHexes } ->
-                                                    names_.subject.verbPresent "initiate"
-                                                        ++ " the fight from "
-                                                        ++ String.fromInt distanceHexes
-                                                        ++ " hexes away."
+                                                    if Perception.atLeast Perception.Great perception then
+                                                        names_.subject.verbPresent "initiate"
+                                                            ++ " the fight from "
+                                                            ++ String.fromInt distanceHexes
+                                                            ++ " hexes away."
+
+                                                    else
+                                                        names_.subject.verbPresent "initiate"
+                                                            ++ " the fight."
 
                                                 ComeCloser { hexes, remainingDistanceHexes } ->
-                                                    -- TODO hide the remaining distance if your SPECIAL is not good enough
-                                                    names_.subject.verbPresent "come"
-                                                        ++ " closer "
-                                                        ++ String.fromInt hexes
-                                                        ++ " hexes. Remaining distance: "
-                                                        ++ String.fromInt remainingDistanceHexes
-                                                        ++ " hexes."
+                                                    if Perception.atLeast Perception.Great perception then
+                                                        names_.subject.verbPresent "come"
+                                                            ++ " closer "
+                                                            ++ String.fromInt hexes
+                                                            ++ " hexes. Remaining distance: "
+                                                            ++ String.fromInt remainingDistanceHexes
+                                                            ++ " hexes."
+
+                                                    else
+                                                        names_.subject.verbPresent "come"
+                                                            ++ " closer."
 
                                                 Attack { damage, remainingHp, shotType } ->
-                                                    -- TODO hide the remaining HP if your SPECIAL is not good enough
                                                     (case shotType of
                                                         NormalShot ->
                                                             ""
@@ -162,12 +171,17 @@ view fight playerName =
                                                         ++ name names_.object.name
                                                         ++ " for "
                                                         ++ String.fromInt damage
-                                                        ++ " damage. Remaining HP: "
-                                                        ++ String.fromInt remainingHp
-                                                        ++ "."
+                                                        ++ " damage."
+                                                        ++ (if Perception.atLeast Perception.Great perception then
+                                                                " Remaining HP: "
+                                                                    ++ String.fromInt remainingHp
+                                                                    ++ "."
+
+                                                            else
+                                                                ""
+                                                           )
 
                                                 Miss { shotType } ->
-                                                    -- TODO hide the remaining distance if your SPECIAL is not good enough
                                                     (case shotType of
                                                         NormalShot ->
                                                             ""

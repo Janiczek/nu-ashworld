@@ -2351,7 +2351,17 @@ messagesView currentTime zone _ player =
 
 
 messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-messageView zone message _ _ =
+messageView zone message _ player =
+    let
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+    in
     [ pageTitleView "Message"
     , H.h3
         [ HA.id "message-summary" ]
@@ -2361,6 +2371,7 @@ messageView zone message _ _ =
         [ H.text <| Message.fullDate zone message ]
     , Message.content
         [ HA.id "message-content" ]
+        special.perception
         message
     , H.button
         [ HE.onClick <| GoToRoute Route.Messages
@@ -2395,8 +2406,18 @@ newsView zone =
 
 fightView : FightInfo -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 fightView fight _ player =
+    let
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+    in
     [ pageTitleView "Fight"
-    , Data.Fight.View.view fight player.name
+    , Data.Fight.View.view special.perception fight player.name
     , H.button
         [ HE.onClick <| GoToRoute Route.Ladder
         , HA.id "fight-back-button"
