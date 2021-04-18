@@ -896,7 +896,7 @@ tagSkill skill clientId player model =
     let
         totalTagsAvailable : Int
         totalTagsAvailable =
-            Logic.totalTags { hasTagPerk = Player.perkRank Perk.Tag player > 0 }
+            Logic.totalTags { hasTagPerk = Perk.rank Perk.Tag player.perks > 0 }
 
         unusedTags : Int
         unusedTags =

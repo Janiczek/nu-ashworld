@@ -18,8 +18,10 @@ import AssocList as Dict_
 import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Item as Item
+import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
+import Data.Trait as Trait exposing (Trait)
 
 
 hitpoints :
@@ -196,8 +198,10 @@ xpGained { damageDealt } =
 
 
 unarmedAttackStats :
-    { special : Special
-    , skills : Dict_.Dict Skill Int
+    { finalSpecial : Special
+    , unarmedSkill : Int
+    , traits : Set_.Set Trait
+    , perks : Dict_.Dict Perk Int
     , level : Int
     }
     ->
@@ -208,38 +212,36 @@ unarmedAttackStats :
 unarmedAttackStats r =
     let
         { strength, agility } =
-            r.special
-
-        unarmedSkill : Int
-        unarmedSkill =
-            Skill.get r.special r.skills Skill.Unarmed
+            r.finalSpecial
 
         heavyHandedTraitBonus : Int
         heavyHandedTraitBonus =
-            -- TODO
-            0
+            if Trait.isSelected Trait.HeavyHanded r.traits then
+                4
+
+            else
+                0
 
         hthDamagePerkBonus : Int
         hthDamagePerkBonus =
-            -- TODO
-            0
+            2 * Perk.rank Perk.BonusHthDamage r.perks
 
         bonusMeleeDamage : Int
         bonusMeleeDamage =
             max 1 (strength - 5) + heavyHandedTraitBonus + hthDamagePerkBonus
 
         { unarmedAttackBonus, criticalChanceBonus } =
-            if unarmedSkill < 55 || agility < 6 then
+            if r.unarmedSkill < 55 || agility < 6 then
                 { unarmedAttackBonus = 0
                 , criticalChanceBonus = 0
                 }
 
-            else if unarmedSkill < 75 || strength < 5 || r.level < 6 then
+            else if r.unarmedSkill < 75 || strength < 5 || r.level < 6 then
                 { unarmedAttackBonus = 3
                 , criticalChanceBonus = 0
                 }
 
-            else if unarmedSkill < 100 || agility < 7 || r.level < 9 then
+            else if r.unarmedSkill < 100 || agility < 7 || r.level < 9 then
                 { unarmedAttackBonus = 5
                 , criticalChanceBonus = 5
                 }

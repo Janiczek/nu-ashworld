@@ -11,7 +11,6 @@ module Data.Player exposing
     , getAuth
     , getPlayerData
     , map
-    , perkRank
     , sPlayerDecoder
     , serverToClient
     , serverToClientOther
@@ -341,9 +340,3 @@ fromNewChar currentTime auth newChar =
             , taggedSkills = newChar.taggedSkills
             , availableSkillPoints = 0
             }
-
-
-perkRank : Perk -> { p | perks : Dict_.Dict Perk Int } -> Int
-perkRank perk { perks } =
-    Dict_.get perk perks
-        |> Maybe.withDefault 0

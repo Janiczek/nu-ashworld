@@ -1,4 +1,11 @@
-module Data.Perk exposing (Perk(..), decoder, encode, maxRank, name)
+module Data.Perk exposing
+    ( Perk(..)
+    , decoder
+    , encode
+    , maxRank
+    , name
+    , rank
+    )
 
 import AssocList as Dict_
 import Json.Decode as JD exposing (Decoder)
@@ -15,11 +22,13 @@ import Json.Encode as JE
 -- TODO Earlier Sequence (3x) + sequence
 -- TODO Tag (1x) + tag skill
 -- TODO Educated (3x) + skill points at level up
+-- TODO BonusHthDamage (3x) + damage
 
 
 type Perk
     = EarlierSequence
     | Tag
+    | BonusHthDamage
 
 
 name : Perk -> String
@@ -31,12 +40,17 @@ name perk =
         Tag ->
             "Tag!"
 
+        BonusHthDamage ->
+            "Bonus HtH Damage"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
     -- https://fallout.fandom.com/wiki/Fallout_2_perks
     Dict_.fromList
-        [ ( EarlierSequence, 3 ) ]
+        [ ( EarlierSequence, 3 )
+        , ( BonusHthDamage, 3 )
+        ]
 
 
 maxRank : Perk -> Int
@@ -55,6 +69,9 @@ encode perk =
             Tag ->
                 "tag"
 
+            BonusHthDamage ->
+                "bonus-hth-damage"
+
 
 decoder : Decoder Perk
 decoder =
@@ -68,6 +85,15 @@ decoder =
                     "tag" ->
                         JD.succeed Tag
 
+                    "bonus-hth-damage" ->
+                        JD.succeed BonusHthDamage
+
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
             )
+
+
+rank : Perk -> Dict_.Dict Perk Int -> Int
+rank perk perks =
+    Dict_.get perk perks
+        |> Maybe.withDefault 0

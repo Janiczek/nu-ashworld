@@ -9,6 +9,7 @@ import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player as Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
+import Data.Skill as Skill
 import Data.Trait as Trait
 import Data.Xp as Xp
 import Logic
@@ -110,7 +111,7 @@ generator currentTime initPlayers =
                             Logic.sequence
                                 { perception = special.perception
                                 , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
-                                , earlierSequencePerkRank = Player.perkRank Perk.EarlierSequence player
+                                , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
                                 }
                     )
                 |> List.map Tuple.first
@@ -251,9 +252,8 @@ generator currentTime initPlayers =
             let
                 player =
                     player_ who ongoing
-            in
-            Logic.unarmedAttackStats
-                { special =
+
+                finalSpecial =
                     Logic.special
                         { baseSpecial = player.baseSpecial
                         , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
@@ -261,8 +261,13 @@ generator currentTime initPlayers =
                         , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
                         , isNewChar = False
                         }
-                , skills = player.addedSkillPercentages
+            in
+            Logic.unarmedAttackStats
+                { finalSpecial = finalSpecial
+                , unarmedSkill = Skill.get finalSpecial player.addedSkillPercentages Skill.Unarmed
                 , level = Xp.currentLevel player.xp
+                , perks = player.perks
+                , traits = player.traits
                 }
 
         rollDamage : Who -> OngoingFight -> ShotType -> Generator Int

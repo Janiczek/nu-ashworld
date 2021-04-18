@@ -175,7 +175,7 @@ specialPercentage skill s =
 
 
 get : Special -> Dict_.Dict Skill Int -> Skill -> Int
-get special addedPercentages skill =
+get finalSpecial addedPercentages skill =
     let
         added : Int
         added =
@@ -185,7 +185,7 @@ get special addedPercentages skill =
 
         viaSpecial : Int
         viaSpecial =
-            specialPercentage skill special
+            specialPercentage skill finalSpecial
     in
     min 300 <| added + viaSpecial
 

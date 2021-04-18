@@ -28,6 +28,8 @@ import Json.Encode as JE
 -- TODO Skilled - perk rate
 -- TODO Small Frame + agility
 -- TODO Small Frame - carry weight
+-- TODO Heavy Handed + damage
+-- TODO Heavy Handed - critical hit chance
 
 
 type Trait
@@ -36,15 +38,18 @@ type Trait
     | Gifted
     | SmallFrame
     | Skilled
+    | HeavyHanded
 
 
 all : List Trait
 all =
+    -- TODO sort them according to F2
     [ Bruiser
     , Kamikaze
     , Gifted
     , SmallFrame
     , Skilled
+    , HeavyHanded
     ]
 
 
@@ -66,6 +71,9 @@ name trait =
         Skilled ->
             "Skilled"
 
+        HeavyHanded ->
+            "Heavy Handed"
+
 
 encode : Trait -> JE.Value
 encode trait =
@@ -85,6 +93,9 @@ encode trait =
 
             Skilled ->
                 "skilled"
+
+            HeavyHanded ->
+                "heavy-handed"
 
 
 decoder : Decoder Trait
@@ -107,6 +118,9 @@ decoder =
 
                     "skilled" ->
                         JD.succeed Skilled
+
+                    "heavy-handed" ->
+                        JD.succeed HeavyHanded
 
                     _ ->
                         JD.fail <| "unknown Trait: '" ++ trait ++ "'"
