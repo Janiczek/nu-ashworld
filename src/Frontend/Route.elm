@@ -19,7 +19,6 @@ type Route
     | Map
     | Ladder
     | Town TownRoute
-    | Settings
     | About
     | News
     | Fight FightInfo
@@ -52,9 +51,6 @@ needsLogin route =
             False
 
         Town _ ->
-            True
-
-        Settings ->
             True
 
         About ->

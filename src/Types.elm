@@ -8,14 +8,16 @@ import Data.Fight exposing (FightInfo)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
-import Data.NewChar exposing (NewChar)
+import Data.NewChar as NewChar exposing (NewChar)
 import Data.Player
     exposing
         ( Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Skill exposing (Skill)
 import Data.Special exposing (SpecialType)
+import Data.Trait exposing (Trait)
 import Data.Vendor exposing (Vendors)
 import Data.World
     exposing
@@ -72,12 +74,15 @@ type FrontendMsg
     | ImportFileSelected File
     | AskToImport String
     | Refresh
-    | AskToIncSpecial SpecialType
+    | AskToTagSkill Skill
+    | AskToIncSkill Skill
     | SetAuthName String
     | SetAuthPassword String
     | CreateChar
     | NewCharIncSpecial SpecialType
     | NewCharDecSpecial SpecialType
+    | NewCharToggleTaggedSkill Skill
+    | NewCharToggleTrait Trait
     | MapMouseAtCoords TileCoords
     | MapMouseOut
     | MapMouseClick
@@ -110,7 +115,8 @@ type ToBackend
     | Fight PlayerName
     | HealMe
     | RefreshPlease
-    | IncSpecial SpecialType
+    | TagSkill Skill
+    | IncSkill Skill
     | MoveTo TileCoords (Set TileCoords)
     | MessageWasRead Message
     | RemoveMessage Message
@@ -145,10 +151,11 @@ type ToFrontend
     | YourFightResult ( FightInfo, WorldLoggedInData )
     | YoureLoggedIn WorldLoggedInData
     | YoureRegistered WorldLoggedInData
+    | CharCreationError NewChar.CreationError
     | YouHaveCreatedChar WorldLoggedInData
     | YoureLoggedOut WorldLoggedOutData
     | AlertMessage String
     | YoureLoggedInAsAdmin AdminData
     | JsonExportDone String
-    | BarterDone WorldLoggedInData
-    | BarterProblem Barter.Problem
+    | BarterDone ( WorldLoggedInData, Maybe Barter.Message )
+    | BarterMessage Barter.Message

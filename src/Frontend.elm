@@ -1,6 +1,7 @@
 module Frontend exposing (..)
 
 import AssocList as Dict_
+import AssocSet as Set_
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
@@ -9,21 +10,25 @@ import Data.Fight exposing (FightInfo)
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
+import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.Terrain as Terrain
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
+import Data.Perk as Perk exposing (Perk)
 import Data.Player as Player
     exposing
         ( COtherPlayer
         , CPlayer
         , Player(..)
         )
-import Data.Special as Special
+import Data.Skill as Skill exposing (Skill)
+import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
+import Data.Trait as Trait exposing (Trait)
 import Data.Version as Version
 import Data.World as World
     exposing
@@ -199,9 +204,14 @@ update msg model =
             , Lamdera.sendToBackend RefreshPlease
             )
 
-        AskToIncSpecial type_ ->
+        AskToTagSkill skill ->
             ( model
-            , Lamdera.sendToBackend <| IncSpecial type_
+            , Lamdera.sendToBackend <| TagSkill skill
+            )
+
+        AskToIncSkill skill ->
+            ( model
+            , Lamdera.sendToBackend <| IncSkill skill
             )
 
         SetAuthName newName ->
@@ -227,17 +237,47 @@ update msg model =
             )
 
         CreateChar ->
-            ( { model | newChar = NewChar.init }
+            ( model
             , Lamdera.sendToBackend <| CreateNewChar model.newChar
             )
 
         NewCharIncSpecial type_ ->
-            ( { model | newChar = NewChar.incSpecial type_ model.newChar }
+            ( { model
+                | newChar =
+                    model.newChar
+                        |> NewChar.incSpecial type_
+                        |> NewChar.dismissError
+              }
             , Cmd.none
             )
 
         NewCharDecSpecial type_ ->
-            ( { model | newChar = NewChar.decSpecial type_ model.newChar }
+            ( { model
+                | newChar =
+                    model.newChar
+                        |> NewChar.decSpecial type_
+                        |> NewChar.dismissError
+              }
+            , Cmd.none
+            )
+
+        NewCharToggleTaggedSkill skill ->
+            ( { model
+                | newChar =
+                    model.newChar
+                        |> NewChar.toggleTaggedSkill skill
+                        |> NewChar.dismissError
+              }
+            , Cmd.none
+            )
+
+        NewCharToggleTrait trait ->
+            ( { model
+                | newChar =
+                    model.newChar
+                        |> NewChar.toggleTrait trait
+                        |> NewChar.dismissError
+              }
             , Cmd.none
             )
 
@@ -247,6 +287,16 @@ update msg model =
                     case world.player of
                         Player cPlayer ->
                             let
+                                special : Special
+                                special =
+                                    Logic.special
+                                        { baseSpecial = cPlayer.baseSpecial
+                                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser cPlayer.traits
+                                        , hasGiftedTrait = Trait.isSelected Trait.Gifted cPlayer.traits
+                                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame cPlayer.traits
+                                        , isNewChar = False
+                                        }
+
                                 playerCoords =
                                     Map.toTileCoords cPlayer.location
                             in
@@ -255,7 +305,7 @@ update msg model =
                                     Just
                                         ( mouseCoords
                                         , Pathfinding.path
-                                            (Perception.level cPlayer.special.perception)
+                                            (Perception.level special.perception)
                                             { from = playerCoords
                                             , to = mouseCoords
                                             }
@@ -318,7 +368,7 @@ resetBarter model =
 
 updateBarter : BarterMsg -> Model -> ( Model, Cmd FrontendMsg )
 updateBarter msg model =
-    Tuple.mapFirst (mapBarter_ Barter.dismissProblem) <|
+    Tuple.mapFirst (mapBarter_ Barter.dismissMessage) <|
         case msg of
             ResetBarter ->
                 resetBarter model
@@ -397,10 +447,16 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        CharCreationError error ->
+            ( { model | newChar = NewChar.setError error model.newChar }
+            , Cmd.none
+            )
+
         YouHaveCreatedChar world ->
             ( { model
                 | world = WorldLoggedIn world
                 , route = Route.Ladder
+                , newChar = NewChar.init
               }
             , Cmd.none
             )
@@ -451,19 +507,39 @@ updateFromBackend msg model =
             )
 
         JsonExportDone json ->
+            let
+                date : String
+                date =
+                    DateFormat.format
+                        [ DateFormat.yearNumber
+                        , DateFormat.text "-"
+                        , DateFormat.monthFixed
+                        , DateFormat.text "-"
+                        , DateFormat.dayOfMonthFixed
+                        ]
+                        model.zone
+                        model.time
+            in
             ( model
             , File.Download.string
-                "nu-ashworld-db-export.json"
+                ("nu-ashworld-db-export-" ++ date ++ ".json")
                 "application/json"
                 json
             )
 
-        BarterDone world ->
+        BarterDone ( world, maybeMessage ) ->
             { model | world = WorldLoggedIn world }
                 |> resetBarter
+                |> (case maybeMessage of
+                        Nothing ->
+                            identity
 
-        BarterProblem problem ->
-            mapBarter (Barter.setProblem problem) model
+                        Just message ->
+                            Tuple.mapFirst (mapBarter_ (Barter.setMessage message))
+                   )
+
+        BarterMessage message ->
+            mapBarter (Barter.setMessage message) model
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -641,6 +717,7 @@ contentView model =
                     , players =
                         data.players
                             |> List.filterMap Player.getPlayerData
+                            |> Ladder.sort
                             |> List.map (Player.serverToClientOther { perception = 10 })
                     }
 
@@ -654,12 +731,6 @@ contentView model =
                 withLocation world (townStoreView barter)
 
             ( Route.Town _, _ ) ->
-                contentUnavailableToLoggedOutView
-
-            ( Route.Settings, WorldLoggedIn _ ) ->
-                settingsView
-
-            ( Route.Settings, _ ) ->
                 contentUnavailableToLoggedOutView
 
             ( Route.About, _ ) ->
@@ -687,7 +758,7 @@ contentView model =
                 contentUnavailableToLoggedOutView
 
             ( Route.CharCreation, WorldLoggedIn _ ) ->
-                charCreationView model.newChar
+                newCharView model.newChar
 
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -744,6 +815,16 @@ mapView :
     -> List (Html FrontendMsg)
 mapView mouseCoords _ player =
     let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
         playerCoords : TileCoords
         playerCoords =
             Map.toTileCoords player.location
@@ -786,7 +867,7 @@ mapView mouseCoords _ player =
                     (List.map pathTileView
                         (Set.toList (Set.remove mouseCoords_ pathTaken))
                     )
-                , H.viewIf (Perception.atLeast Perception.Good player.special.perception) <|
+                , H.viewIf (Perception.atLeast Perception.Good special.perception) <|
                     H.div
                         [ HA.id "map-cost-info"
                         , cssVars
@@ -999,6 +1080,16 @@ townStoreView barter location world player =
 
         Just vendor ->
             let
+                special : Special
+                special =
+                    Logic.special
+                        { baseSpecial = player.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                        , isNewChar = False
+                        }
+
                 playerKeptCaps : Int
                 playerKeptCaps =
                     player.caps - barter.playerCaps
@@ -1040,7 +1131,7 @@ townStoreView barter location world player =
                                             Logic.price
                                                 { itemCount = count
                                                 , itemKind = kind
-                                                , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                                , playerBarterSkill = Skill.get special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 }
                                         )
@@ -1498,169 +1589,78 @@ townStoreView barter location world player =
                 [ H.text "[Back]" ]
             , H.div [ HA.id "town-store-grid" ] gridContents
             , H.viewMaybe
-                (\problem ->
+                (\message ->
                     H.div
-                        [ HA.id "town-store-barter-problem" ]
-                        [ H.text <| Barter.problemText problem ]
+                        [ HA.id "town-store-barter-message" ]
+                        [ H.text <| Barter.messageText message ]
                 )
-                barter.lastProblem
+                barter.lastMessage
             ]
 
 
-settingsView : List (Html FrontendMsg)
-settingsView =
-    [ pageTitleView "Settings"
-    , H.text "TODO"
-    ]
-
-
-charCreationView : NewChar -> List (Html FrontendMsg)
-charCreationView newChar =
+newCharView : NewChar -> List (Html FrontendMsg)
+newCharView newChar =
     let
-        specialItemView type_ =
-            let
-                value =
-                    Special.get type_ newChar.special
-
-                isUseful =
-                    Special.isUseful type_
-            in
-            H.tr
-                [ HA.classList
-                    [ ( "character-special-attribute", True )
-                    , ( "not-useful", not isUseful )
-                    ]
-                ]
-                [ H.td
-                    [ HA.class "character-special-attribute-dec" ]
-                    [ H.button
-                        [ HE.onClick <| NewCharDecSpecial type_
-                        , HA.disabled <|
-                            not <|
-                                Special.canDecrement
-                                    type_
-                                    newChar.special
-                        ]
-                        [ H.text "[-]" ]
-                    ]
-                , H.td
-                    [ HA.class "character-special-attribute-label"
-                    , HA.attributeIf (not isUseful) skillNotUseful
-                    ]
-                    [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.class "character-special-attribute-value" ]
-                    [ H.text <| String.fromInt value ]
-                , H.td
-                    [ HA.class "character-special-attribute-inc" ]
-                    [ H.button
-                        [ HE.onClick <| NewCharIncSpecial type_
-                        , HA.disabled <|
-                            not <|
-                                Special.canIncrement
-                                    newChar.availableSpecial
-                                    type_
-                                    newChar.special
-                        ]
-                        [ H.text "[+]" ]
-                    ]
+        createBtnView =
+            H.div [ HA.id "new-character-create-btn" ]
+                [ H.button
+                    [ HE.onClick CreateChar ]
+                    [ H.text "[Create]" ]
                 ]
 
-        itemView : ( String, String ) -> Html FrontendMsg
-        itemView ( label, value ) =
-            H.li [] [ H.text <| label ++ ": " ++ value ]
-
-        perceptionLevel : PerceptionLevel
-        perceptionLevel =
-            Perception.level newChar.special.perception
+        errorView =
+            H.viewMaybe
+                (\error ->
+                    H.div [ HA.id "new-character-error" ]
+                        [ H.text <| NewChar.error error ]
+                )
+                newChar.error
     in
     [ pageTitleView "New Character"
-    , H.table
-        [ HA.id "character-special-table" ]
-        (List.map specialItemView Special.all)
     , H.div
-        [ HA.class "character-special-available" ]
-        [ H.span
-            [ HA.class "character-special-available-label" ]
-            [ H.text "Available SPECIAL points: " ]
-        , H.span
-            [ HA.class "character-special-available-number" ]
-            [ H.text <| String.fromInt newChar.availableSpecial ]
-        ]
-    , [ ( "Hitpoints"
-        , String.fromInt <|
-            Logic.hitpoints
-                { level = 1
-                , special = newChar.special
-                }
-        )
-      , ( "Healing rate"
-        , (String.fromInt <| Logic.healingRate newChar.special)
-            ++ " HP/tick"
-        )
-      , ( "Perception Level"
-        , Perception.label perceptionLevel
-            ++ ". "
-            ++ Perception.tooltip perceptionLevel
-        )
-      , ( "Action Points"
-        , String.fromInt <| Logic.actionPoints newChar.special
-        )
-      ]
-        |> List.map itemView
-        |> H.ul [ HA.id "character-stats-list" ]
-    , H.div [ HA.id "create-char-button" ]
-        [ H.button
-            [ HE.onClick CreateChar ]
-            [ H.text "[Create]" ]
+        [ HA.id "new-character-grid" ]
+        [ H.div
+            [ HA.class "new-character-column" ]
+            [ newCharSpecialView newChar
+            , newCharTraitsView newChar.traits
+            , createBtnView
+            , errorView
+            ]
+        , H.div
+            [ HA.class "new-character-column" ]
+            [ newCharSkillsView newChar
+            ]
+        , H.div
+            [ HA.class "new-character-column" ]
+            [ newCharDerivedStatsView newChar
+            , newCharHelpView
+            ]
         ]
     ]
 
 
-skillNotUseful : Attribute msg
-skillNotUseful =
-    HA.title "This skill is not yet useful in this version of the game."
+newCharHelpView : Html FrontendMsg
+newCharHelpView =
+    H.div
+        [ HA.id "new-character-help" ]
+        [ H.h3
+            [ HA.class "new-character-section-title" ]
+            [ H.text "Help" ]
+        , H.p [] [ H.text "TODO info about hovered item" ]
+        ]
 
 
-characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-characterView _ player =
+newCharDerivedStatsView : NewChar -> Html FrontendMsg
+newCharDerivedStatsView newChar =
     let
-        specialAttributeView type_ =
-            let
-                value =
-                    Special.get type_ player.special
-
-                isUseful =
-                    Special.isUseful type_
-            in
-            H.tr
-                [ HA.classList
-                    [ ( "character-special-attribute", True )
-                    , ( "not-useful", not isUseful )
-                    ]
-                ]
-                [ H.td
-                    [ HA.class "character-special-attribute-label"
-                    , HA.attributeIf (not isUseful) skillNotUseful
-                    ]
-                    [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.class "character-special-attribute-value" ]
-                    [ H.text <| String.fromInt value ]
-                , H.td
-                    [ HA.class "character-special-attribute-inc" ]
-                    [ H.button
-                        [ HE.onClick <| AskToIncSpecial type_
-                        , HA.disabled <|
-                            not <|
-                                Special.canIncrement
-                                    player.availableSpecial
-                                    type_
-                                    player.special
-                        ]
-                        [ H.text "[+]" ]
-                    ]
-                ]
+        specialAfterTraits =
+            Logic.special
+                { baseSpecial = newChar.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
+                , isNewChar = True
+                }
 
         itemView : ( String, String, Maybe String ) -> Html FrontendMsg
         itemView ( label, value, tooltip ) =
@@ -1682,52 +1682,566 @@ characterView _ player =
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Perception.level player.special.perception
+            Perception.level specialAfterTraits.perception
     in
+    H.div
+        [ HA.id "new-character-derived-stats" ]
+        [ H.h3
+            [ HA.class "new-character-section-title" ]
+            [ H.text "Derived stats" ]
+        , H.ul [ HA.id "new-character-derived-stats-list" ] <|
+            List.map itemView
+                [ ( "Hitpoints"
+                  , String.fromInt <|
+                        Logic.hitpoints
+                            { level = 1
+                            , special = specialAfterTraits
+                            }
+                  , Nothing
+                  )
+                , ( "Healing rate"
+                  , (String.fromInt <| Logic.healingRate specialAfterTraits)
+                        ++ " HP/tick"
+                  , Nothing
+                  )
+                , ( "Perception Level"
+                  , Perception.label perceptionLevel
+                  , Just <| Perception.tooltip perceptionLevel
+                  )
+                , ( "Action Points"
+                  , String.fromInt <|
+                        Logic.actionPoints
+                            { hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                            , special = specialAfterTraits
+                            }
+                  , Nothing
+                  )
+                ]
+        ]
+
+
+newCharSpecialView : NewChar -> Html FrontendMsg
+newCharSpecialView newChar =
+    let
+        specialAfterTraits =
+            Logic.special
+                { baseSpecial = newChar.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
+                , isNewChar = True
+                }
+
+        specialItemView type_ =
+            let
+                value =
+                    Special.get type_ specialAfterTraits
+            in
+            H.tr
+                [ HA.class "character-special-attribute" ]
+                [ H.td
+                    [ HA.class "character-special-attribute-dec" ]
+                    [ H.button
+                        [ HE.onClick <| NewCharDecSpecial type_
+                        , HA.disabled <|
+                            not <|
+                                Special.canDecrement
+                                    type_
+                                    specialAfterTraits
+                        ]
+                        [ H.text "[-]" ]
+                    ]
+                , H.td
+                    [ HA.class "character-special-attribute-label" ]
+                    [ H.text <| Special.label type_ ]
+                , H.td
+                    [ HA.classList
+                        [ ( "character-special-attribute-value", True )
+                        , ( "out-of-range", not <| Special.isValueInRange value )
+                        ]
+                    ]
+                    [ H.text <| String.fromInt value ]
+                , H.td
+                    [ HA.class "character-special-attribute-inc" ]
+                    [ H.button
+                        [ HE.onClick <| NewCharIncSpecial type_
+                        , HA.disabled <|
+                            not <|
+                                Special.canIncrement
+                                    newChar.availableSpecial
+                                    type_
+                                    specialAfterTraits
+                        ]
+                        [ H.text "[+]" ]
+                    ]
+                ]
+    in
+    H.div
+        [ HA.id "new-character-special" ]
+        [ H.h3
+            [ HA.class "new-character-section-title" ]
+            [ H.text "SPECIAL ("
+            , H.span
+                [ HA.class "new-character-section-available-number" ]
+                [ H.text <| String.fromInt newChar.availableSpecial ]
+            , H.text " points left)"
+            ]
+        , H.table
+            [ HA.id "character-special-table" ]
+            (List.map specialItemView Special.all)
+        , H.p [] [ H.text "Distribute your SPECIAL points (each attribute can be in range 1..10)." ]
+        ]
+
+
+newCharTraitsView : Set_.Set Trait -> Html FrontendMsg
+newCharTraitsView traits =
+    let
+        availableTraits : Int
+        availableTraits =
+            Logic.maxTraits - Set_.size traits
+
+        traitView : Trait -> Html FrontendMsg
+        traitView trait =
+            let
+                isToggled : Bool
+                isToggled =
+                    Set_.member trait traits
+
+                buttonLabel : String
+                buttonLabel =
+                    if isToggled then
+                        "[*]"
+
+                    else
+                        "[ ]"
+            in
+            H.li
+                [ HA.classList
+                    [ ( "new-character-traits-trait", True )
+                    , ( "is-toggled", isToggled )
+                    ]
+                , HE.onClick <| NewCharToggleTrait trait
+                ]
+                [ H.button
+                    [ HE.onClickStopPropagation <| NewCharToggleTrait trait
+                    , HA.class "new-character-trait-tag-btn"
+                    ]
+                    [ H.text buttonLabel ]
+                , H.div [] [ H.text <| Trait.name trait ]
+                ]
+    in
+    H.div
+        [ HA.id "new-character-traits" ]
+        [ H.h3
+            [ HA.class "new-character-section-title" ]
+            [ H.text "Traits ("
+            , H.span
+                [ HA.class "new-character-section-available-number" ]
+                [ H.text <| String.fromInt availableTraits ]
+            , H.text " available)"
+            ]
+        , H.ul
+            [ HA.id "new-character-traits-list" ]
+            (List.map traitView Trait.all)
+        , H.p [] [ H.text "Select up to two traits." ]
+        ]
+
+
+newCharSkillsView : NewChar -> Html FrontendMsg
+newCharSkillsView newChar =
+    let
+        specialAfterTraits : Special
+        specialAfterTraits =
+            Logic.special
+                { baseSpecial = newChar.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
+                , isNewChar = True
+                }
+    in
+    skillsView_
+        { addedSkillPercentages =
+            Logic.addedSkillPercentages
+                { taggedSkills = newChar.taggedSkills
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                }
+        , special = specialAfterTraits
+        , taggedSkills = newChar.taggedSkills
+        , hasTagPerk = False
+        , availableSkillPoints = 0
+        , isNewChar = True
+        , id = "new-character-skills"
+        }
+
+
+characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+characterView _ player =
     [ pageTitleView "Character"
     , H.div
+        [ HA.id "character-grid" ]
+        [ H.div
+            [ HA.class "character-column" ]
+            [ charSpecialView player
+            , charTraitsView player.traits
+            , charPerksView player.perks
+            ]
+        , H.div
+            [ HA.class "character-column" ]
+            [ charSkillsView player
+            ]
+        , H.div
+            [ HA.class "character-column" ]
+            [ charDerivedStatsView player
+            , charHelpView
+            ]
+        ]
+    ]
+
+
+charTraitsView : Set_.Set Trait -> Html FrontendMsg
+charTraitsView traits =
+    let
+        itemView : Trait -> Html FrontendMsg
+        itemView trait =
+            H.li
+                [ HA.class "character-traits-trait" ]
+                [ H.text <| Trait.name trait ]
+    in
+    H.div
+        [ HA.id "character-traits" ]
+        [ H.h3
+            [ HA.class "character-section-title" ]
+            [ H.text "Traits" ]
+        , if Set_.isEmpty traits then
+            H.p [] [ H.text "You have no traits." ]
+
+          else
+            H.ul
+                [ HA.id "character-traits-list" ]
+                (List.map itemView <| Set_.toList traits)
+        ]
+
+
+charHelpView : Html FrontendMsg
+charHelpView =
+    H.div
+        [ HA.id "character-help" ]
+        [ H.h3
+            [ HA.class "character-section-title" ]
+            [ H.text "Help" ]
+        , H.p [] [ H.text "TODO info about hovered item" ]
+        ]
+
+
+charDerivedStatsView : CPlayer -> Html FrontendMsg
+charDerivedStatsView player =
+    let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
+        itemView ( label, value, tooltip ) =
+            let
+                ( liAttrs, valueAttrs ) =
+                    case tooltip of
+                        Just tooltip_ ->
+                            ( [ HA.title tooltip_ ]
+                            , [ HA.class "has-tooltip" ]
+                            )
+
+                        Nothing ->
+                            ( [], [] )
+            in
+            H.li liAttrs
+                [ H.text <| label ++ ": "
+                , H.span valueAttrs [ H.text value ]
+                ]
+
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
+            Perception.level special.perception
+    in
+    H.div
+        [ HA.id "character-derived-stats" ]
+        [ H.h3
+            [ HA.class "character-section-title" ]
+            [ H.text "Derived stats" ]
+        , H.ul [ HA.id "character-derived-stats-list" ] <|
+            List.map itemView
+                [ ( "Hitpoints"
+                  , String.fromInt <|
+                        Logic.hitpoints
+                            { level = 1
+                            , special = special
+                            }
+                  , Nothing
+                  )
+                , ( "Healing rate"
+                  , (String.fromInt <| Logic.healingRate special)
+                        ++ " HP/tick"
+                  , Nothing
+                  )
+                , ( "Perception Level"
+                  , Perception.label perceptionLevel
+                  , Just <| Perception.tooltip perceptionLevel
+                  )
+                , ( "Action Points"
+                  , String.fromInt <|
+                        Logic.actionPoints
+                            { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                            , special = special
+                            }
+                  , Nothing
+                  )
+                ]
+        ]
+
+
+charSpecialView : CPlayer -> Html FrontendMsg
+charSpecialView player =
+    let
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        specialItemView type_ =
+            let
+                value =
+                    Special.get type_ special
+            in
+            H.tr
+                [ HA.class "character-special-attribute" ]
+                [ H.td
+                    [ HA.class "character-special-attribute-label" ]
+                    [ H.text <| Special.label type_ ]
+                , H.td
+                    [ HA.class "character-special-attribute-value"
+
+                    -- TODO highlighted if addiction etc?
+                    ]
+                    [ H.text <| String.fromInt value ]
+                ]
+    in
+    H.div
         [ HA.id "character-special" ]
         [ H.h3
-            [ HA.id "character-special-title" ]
+            [ HA.class "character-section-title" ]
             [ H.text "SPECIAL" ]
         , H.table
             [ HA.id "character-special-table" ]
-            (List.map specialAttributeView Special.all)
-        , H.div
-            [ HA.class "character-special-available" ]
-            [ H.span
-                [ HA.class "character-special-available-label" ]
-                [ H.text "Available SPECIAL points: " ]
-            , H.span
-                [ HA.class "character-special-available-number" ]
-                [ H.text <| String.fromInt player.availableSpecial ]
-            ]
+            (List.map specialItemView Special.all)
         ]
-    , [ ( "HP", String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp, Nothing )
-      , ( "XP", String.fromInt player.xp, Nothing )
-      , ( "Name", player.name, Nothing )
-      , ( "Caps", String.fromInt player.caps, Nothing )
-      , ( "Ticks", String.fromInt player.ticks, Nothing )
-      , ( "Wins", String.fromInt player.wins, Nothing )
-      , ( "Losses", String.fromInt player.losses, Nothing )
-      , ( "Healing rate"
-        , (String.fromInt <| Logic.healingRate player.special)
-            ++ " HP/tick"
-        , Nothing
-        )
-      , ( "Perception Level"
-        , Perception.label perceptionLevel
-        , Just <| Perception.tooltip perceptionLevel
-        )
-      , ( "Action Points"
-        , String.fromInt <| Logic.actionPoints player.special
-        , Nothing
-        )
-      ]
-        |> List.map itemView
-        |> H.ul [ HA.id "character-stats-list" ]
-    , inventoryView player
-    ]
+
+
+skillsView_ :
+    { addedSkillPercentages : Dict_.Dict Skill Int
+    , special : Special
+    , taggedSkills : Set_.Set Skill
+    , hasTagPerk : Bool
+    , availableSkillPoints : Int
+    , isNewChar : Bool
+    , id : String
+    }
+    -> Html FrontendMsg
+skillsView_ r =
+    let
+        onTag : Skill -> FrontendMsg
+        onTag =
+            if r.isNewChar then
+                NewCharToggleTaggedSkill
+
+            else
+                AskToTagSkill
+
+        totalTags : Int
+        totalTags =
+            Logic.totalTags { hasTagPerk = r.hasTagPerk }
+
+        availableTags : Int
+        availableTags =
+            max 0 <| totalTags - Set_.size r.taggedSkills
+
+        skillView : Skill -> Html FrontendMsg
+        skillView skill =
+            let
+                percent : Int
+                percent =
+                    Skill.get r.special r.addedSkillPercentages skill
+
+                notUseful : Bool
+                notUseful =
+                    not <| Skill.isUseful skill
+
+                isTagged : Bool
+                isTagged =
+                    Set_.member skill r.taggedSkills
+
+                ( showTagButton, isTaggingDisabled, tagButtonLabel ) =
+                    case ( r.isNewChar, isTagged ) of
+                        ( True, True ) ->
+                            ( True, False, "[*]" )
+
+                        ( True, False ) ->
+                            ( True, availableTags == 0, "[ ]" )
+
+                        ( False, True ) ->
+                            ( availableTags > 0, True, "[*]" )
+
+                        ( False, False ) ->
+                            ( availableTags > 0, availableTags == 0, "[ ]" )
+
+                isIncButtonDisabled : Bool
+                isIncButtonDisabled =
+                    r.availableSkillPoints <= 0
+            in
+            H.li
+                [ HA.classList
+                    [ ( "character-skills-skill", True )
+                    , ( "not-useful", notUseful )
+                    , ( "is-tagged", isTagged )
+                    , ( "is-taggable", showTagButton && not isTaggingDisabled )
+                    ]
+                , HA.attributeIf notUseful <| HA.title "This skill is not yet useful in the game."
+                , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
+                ]
+                [ H.div
+                    [ HA.class "character-skill-name" ]
+                    [ H.viewIf showTagButton <|
+                        H.button
+                            [ HE.onClickStopPropagation <| onTag skill
+                            , HA.disabled isTaggingDisabled
+                            , HA.class "character-skill-tag-btn"
+                            ]
+                            [ H.text tagButtonLabel ]
+                    , H.text <| Skill.name skill
+                    ]
+                , H.div
+                    [ HA.class "character-skill-value" ]
+                    [ H.div
+                        [ HA.class "character-skill-percent" ]
+                        [ H.text <| String.fromInt percent ++ "%" ]
+                    , H.viewIf (not r.isNewChar) <|
+                        H.button
+                            [ HE.onClickStopPropagation <| AskToIncSkill skill
+                            , HA.class "character-skill-inc-btn"
+                            , HA.disabled isIncButtonDisabled
+                            , HA.attributeIf isIncButtonDisabled <|
+                                HA.title "You have no skill points available."
+                            ]
+                            [ H.text "[+]" ]
+                    ]
+                ]
+    in
+    if r.isNewChar then
+        H.div
+            [ HA.id r.id ]
+            [ H.h3
+                [ HA.class "new-character-section-title" ]
+                [ H.text "Skills ("
+                , H.span
+                    [ HA.class "new-character-section-available-number" ]
+                    [ H.text <| String.fromInt availableTags ]
+                , H.text " tags left)"
+                ]
+            , H.ul
+                [ HA.id "character-skills-list" ]
+                (List.map skillView Skill.all)
+            , H.p [] [ H.text "Tag three skills. Dimmed skills are not yet useful in the game." ]
+            ]
+
+    else
+        H.div
+            [ HA.id r.id
+            , HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ]
+            ]
+            [ H.h3
+                [ HA.class "character-section-title" ]
+                [ H.text "Skills ("
+                , H.span
+                    [ HA.class "character-section-available-number" ]
+                    [ H.text <| String.fromInt r.availableSkillPoints ]
+                , H.text " points available)"
+                ]
+            , H.ul
+                [ HA.id "character-skills-list" ]
+                (List.map skillView Skill.all)
+            , H.viewIf (availableTags > 0) <|
+                H.p [] [ H.text <| "Tags available: " ++ String.fromInt availableTags ]
+            , H.viewIf (r.availableSkillPoints > 0) <|
+                H.p [] [ H.text <| "Skill points available: " ++ String.fromInt r.availableSkillPoints ]
+            ]
+
+
+charSkillsView : CPlayer -> Html FrontendMsg
+charSkillsView player =
+    let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+    in
+    skillsView_
+        { addedSkillPercentages = player.addedSkillPercentages
+        , special = special
+        , taggedSkills = player.taggedSkills
+        , hasTagPerk = Player.perkRank Perk.Tag player > 0
+        , availableSkillPoints = player.availableSkillPoints
+        , isNewChar = False
+        , id = "character-skills"
+        }
+
+
+charPerksView : Dict_.Dict Perk Int -> Html FrontendMsg
+charPerksView perks =
+    let
+        itemView : ( Perk, Int ) -> Html FrontendMsg
+        itemView ( perk, rank ) =
+            let
+                maxRank : Int
+                maxRank =
+                    Perk.maxRank perk
+            in
+            H.li
+                [ HA.class "character-perks-perk" ]
+                [ H.text <|
+                    if maxRank == 1 then
+                        Perk.name perk
+
+                    else
+                        Perk.name perk ++ " (" ++ String.fromInt rank ++ "x)"
+                ]
+    in
+    H.div
+        [ HA.id "character-perks" ]
+        [ H.h3
+            [ HA.class "character-section-title" ]
+            [ H.text "Perks" ]
+        , if Dict_.isEmpty perks then
+            H.p [] [ H.text "No perks yet!" ]
+
+          else
+            H.ul
+                [ HA.id "character-perks-list" ]
+                (List.map itemView <| Dict_.toList perks)
+        ]
 
 
 inventoryView : CPlayer -> Html FrontendMsg
@@ -1742,7 +2256,7 @@ inventoryView player =
     H.div
         [ HA.id "character-inventory" ]
         [ H.h3
-            [ HA.id "character-special-title" ]
+            [ HA.id "character-inventory-title" ]
             [ H.text "Inventory" ]
         , H.ul
             [ HA.id "character-inventory-list" ]
@@ -1791,8 +2305,7 @@ messagesView currentTime zone _ player =
                         in
                         H.tr
                             [ HA.classList [ ( "is-unread", isUnread ) ]
-                            , -- TODO does this work here?
-                              HE.onClick <| OpenMessage message
+                            , HE.onClick <| OpenMessage message
                             ]
                             [ if isUnread then
                                 H.td
@@ -1976,6 +2489,9 @@ ladderTableView { loggedInPlayer, players } =
                                         else if HealthStatus.isDead player.healthStatus then
                                             cantFight "Can't fight this person: they're dead!"
 
+                                        else if loggedInPlayer_.ticks <= 0 then
+                                            cantFight "Can't fight: you have no ticks!"
+
                                         else
                                             H.td
                                                 [ HA.class "ladder-fight"
@@ -1991,10 +2507,21 @@ ladderTableView { loggedInPlayer, players } =
                             , loggedInPlayer
                                 |> H.viewMaybe
                                     (\loggedInPlayer_ ->
+                                        let
+                                            special : Special
+                                            special =
+                                                Logic.special
+                                                    { baseSpecial = loggedInPlayer_.baseSpecial
+                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser loggedInPlayer_.traits
+                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted loggedInPlayer_.traits
+                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame loggedInPlayer_.traits
+                                                    , isNewChar = False
+                                                    }
+                                        in
                                         H.td
                                             [ HA.class "ladder-status"
                                             , HA.title <|
-                                                if loggedInPlayer_.special.perception <= 1 then
+                                                if special.perception <= 1 then
                                                     "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
 
                                                 else
@@ -2282,7 +2809,6 @@ loggedInLinksView player currentRoute =
                     , linkIn "Map" Route.Map Nothing False
                     , linkIn "Ladder" Route.Ladder Nothing False
                     , linkIn "Town" (Route.Town Route.MainSquare) Nothing False
-                    , linkIn "Settings" Route.Settings Nothing False
                     , linkIn "Messages" Route.Messages Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]

@@ -1,18 +1,25 @@
 module Logic exposing
     ( actionPoints
+    , addedSkillPercentages
     , healingRate
     , hitpoints
+    , maxTraits
     , price
     , sequence
-    , temporaryBarterSkill
+    , skillPointCost
+    , special
+    , totalTags
     , unarmedAttackStats
     , unarmedChanceToHit
     , xpGained
     )
 
+import AssocList as Dict_
+import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Item as Item
-import Data.Special exposing (Special)
+import Data.Skill as Skill exposing (Skill)
+import Data.Special as Special exposing (Special)
 
 
 hitpoints :
@@ -20,15 +27,15 @@ hitpoints :
     , special : Special
     }
     -> Int
-hitpoints { level, special } =
+hitpoints r =
     let
         { strength, endurance } =
-            special
+            r.special
     in
     15
         + (2 * endurance)
         + strength
-        + (level * (2 + endurance // 2))
+        + (r.level * (2 + endurance // 2))
 
 
 healingRate : Special -> Int
@@ -42,15 +49,40 @@ tickHealingRateMultiplier =
     2
 
 
-armourClass : Special -> Int
-armourClass { agility } =
-    -- TODO take armour into account once we have it
-    agility
+armorClass :
+    { special : Special
+    , hasKamikazeTrait : Bool
+    }
+    -> Int
+armorClass r =
+    let
+        initial =
+            if r.hasKamikazeTrait then
+                0
+
+            else
+                r.special.agility
+    in
+    -- TODO take armor into account once we have it
+    initial
 
 
-actionPoints : Special -> Int
-actionPoints { agility } =
-    5 + agility // 2
+actionPoints :
+    { special : Special
+    , hasBruiserTrait : Bool
+    }
+    -> Int
+actionPoints r =
+    let
+        bruiserPenalty =
+            if r.hasBruiserTrait then
+                2
+
+            else
+                0
+    in
+    (5 + r.special.agility // 2)
+        - bruiserPenalty
 
 
 distancePenalty : Int -> Int
@@ -78,25 +110,13 @@ darknessPenalty isItDark distanceHexes =
         0
 
 
-temporaryBarterSkill : Special -> Int
-temporaryBarterSkill { charisma } =
-    -- TODO this is just the initial value
-    -- TODO remove this and use the value from SPlayer once we start tracking it there
-    4 * charisma
-
-
-temporaryUnarmedSkill : Special -> Int
-temporaryUnarmedSkill { strength, agility } =
-    -- TODO this is just the initial value
-    -- TODO remove this and use the value from SPlayer once we start tracking it there
-    30 + 2 * (strength + agility)
-
-
 unarmedChanceToHit :
     { attackerSpecial : Special
     , targetSpecial : Special
     , distanceHexes : Int
     , shotType : ShotType
+    , targetHasKamikazeTrait : Bool
+    , attackerSkills : Dict_.Dict Skill Int
     }
     -> Int
 unarmedChanceToHit r =
@@ -113,14 +133,21 @@ unarmedChanceToHit r =
         let
             skillPercentage : Int
             skillPercentage =
-                temporaryUnarmedSkill r.attackerSpecial
+                Skill.get r.attackerSpecial r.attackerSkills Skill.Unarmed
 
             shotPenalty : Int
             shotPenalty =
                 ShotType.chanceToHitPenalty r.shotType
+
+            armorClass_ : Int
+            armorClass_ =
+                armorClass
+                    { hasKamikazeTrait = r.targetHasKamikazeTrait
+                    , special = r.targetSpecial
+                    }
         in
         (skillPercentage
-            - armourClass r.targetSpecial
+            - armorClass_
             - shotPenalty
             {- Those two never matter for unarmed fights right now, but let's
                keep them in case we later tweak the two functions to do something
@@ -134,24 +161,24 @@ unarmedChanceToHit r =
 
 sequence :
     { perception : Int
-    , hasKamikazePerk : Bool
-    , earlierSequencePerkCount : Int
+    , hasKamikazeTrait : Bool
+    , earlierSequencePerkRank : Int
     }
     -> Int
-sequence { perception, hasKamikazePerk, earlierSequencePerkCount } =
+sequence { perception, hasKamikazeTrait, earlierSequencePerkRank } =
     let
         base =
             2 * perception
 
         kamikazeBonus =
-            if hasKamikazePerk then
+            if hasKamikazeTrait then
                 5
 
             else
                 0
 
         earlierSequenceBonus =
-            earlierSequencePerkCount * 2
+            earlierSequencePerkRank * 2
     in
     base
         + kamikazeBonus
@@ -170,6 +197,7 @@ xpGained { damageDealt } =
 
 unarmedAttackStats :
     { special : Special
+    , skills : Dict_.Dict Skill Int
     , level : Int
     }
     ->
@@ -177,14 +205,14 @@ unarmedAttackStats :
         , maxDamage : Int
         , criticalChanceBonus : Int
         }
-unarmedAttackStats { special, level } =
+unarmedAttackStats r =
     let
         { strength, agility } =
-            special
+            r.special
 
         unarmedSkill : Int
         unarmedSkill =
-            temporaryUnarmedSkill special
+            Skill.get r.special r.skills Skill.Unarmed
 
         heavyHandedTraitBonus : Int
         heavyHandedTraitBonus =
@@ -206,12 +234,12 @@ unarmedAttackStats { special, level } =
                 , criticalChanceBonus = 0
                 }
 
-            else if unarmedSkill < 75 || strength < 5 || level < 6 then
+            else if unarmedSkill < 75 || strength < 5 || r.level < 6 then
                 { unarmedAttackBonus = 3
                 , criticalChanceBonus = 0
                 }
 
-            else if unarmedSkill < 100 || agility < 7 || level < 9 then
+            else if unarmedSkill < 100 || agility < 7 || r.level < 9 then
                 { unarmedAttackBonus = 5
                 , criticalChanceBonus = 5
                 }
@@ -274,3 +302,174 @@ price r =
             Item.basePrice r.itemKind * r.itemCount
     in
     round (toFloat itemTotalPrice * barterRatio * (toFloat barterPercent * 0.01))
+
+
+{-| Cost of increasing a skill 1% (or 2% if tagged)
+-}
+skillPointCost : Int -> Int
+skillPointCost skillPercentage =
+    if skillPercentage <= 100 then
+        1
+
+    else if skillPercentage <= 125 then
+        2
+
+    else if skillPercentage <= 150 then
+        3
+
+    else if skillPercentage <= 175 then
+        4
+
+    else if skillPercentage <= 200 then
+        5
+
+    else
+        -- if skillPercentage <= 300 then
+        6
+
+
+totalTags : { hasTagPerk : Bool } -> Int
+totalTags { hasTagPerk } =
+    if hasTagPerk then
+        4
+
+    else
+        3
+
+
+skillPointsPerLevel :
+    { hasGiftedTrait : Bool
+    , hasSkilledTrait : Bool
+    , educatedPerkRanks : Int
+    , intelligence : Int
+    }
+    -> Int
+skillPointsPerLevel r =
+    let
+        giftedPenalty : Int
+        giftedPenalty =
+            if r.hasGiftedTrait then
+                5
+
+            else
+                0
+
+        skilledBonus : Int
+        skilledBonus =
+            if r.hasSkilledTrait then
+                5
+
+            else
+                0
+
+        educatedBonus : Int
+        educatedBonus =
+            r.educatedPerkRanks * 2
+    in
+    (5 + 2 * r.intelligence)
+        - giftedPenalty
+        + skilledBonus
+        + educatedBonus
+
+
+addedSkillPercentages :
+    { taggedSkills : Set_.Set Skill
+    , hasGiftedTrait : Bool
+    }
+    -> Dict_.Dict Skill Int
+addedSkillPercentages { taggedSkills, hasGiftedTrait } =
+    let
+        taggedSkillBonuses =
+            taggedSkills
+                |> Set_.toList
+                {- Each tag adds 20% at the beginning. This doesn't happen
+                   later when adding a tag via the Tag! perk.
+                -}
+                |> List.map (\skill -> ( skill, 20 ))
+                |> Dict_.fromList
+
+        giftedTraitPenalties =
+            if hasGiftedTrait then
+                Skill.all
+                    |> List.map (\skill -> ( skill, -10 ))
+                    |> Dict_.fromList
+
+            else
+                Dict_.empty
+    in
+    [ taggedSkillBonuses
+    , giftedTraitPenalties
+    ]
+        |> List.foldl
+            (\bonusesDict accSkills ->
+                bonusesDict
+                    |> Dict_.foldl
+                        (\bonusSkill bonus accSkills_ ->
+                            accSkills_
+                                |> Dict_.update bonusSkill
+                                    (\maybeSkillPercentage ->
+                                        case maybeSkillPercentage of
+                                            Nothing ->
+                                                Just bonus
+
+                                            Just skillPercentage ->
+                                                Just <| skillPercentage + bonus
+                                    )
+                        )
+                        accSkills
+            )
+            Dict_.empty
+
+
+special :
+    { -- doesn't contain bonunses from traits, perks, armor, drugs, etc.
+      baseSpecial : Special
+    , hasBruiserTrait : Bool
+    , hasGiftedTrait : Bool
+    , hasSmallFrameTrait : Bool
+    , isNewChar : Bool
+    }
+    -> Special
+special r =
+    let
+        strengthBonus =
+            if r.hasBruiserTrait then
+                2
+
+            else
+                0
+
+        allBonus =
+            if r.hasGiftedTrait then
+                1
+
+            else
+                0
+
+        agilityBonus =
+            if r.hasSmallFrameTrait then
+                1
+
+            else
+                0
+
+        map =
+            if r.isNewChar then
+                Special.mapWithoutClamp
+
+            else
+                Special.map
+    in
+    r.baseSpecial
+        |> map ((+) (strengthBonus + allBonus)) Special.Strength
+        |> map ((+) allBonus) Special.Perception
+        |> map ((+) allBonus) Special.Endurance
+        |> map ((+) allBonus) Special.Charisma
+        |> map ((+) allBonus) Special.Intelligence
+        |> map ((+) (agilityBonus + allBonus)) Special.Agility
+        |> map ((+) allBonus) Special.Luck
+
+
+maxTraits : Int
+maxTraits =
+    2

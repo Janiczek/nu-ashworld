@@ -61,6 +61,10 @@ body:after {
   pointer-events: none;
 }
 
+p {
+  max-width: 60ch;
+}
+
 button, input, textarea {
   font-family: BQN386;
   border: none;
@@ -138,6 +142,15 @@ ul {
 #app.logged-in #logo {
   filter: var(--filter-fg01);
   animation: flicker 2s linear 1;
+}
+
+/* Safari hack courtesy https://browserstrangeness.github.io/
+
+Disable the flicker animation in Safari, since it behaves very weird and
+doesn't look as nice as in Chrome/Firefox. 
+*/
+_::-webkit-full-page-media, _:future, :root #app.logged-in #logo {
+  animation: none;
 }
 
 @keyframes flicker {
@@ -416,16 +429,13 @@ table tbody tr:hover td {
   color: var(--fg-highlight);
 }
 
-#character-inventory {}
-#character-inventory-list {}
-.character-inventory-item {}
-
-.character-special-attribute.not-useful {
-  opacity: 0.5;
-}
-
 .character-special-attribute-value {
-  padding-left: 20px;
+  padding-left: 2ch;
+  width: 2ch;
+  text-align: right;
+}
+.character-special-attribute-value.out-of-range {
+  color: var(--fg-highlight);
 }
 
 .character-special-attribute-dec button,
@@ -453,10 +463,6 @@ table tbody tr:hover td {
 
 .character-special-attribute-inc {
   padding-left: 20px;
-}
-
-.character-special-available {
-  margin-top: 20px;
 }
 
 #character-stats-list {
@@ -790,7 +796,7 @@ table tbody tr:hover td {
 #town-store-player-traded-value { grid-area: player-traded-value; }
 #town-store-vendor-traded-value { grid-area: vendor-traded-value; }
 
-#town-store-barter-problem {
+#town-store-barter-message {
   margin-top: 40px;
   color: var(--fg-highlight);
 }
@@ -806,4 +812,123 @@ table tbody tr:hover td {
   width: 5.5ch;
   background-color: var(--bg02);
   padding-left: 6px;
+}
+
+.character-skills-skill {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.character-skills-skill:hover,
+.character-skills-skill:hover .character-skill-tag-btn,
+.character-skills-skill:hover .character-skill-inc-btn {
+  color: var(--fg01);
+}
+.character-skills-skill.is-taggable {
+  cursor: pointer;
+}
+.character-skills-skill.not-useful {
+  opacity: 0.5;
+}
+.character-skills-skill.is-tagged,
+.character-skills-skill.is-tagged .character-skill-tag-btn ,
+.character-skills-skill.is-tagged .character-skill-inc-btn {
+  color: var(--fg-highlight);
+}
+.character-skill-tag-btn {
+  white-space: pre;
+  margin-right: 1ch;
+}
+.character-skill-inc-btn {
+  white-space: pre;
+  margin-left: 1ch;
+}
+#character-skills.cannot-inc .character-skill-inc-btn {
+  opacity: 0.5;
+}
+.character-skill-value {
+  display: flex;
+}
+.character-skill-percent {
+  padding-left: 2ch;
+  width: 4ch;
+  text-align: right;
+}
+#character-skills-list {
+  width: max-content;
+  padding: 0;
+}
+
+.new-character-traits-trait {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+.new-character-traits-trait:hover,
+.new-character-traits-trait:hover .new-character-trait-tag-btn {
+  color: var(--fg01);
+}
+.new-character-traits-trait.is-toggled,
+.new-character-traits-trait.is-toggled .new-character-trait-tag-btn {
+  color: var(--fg-highlight);
+}
+.new-character-trait-tag-btn {
+  white-space: pre;
+  margin-right: 1ch;
+}
+#new-character-traits-list {
+  width: max-content;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+#new-character-grid,
+#character-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 20px;
+}
+
+#new-character-traits,
+#character-traits,
+#character-perks {
+  margin-top: 40px;
+}
+
+#new-character-notes p {
+  max-width: none;
+  color: var(--fg03);
+}
+
+#new-character-create-btn {
+  margin-top: 40px;
+}
+
+.new-character-section-title,
+.character-section-title {
+  color: var(--fg03);
+  font-size: 18px;
+  margin-top: 0;
+}
+.new-character-section-available-number,
+.character-section-available-number {
+  color: var(--fg-highlight);
+}
+
+#new-character-special p,
+#new-character-traits p,
+#new-character-skills p {
+  color: var(--fg03);
+}
+
+#new-character-error {
+  color: var(--fg-highlight);
+  margin-top: 20px;
+}
+
+#new-character-help,
+#character-help {
+  margin-top: 20px;
 }

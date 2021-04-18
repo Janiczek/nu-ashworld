@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import Admin
+import AssocSet as Set_
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -9,11 +10,13 @@ import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.Fight.Generator as FightGen
 import Data.Item as Item exposing (Item)
+import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message exposing (Message)
-import Data.NewChar exposing (NewChar)
+import Data.NewChar as NewChar exposing (NewChar)
+import Data.Perk as Perk
 import Data.Player as Player
     exposing
         ( Player(..)
@@ -21,9 +24,11 @@ import Data.Player as Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
-import Data.Special as Special exposing (SpecialType)
+import Data.Skill as Skill exposing (Skill)
+import Data.Special as Special exposing (Special, SpecialType)
 import Data.Special.Perception as Perception
 import Data.Tick as Tick
+import Data.Trait as Trait
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.World
     exposing
@@ -36,6 +41,7 @@ import Dict.ExtraExtra as Dict
 import Json.Decode as JD
 import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
+import List.Extra as List
 import Logic
 import Random
 import Set exposing (Set)
@@ -99,7 +105,7 @@ getWorldLoggedOut model =
         model.players
             |> Dict.values
             |> List.filterMap Player.getPlayerData
-            |> List.sortBy (negate << .xp)
+            |> Ladder.sort
             |> List.map
                 (Player.serverToClientOther
                     -- no info about alive/dead!
@@ -117,23 +123,50 @@ getWorldLoggedIn playerName model =
 getWorldLoggedIn_ : Player SPlayer -> Model -> WorldLoggedInData
 getWorldLoggedIn_ player model =
     let
+        auth : Auth Verified
         auth =
             Player.getAuth player
 
+        perception : Int
         perception =
             Player.getPlayerData player
-                |> Maybe.map (.special >> .perception)
+                |> Maybe.map
+                    (\player_ ->
+                        Logic.special
+                            { baseSpecial = player_.baseSpecial
+                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player_.traits
+                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player_.traits
+                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player_.traits
+                            , isNewChar = False
+                            }
+                            |> .perception
+                    )
+                |> Maybe.withDefault 1
+
+        sortedPlayers =
+            model.players
+                |> Dict.values
+                |> List.filterMap Player.getPlayerData
+                |> Ladder.sort
+
+        isCurrentPlayer p =
+            p.name == auth.name
+
+        playerRank =
+            sortedPlayers
+                |> List.indexedMap Tuple.pair
+                |> List.find (Tuple.second >> isCurrentPlayer)
+                |> Maybe.map (Tuple.first >> (+) 1)
+                -- TODO find this info in a non-Maybe way?
                 |> Maybe.withDefault 1
     in
     { player = Player.map Player.serverToClient player
+    , playerRank = playerRank
     , otherPlayers =
-        model.players
-            |> Dict.values
-            |> List.filterMap Player.getPlayerData
-            |> List.sortBy (negate << .xp)
+        sortedPlayers
             |> List.filterMap
                 (\otherPlayer ->
-                    if otherPlayer.name == auth.name then
+                    if isCurrentPlayer otherPlayer then
                         Nothing
 
                     else
@@ -422,8 +455,11 @@ updateFromFrontend sessionId clientId msg model =
                                 )
                             |> Maybe.withDefault (loggedOut ())
 
-        IncSpecial type_ ->
-            withLoggedInCreatedPlayer (incrementSpecial type_)
+        TagSkill skill ->
+            withLoggedInCreatedPlayer (tagSkill skill)
+
+        IncSkill skill ->
+            withLoggedInCreatedPlayer (incSkill skill)
 
         CreateNewChar newChar ->
             withLoggedInPlayer (createNewChar newChar)
@@ -488,6 +524,16 @@ barter barterState clientId location player model =
 
         Just vendor ->
             let
+                playerSpecial : Special
+                playerSpecial =
+                    Logic.special
+                        { baseSpecial = player.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                        , isNewChar = False
+                        }
+
                 barterNotEmpty : Bool
                 barterNotEmpty =
                     barterState /= Barter.empty
@@ -544,17 +590,24 @@ barter barterState clientId location player model =
                                             Logic.price
                                                 { itemCount = count
                                                 , itemKind = item.kind
-                                                , playerBarterSkill = Logic.temporaryBarterSkill player.special
+                                                , playerBarterSkill = Skill.get playerSpecial player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 }
                                         )
                             )
                         |> List.sum
 
+                playerValue : Int
+                playerValue =
+                    playerItemsPrice + barterState.playerCaps
+
+                vendorValue : Int
+                vendorValue =
+                    vendorItemsPrice + barterState.vendorCaps
+
                 playerOfferValuableEnough : Bool
                 playerOfferValuableEnough =
-                    (playerItemsPrice + barterState.playerCaps)
-                        >= (vendorItemsPrice + barterState.vendorCaps)
+                    playerValue >= vendorValue
             in
             if
                 List.all identity
@@ -575,7 +628,15 @@ barter barterState clientId location player model =
                     |> Maybe.map
                         (\world ->
                             ( newModel
-                            , Lamdera.sendToFrontend clientId <| BarterDone world
+                            , Lamdera.sendToFrontend clientId <|
+                                BarterDone
+                                    ( world
+                                    , if vendorValue == 0 then
+                                        Just Barter.YouGaveStuffForFree
+
+                                      else
+                                        Nothing
+                                    )
                             )
                         )
                     |> Maybe.withDefault ( model, Cmd.none )
@@ -584,10 +645,10 @@ barter barterState clientId location player model =
                 ( model
                 , -- TODO somehow generate and filter this during all the checks above?
                   if not barterNotEmpty then
-                    Lamdera.sendToFrontend clientId <| BarterProblem Barter.BarterIsEmpty
+                    Lamdera.sendToFrontend clientId <| BarterMessage Barter.BarterIsEmpty
 
                   else if not playerOfferValuableEnough then
-                    Lamdera.sendToFrontend clientId <| BarterProblem Barter.PlayerOfferNotValuableEnough
+                    Lamdera.sendToFrontend clientId <| BarterMessage Barter.PlayerOfferNotValuableEnough
 
                   else
                     -- silent error ... somebody's trying to hack probably
@@ -730,6 +791,16 @@ removeMessage message clientId player model =
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 moveTo newCoords pathTaken clientId player model =
     let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
         currentCoords : TileCoords
         currentCoords =
             Map.toTileCoords player.location
@@ -745,7 +816,7 @@ moveTo newCoords pathTaken clientId player model =
         pathTaken
             /= Set.remove currentCoords
                 (Pathfinding.path
-                    (Perception.level player.special.perception)
+                    (Perception.level special.perception)
                     { from = currentCoords
                     , to = newCoords
                     }
@@ -795,41 +866,52 @@ createNewCharWithTime newChar currentTime clientId player model =
             ( model, Cmd.none )
 
         NeedsCharCreated auth ->
-            let
-                sPlayer : SPlayer
-                sPlayer =
-                    Player.fromNewChar currentTime auth newChar
+            case Player.fromNewChar currentTime auth newChar of
+                Err creationError ->
+                    ( model
+                    , Lamdera.sendToFrontend clientId <| CharCreationError creationError
+                    )
 
-                newPlayer : Player SPlayer
-                newPlayer =
-                    Player sPlayer
+                Ok sPlayer ->
+                    let
+                        newPlayer : Player SPlayer
+                        newPlayer =
+                            Player sPlayer
 
-                newModel : Model
-                newModel =
-                    { model | players = Dict.insert auth.name newPlayer model.players }
+                        newModel : Model
+                        newModel =
+                            { model | players = Dict.insert auth.name newPlayer model.players }
 
-                world : WorldLoggedInData
-                world =
-                    getWorldLoggedIn_ newPlayer newModel
-            in
-            ( newModel
-            , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar world
-            )
+                        world : WorldLoggedInData
+                        world =
+                            getWorldLoggedIn_ newPlayer newModel
+                    in
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar world
+                    )
 
 
-incrementSpecial : SpecialType -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-incrementSpecial type_ clientId player model =
-    if Special.canIncrement player.availableSpecial type_ player.special then
+tagSkill : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+tagSkill skill clientId player model =
+    let
+        totalTagsAvailable : Int
+        totalTagsAvailable =
+            Logic.totalTags { hasTagPerk = Player.perkRank Perk.Tag player > 0 }
+
+        unusedTags : Int
+        unusedTags =
+            totalTagsAvailable - Set_.size player.taggedSkills
+
+        isTagged : Bool
+        isTagged =
+            Set_.member skill player.taggedSkills
+    in
+    if unusedTags > 0 && not isTagged then
         let
             newModel : Model
             newModel =
                 model
-                    |> updatePlayer
-                        (SPlayer.incSpecial type_
-                            >> SPlayer.decAvailableSpecial
-                            >> SPlayer.recalculateHp
-                        )
-                        player.name
+                    |> updatePlayer (SPlayer.tagSkill skill) player.name
         in
         getWorldLoggedIn player.name newModel
             |> Maybe.map
@@ -843,6 +925,24 @@ incrementSpecial type_ clientId player model =
     else
         -- TODO notify the user?
         ( model, Cmd.none )
+
+
+incSkill : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+incSkill skill clientId player model =
+    let
+        newModel : Model
+        newModel =
+            model
+                |> updatePlayer (SPlayer.incSkill skill) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 healMe : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -864,7 +964,10 @@ healMe clientId player model =
 
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 fight otherPlayerName clientId sPlayer model =
-    if sPlayer.hp == 0 then
+    if sPlayer.ticks <= 0 then
+        ( model, Cmd.none )
+
+    else if sPlayer.hp <= 0 then
         ( model, Cmd.none )
 
     else

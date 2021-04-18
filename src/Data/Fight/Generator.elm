@@ -9,6 +9,7 @@ import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player as Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
+import Data.Trait as Trait
 import Data.Xp as Xp
 import Logic
 import Random exposing (Generator)
@@ -48,11 +49,31 @@ generator currentTime initPlayers =
 
         attackerMaxAp : Int
         attackerMaxAp =
-            Logic.actionPoints initPlayers.attacker.special
+            Logic.actionPoints
+                { hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.attacker.traits
+                , special =
+                    Logic.special
+                        { baseSpecial = initPlayers.attacker.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.attacker.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted initPlayers.attacker.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame initPlayers.attacker.traits
+                        , isNewChar = False
+                        }
+                }
 
         targetMaxAp : Int
         targetMaxAp =
-            Logic.actionPoints initPlayers.target.special
+            Logic.actionPoints
+                { hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.target.traits
+                , special =
+                    Logic.special
+                        { baseSpecial = initPlayers.target.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.target.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted initPlayers.target.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame initPlayers.target.traits
+                        , isNewChar = False
+                        }
+                }
 
         initialFight : Generator OngoingFight
         initialFight =
@@ -75,11 +96,21 @@ generator currentTime initPlayers =
             ]
                 |> List.sortBy
                     (\( _, player ) ->
+                        let
+                            special =
+                                Logic.special
+                                    { baseSpecial = player.baseSpecial
+                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                                    , isNewChar = False
+                                    }
+                        in
                         negate <|
                             Logic.sequence
-                                { perception = player.special.perception
-                                , hasKamikazePerk = Player.perkCount Perk.Kamikaze player > 0
-                                , earlierSequencePerkCount = Player.perkCount Perk.EarlierSequence player
+                                { perception = special.perception
+                                , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
+                                , earlierSequencePerkRank = Player.perkRank Perk.EarlierSequence player
                                 }
                     )
                 |> List.map Tuple.first
@@ -163,14 +194,36 @@ generator currentTime initPlayers =
                 availableAp =
                     playerAp who ongoing
 
+                player =
+                    player_ who ongoing
+
+                otherPlayer =
+                    player_ (Fight.theOther who) ongoing
+
                 chanceToHit : ShotType -> Float
                 chanceToHit shot =
                     toFloat
                         (Logic.unarmedChanceToHit
-                            { attackerSpecial = player_ who ongoing |> .special
-                            , targetSpecial = player_ (Fight.theOther who) ongoing |> .special
+                            { attackerSpecial =
+                                Logic.special
+                                    { baseSpecial = player.baseSpecial
+                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                                    , isNewChar = False
+                                    }
+                            , targetSpecial =
+                                Logic.special
+                                    { baseSpecial = otherPlayer.baseSpecial
+                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser otherPlayer.traits
+                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted otherPlayer.traits
+                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame otherPlayer.traits
+                                    , isNewChar = False
+                                    }
+                            , attackerSkills = player.addedSkillPercentages
                             , distanceHexes = ongoing.distanceHexes
                             , shotType = shot
+                            , targetHasKamikazeTrait = Trait.isSelected Trait.Kamikaze otherPlayer.traits
                             }
                         )
                         / 100
@@ -196,12 +249,20 @@ generator currentTime initPlayers =
 
         attackStats who ongoing =
             let
-                { special, xp } =
+                player =
                     player_ who ongoing
             in
             Logic.unarmedAttackStats
-                { special = special
-                , level = Xp.currentLevel xp
+                { special =
+                    Logic.special
+                        { baseSpecial = player.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                        , isNewChar = False
+                        }
+                , skills = player.addedSkillPercentages
+                , level = Xp.currentLevel player.xp
                 }
 
         rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
@@ -281,16 +342,38 @@ generator currentTime initPlayers =
                         let
                             apCost =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
+
+                            player =
+                                player_ who ongoing
+
+                            otherPlayer =
+                                player_ other ongoing
                         in
                         if ongoing.distanceHexes == 0 && playerAp who ongoing >= apCost then
                             let
                                 chanceToHit =
                                     toFloat
                                         (Logic.unarmedChanceToHit
-                                            { attackerSpecial = player_ who ongoing |> .special
-                                            , targetSpecial = player_ other ongoing |> .special
+                                            { attackerSpecial =
+                                                Logic.special
+                                                    { baseSpecial = player.baseSpecial
+                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                                                    , isNewChar = False
+                                                    }
+                                            , targetSpecial =
+                                                Logic.special
+                                                    { baseSpecial = otherPlayer.baseSpecial
+                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser otherPlayer.traits
+                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted otherPlayer.traits
+                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame otherPlayer.traits
+                                                    , isNewChar = False
+                                                    }
+                                            , attackerSkills = player.addedSkillPercentages
                                             , distanceHexes = ongoing.distanceHexes
                                             , shotType = shot
+                                            , targetHasKamikazeTrait = Trait.isSelected Trait.Kamikaze otherPlayer.traits
                                             }
                                         )
                                         / 100

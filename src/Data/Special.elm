@@ -10,8 +10,11 @@ module Data.Special exposing
     , get
     , increment
     , init
-    , isUseful
+    , isInRange
+    , isValueInRange
     , label
+    , map
+    , mapWithoutClamp
     )
 
 import Json.Decode as JD exposing (Decoder)
@@ -38,31 +41,6 @@ type SpecialType
     | Intelligence
     | Agility
     | Luck
-
-
-isUseful : SpecialType -> Bool
-isUseful type_ =
-    case type_ of
-        Strength ->
-            True
-
-        Perception ->
-            True
-
-        Endurance ->
-            True
-
-        Charisma ->
-            True
-
-        Intelligence ->
-            False
-
-        Agility ->
-            True
-
-        Luck ->
-            False
 
 
 label : SpecialType -> String
@@ -139,37 +117,56 @@ canDecrement type_ special =
 
 increment : SpecialType -> Special -> Special
 increment =
-    map (\x -> x + 1)
+    mapWithoutClamp (\x -> x + 1)
 
 
 decrement : SpecialType -> Special -> Special
 decrement =
-    map (\x -> x - 1)
+    mapWithoutClamp (\x -> x - 1)
+
+
+mapWithoutClamp : (Int -> Int) -> SpecialType -> Special -> Special
+mapWithoutClamp =
+    map_ False
 
 
 map : (Int -> Int) -> SpecialType -> Special -> Special
-map fn type_ special =
+map =
+    map_ True
+
+
+map_ : Bool -> (Int -> Int) -> SpecialType -> Special -> Special
+map_ shouldClamp fn type_ special =
+    let
+        clampedFn : Int -> Int
+        clampedFn =
+            if shouldClamp then
+                clamp 1 10 << fn
+
+            else
+                fn
+    in
     case type_ of
         Strength ->
-            { special | strength = fn special.strength }
+            { special | strength = clampedFn special.strength }
 
         Perception ->
-            { special | perception = fn special.perception }
+            { special | perception = clampedFn special.perception }
 
         Endurance ->
-            { special | endurance = fn special.endurance }
+            { special | endurance = clampedFn special.endurance }
 
         Charisma ->
-            { special | charisma = fn special.charisma }
+            { special | charisma = clampedFn special.charisma }
 
         Intelligence ->
-            { special | intelligence = fn special.intelligence }
+            { special | intelligence = clampedFn special.intelligence }
 
         Agility ->
-            { special | agility = fn special.agility }
+            { special | agility = clampedFn special.agility }
 
         Luck ->
-            { special | luck = fn special.luck }
+            { special | luck = clampedFn special.luck }
 
 
 init : Special
@@ -200,3 +197,23 @@ decoder =
         |> JD.andMap (JD.field "intelligence" JD.int)
         |> JD.andMap (JD.field "agility" JD.int)
         |> JD.andMap (JD.field "luck" JD.int)
+
+
+isInRange : Special -> Bool
+isInRange special =
+    let
+        isTypeInRange : SpecialType -> Bool
+        isTypeInRange type_ =
+            let
+                value : Int
+                value =
+                    get type_ special
+            in
+            isValueInRange value
+    in
+    List.all isTypeInRange all
+
+
+isValueInRange : Int -> Bool
+isValueInRange value =
+    value >= 1 && value <= 10

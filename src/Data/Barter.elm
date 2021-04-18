@@ -1,6 +1,6 @@
 module Data.Barter exposing
     ( ArrowsDirection(..)
-    , Problem(..)
+    , Message(..)
     , State
     , TransferNPosition(..)
     , addPlayerCaps
@@ -9,15 +9,15 @@ module Data.Barter exposing
     , addVendorItem
     , arrowsDirection
     , defaultTransferN
-    , dismissProblem
+    , dismissMessage
     , doubleArrow
     , empty
-    , problemText
+    , messageText
     , removePlayerCaps
     , removePlayerItem
     , removeVendorCaps
     , removeVendorItem
-    , setProblem
+    , setMessage
     , setTransferNHover
     , setTransferNInput
     , singleArrow
@@ -29,9 +29,10 @@ import Data.Item as Item
 import Dict exposing (Dict)
 
 
-type Problem
+type Message
     = BarterIsEmpty
     | PlayerOfferNotValuableEnough
+    | YouGaveStuffForFree
 
 
 type TransferNPosition
@@ -50,7 +51,7 @@ type alias State =
     , vendorItems : Dict Item.Id Int
     , playerCaps : Int
     , vendorCaps : Int
-    , lastProblem : Maybe Problem
+    , lastMessage : Maybe Message
     , transferNInputs : Dict_.Dict TransferNPosition String
     , transferNHover : Maybe TransferNPosition
     }
@@ -62,7 +63,7 @@ empty =
     , vendorItems = Dict.empty
     , playerCaps = 0
     , vendorCaps = 0
-    , lastProblem = Nothing
+    , lastMessage = Nothing
     , transferNInputs = Dict_.empty
     , transferNHover = Nothing
     }
@@ -172,24 +173,27 @@ removeVendorCaps amount state =
     { state | vendorCaps = state.vendorCaps - amount }
 
 
-setProblem : Problem -> State -> State
-setProblem problem state =
-    { state | lastProblem = Just problem }
+setMessage : Message -> State -> State
+setMessage message state =
+    { state | lastMessage = Just message }
 
 
-dismissProblem : State -> State
-dismissProblem state =
-    { state | lastProblem = Nothing }
+dismissMessage : State -> State
+dismissMessage state =
+    { state | lastMessage = Nothing }
 
 
-problemText : Problem -> String
-problemText problem =
-    case problem of
+messageText : Message -> String
+messageText message =
+    case message of
         BarterIsEmpty ->
             "You didn't yet say what you want to trade."
 
         PlayerOfferNotValuableEnough ->
             "You didn't offer enough value for what you request."
+
+        YouGaveStuffForFree ->
+            "You gave stuff away for free. Just sayin'."
 
 
 defaultTransferN : String

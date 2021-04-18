@@ -11,7 +11,7 @@ module Data.Player exposing
     , getAuth
     , getPlayerData
     , map
-    , perkCount
+    , perkRank
     , sPlayerDecoder
     , serverToClient
     , serverToClientOther
@@ -19,6 +19,8 @@ module Data.Player exposing
 
 import AssocList as Dict_
 import AssocList.ExtraExtra as Dict_
+import AssocSet as Set_
+import AssocSet.Extra as Set_
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -31,10 +33,12 @@ import Data.Item as Item exposing (Item)
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.Message as Message exposing (Message)
-import Data.NewChar exposing (NewChar)
+import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
+import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp exposing (Level, Xp)
 import Dict exposing (Dict)
 import Dict.Json as Dict
@@ -56,8 +60,8 @@ type alias SPlayer =
     , hp : Int
     , maxHp : Int
     , xp : Int
-    , special : Special
-    , availableSpecial : Int
+    , -- doesn't contain bonunses from traits, perks, armor, drugs, etc.
+      baseSpecial : Special
     , caps : Int
     , ticks : Int
     , wins : Int
@@ -66,6 +70,11 @@ type alias SPlayer =
     , perks : Dict_.Dict Perk Int
     , messages : List Message
     , items : Dict Item.Id Item
+    , traits : Set_.Set Trait
+    , -- doesn't contain Special skill percentages:
+      addedSkillPercentages : Dict_.Dict Skill Int
+    , taggedSkills : Set_.Set Skill
+    , availableSkillPoints : Int
     }
 
 
@@ -74,8 +83,7 @@ type alias CPlayer =
     , maxHp : Int
     , xp : Xp
     , name : PlayerName
-    , special : Special
-    , availableSpecial : Int
+    , baseSpecial : Special
     , caps : Int
     , ticks : Int
     , wins : Int
@@ -84,6 +92,11 @@ type alias CPlayer =
     , perks : Dict_.Dict Perk Int
     , messages : List Message
     , items : Dict Item.Id Item
+    , traits : Set_.Set Trait
+    , -- doesn't contain Special skill percentages:
+      addedSkillPercentages : Dict_.Dict Skill Int
+    , taggedSkills : Set_.Set Skill
+    , availableSkillPoints : Int
     }
 
 
@@ -120,8 +133,7 @@ encodeSPlayer player =
         , ( "hp", JE.int player.hp )
         , ( "maxHp", JE.int player.maxHp )
         , ( "xp", JE.int player.xp )
-        , ( "special", Special.encode player.special )
-        , ( "availableSpecial", JE.int player.availableSpecial )
+        , ( "baseSpecial", Special.encode player.baseSpecial )
         , ( "caps", JE.int player.caps )
         , ( "ticks", JE.int player.ticks )
         , ( "wins", JE.int player.wins )
@@ -130,6 +142,10 @@ encodeSPlayer player =
         , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
         , ( "messages", JE.list Message.encode player.messages )
         , ( "items", Dict.encode JE.int Item.encode player.items )
+        , ( "traits", Set_.encode Trait.encode player.traits )
+        , ( "addedSkillPercentages", Dict_.encode Skill.encode JE.int player.addedSkillPercentages )
+        , ( "taggedSkills", Set_.encode Skill.encode player.taggedSkills )
+        , ( "availableSkillPoints", JE.int player.availableSkillPoints )
         ]
 
 
@@ -155,12 +171,11 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV3
-        , sPlayerDecoderV2
-        , sPlayerDecoderV1
-        ]
+        [ sPlayerDecoderV1 ]
 
 
+{-| with skills we are getting a reset!
+-}
 sPlayerDecoderV1 : Decoder SPlayer
 sPlayerDecoderV1 =
     JD.succeed SPlayer
@@ -169,52 +184,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
-        |> JD.andMap (JD.field "special" Special.decoder)
-        |> JD.andMap (JD.field "availableSpecial" JD.int)
-        |> JD.andMap (JD.field "caps" JD.int)
-        |> JD.andMap (JD.field "ticks" JD.int)
-        |> JD.andMap (JD.field "wins" JD.int)
-        |> JD.andMap (JD.field "losses" JD.int)
-        |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.succeed [])
-        |> JD.andMap (JD.succeed Dict.empty)
-
-
-{-| adds "messages" field
--}
-sPlayerDecoderV2 : Decoder SPlayer
-sPlayerDecoderV2 =
-    JD.succeed SPlayer
-        |> JD.andMap (JD.field "name" JD.string)
-        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.field "hp" JD.int)
-        |> JD.andMap (JD.field "maxHp" JD.int)
-        |> JD.andMap (JD.field "xp" JD.int)
-        |> JD.andMap (JD.field "special" Special.decoder)
-        |> JD.andMap (JD.field "availableSpecial" JD.int)
-        |> JD.andMap (JD.field "caps" JD.int)
-        |> JD.andMap (JD.field "ticks" JD.int)
-        |> JD.andMap (JD.field "wins" JD.int)
-        |> JD.andMap (JD.field "losses" JD.int)
-        |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
-        |> JD.andMap (JD.succeed Dict.empty)
-
-
-{-| adds "items" field
--}
-sPlayerDecoderV3 : Decoder SPlayer
-sPlayerDecoderV3 =
-    JD.succeed SPlayer
-        |> JD.andMap (JD.field "name" JD.string)
-        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.field "hp" JD.int)
-        |> JD.andMap (JD.field "maxHp" JD.int)
-        |> JD.andMap (JD.field "xp" JD.int)
-        |> JD.andMap (JD.field "special" Special.decoder)
-        |> JD.andMap (JD.field "availableSpecial" JD.int)
+        |> JD.andMap (JD.field "baseSpecial" Special.decoder)
         |> JD.andMap (JD.field "caps" JD.int)
         |> JD.andMap (JD.field "ticks" JD.int)
         |> JD.andMap (JD.field "wins" JD.int)
@@ -223,6 +193,10 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
 
 
 serverToClient : SPlayer -> CPlayer
@@ -231,8 +205,7 @@ serverToClient p =
     , maxHp = p.maxHp
     , xp = p.xp
     , name = p.name
-    , special = p.special
-    , availableSpecial = p.availableSpecial
+    , baseSpecial = p.baseSpecial
     , caps = p.caps
     , ticks = p.ticks
     , wins = p.wins
@@ -241,6 +214,10 @@ serverToClient p =
     , perks = p.perks
     , messages = p.messages
     , items = p.items
+    , traits = p.traits
+    , addedSkillPercentages = p.addedSkillPercentages
+    , taggedSkills = p.taggedSkills
+    , availableSkillPoints = p.availableSkillPoints
     }
 
 
@@ -300,41 +277,73 @@ getAuth player =
             }
 
 
-fromNewChar : Posix -> Auth Verified -> NewChar -> SPlayer
+fromNewChar : Posix -> Auth Verified -> NewChar -> Result NewChar.CreationError SPlayer
 fromNewChar currentTime auth newChar =
     let
-        hp : Int
-        hp =
-            Logic.hitpoints
-                { level = 1
-                , special = newChar.special
+        specialAfterTraits : Special
+        specialAfterTraits =
+            Logic.special
+                { baseSpecial = newChar.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
+                , isNewChar = True
                 }
-
-        startingTileNum : TileNum
-        startingTileNum =
-            Location.default
-                |> Location.coords
-                |> Map.toTileNum
     in
-    { name = auth.name
-    , password = auth.password
-    , hp = hp
-    , maxHp = hp
-    , xp = 0
-    , special = newChar.special
-    , availableSpecial = newChar.availableSpecial
-    , caps = 15
-    , ticks = 10
-    , wins = 0
-    , losses = 0
-    , location = startingTileNum
-    , perks = Dict_.empty
-    , messages = [ Message.new currentTime Message.Welcome ]
-    , items = Dict.empty
-    }
+    if Set_.size newChar.taggedSkills /= 3 then
+        Err NewChar.DoesNotHaveThreeTaggedSkills
+
+    else if newChar.availableSpecial > 0 then
+        Err NewChar.HasSpecialPointsLeft
+
+    else if not <| Special.isInRange specialAfterTraits then
+        Err NewChar.HasSpecialOutOfRange
+
+    else if Set_.size newChar.traits > 2 then
+        Err NewChar.HasMoreThanTwoTraits
+
+    else
+        Ok <|
+            let
+                hp : Int
+                hp =
+                    Logic.hitpoints
+                        { level = 1
+                        , special = specialAfterTraits
+                        }
+
+                startingTileNum : TileNum
+                startingTileNum =
+                    Location.default
+                        |> Location.coords
+                        |> Map.toTileNum
+            in
+            { name = auth.name
+            , password = auth.password
+            , hp = hp
+            , maxHp = hp
+            , xp = 0
+            , baseSpecial = newChar.baseSpecial
+            , caps = 15
+            , ticks = 10
+            , wins = 0
+            , losses = 0
+            , location = startingTileNum
+            , perks = Dict_.empty
+            , messages = [ Message.new currentTime Message.Welcome ]
+            , items = Dict.empty
+            , traits = newChar.traits
+            , addedSkillPercentages =
+                Logic.addedSkillPercentages
+                    { taggedSkills = newChar.taggedSkills
+                    , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+                    }
+            , taggedSkills = newChar.taggedSkills
+            , availableSkillPoints = 0
+            }
 
 
-perkCount : Perk -> SPlayer -> Int
-perkCount perk { perks } =
+perkRank : Perk -> { p | perks : Dict_.Dict Perk Int } -> Int
+perkRank perk { perks } =
     Dict_.get perk perks
         |> Maybe.withDefault 0

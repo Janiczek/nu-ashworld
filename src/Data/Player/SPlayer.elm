@@ -3,10 +3,9 @@ module Data.Player.SPlayer exposing
     , addItem
     , addMessage
     , addXp
-    , decAvailableSpecial
     , healUsingTick
     , incLosses
-    , incSpecial
+    , incSkill
     , incWins
     , readMessage
     , recalculateHp
@@ -16,15 +15,20 @@ module Data.Player.SPlayer exposing
     , subtractCaps
     , subtractHp
     , subtractTicks
+    , tagSkill
     , tick
     )
 
+import AssocList as Dict_
+import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Player exposing (SPlayer)
-import Data.Special as Special exposing (SpecialType)
+import Data.Skill as Skill exposing (Skill)
+import Data.Special as Special exposing (Special, SpecialType)
 import Data.Tick as Tick
+import Data.Trait as Trait
 import Data.Xp as Xp
 import Dict
 import Logic
@@ -106,19 +110,9 @@ incLosses player =
     { player | losses = player.losses + 1 }
 
 
-incSpecial : SpecialType -> SPlayer -> SPlayer
-incSpecial type_ player =
-    { player | special = Special.increment type_ player.special }
-
-
 subtractTicks : Int -> SPlayer -> SPlayer
 subtractTicks n player =
     { player | ticks = max 0 (player.ticks - n) }
-
-
-decAvailableSpecial : SPlayer -> SPlayer
-decAvailableSpecial player =
-    { player | availableSpecial = player.availableSpecial - 1 }
 
 
 setLocation : TileNum -> SPlayer -> SPlayer
@@ -132,7 +126,14 @@ recalculateHp player =
         newMaxHp =
             Logic.hitpoints
                 { level = Xp.currentLevel player.xp
-                , special = player.special
+                , special =
+                    Logic.special
+                        { baseSpecial = player.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                        , isNewChar = False
+                        }
                 }
 
         diff =
@@ -158,7 +159,17 @@ tick player =
         |> addTicks (Tick.ticksAddedPerInterval player.ticks)
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
-                addHp (Logic.healingRate player.special)
+                addHp
+                    (Logic.healingRate
+                        (Logic.special
+                            { baseSpecial = player.baseSpecial
+                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                            , isNewChar = False
+                            }
+                        )
+                    )
 
             else
                 identity
@@ -243,3 +254,61 @@ removeItem id removedCount player =
                                     Nothing
                     )
     }
+
+
+tagSkill : Skill -> SPlayer -> SPlayer
+tagSkill skill player =
+    { player | taggedSkills = Set_.insert skill player.taggedSkills }
+
+
+incSkill : Skill -> SPlayer -> SPlayer
+incSkill skill player =
+    let
+        isTagged : Bool
+        isTagged =
+            Set_.member skill player.taggedSkills
+
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        skillPercent : Int
+        skillPercent =
+            Skill.get special player.addedSkillPercentages skill
+
+        neededPoints : Int
+        neededPoints =
+            Logic.skillPointCost skillPercent
+
+        percentToAdd : Int
+        percentToAdd =
+            if isTagged then
+                2
+
+            else
+                1
+    in
+    if skillPercent < 300 && player.availableSkillPoints >= neededPoints then
+        { player
+            | addedSkillPercentages =
+                Dict_.update skill
+                    (\maybePercent ->
+                        case maybePercent of
+                            Nothing ->
+                                Just percentToAdd
+
+                            Just percent ->
+                                Just <| percent + percentToAdd
+                    )
+                    player.addedSkillPercentages
+            , availableSkillPoints = player.availableSkillPoints - neededPoints
+        }
+
+    else
+        player

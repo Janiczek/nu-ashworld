@@ -11,6 +11,7 @@ module Data.World exposing
     )
 
 import Data.Auth exposing (Auth, Plaintext)
+import Data.Ladder as Ladder
 import Data.Player as Player
     exposing
         ( COtherPlayer
@@ -51,6 +52,8 @@ type alias WorldLoggedOutData =
 type alias WorldLoggedInData =
     { player : Player CPlayer
     , otherPlayers : List COtherPlayer
+    , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
+      playerRank : Int
     , vendors : Vendors
     }
 
@@ -62,8 +65,11 @@ allPlayers world =
             world.otherPlayers
 
         Player cPlayer ->
-            Player.clientToClientOther cPlayer
-                :: world.otherPlayers
+            Ladder.sortMixed
+                { player = cPlayer
+                , playerRank = world.playerRank
+                , otherPlayers = world.otherPlayers
+                }
 
 
 isLoggedIn : World -> Bool
