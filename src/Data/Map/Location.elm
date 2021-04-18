@@ -19,7 +19,6 @@ import Dict exposing (Dict)
 
 default : Location
 default =
-    -- TODO does this cause issues? Do new players need protection from PKers?
     Arroyo
 
 
