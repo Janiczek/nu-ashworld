@@ -17,18 +17,8 @@ import Json.Encode as JE
    https://fallout.fandom.com/wiki/Fallout_2_traits
    and implement all missing and applicable
 -}
--- TODO Kamikaze + sequence
--- TODO Kamikaze - armor class
--- TODO Bruiser + strength
--- TODO Bruiser - action points
--- TODO Gifted + SPECIAL
--- TODO Gifted - skills
--- TODO Gifted - skill points per level
--- TODO Skilled + skill points per level
--- TODO Skilled - perk rate
--- TODO Small Frame + agility
+-- TODO Skilled - perk rate (per 4 levels instead of per 3 levels)
 -- TODO Small Frame - carry weight
--- TODO Heavy Handed + damage
 -- TODO Heavy Handed - critical hit chance
 
 

@@ -19,10 +19,6 @@ import Json.Encode as JE
 -}
 -- TODO allow adding the perks in Character view
 -- TODO conditions
--- TODO Earlier Sequence (3x) + sequence
--- TODO Tag (1x) + tag skill
--- TODO BonusHthDamage (3x) + damage
--- TODO MasterTrader (1x) + 25% discount for vendor prices
 
 
 type Perk
