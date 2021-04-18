@@ -5,11 +5,6 @@ List.concat and List.concatMap.
 
 To be used with <https://package.elm-lang.org/packages/jfmengels/elm-review/latest/>
 
-TODO theoretically we could have an automatic fix:
-
-  - replace (Node.range fn) with "List.fastConcat"
-  - somehow make sure List.ExtraExtra is imported as List
-
 
 # Rule
 
