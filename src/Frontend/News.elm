@@ -20,8 +20,9 @@ items =
       , title = "Skills and traits"
       , text = """
 I've just revamped the **character creation screen** and added some initial
-**traits** and support for **tagged skills** there. This should all result in
-more interesting characters and meta.
+**traits** and support for **tagged skills** there. On each level-up you'll get
+**skill points** to upgrade your skills with. This should all result in more
+interesting characters and meta.
 
 Since I'm resetting the ladder instead of
 attempting a complicated migration, you can try the new features out with new
