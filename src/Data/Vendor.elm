@@ -1,6 +1,6 @@
 module Data.Vendor exposing
-    ( Vendor
-    , VendorName(..)
+    ( Name(..)
+    , Vendor
     , addCaps
     , addItem
     , emptyVendors
@@ -28,12 +28,12 @@ import Random.Float
 import Random.List
 
 
-type VendorName
+type Name
     = KlamathMaidaBuckner
 
 
 type alias Vendor =
-    { name : VendorName
+    { name : Name
     , items : Dict Item.Id Item
     , caps : Int
     , barterSkill : Int
@@ -47,39 +47,39 @@ type alias VendorSpec =
     }
 
 
-all : List VendorName
+all : List Name
 all =
     [ KlamathMaidaBuckner ]
 
 
-spec : VendorName -> VendorSpec
+spec : Name -> VendorSpec
 spec name_ =
     case name_ of
         KlamathMaidaBuckner ->
             klamathSpec
 
 
-barterSkill : VendorName -> Int
+barterSkill : Name -> Int
 barterSkill name_ =
     case name_ of
         KlamathMaidaBuckner ->
             55
 
 
-getFrom : Dict_.Dict VendorName Vendor -> VendorName -> Vendor
+getFrom : Dict_.Dict Name Vendor -> Name -> Vendor
 getFrom vendors name_ =
     Dict_.get name_ vendors
         |> Maybe.withDefault (emptyVendor name_)
 
 
-emptyVendors : Dict_.Dict VendorName Vendor
+emptyVendors : Dict_.Dict Name Vendor
 emptyVendors =
     all
         |> List.map (\name_ -> ( name_, emptyVendor name_ ))
         |> Dict_.fromList
 
 
-emptyVendor : VendorName -> Vendor
+emptyVendor : Name -> Vendor
 emptyVendor name_ =
     { items = Dict.empty
     , caps = 0
@@ -125,7 +125,7 @@ stockGenerator { stock } =
             )
 
 
-restockVendors : Int -> Dict_.Dict VendorName Vendor -> Generator ( Dict_.Dict VendorName Vendor, Int )
+restockVendors : Int -> Dict_.Dict Name Vendor -> Generator ( Dict_.Dict Name Vendor, Int )
 restockVendors lastItemId vendors =
     let
         restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
@@ -196,26 +196,26 @@ restockVendors lastItemId vendors =
             (Random.constant ( vendors, lastItemId ))
 
 
-encodeVendors : Dict_.Dict VendorName Vendor -> JE.Value
+encodeVendors : Dict_.Dict Name Vendor -> JE.Value
 encodeVendors vendors =
-    Dict_.encode encodeVendorName encode vendors
+    Dict_.encode encodeName encode vendors
 
 
-vendorsDecoder : Decoder (Dict_.Dict VendorName Vendor)
+vendorsDecoder : Decoder (Dict_.Dict Name Vendor)
 vendorsDecoder =
-    Dict_.decoder vendorNameDecoder decoder
+    Dict_.decoder nameDecoder decoder
 
 
-encodeVendorName : VendorName -> JE.Value
-encodeVendorName name_ =
+encodeName : Name -> JE.Value
+encodeName name_ =
     JE.string <|
         case name_ of
             KlamathMaidaBuckner ->
                 "klamath-maida-buckner"
 
 
-vendorNameDecoder : Decoder VendorName
-vendorNameDecoder =
+nameDecoder : Decoder Name
+nameDecoder =
     JD.string
         |> JD.andThen
             (\name_ ->
@@ -224,14 +224,14 @@ vendorNameDecoder =
                         JD.succeed KlamathMaidaBuckner
 
                     _ ->
-                        JD.fail <| "unknown VendorName: '" ++ name_ ++ "'"
+                        JD.fail <| "unknown Vendor.Name: '" ++ name_ ++ "'"
             )
 
 
 encode : Vendor -> JE.Value
 encode vendor =
     JE.object
-        [ ( "name", encodeVendorName vendor.name )
+        [ ( "name", encodeName vendor.name )
         , ( "items", Dict.encode JE.int Item.encode vendor.items )
         , ( "caps", JE.int vendor.caps )
         , ( "barterSkill", JE.int vendor.barterSkill )
@@ -241,7 +241,7 @@ encode vendor =
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
-        |> JD.andMap (JD.field "name" vendorNameDecoder)
+        |> JD.andMap (JD.field "name" nameDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "caps" JD.int)
         |> JD.andMap (JD.field "barterSkill" JD.int)
@@ -308,8 +308,8 @@ addItem item vendor =
     }
 
 
-name : VendorName -> String
-name vendorName =
-    case vendorName of
+name : Name -> String
+name name_ =
+    case name_ of
         KlamathMaidaBuckner ->
             "Maida Buckner (Klamath)"

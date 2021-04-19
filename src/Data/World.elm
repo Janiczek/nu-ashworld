@@ -21,7 +21,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Vendor exposing (Vendor, VendorName)
+import Data.Vendor as Vendor exposing (Vendor)
 import Time exposing (Posix)
 
 
@@ -55,7 +55,7 @@ type alias WorldLoggedInData =
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
-    , vendors : Dict_.Dict VendorName Vendor
+    , vendors : Dict_.Dict Vendor.Name Vendor
     }
 
 

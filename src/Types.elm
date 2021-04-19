@@ -19,7 +19,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (SpecialType)
 import Data.Trait exposing (Trait)
-import Data.Vendor exposing (Vendor, VendorName)
+import Data.Vendor as Vendor exposing (Vendor)
 import Data.World
     exposing
         ( AdminData
@@ -54,7 +54,7 @@ type alias BackendModel =
     , nextWantedTick : Maybe Posix
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , time : Posix
-    , vendors : Dict_.Dict VendorName Vendor
+    , vendors : Dict_.Dict Vendor.Name Vendor
     , lastItemId : Int
     }
 
@@ -140,7 +140,7 @@ type BackendMsg
         , finalTarget : SPlayer
         , fightInfo : FightInfo
         }
-    | GeneratedNewVendorsStock ( Dict_.Dict VendorName Vendor, Int )
+    | GeneratedNewVendorsStock ( Dict_.Dict Vendor.Name Vendor, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
 

@@ -12,7 +12,7 @@ module Data.Map.Location exposing
     )
 
 import Data.Map as Map exposing (TileCoords, TileNum)
-import Data.Vendor exposing (VendorName(..))
+import Data.Vendor as Vendor
 import Dict exposing (Dict)
 
 
@@ -301,11 +301,11 @@ name loc =
             "Vault City"
 
 
-getVendor : Location -> Maybe VendorName
+getVendor : Location -> Maybe Vendor.Name
 getVendor loc =
     case loc of
         Klamath ->
-            Just KlamathMaidaBuckner
+            Just Vendor.KlamathMaidaBuckner
 
         _ ->
             Nothing
