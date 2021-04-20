@@ -147,7 +147,8 @@ type BackendMsg
 
 type ToFrontend
     = YourCurrentWorld WorldLoggedInData
-    | CurrentWorld WorldLoggedOutData
+    | InitWorld WorldLoggedOutData
+    | RefreshedLoggedOut WorldLoggedOutData
     | CurrentAdminData AdminData
     | YourFightResult ( FightInfo, WorldLoggedInData )
     | YoureLoggedIn WorldLoggedInData

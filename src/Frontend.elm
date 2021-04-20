@@ -480,7 +480,17 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        CurrentWorld world ->
+        InitWorld world ->
+            case model.world of
+                WorldNotInitialized auth ->
+                    ( { model | world = WorldLoggedOut auth world }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        RefreshedLoggedOut world ->
             let
                 auth =
                     model.world

@@ -193,7 +193,7 @@ update msg model =
                     getWorldLoggedOut model
             in
             ( model
-            , Lamdera.sendToFrontend clientId <| CurrentWorld world
+            , Lamdera.sendToFrontend clientId <| InitWorld world
             )
 
         Disconnected _ clientId ->
@@ -433,7 +433,7 @@ updateFromFrontend sessionId clientId msg model =
             let
                 loggedOut () =
                     ( model
-                    , Lamdera.sendToFrontend clientId <| CurrentWorld <| getWorldLoggedOut model
+                    , Lamdera.sendToFrontend clientId <| RefreshedLoggedOut <| getWorldLoggedOut model
                     )
             in
             if isAdmin sessionId clientId model then
