@@ -2737,8 +2737,7 @@ Original highlight.js style (c) Ivan Sagalaev <maniac@softwaremaniacs.org>
 table {
   font-variant-numeric: tabular-nums;
 }a.tc-tiddlylink-external:after {
-  padding-left: 2px;
-  content: "↑";
+  content: " ↗";
   color: gray;
   position: relative;
 }
