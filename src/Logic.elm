@@ -205,6 +205,7 @@ unarmedAttackStats :
     , traits : Set_.Set Trait
     , perks : Dict_.Dict Perk Int
     , level : Int
+    , extraBonus : Int -- for NPCs
     }
     -> AttackStats
 unarmedAttackStats r =
@@ -255,7 +256,7 @@ unarmedAttackStats r =
 
         maxDamage : Int
         maxDamage =
-            minDamage + bonusMeleeDamage
+            minDamage + bonusMeleeDamage + r.extraBonus
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks

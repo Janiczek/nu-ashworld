@@ -10,12 +10,11 @@ module Data.Enemy exposing
     , encodeType
     , forChunk
     , hp
-    , meleeDamage
+    , meleeDamageBonus
     , name
     , sequence
     , special
     , typeDecoder
-    , unarmedDamage
     , xp
     )
 
@@ -38,12 +37,7 @@ import Random.FloatExtra as Random
 
 
 type Type
-    = --  -- Radscorpions: https://fallout.fandom.com/wiki/Radscorpion_(Fallout)
-      --| LesserRadscorpion
-      --| Radscorpion
-      --| BlackRadscorpion
-      --| LesserBlackRadscorpion
-      --  -- Mantises: https://fallout.fandom.com/wiki/Mantis_(Fallout)
+    = --  -- Mantises: https://fallout.fandom.com/wiki/Mantis_(Fallout)
       --| Mantis
       --  -- Brahmins: https://fallout.fandom.com/wiki/Brahmin_(Fallout)
       --| Brahmin
@@ -97,6 +91,11 @@ type Type
       -- Giant Ants: https://fallout.fandom.com/wiki/Giant_ant_(Fallout_2)
       GiantAnt
     | ToughGiantAnt
+      -- Radscorpions: https://fallout.fandom.com/wiki/Radscorpion_(Fallout)
+      --| TODO BlackRadscorpion
+      --| TODO LesserBlackRadscorpion
+    | LesserRadscorpion
+    | Radscorpion
 
 
 forChunk : Chunk -> List Type
@@ -105,7 +104,11 @@ forChunk chunk =
        (non-public/map-encounters.json), but for now let's
        have Ants eeeEEEEeeeverywhere.
     -}
-    [ GiantAnt, ToughGiantAnt ]
+    [ GiantAnt
+    , ToughGiantAnt
+    , LesserRadscorpion
+    , Radscorpion
+    ]
 
 
 xp : Type -> Int
@@ -117,6 +120,12 @@ xp type_ =
         ToughGiantAnt ->
             50
 
+        LesserRadscorpion ->
+            60
+
+        Radscorpion ->
+            110
+
 
 hp : Type -> Int
 hp type_ =
@@ -126,6 +135,12 @@ hp type_ =
 
         ToughGiantAnt ->
             12
+
+        LesserRadscorpion ->
+            10
+
+        Radscorpion ->
+            26
 
 
 armorClass : Type -> Int
@@ -137,6 +152,12 @@ armorClass type_ =
         ToughGiantAnt ->
             3
 
+        LesserRadscorpion ->
+            3
+
+        Radscorpion ->
+            5
+
 
 sequence : Type -> Int
 sequence type_ =
@@ -146,6 +167,12 @@ sequence type_ =
 
         ToughGiantAnt ->
             9
+
+        LesserRadscorpion ->
+            4
+
+        Radscorpion ->
+            4
 
 
 actionPoints : Type -> Int
@@ -157,25 +184,27 @@ actionPoints type_ =
         ToughGiantAnt ->
             6
 
+        LesserRadscorpion ->
+            5
 
-unarmedDamage : Type -> Int
-unarmedDamage type_ =
-    case type_ of
-        GiantAnt ->
-            0
-
-        ToughGiantAnt ->
-            0
+        Radscorpion ->
+            7
 
 
-meleeDamage : Type -> Int
-meleeDamage type_ =
+meleeDamageBonus : Type -> Int
+meleeDamageBonus type_ =
     case type_ of
         GiantAnt ->
             2
 
         ToughGiantAnt ->
             4
+
+        LesserRadscorpion ->
+            4
+
+        Radscorpion ->
+            6
 
 
 damageThresholdNormal : Type -> Int
@@ -187,6 +216,12 @@ damageThresholdNormal type_ =
         ToughGiantAnt ->
             0
 
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            2
+
 
 damageResistanceNormal : Type -> Int
 damageResistanceNormal type_ =
@@ -195,6 +230,12 @@ damageResistanceNormal type_ =
             0
 
         ToughGiantAnt ->
+            0
+
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
             0
 
 
@@ -213,6 +254,12 @@ encodeType type_ =
             ToughGiantAnt ->
                 "tough-giant-ant"
 
+            LesserRadscorpion ->
+                "lesser-radscorpion"
+
+            Radscorpion ->
+                "radscorpion"
+
 
 typeDecoder : Decoder Type
 typeDecoder =
@@ -225,6 +272,12 @@ typeDecoder =
 
                     "tough-giant-ant" ->
                         JD.succeed ToughGiantAnt
+
+                    "lesser-radscorpion" ->
+                        JD.succeed LesserRadscorpion
+
+                    "radscorpion" ->
+                        JD.succeed Radscorpion
 
                     _ ->
                         JD.fail <| "Unknown Enemy.Type: '" ++ type_ ++ "'"
@@ -240,6 +293,12 @@ name type_ =
         ToughGiantAnt ->
             "Tough Giant Ant"
 
+        LesserRadscorpion ->
+            "Lesser Radscorpion"
+
+        Radscorpion ->
+            "Radscorpion"
+
 
 special : Type -> Special
 special type_ =
@@ -249,6 +308,12 @@ special type_ =
 
         ToughGiantAnt ->
             Special 2 2 2 1 1 3 5
+
+        LesserRadscorpion ->
+            Special 5 2 6 1 1 3 2
+
+        Radscorpion ->
+            Special 7 2 6 1 1 5 2
 
 
 addedSkillPercentages : Type -> Dict_.Dict Skill Int
@@ -266,30 +331,35 @@ addedSkillPercentages type_ =
                 , ( MeleeWeapons, 50 )
                 ]
 
+        LesserRadscorpion ->
+            Dict_.fromList
+                [ ( Unarmed, 29 )
+                ]
+
+        Radscorpion ->
+            Dict_.fromList
+                [ ( Unarmed, 21 )
+                ]
+
 
 caps : Type -> Generator Int
 caps type_ =
+    let
+        common : { average : Float, maxDeviation : Float } -> Generator Int
+        common r =
+            Random.Extra.frequency
+                ( 0.2, Random.constant 0 )
+                [ ( 0.8, Random.normallyDistributed r |> Random.map round ) ]
+    in
     case type_ of
         GiantAnt ->
-            Random.Extra.frequency
-                ( 0.2, Random.constant 0 )
-                [ ( 0.8
-                  , Random.normallyDistributed
-                        { average = 30
-                        , maxDeviation = 25
-                        }
-                        |> Random.map round
-                  )
-                ]
+            common { average = 30, maxDeviation = 25 }
 
         ToughGiantAnt ->
-            Random.Extra.frequency
-                ( 0.2, Random.constant 0 )
-                [ ( 0.8
-                  , Random.normallyDistributed
-                        { average = 60
-                        , maxDeviation = 40
-                        }
-                        |> Random.map round
-                  )
-                ]
+            common { average = 60, maxDeviation = 40 }
+
+        LesserRadscorpion ->
+            common { average = 50, maxDeviation = 30 }
+
+        Radscorpion ->
+            common { average = 100, maxDeviation = 70 }

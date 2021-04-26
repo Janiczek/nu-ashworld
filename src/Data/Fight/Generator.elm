@@ -556,6 +556,7 @@ enemyOpponentGenerator enemyType =
                     , level =
                         -- TODO what to do? What damage ranges do enemies really have in FO2?
                         1
+                    , extraBonus = Enemy.meleeDamageBonus enemyType
                     }
             , addedSkillPercentages = addedSkillPercentages
             , baseSpecial =
@@ -609,6 +610,7 @@ playerOpponent player =
                 , level = Xp.currentLevel player.xp
                 , perks = player.perks
                 , traits = player.traits
+                , extraBonus = 0 -- this is only for NPCs
                 }
     in
     { type_ = Fight.Player player.name
