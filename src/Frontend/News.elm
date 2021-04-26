@@ -16,7 +16,23 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1618787348
+    [ { date = 1619480881
+      , title = "PvM fights"
+      , text = """
+You can now fight some NPC enemies and get those sweet caps flowing into the
+economy!
+
+When you move out of any town, you'll see that the **[Town]** link in
+your menu changes to a **[Wander]** one. Clicking it will find you a NPC to fight
+for the price of **one tick,** similarly to the PvP fights.
+
+Go forth and save up for those stimpaks! And don't forget, if you fight another
+player, you get all their caps (or they yours). Should get much more exciting now!
+
+~janiczek
+"""
+      }
+    , { date = 1618787348
       , title = "Skills and traits"
       , text = """
 I've just revamped the **character creation screen** and added some initial
