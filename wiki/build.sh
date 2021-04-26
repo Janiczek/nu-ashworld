@@ -17,6 +17,9 @@ if [ ! -f "./tiddlers.json" ]; then
     exit 1
 fi
 
+rm -rf output
+rm -rf minified
+
 echo "1. Deleting old tiddlers from the local database"
 rm -rf tiddlers
 tiddlywiki --deletetiddlers "[all[tiddlers]]"
