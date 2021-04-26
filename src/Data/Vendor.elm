@@ -25,6 +25,7 @@ import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
 import Random.Float
+import Random.FloatExtra as Random
 import Random.List
 
 
@@ -90,16 +91,11 @@ emptyVendor name_ =
 
 capsGenerator : VendorSpec -> Generator Int
 capsGenerator { avgCaps, maxCapsDeviation } =
-    -- dev/3 == 99.7% chance the value will fall inside the range
-    -- we'll just clamp the remaining 0.3%
-    Random.Float.normal (toFloat avgCaps) (toFloat maxCapsDeviation / 3)
-        |> Random.map
-            (\n ->
-                clamp
-                    (avgCaps - maxCapsDeviation)
-                    (avgCaps + maxCapsDeviation)
-                    (round n)
-            )
+    Random.normallyDistributed
+        { average = toFloat avgCaps
+        , maxDeviation = toFloat maxCapsDeviation
+        }
+        |> Random.map round
 
 
 stockGenerator : VendorSpec -> Generator (List ( Item.UniqueKey, Int ))

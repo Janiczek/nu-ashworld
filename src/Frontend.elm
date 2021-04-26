@@ -6,7 +6,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
 import Data.Barter as Barter
-import Data.Fight exposing (FightInfo)
+import Data.Fight as Fight exposing (FightInfo)
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
@@ -178,6 +178,11 @@ update msg model =
         AskToHeal ->
             ( model
             , Lamdera.sendToBackend HealMe
+            )
+
+        AskToWander ->
+            ( model
+            , Lamdera.sendToBackend Wander
             )
 
         ImportButtonClicked ->
@@ -585,7 +590,10 @@ appView :
 appView { leftNav } model =
     H.div
         [ HA.id "app"
-        , HA.classList [ ( "logged-in", World.isLoggedIn model.world ) ]
+        , HA.classList
+            [ ( "logged-in", World.isLoggedIn model.world )
+            , ( "admin", World.isAdmin model.world )
+            ]
         ]
         [ H.div [ HA.id "left-nav" ]
             (logoView
@@ -1671,7 +1679,7 @@ newCharHelpView =
 newCharDerivedStatsView : NewChar -> Html FrontendMsg
 newCharDerivedStatsView newChar =
     let
-        specialAfterTraits =
+        finalSpecial =
             Logic.special
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
@@ -1700,7 +1708,7 @@ newCharDerivedStatsView newChar =
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Perception.level specialAfterTraits.perception
+            Perception.level finalSpecial.perception
     in
     H.div
         [ HA.id "new-character-derived-stats" ]
@@ -1713,12 +1721,12 @@ newCharDerivedStatsView newChar =
                   , String.fromInt <|
                         Logic.hitpoints
                             { level = 1
-                            , special = specialAfterTraits
+                            , finalSpecial = finalSpecial
                             }
                   , Nothing
                   )
                 , ( "Healing rate"
-                  , (String.fromInt <| Logic.healingRate specialAfterTraits)
+                  , (String.fromInt <| Logic.healingRate finalSpecial)
                         ++ " HP/tick"
                   , Nothing
                   )
@@ -1730,7 +1738,7 @@ newCharDerivedStatsView newChar =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
-                            , special = specialAfterTraits
+                            , finalSpecial = finalSpecial
                             }
                   , Nothing
                   )
@@ -1741,7 +1749,7 @@ newCharDerivedStatsView newChar =
 newCharSpecialView : NewChar -> Html FrontendMsg
 newCharSpecialView newChar =
     let
-        specialAfterTraits =
+        finalSpecial =
             Logic.special
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
@@ -1753,7 +1761,7 @@ newCharSpecialView newChar =
         specialItemView type_ =
             let
                 value =
-                    Special.get type_ specialAfterTraits
+                    Special.get type_ finalSpecial
             in
             H.tr
                 [ HA.class "character-special-attribute" ]
@@ -1765,7 +1773,7 @@ newCharSpecialView newChar =
                             not <|
                                 Special.canDecrement
                                     type_
-                                    specialAfterTraits
+                                    finalSpecial
                         ]
                         [ H.text "[-]" ]
                     ]
@@ -1788,7 +1796,7 @@ newCharSpecialView newChar =
                                 Special.canIncrement
                                     newChar.availableSpecial
                                     type_
-                                    specialAfterTraits
+                                    finalSpecial
                         ]
                         [ H.text "[+]" ]
                     ]
@@ -1868,8 +1876,8 @@ newCharTraitsView traits =
 newCharSkillsView : NewChar -> Html FrontendMsg
 newCharSkillsView newChar =
     let
-        specialAfterTraits : Special
-        specialAfterTraits =
+        finalSpecial : Special
+        finalSpecial =
             Logic.special
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
@@ -1884,7 +1892,7 @@ newCharSkillsView newChar =
                 { taggedSkills = newChar.taggedSkills
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                 }
-        , special = specialAfterTraits
+        , special = finalSpecial
         , taggedSkills = newChar.taggedSkills
         , hasTagPerk = False
         , availableSkillPoints = 0
@@ -1955,8 +1963,8 @@ charHelpView =
 charDerivedStatsView : CPlayer -> Html FrontendMsg
 charDerivedStatsView player =
     let
-        special : Special
-        special =
+        finalSpecial : Special
+        finalSpecial =
             Logic.special
                 { baseSpecial = player.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
@@ -1985,7 +1993,7 @@ charDerivedStatsView player =
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Perception.level special.perception
+            Perception.level finalSpecial.perception
     in
     H.div
         [ HA.id "character-derived-stats" ]
@@ -1998,12 +2006,12 @@ charDerivedStatsView player =
                   , String.fromInt <|
                         Logic.hitpoints
                             { level = 1
-                            , special = special
+                            , finalSpecial = finalSpecial
                             }
                   , Nothing
                   )
                 , ( "Healing rate"
-                  , (String.fromInt <| Logic.healingRate special)
+                  , (String.fromInt <| Logic.healingRate finalSpecial)
                         ++ " HP/tick"
                   , Nothing
                   )
@@ -2015,7 +2023,7 @@ charDerivedStatsView player =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                            , special = special
+                            , finalSpecial = finalSpecial
                             }
                   , Nothing
                   )
@@ -2418,7 +2426,10 @@ newsView zone =
 fightView : FightInfo -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 fightView fight _ player =
     let
-        special =
+        youAreAttacker =
+            fight.attacker == Fight.Player player.name
+
+        finalSpecial =
             Logic.special
                 { baseSpecial = player.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
@@ -2428,7 +2439,29 @@ fightView fight _ player =
                 }
     in
     [ pageTitleView "Fight"
-    , Data.Fight.View.view special.perception fight player.name
+    , H.div []
+        [ H.text <|
+            "Attacker: "
+                ++ Fight.opponentName fight.attacker
+                ++ (if youAreAttacker then
+                        " (you)"
+
+                    else
+                        ""
+                   )
+        ]
+    , H.div []
+        [ H.text <|
+            "Target: "
+                ++ Fight.opponentName fight.target
+                ++ (if youAreAttacker then
+                        ""
+
+                    else
+                        " (you)"
+                   )
+        ]
+    , Data.Fight.View.view finalSpecial.perception fight player.name
     , H.button
         [ HE.onClick <| GoToRoute Route.Ladder
         , HA.id "fight-back-button"
@@ -2829,18 +2862,41 @@ loggedInLinksView player currentRoute =
 
                 Player p ->
                     let
-                        healTooltip =
+                        ( healTooltip, healDisabled ) =
                             if p.hp >= p.maxHp then
-                                Just "Cost: 1 tick. You are at full HP!"
+                                ( Just "Heal your HP fully. Cost: 1 tick. You are at full HP!"
+                                , True
+                                )
 
                             else if p.ticks < 1 then
-                                Just "Cost: 1 tick. You have no ticks left!"
+                                ( Just "Heal your HP fully. Cost: 1 tick. You have no ticks left!"
+                                , True
+                                )
 
                             else
-                                Just "Cost: 1 tick"
+                                ( Just "Heal your HP fully. Cost: 1 tick"
+                                , False
+                                )
 
-                        healDisabled =
-                            p.ticks < 1 || p.hp >= p.maxHp
+                        ( wanderTooltip, wanderDisabled ) =
+                            if p.hp <= 0 then
+                                ( Just "Find something to fight. Cost: 1 tick. You are dead!"
+                                , True
+                                )
+
+                            else if p.ticks < 1 then
+                                ( Just "Find something to fight. Cost: 1 tick. You have no ticks left!"
+                                , True
+                                )
+
+                            else
+                                ( Just "Find something to fight. Cost: 1 tick"
+                                , False
+                                )
+
+                        isInTown : Bool
+                        isInTown =
+                            Location.location p.location /= Nothing
                     in
                     [ linkMsg "Heal" AskToHeal healTooltip healDisabled
                     , linkMsg "Refresh" Refresh Nothing False
@@ -2848,7 +2904,11 @@ loggedInLinksView player currentRoute =
                     , linkIn "Inventory" Route.Inventory Nothing False
                     , linkIn "Map" Route.Map Nothing False
                     , linkIn "Ladder" Route.Ladder Nothing False
-                    , linkIn "Town" (Route.Town Route.MainSquare) Nothing False
+                    , if isInTown then
+                        linkIn "Town" (Route.Town Route.MainSquare) Nothing False
+
+                      else
+                        linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
                     , linkIn "Messages" Route.Messages Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]
@@ -2902,10 +2962,11 @@ commonLinksView currentRoute =
         ]
         ([ linkIn "News" Route.News Nothing False
          , linkIn "About" Route.About Nothing False
-         , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
+         , linkOut "Wiki    →" "https://nu-ashworld.tiddlyhost.com" Nothing False
          , linkOut "Discord →" "https://discord.gg/HUmwvnv4xV" Nothing False
+         , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
+         , linkOut "GitHub  →" "https://github.com/Janiczek/nu-ashworld" Nothing False
          , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "GitHub  →" "https://github.com/Janiczek/nu-ashworld-lamdera" Nothing False
          , linkOut "Donate  →" "https://patreon.com/janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)

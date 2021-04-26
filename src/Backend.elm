@@ -9,10 +9,13 @@ import Data.Auth as Auth
         , Verified
         )
 import Data.Barter as Barter
+import Data.Enemy as Enemy
+import Data.Fight as Fight exposing (FightResult(..), Opponent)
 import Data.Fight.Generator as FightGen
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
+import Data.Map.Chunk as Chunk
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message exposing (Message)
@@ -44,7 +47,8 @@ import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra as List
 import Logic
-import Random
+import Random exposing (Generator)
+import Random.List
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -234,16 +238,101 @@ update msg model =
 
         GeneratedFight clientId sPlayer fight_ ->
             let
+                targetIsPlayer : Bool
+                targetIsPlayer =
+                    Fight.isPlayer fight_.finalTarget.type_
+
+                updateIfPlayer : (SPlayer -> SPlayer) -> Opponent -> Model -> Model
+                updateIfPlayer fn opponent =
+                    case opponent.type_ of
+                        Fight.Npc _ ->
+                            identity
+
+                        Fight.Player name ->
+                            updatePlayer fn name
+
                 newModel =
                     model
-                        |> savePlayer fight_.finalAttacker
-                        |> savePlayer fight_.finalTarget
+                        |> updateIfPlayer
+                            (\player ->
+                                player
+                                    |> SPlayer.setHp fight_.finalAttacker.hp
+                                    |> SPlayer.subtractTicks 1
+                            )
+                            fight_.finalAttacker
+                        |> updateIfPlayer
+                            (\player ->
+                                player
+                                    |> SPlayer.setHp fight_.finalTarget.hp
+                                    |> SPlayer.addMessage fight_.messageForTarget
+                            )
+                            fight_.finalTarget
+                        |> (case fight_.fightInfo.result of
+                                BothDead ->
+                                    identity
+
+                                NobodyDead ->
+                                    identity
+
+                                TargetAlreadyDead ->
+                                    identity
+
+                                AttackerWon { xpGained, capsGained } ->
+                                    identity
+                                        >> updateIfPlayer
+                                            (\player ->
+                                                player
+                                                    |> SPlayer.addXp xpGained model.time
+                                                    |> SPlayer.addCaps capsGained
+                                                    |> (if targetIsPlayer then
+                                                            SPlayer.incWins
+
+                                                        else
+                                                            identity
+                                                       )
+                                            )
+                                            fight_.finalAttacker
+                                        >> updateIfPlayer
+                                            (\player ->
+                                                player
+                                                    |> SPlayer.subtractCaps capsGained
+                                                    |> SPlayer.incLosses
+                                            )
+                                            fight_.finalTarget
+
+                                TargetWon { xpGained, capsGained } ->
+                                    identity
+                                        >> updateIfPlayer
+                                            (\player ->
+                                                player
+                                                    |> SPlayer.subtractCaps capsGained
+                                                    |> (if targetIsPlayer then
+                                                            SPlayer.incLosses
+
+                                                        else
+                                                            identity
+                                                       )
+                                            )
+                                            fight_.finalAttacker
+                                        >> updateIfPlayer
+                                            (\player ->
+                                                player
+                                                    |> SPlayer.addXp xpGained model.time
+                                                    |> SPlayer.addCaps capsGained
+                                                    |> SPlayer.incWins
+                                            )
+                                            fight_.finalTarget
+                           )
             in
             getWorldLoggedIn sPlayer.name newModel
                 |> Maybe.map
                     (\world ->
                         ( newModel
-                        , Lamdera.sendToFrontend clientId <| YourFightResult ( fight_.fightInfo, world )
+                        , Lamdera.sendToFrontend clientId <|
+                            YourFightResult
+                                ( fight_.fightInfo
+                                , world
+                                )
                         )
                     )
                 -- Shouldn't happen but we don't have a good way of getting rid of the Maybe
@@ -264,7 +353,12 @@ update msg model =
 processTick : Model -> ( Model, Cmd BackendMsg )
 processTick model =
     -- TODO refresh the affected users that are logged-in
-    ( { model | players = Dict.map (always (Player.map SPlayer.tick)) model.players }
+    ( { model
+        | players =
+            Dict.map
+                (always (Player.map SPlayer.tick))
+                model.players
+      }
     , restockVendors model
     )
 
@@ -428,6 +522,9 @@ updateFromFrontend sessionId clientId msg model =
 
         HealMe ->
             withLoggedInCreatedPlayer healMe
+
+        Wander ->
+            withLoggedInCreatedPlayer wander
 
         RefreshPlease ->
             let
@@ -810,23 +907,27 @@ moveTo newCoords pathTaken clientId player model =
         tickCost : Int
         tickCost =
             Pathfinding.tickCost pathTaken
+
+        isSamePosition : Bool
+        isSamePosition =
+            currentCoords == newCoords
+
+        pathDoesntAgree : Bool
+        pathDoesntAgree =
+            pathTaken
+                /= Set.remove currentCoords
+                    (Pathfinding.path
+                        (Perception.level special.perception)
+                        { from = currentCoords
+                        , to = newCoords
+                        }
+                    )
+
+        notEnoughTicks : Bool
+        notEnoughTicks =
+            tickCost > player.ticks
     in
-    if currentCoords == newCoords then
-        ( model, Cmd.none )
-
-    else if
-        pathTaken
-            /= Set.remove currentCoords
-                (Pathfinding.path
-                    (Perception.level special.perception)
-                    { from = currentCoords
-                    , to = newCoords
-                    }
-                )
-    then
-        ( model, Cmd.none )
-
-    else if tickCost > player.ticks then
+    if isSamePosition || pathDoesntAgree || notEnoughTicks then
         ( model, Cmd.none )
 
     else
@@ -964,6 +1065,51 @@ healMe clientId player model =
         |> Maybe.withDefault ( model, Cmd.none )
 
 
+wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+wander clientId player model =
+    let
+        isInTown : Bool
+        isInTown =
+            Location.location player.location /= Nothing
+
+        notEnoughTicks : Bool
+        notEnoughTicks =
+            player.ticks <= 0
+    in
+    if isInTown || notEnoughTicks then
+        ( model, Cmd.none )
+
+    else
+        let
+            possibleEnemies : List Enemy.Type
+            possibleEnemies =
+                player.location
+                    |> Map.toTileCoords
+                    |> Chunk.chunk
+                    |> Enemy.forChunk
+
+            enemyTypeGenerator : Generator Enemy.Type
+            enemyTypeGenerator =
+                Random.List.choose possibleEnemies
+                    |> Random.map (Tuple.first >> Maybe.withDefault Enemy.default)
+        in
+        ( model
+        , Random.generate
+            (GeneratedFight clientId player)
+            (enemyTypeGenerator
+                |> Random.andThen FightGen.enemyOpponentGenerator
+                |> Random.andThen
+                    (\enemyOpponent ->
+                        FightGen.generator
+                            { attacker = FightGen.playerOpponent player
+                            , target = enemyOpponent
+                            , currentTime = model.time
+                            }
+                    )
+            )
+        )
+
+
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 fight otherPlayerName clientId sPlayer model =
     if sPlayer.ticks <= 0 then
@@ -983,8 +1129,9 @@ fight otherPlayerName clientId sPlayer model =
                                 clientId
                                 sPlayer
                                 (FightGen.targetAlreadyDead
-                                    { attacker = sPlayer
-                                    , target = target
+                                    { attacker = FightGen.playerOpponent sPlayer
+                                    , target = FightGen.playerOpponent target
+                                    , currentTime = model.time
                                     }
                                 )
                             )
@@ -995,9 +1142,9 @@ fight otherPlayerName clientId sPlayer model =
                         , Random.generate
                             (GeneratedFight clientId sPlayer)
                             (FightGen.generator
-                                model.time
-                                { attacker = sPlayer
-                                , target = target
+                                { attacker = FightGen.playerOpponent sPlayer
+                                , target = FightGen.playerOpponent target
+                                , currentTime = model.time
                                 }
                             )
                         )

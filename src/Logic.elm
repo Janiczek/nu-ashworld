@@ -1,6 +1,8 @@
 module Logic exposing
-    ( actionPoints
+    ( AttackStats
+    , actionPoints
     , addedSkillPercentages
+    , armorClass
     , healingRate
     , hitpoints
     , maxTraits
@@ -27,13 +29,13 @@ import Data.Trait as Trait exposing (Trait)
 
 hitpoints :
     { level : Int
-    , special : Special
+    , finalSpecial : Special
     }
     -> Int
 hitpoints r =
     let
         { strength, endurance } =
-            r.special
+            r.finalSpecial
     in
     15
         + (2 * endurance)
@@ -53,7 +55,7 @@ tickHealingRateMultiplier =
 
 
 armorClass :
-    { special : Special
+    { finalSpecial : Special
     , hasKamikazeTrait : Bool
     }
     -> Int
@@ -64,14 +66,14 @@ armorClass r =
                 0
 
             else
-                r.special.agility
+                r.finalSpecial.agility
     in
     -- TODO take armor into account once we have it
     initial
 
 
 actionPoints :
-    { special : Special
+    { finalSpecial : Special
     , hasBruiserTrait : Bool
     }
     -> Int
@@ -84,7 +86,7 @@ actionPoints r =
             else
                 0
     in
-    (5 + r.special.agility // 2)
+    (5 + r.finalSpecial.agility // 2)
         - bruiserPenalty
 
 
@@ -114,12 +116,11 @@ darknessPenalty isItDark distanceHexes =
 
 
 unarmedChanceToHit :
-    { attackerSpecial : Special
-    , targetSpecial : Special
+    { attackerAddedSkillPercentages : Dict_.Dict Skill Int
+    , attackerFinalSpecial : Special
     , distanceHexes : Int
     , shotType : ShotType
-    , targetHasKamikazeTrait : Bool
-    , attackerSkills : Dict_.Dict Skill Int
+    , targetArmorClass : Int
     }
     -> Int
 unarmedChanceToHit r =
@@ -136,21 +137,14 @@ unarmedChanceToHit r =
         let
             skillPercentage : Int
             skillPercentage =
-                Skill.get r.attackerSpecial r.attackerSkills Skill.Unarmed
+                Skill.get r.attackerFinalSpecial r.attackerAddedSkillPercentages Skill.Unarmed
 
             shotPenalty : Int
             shotPenalty =
                 ShotType.chanceToHitPenalty r.shotType
-
-            armorClass_ : Int
-            armorClass_ =
-                armorClass
-                    { hasKamikazeTrait = r.targetHasKamikazeTrait
-                    , special = r.targetSpecial
-                    }
         in
         (skillPercentage
-            - armorClass_
+            - r.targetArmorClass
             - shotPenalty
             {- Those two never matter for unarmed fights right now, but let's
                keep them in case we later tweak the two functions to do something
@@ -198,6 +192,13 @@ xpGained { damageDealt } =
     damageDealt * xpPerHpMultiplier
 
 
+type alias AttackStats =
+    { minDamage : Int
+    , maxDamage : Int
+    , criticalChanceBonus : Int
+    }
+
+
 unarmedAttackStats :
     { finalSpecial : Special
     , unarmedSkill : Int
@@ -205,11 +206,7 @@ unarmedAttackStats :
     , perks : Dict_.Dict Perk Int
     , level : Int
     }
-    ->
-        { minDamage : Int
-        , maxDamage : Int
-        , criticalChanceBonus : Int
-        }
+    -> AttackStats
 unarmedAttackStats r =
     let
         { strength, agility } =
@@ -258,7 +255,7 @@ unarmedAttackStats r =
 
         maxDamage : Int
         maxDamage =
-            1 + unarmedAttackBonus + bonusMeleeDamage
+            minDamage + bonusMeleeDamage
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks

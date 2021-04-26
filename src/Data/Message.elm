@@ -163,7 +163,7 @@ Your current level is """
                 [ Data.Fight.View.view
                     perception
                     r.fightInfo
-                    r.fightInfo.targetName
+                    (Fight.opponentName r.fightInfo.target)
                 ]
 
 

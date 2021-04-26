@@ -10,6 +10,7 @@ module Data.Player.SPlayer exposing
     , readMessage
     , removeItem
     , removeMessage
+    , setHp
     , setLocation
     , subtractCaps
     , subtractHp
@@ -127,7 +128,7 @@ recalculateHpOnLevelup player =
         newMaxHp =
             Logic.hitpoints
                 { level = Xp.currentLevel player.xp
-                , special =
+                , finalSpecial =
                     Logic.special
                         { baseSpecial = player.baseSpecial
                         , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits

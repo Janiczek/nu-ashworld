@@ -10,6 +10,7 @@ module Frontend.Route exposing
     )
 
 import Data.Barter as Barter
+import Data.Enemy as Enemy
 import Data.Fight exposing (FightInfo)
 import Data.Message exposing (Message)
 

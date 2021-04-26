@@ -1,6 +1,6 @@
 module Data.Fight.View exposing (view)
 
-import Data.Fight
+import Data.Fight as Fight
     exposing
         ( FightAction(..)
         , FightInfo
@@ -56,9 +56,17 @@ addS verb =
 view : Int -> FightInfo -> PlayerName -> Html msg
 view perception fight yourName =
     let
+        attackerName : String
+        attackerName =
+            Fight.opponentName fight.attacker
+
+        targetName : String
+        targetName =
+            Fight.opponentName fight.target
+
         youAreAttacker : Bool
         youAreAttacker =
-            fight.attackerName == yourName
+            attackerName == yourName
 
         names : Name -> Names
         names name =
@@ -71,16 +79,16 @@ view perception fight yourName =
                     }
 
                 TargetVerbatim ->
-                    { name = fight.targetName
-                    , nameCap = fight.targetName
-                    , namePossCap = normalPoss fight.targetName
+                    { name = targetName
+                    , nameCap = targetName
+                    , namePossCap = normalPoss targetName
                     , verbPresent = addS
                     }
 
                 AttackerVerbatim ->
-                    { name = fight.attackerName
-                    , nameCap = fight.attackerName
-                    , namePossCap = normalPoss fight.attackerName
+                    { name = attackerName
+                    , nameCap = attackerName
+                    , namePossCap = normalPoss attackerName
                     , verbPresent = addS
                     }
 
@@ -231,11 +239,15 @@ view perception fight yourName =
 
                             TargetWon { xpGained, capsGained } ->
                                 if youAreAttacker then
-                                    "You lost! Your target gained "
-                                        ++ String.fromInt xpGained
-                                        ++ " XP and looted "
-                                        ++ String.fromInt capsGained
-                                        ++ " caps."
+                                    if Fight.isPlayer fight.target then
+                                        "You lost! Your target gained "
+                                            ++ String.fromInt xpGained
+                                            ++ " XP and looted "
+                                            ++ String.fromInt capsGained
+                                            ++ " caps."
+
+                                    else
+                                        "You lost!"
 
                                 else
                                     "You won! You gained "
@@ -249,7 +261,7 @@ view perception fight yourName =
                                     "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
 
                                 else
-                                    fight.attackerName ++ " wanted to fight you but due to their low Perception didn't realize you're already dead. Ashamed, they quickly ran away and will deny this ever happened."
+                                    attackerName ++ " wanted to fight you but due to their low Perception didn't realize you're already dead. Ashamed, they quickly ran away and will deny this ever happened."
 
                             BothDead ->
                                 "You both end up dead."

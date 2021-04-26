@@ -1,27 +1,49 @@
 module Data.Fight.Generator exposing
-    ( generator
+    ( Fight
+    , enemyOpponentGenerator
+    , generator
+    , playerOpponent
     , targetAlreadyDead
     )
 
-import Data.Fight as Fight exposing (FightAction(..), FightInfo, FightResult(..), Who(..))
+import AssocList as Dict_
+import AssocSet as Set_
+import Data.Enemy as Enemy
+import Data.Fight as Fight
+    exposing
+        ( FightAction(..)
+        , FightInfo
+        , FightResult(..)
+        , Opponent
+        , Who(..)
+        )
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Player.SPlayer as SPlayer
-import Data.Skill as Skill
-import Data.Trait as Trait
+import Data.Skill as Skill exposing (Skill)
+import Data.Special exposing (Special)
+import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
-import Logic
+import Logic exposing (AttackStats)
 import Random exposing (Generator)
 import Random.Bool
 import Time exposing (Posix)
 
 
+type alias Fight =
+    { finalAttacker : Opponent
+    , finalTarget : Opponent
+    , fightInfo : FightInfo
+    , messageForTarget : Message
+    }
+
+
 type alias OngoingFight =
     { distanceHexes : Int
-    , attacker : SPlayer
-    , target : SPlayer
+    , attacker : Opponent
+    , target : Opponent
     , attackerAp : Int
     , targetAp : Int
     , reverseLog : List ( Who, FightAction )
@@ -29,52 +51,26 @@ type alias OngoingFight =
 
 
 generator :
-    Posix
-    ->
-        { attacker : SPlayer
-        , target : SPlayer
-        }
-    ->
-        Generator
-            { finalAttacker : SPlayer
-            , finalTarget : SPlayer
-            , fightInfo : FightInfo
-            }
-generator currentTime initPlayers =
+    { attacker : Opponent
+    , target : Opponent
+    , currentTime : Posix
+    }
+    -> Generator Fight
+generator r =
     let
+        attackerName : String
+        attackerName =
+            Fight.opponentName r.attacker.type_
+
+        targetName : String
+        targetName =
+            Fight.opponentName r.target.type_
+
         -- TODO for non-unarmed attacks check that the range is <= weapon's range
         startingDistance : Generator Int
         startingDistance =
             -- TODO vary this based on the Perception / perks / Outdoorsman / ...?
             Random.int 10 20
-
-        attackerMaxAp : Int
-        attackerMaxAp =
-            Logic.actionPoints
-                { hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.attacker.traits
-                , special =
-                    Logic.special
-                        { baseSpecial = initPlayers.attacker.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.attacker.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted initPlayers.attacker.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame initPlayers.attacker.traits
-                        , isNewChar = False
-                        }
-                }
-
-        targetMaxAp : Int
-        targetMaxAp =
-            Logic.actionPoints
-                { hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.target.traits
-                , special =
-                    Logic.special
-                        { baseSpecial = initPlayers.target.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser initPlayers.target.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted initPlayers.target.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame initPlayers.target.traits
-                        , isNewChar = False
-                        }
-                }
 
         initialFight : Generator OngoingFight
         initialFight =
@@ -82,38 +78,20 @@ generator currentTime initPlayers =
                 |> Random.map
                     (\distance ->
                         { distanceHexes = distance
-                        , attacker = initPlayers.attacker
-                        , target = initPlayers.target
-                        , attackerAp = attackerMaxAp
-                        , targetAp = targetMaxAp
+                        , attacker = r.attacker
+                        , target = r.target
+                        , attackerAp = r.attacker.maxAp
+                        , targetAp = r.target.maxAp
                         , reverseLog = [ ( Attacker, Start { distanceHexes = distance } ) ]
                         }
                     )
 
         sequenceOrder : List Who
         sequenceOrder =
-            [ ( Attacker, initPlayers.attacker )
-            , ( Target, initPlayers.target )
+            [ ( Attacker, r.attacker )
+            , ( Target, r.target )
             ]
-                |> List.sortBy
-                    (\( _, player ) ->
-                        let
-                            special =
-                                Logic.special
-                                    { baseSpecial = player.baseSpecial
-                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                                    , isNewChar = False
-                                    }
-                        in
-                        negate <|
-                            Logic.sequence
-                                { perception = special.perception
-                                , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
-                                , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
-                                }
-                    )
+                |> List.sortBy (\( _, opponent ) -> negate opponent.sequence)
                 |> List.map Tuple.first
 
         turn : Who -> OngoingFight -> Generator OngoingFight
@@ -128,33 +106,13 @@ generator currentTime initPlayers =
         resetAp who ongoing =
             case who of
                 Attacker ->
-                    { ongoing | attackerAp = attackerMaxAp }
+                    { ongoing | attackerAp = r.attacker.maxAp }
 
                 Target ->
-                    { ongoing | targetAp = targetMaxAp }
+                    { ongoing | targetAp = r.target.maxAp }
 
-        attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
-        attackWhilePossible who ongoing =
-            let
-                myHp =
-                    player_ who ongoing |> .hp
-
-                otherHp =
-                    player_ (Fight.theOther who) ongoing |> .hp
-
-                minApCost =
-                    attackApCost { isAimedShot = False }
-            in
-            if playerAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
-                Random.constant ongoing
-                    |> Random.andThen (attack who)
-                    |> Random.andThen (attackWhilePossible who)
-
-            else
-                Random.constant ongoing
-
-        player_ : Who -> OngoingFight -> SPlayer
-        player_ who ongoing =
+        opponent_ : Who -> OngoingFight -> Opponent
+        opponent_ who ongoing =
             case who of
                 Attacker ->
                     ongoing.attacker
@@ -162,14 +120,34 @@ generator currentTime initPlayers =
                 Target ->
                     ongoing.target
 
-        playerAp : Who -> OngoingFight -> Int
-        playerAp who ongoing =
+        opponentAp : Who -> OngoingFight -> Int
+        opponentAp who ongoing =
             case who of
                 Attacker ->
                     ongoing.attackerAp
 
                 Target ->
                     ongoing.targetAp
+
+        attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
+        attackWhilePossible who ongoing =
+            let
+                myHp =
+                    opponent_ who ongoing |> .hp
+
+                otherHp =
+                    opponent_ (Fight.theOther who) ongoing |> .hp
+
+                minApCost =
+                    attackApCost { isAimedShot = False }
+            in
+            if opponentAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
+                Random.constant ongoing
+                    |> Random.andThen (attack who)
+                    |> Random.andThen (attackWhilePossible who)
+
+            else
+                Random.constant ongoing
 
         addLog : Who -> FightAction -> OngoingFight -> OngoingFight
         addLog who action ongoing =
@@ -189,94 +167,74 @@ generator currentTime initPlayers =
             -- TODO vary this based on weapon / ...
             3
 
-        shotType : Who -> OngoingFight -> Generator ShotType
+        chanceToHit : Who -> OngoingFight -> ShotType -> Int
+        chanceToHit who ongoing shot =
+            let
+                opponent =
+                    opponent_ who ongoing
+
+                otherOpponent =
+                    opponent_ (Fight.theOther who) ongoing
+            in
+            Logic.unarmedChanceToHit
+                { attackerFinalSpecial =
+                    Logic.special
+                        { baseSpecial = opponent.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser opponent.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted opponent.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame opponent.traits
+                        , isNewChar = False
+                        }
+                , attackerAddedSkillPercentages = opponent.addedSkillPercentages
+                , distanceHexes = ongoing.distanceHexes
+                , shotType = shot
+                , targetArmorClass = opponent.armorClass
+                }
+
+        shotType : Who -> OngoingFight -> Generator ( ShotType, Float )
         shotType who ongoing =
             let
                 availableAp =
-                    playerAp who ongoing
+                    opponentAp who ongoing
 
-                player =
-                    player_ who ongoing
+                opponent =
+                    opponent_ who ongoing
 
-                otherPlayer =
-                    player_ (Fight.theOther who) ongoing
+                otherOpponent =
+                    opponent_ (Fight.theOther who) ongoing
 
-                chanceToHit : ShotType -> Float
-                chanceToHit shot =
-                    toFloat
-                        (Logic.unarmedChanceToHit
-                            { attackerSpecial =
-                                Logic.special
-                                    { baseSpecial = player.baseSpecial
-                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                                    , isNewChar = False
-                                    }
-                            , targetSpecial =
-                                Logic.special
-                                    { baseSpecial = otherPlayer.baseSpecial
-                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser otherPlayer.traits
-                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted otherPlayer.traits
-                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame otherPlayer.traits
-                                    , isNewChar = False
-                                    }
-                            , attackerSkills = player.addedSkillPercentages
-                            , distanceHexes = ongoing.distanceHexes
-                            , shotType = shot
-                            , targetHasKamikazeTrait = Trait.isSelected Trait.Kamikaze otherPlayer.traits
-                            }
-                        )
-                        / 100
+                shotAndChance : ShotType -> ( Float, ( ShotType, Float ) )
+                shotAndChance shot =
+                    let
+                        chance : Float
+                        chance =
+                            toFloat (chanceToHit who ongoing shot) / 100
+                    in
+                    ( chance, ( shot, chance ) )
             in
             Random.weighted
-                ( chanceToHit NormalShot, NormalShot )
+                (shotAndChance NormalShot)
                 (if availableAp >= attackApCost { isAimedShot = True } then
                     ShotType.allAimed
-                        |> List.map
-                            (\shot ->
-                                ( chanceToHit (AimedShot shot)
-                                , AimedShot shot
-                                )
-                            )
+                        |> List.map (AimedShot >> shotAndChance)
 
                  else
                     []
                 )
 
         attackApCost : { isAimedShot : Bool } -> Int
-        attackApCost r =
-            baseApCost + ShotType.apCostPenalty r
-
-        attackStats who ongoing =
-            let
-                player =
-                    player_ who ongoing
-
-                finalSpecial =
-                    Logic.special
-                        { baseSpecial = player.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                        , isNewChar = False
-                        }
-            in
-            Logic.unarmedAttackStats
-                { finalSpecial = finalSpecial
-                , unarmedSkill = Skill.get finalSpecial player.addedSkillPercentages Skill.Unarmed
-                , level = Xp.currentLevel player.xp
-                , perks = player.perks
-                , traits = player.traits
-                }
+        attackApCost r_ =
+            baseApCost + ShotType.apCostPenalty r_
 
         rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
         rollDamage who ongoing _ =
             let
-                stats =
-                    attackStats who ongoing
+                opponent =
+                    opponent_ who ongoing
             in
-            Random.int stats.minDamage stats.maxDamage
+            Random.int
+                opponent.attackStats.minDamage
+                opponent.attackStats.maxDamage
                 |> Random.map
                     (\damage ->
                         let
@@ -343,47 +301,19 @@ generator currentTime initPlayers =
             -- TODO for now, everything is unarmed
             shotType who ongoing
                 |> Random.andThen
-                    (\shot ->
+                    (\( shot, chance ) ->
                         let
                             apCost =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
 
-                            player =
-                                player_ who ongoing
+                            opponent =
+                                opponent_ who ongoing
 
-                            otherPlayer =
-                                player_ other ongoing
+                            otherOpponent =
+                                opponent_ other ongoing
                         in
-                        if ongoing.distanceHexes == 0 && playerAp who ongoing >= apCost then
-                            let
-                                chanceToHit =
-                                    toFloat
-                                        (Logic.unarmedChanceToHit
-                                            { attackerSpecial =
-                                                Logic.special
-                                                    { baseSpecial = player.baseSpecial
-                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                                                    , isNewChar = False
-                                                    }
-                                            , targetSpecial =
-                                                Logic.special
-                                                    { baseSpecial = otherPlayer.baseSpecial
-                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser otherPlayer.traits
-                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted otherPlayer.traits
-                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame otherPlayer.traits
-                                                    , isNewChar = False
-                                                    }
-                                            , attackerSkills = player.addedSkillPercentages
-                                            , distanceHexes = ongoing.distanceHexes
-                                            , shotType = shot
-                                            , targetHasKamikazeTrait = Trait.isSelected Trait.Kamikaze otherPlayer.traits
-                                            }
-                                        )
-                                        / 100
-                            in
-                            Random.Bool.weightedBool chanceToHit
+                        if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost then
+                            Random.Bool.weightedBool chance
                                 |> Random.andThen
                                     (\hasHit ->
                                         -- TODO critical misses, critical hits according to inspiration/fo2-calc/fo2calg.pdf
@@ -396,11 +326,11 @@ generator currentTime initPlayers =
                                                                 (Attack
                                                                     { damage = damage
                                                                     , shotType = shot
-                                                                    , remainingHp = .hp (player_ other ongoing) - damage
+                                                                    , remainingHp = .hp (opponent_ other ongoing) - damage
                                                                     }
                                                                 )
                                                             |> subtractAp who apCost
-                                                            |> updatePlayer other (SPlayer.subtractHp damage)
+                                                            |> updateOpponent other (subtractHp damage)
                                                     )
 
                                         else
@@ -428,7 +358,7 @@ generator currentTime initPlayers =
                 let
                     maxPossibleMove : Int
                     maxPossibleMove =
-                        min ongoing.distanceHexes (playerAp who ongoing)
+                        min ongoing.distanceHexes (opponentAp who ongoing)
                 in
                 ongoing
                     |> addLog who
@@ -476,8 +406,8 @@ generator currentTime initPlayers =
             else
                 Random.constant ongoing
 
-        updatePlayer : Who -> (SPlayer -> SPlayer) -> OngoingFight -> OngoingFight
-        updatePlayer who fn ongoing =
+        updateOpponent : Who -> (Opponent -> Opponent) -> OngoingFight -> OngoingFight
+        updateOpponent who fn ongoing =
             case who of
                 Attacker ->
                     { ongoing | attacker = fn ongoing.attacker }
@@ -485,13 +415,7 @@ generator currentTime initPlayers =
                 Target ->
                     { ongoing | target = fn ongoing.target }
 
-        finalizeFight :
-            OngoingFight
-            ->
-                { finalAttacker : SPlayer
-                , finalTarget : SPlayer
-                , fightInfo : FightInfo
-                }
+        finalizeFight : OngoingFight -> Fight
         finalizeFight ongoing =
             let
                 result : FightResult
@@ -500,15 +424,23 @@ generator currentTime initPlayers =
                         BothDead
 
                     else if ongoing.attacker.hp <= 0 then
-                        TargetWon
-                            { capsGained = ongoing.attacker.caps
-                            , xpGained = Logic.xpGained { damageDealt = initPlayers.attacker.hp }
-                            }
+                        if Fight.isPlayer ongoing.target.type_ then
+                            TargetWon
+                                { capsGained = ongoing.attacker.caps
+                                , xpGained = Logic.xpGained { damageDealt = r.attacker.hp }
+                                }
+
+                        else
+                            -- Enemies have no use for your caps, so let's not make you lose them
+                            TargetWon
+                                { capsGained = 0
+                                , xpGained = 0
+                                }
 
                     else if ongoing.target.hp <= 0 then
                         AttackerWon
                             { capsGained = ongoing.target.caps
-                            , xpGained = Logic.xpGained { damageDealt = initPlayers.target.hp }
+                            , xpGained = Logic.xpGained { damageDealt = r.target.hp }
                             }
 
                     else
@@ -516,75 +448,26 @@ generator currentTime initPlayers =
 
                 fightInfo : FightInfo
                 fightInfo =
-                    { attackerName = initPlayers.attacker.name
-                    , targetName = initPlayers.target.name
+                    { attacker = r.attacker.type_
+                    , target = r.target.type_
                     , log = List.reverse ongoing.reverseLog
                     , result = result
                     }
 
                 messageForTarget : Message
                 messageForTarget =
-                    Message.new currentTime
+                    Message.new
+                        r.currentTime
                         (YouWereAttacked
-                            { attacker = initPlayers.attacker.name
+                            { attacker = attackerName
                             , fightInfo = fightInfo
                             }
                         )
-
-                final : OngoingFight
-                final =
-                    let
-                        withoutTickWithMessage : OngoingFight
-                        withoutTickWithMessage =
-                            ongoing
-                                |> updatePlayer Attacker (SPlayer.subtractTicks 1)
-                                |> updatePlayer Target (SPlayer.addMessage messageForTarget)
-                    in
-                    case result of
-                        BothDead ->
-                            withoutTickWithMessage
-
-                        NobodyDead ->
-                            withoutTickWithMessage
-
-                        TargetAlreadyDead ->
-                            withoutTickWithMessage
-
-                        AttackerWon { xpGained, capsGained } ->
-                            withoutTickWithMessage
-                                |> updatePlayer Attacker
-                                    (\player ->
-                                        player
-                                            |> SPlayer.addXp xpGained currentTime
-                                            |> SPlayer.addCaps capsGained
-                                            |> SPlayer.incWins
-                                    )
-                                |> updatePlayer Target
-                                    (\player ->
-                                        player
-                                            |> SPlayer.subtractCaps capsGained
-                                            |> SPlayer.incLosses
-                                    )
-
-                        TargetWon { xpGained, capsGained } ->
-                            withoutTickWithMessage
-                                |> updatePlayer Attacker
-                                    (\player ->
-                                        player
-                                            |> SPlayer.subtractCaps capsGained
-                                            |> SPlayer.incLosses
-                                    )
-                                |> updatePlayer Target
-                                    (\player ->
-                                        player
-                                            |> SPlayer.addXp xpGained currentTime
-                                            |> SPlayer.addCaps capsGained
-                                            |> SPlayer.incWins
-                                    )
             in
-            { finalAttacker = final.attacker
-            , finalTarget = final.target
-            , fightInfo = fightInfo
+            { fightInfo = fightInfo
+            , messageForTarget = messageForTarget
+            , finalAttacker = ongoing.attacker
+            , finalTarget = ongoing.target
             }
     in
     initialFight
@@ -595,21 +478,148 @@ generator currentTime initPlayers =
 
 
 targetAlreadyDead :
-    { attacker : SPlayer
-    , target : SPlayer
+    { attacker : Opponent
+    , target : Opponent
+    , currentTime : Posix
     }
-    ->
-        { finalAttacker : SPlayer
-        , finalTarget : SPlayer
-        , fightInfo : FightInfo
-        }
-targetAlreadyDead { attacker, target } =
+    -> Fight
+targetAlreadyDead { attacker, target, currentTime } =
+    let
+        attackerName =
+            Fight.opponentName attacker.type_
+
+        fightInfo =
+            { attacker = Fight.Player <| Fight.opponentName attacker.type_
+            , target = Fight.Player <| Fight.opponentName target.type_
+            , log = []
+            , result = TargetAlreadyDead
+            }
+    in
     { finalAttacker = attacker
     , finalTarget = target
-    , fightInfo =
-        { attackerName = attacker.name
-        , targetName = target.name
-        , log = []
-        , result = TargetAlreadyDead
-        }
+    , fightInfo = fightInfo
+    , messageForTarget =
+        Message.new currentTime
+            (YouWereAttacked
+                { attacker = attackerName
+                , fightInfo = fightInfo
+                }
+            )
+    }
+
+
+subtractHp : Int -> Opponent -> Opponent
+subtractHp hp opponent =
+    { opponent | hp = max 0 <| opponent.hp - hp }
+
+
+enemyOpponentGenerator : Enemy.Type -> Generator Opponent
+enemyOpponentGenerator enemyType =
+    Random.map
+        (\caps ->
+            let
+                hp : Int
+                hp =
+                    Enemy.hp enemyType
+
+                addedSkillPercentages : Dict_.Dict Skill Int
+                addedSkillPercentages =
+                    Enemy.addedSkillPercentages enemyType
+
+                traits : Set_.Set Trait
+                traits =
+                    Set_.empty
+
+                special : Special
+                special =
+                    Enemy.special enemyType
+
+                unarmedSkill : Int
+                unarmedSkill =
+                    Skill.get special addedSkillPercentages Skill.Unarmed
+            in
+            { type_ = Fight.Npc enemyType
+            , hp = hp
+            , maxHp = hp
+            , maxAp = Enemy.actionPoints enemyType
+            , sequence = Enemy.sequence enemyType
+            , traits = traits
+            , caps = caps
+            , armorClass = Enemy.armorClass enemyType
+            , attackStats =
+                -- TODO for now it's all unarmed
+                Logic.unarmedAttackStats
+                    { finalSpecial = special
+                    , unarmedSkill = unarmedSkill
+                    , traits = traits
+                    , perks = Dict_.empty
+                    , level =
+                        -- TODO what to do? What damage ranges do enemies really have in FO2?
+                        1
+                    }
+            , addedSkillPercentages = addedSkillPercentages
+            , baseSpecial =
+                -- Enemies never have anything else than base special (no traits, perks, ...)
+                special
+            }
+        )
+        (Enemy.caps enemyType)
+
+
+playerOpponent : SPlayer -> Opponent
+playerOpponent player =
+    let
+        finalSpecial : Special
+        finalSpecial =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        armorClass : Int
+        armorClass =
+            Logic.armorClass
+                { hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
+                , finalSpecial = finalSpecial
+                }
+
+        sequence : Int
+        sequence =
+            Logic.sequence
+                { perception = finalSpecial.perception
+                , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
+                , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
+                }
+
+        actionPoints : Int
+        actionPoints =
+            Logic.actionPoints
+                { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , finalSpecial = finalSpecial
+                }
+
+        attackStats : AttackStats
+        attackStats =
+            Logic.unarmedAttackStats
+                { finalSpecial = finalSpecial
+                , unarmedSkill = Skill.get finalSpecial player.addedSkillPercentages Skill.Unarmed
+                , level = Xp.currentLevel player.xp
+                , perks = player.perks
+                , traits = player.traits
+                }
+    in
+    { type_ = Fight.Player player.name
+    , hp = player.hp
+    , maxHp = player.maxHp
+    , maxAp = actionPoints
+    , sequence = sequence
+    , traits = player.traits
+    , caps = player.caps
+    , armorClass = armorClass
+    , attackStats = attackStats
+    , addedSkillPercentages = player.addedSkillPercentages
+    , baseSpecial = player.baseSpecial
     }

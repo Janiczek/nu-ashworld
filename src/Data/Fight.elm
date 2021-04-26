@@ -2,24 +2,55 @@ module Data.Fight exposing
     ( FightAction(..)
     , FightInfo
     , FightResult(..)
+    , Opponent
+    , OpponentType(..)
     , Who(..)
     , encodeFightInfo
     , fightInfoDecoder
+    , isPlayer
+    , opponentName
     , theOther
     )
 
+import AssocList as Dict_
+import AssocSet as Set_
+import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Skill exposing (Skill)
+import Data.Special exposing (Special)
+import Data.Trait exposing (Trait)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import Logic exposing (AttackStats)
 
 
 type alias FightInfo =
-    { attackerName : PlayerName
-    , targetName : PlayerName
+    { attacker : OpponentType
+    , target : OpponentType
     , log : List ( Who, FightAction )
     , result : FightResult
+    }
+
+
+type OpponentType
+    = Npc Enemy.Type
+    | Player PlayerName
+
+
+type alias Opponent =
+    { type_ : OpponentType
+    , hp : Int
+    , maxHp : Int
+    , maxAp : Int
+    , sequence : Int
+    , traits : Set_.Set Trait
+    , caps : Int
+    , armorClass : Int
+    , attackStats : AttackStats
+    , addedSkillPercentages : Dict_.Dict Skill Int
+    , baseSpecial : Special
     }
 
 
@@ -71,8 +102,8 @@ fightInfoDecoder =
                 (JD.field "action" fightActionDecoder)
     in
     JD.succeed FightInfo
-        |> JD.andMap (JD.field "attackerName" JD.string)
-        |> JD.andMap (JD.field "targetName" JD.string)
+        |> JD.andMap (JD.field "attacker" opponentTypeDecoder)
+        |> JD.andMap (JD.field "target" opponentTypeDecoder)
         |> JD.andMap (JD.field "log" (JD.list logItemDecoder))
         |> JD.andMap (JD.field "result" fightResultDecoder)
 
@@ -88,11 +119,44 @@ encodeFightInfo info =
                 ]
     in
     JE.object
-        [ ( "attackerName", JE.string info.attackerName )
-        , ( "targetName", JE.string info.targetName )
+        [ ( "attacker", encodeOpponentType info.attacker )
+        , ( "target", encodeOpponentType info.target )
         , ( "log", JE.list encodeLogItem info.log )
         , ( "result", encodeFightResult info.result )
         ]
+
+
+encodeOpponentType : OpponentType -> JE.Value
+encodeOpponentType opponentType =
+    case opponentType of
+        Npc enemyType ->
+            JE.object
+                [ ( "type", JE.string "npc" )
+                , ( "enemyType", Enemy.encodeType enemyType )
+                ]
+
+        Player name ->
+            JE.object
+                [ ( "type", JE.string "player" )
+                , ( "name", JE.string name )
+                ]
+
+
+opponentTypeDecoder : Decoder OpponentType
+opponentTypeDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "npc" ->
+                        JD.map Npc Enemy.typeDecoder
+
+                    "player" ->
+                        JD.map Player JD.string
+
+                    _ ->
+                        JD.fail <| "Unknown Opponent type: '" ++ type_ ++ "'"
+            )
 
 
 encodeFightResult : FightResult -> JE.Value
@@ -263,3 +327,23 @@ fightActionDecoder =
                     _ ->
                         JD.fail <| "Unknown FightAction: '" ++ type_ ++ "'"
             )
+
+
+opponentName : OpponentType -> String
+opponentName opponentType =
+    case opponentType of
+        Npc enemyType ->
+            Enemy.name enemyType
+
+        Player name ->
+            name
+
+
+isPlayer : OpponentType -> Bool
+isPlayer opponentType =
+    case opponentType of
+        Npc _ ->
+            False
+
+        Player _ ->
+            True

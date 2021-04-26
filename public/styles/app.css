@@ -139,7 +139,8 @@ ul {
   color: var(--fg03);
 }
 
-#app.logged-in #logo {
+#app.logged-in #logo,
+#app.admin #logo {
   filter: var(--filter-fg01);
   animation: flicker 2s linear 1;
 }
@@ -149,7 +150,8 @@ ul {
 Disable the flicker animation in Safari, since it behaves very weird and
 doesn't look as nice as in Chrome/Firefox. 
 */
-_::-webkit-full-page-media, _:future, :root #app.logged-in #logo {
+_::-webkit-full-page-media, _:future, :root #app.logged-in #logo,
+_::-webkit-full-page-media, _:future, :root #app.admin #logo {
   animation: none;
 }
 

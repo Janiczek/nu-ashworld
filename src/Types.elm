@@ -5,7 +5,9 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Barter as Barter
+import Data.Enemy as Enemy
 import Data.Fight exposing (FightInfo)
+import Data.Fight.Generator exposing (Fight)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
@@ -70,6 +72,7 @@ type FrontendMsg
     | GotTime Time.Posix
     | AskToFight PlayerName
     | AskToHeal
+    | AskToWander
     | AskForExport
     | ImportButtonClicked
     | ImportFileSelected File
@@ -115,6 +118,7 @@ type ToBackend
     | LogMeOut
     | Fight PlayerName
     | HealMe
+    | Wander
     | RefreshPlease
     | TagSkill Skill
     | IncSkill Skill
@@ -133,13 +137,7 @@ type AdminToBackend
 type BackendMsg
     = Connected SessionId ClientId
     | Disconnected SessionId ClientId
-    | GeneratedFight
-        ClientId
-        SPlayer
-        { finalAttacker : SPlayer
-        , finalTarget : SPlayer
-        , fightInfo : FightInfo
-        }
+    | GeneratedFight ClientId SPlayer Fight
     | GeneratedNewVendorsStock ( Dict_.Dict Vendor.Name Vendor, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix

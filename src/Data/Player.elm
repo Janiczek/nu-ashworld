@@ -279,8 +279,8 @@ getAuth player =
 fromNewChar : Posix -> Auth Verified -> NewChar -> Result NewChar.CreationError SPlayer
 fromNewChar currentTime auth newChar =
     let
-        specialAfterTraits : Special
-        specialAfterTraits =
+        finalSpecial : Special
+        finalSpecial =
             Logic.special
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
@@ -295,7 +295,7 @@ fromNewChar currentTime auth newChar =
     else if newChar.availableSpecial > 0 then
         Err NewChar.HasSpecialPointsLeft
 
-    else if not <| Special.isInRange specialAfterTraits then
+    else if not <| Special.isInRange finalSpecial then
         Err NewChar.HasSpecialOutOfRange
 
     else if Set_.size newChar.traits > 2 then
@@ -308,7 +308,7 @@ fromNewChar currentTime auth newChar =
                 hp =
                     Logic.hitpoints
                         { level = 1
-                        , special = specialAfterTraits
+                        , finalSpecial = finalSpecial
                         }
 
                 startingTileNum : TileNum
