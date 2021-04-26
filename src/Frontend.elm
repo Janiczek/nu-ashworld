@@ -114,7 +114,10 @@ update msg model =
                 model
 
               else
-                { model | route = route }
+                { model
+                    | route = route
+                    , alertMessage = Nothing
+                }
             , Cmd.none
             )
 
@@ -429,6 +432,7 @@ updateFromBackend msg model =
         YoureLoggedIn world ->
             ( { model
                 | world = WorldLoggedIn world
+                , alertMessage = Nothing
                 , route =
                     case world.player of
                         NeedsCharCreated _ ->
@@ -441,13 +445,17 @@ updateFromBackend msg model =
             )
 
         YoureLoggedInAsAdmin adminData ->
-            ( { model | world = WorldAdmin adminData }
+            ( { model
+                | world = WorldAdmin adminData
+                , alertMessage = Nothing
+              }
             , Cmd.none
             )
 
         YoureRegistered world ->
             ( { model
                 | world = WorldLoggedIn world
+                , alertMessage = Nothing
                 , route = Route.CharCreation
               }
             , Cmd.none
@@ -462,6 +470,7 @@ updateFromBackend msg model =
             ( { model
                 | world = WorldLoggedIn world
                 , route = Route.Ladder
+                , alertMessage = Nothing
                 , newChar = NewChar.init
               }
             , Cmd.none
@@ -470,13 +479,16 @@ updateFromBackend msg model =
         YoureLoggedOut world ->
             ( { model
                 | world = WorldLoggedOut Auth.init world
+                , alertMessage = Nothing
                 , route = Route.loggedOut model.route
               }
             , Cmd.none
             )
 
         YourCurrentWorld world ->
-            ( { model | world = WorldLoggedIn world }
+            ( { model
+                | world = WorldLoggedIn world
+              }
             , Cmd.none
             )
 
