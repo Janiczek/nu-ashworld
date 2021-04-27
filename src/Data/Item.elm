@@ -1,5 +1,6 @@
 module Data.Item exposing
-    ( Id
+    ( Effect(..)
+    , Id
     , Item
     , Kind(..)
     , UniqueKey
@@ -10,6 +11,7 @@ module Data.Item exposing
     , findMergeableId
     , getUniqueKey
     , name
+    , usageEffects
     )
 
 import Dict exposing (Dict)
@@ -36,6 +38,11 @@ type alias Id =
 
 type Kind
     = Stimpak
+
+
+type Effect
+    = Heal Int
+    | RemoveAfterUse
 
 
 basePrice : Kind -> Int
@@ -141,3 +148,12 @@ findMergeableId item items =
     items
         |> Dict.find (\_ item_ -> getUniqueKey item_ == uniqueKey)
         |> Maybe.map Tuple.first
+
+
+usageEffects : Kind -> List Effect
+usageEffects kind =
+    case kind of
+        Stimpak ->
+            [ Heal 15
+            , RemoveAfterUse
+            ]

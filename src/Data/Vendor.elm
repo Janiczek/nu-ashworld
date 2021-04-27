@@ -24,8 +24,7 @@ import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
-import Random.Float
-import Random.FloatExtra as Random
+import Random.FloatExtra as Random exposing (NormalIntSpec)
 import Random.List
 
 
@@ -42,8 +41,7 @@ type alias Vendor =
 
 
 type alias VendorSpec =
-    { avgCaps : Int
-    , maxCapsDeviation : Int
+    { normalSpec : NormalIntSpec
     , stock : List { uniqueKey : Item.UniqueKey, maxCount : Int }
     }
 
@@ -90,12 +88,8 @@ emptyVendor name_ =
 
 
 capsGenerator : VendorSpec -> Generator Int
-capsGenerator { avgCaps, maxCapsDeviation } =
-    Random.normallyDistributed
-        { average = toFloat avgCaps
-        , maxDeviation = toFloat maxCapsDeviation
-        }
-        |> Random.map round
+capsGenerator { normalSpec } =
+    Random.normallyDistributedInt normalSpec
 
 
 stockGenerator : VendorSpec -> Generator (List ( Item.UniqueKey, Int ))
@@ -245,8 +239,7 @@ decoder =
 
 klamathSpec : VendorSpec
 klamathSpec =
-    { avgCaps = 1000
-    , maxCapsDeviation = 500
+    { normalSpec = { average = 1000, maxDeviation = 500 }
     , stock = [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 } ]
     }
 

@@ -19,15 +19,14 @@ module Data.Enemy exposing
     )
 
 import AssocList as Dict_
-import Data.Map.Chunk as Chunk exposing (Chunk)
+import Data.Map.Chunk exposing (Chunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
-import Random.FloatExtra as Random
+import Random.FloatExtra as Random exposing (NormalIntSpec)
 
 
 
@@ -99,7 +98,7 @@ type Type
 
 
 forChunk : Chunk -> List Type
-forChunk chunk =
+forChunk _ =
     {- TODO later let's do this based on worldmap.txt
        (non-public/map-encounters.json), but for now let's
        have Ants eeeEEEEeeeverywhere.
@@ -345,21 +344,21 @@ addedSkillPercentages type_ =
 caps : Type -> Generator Int
 caps type_ =
     let
-        common : { average : Float, maxDeviation : Float } -> Generator Int
+        common : NormalIntSpec -> Generator Int
         common r =
             Random.Extra.frequency
                 ( 0.2, Random.constant 0 )
-                [ ( 0.8, Random.normallyDistributed r |> Random.map round ) ]
+                [ ( 0.8, Random.normallyDistributedInt r ) ]
     in
     case type_ of
         GiantAnt ->
-            common { average = 30, maxDeviation = 25 }
+            common { average = 10, maxDeviation = 5 }
 
         ToughGiantAnt ->
-            common { average = 60, maxDeviation = 40 }
+            common { average = 20, maxDeviation = 12 }
 
         LesserRadscorpion ->
-            common { average = 50, maxDeviation = 30 }
+            common { average = 15, maxDeviation = 9 }
 
         Radscorpion ->
-            common { average = 100, maxDeviation = 70 }
+            common { average = 40, maxDeviation = 25 }

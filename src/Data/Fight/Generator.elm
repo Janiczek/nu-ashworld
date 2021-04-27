@@ -21,7 +21,6 @@ import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
-import Data.Player.SPlayer as SPlayer
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -61,10 +60,6 @@ generator r =
         attackerName : String
         attackerName =
             Fight.opponentName r.attacker.type_
-
-        targetName : String
-        targetName =
-            Fight.opponentName r.target.type_
 
         -- TODO for non-unarmed attacks check that the range is <= weapon's range
         startingDistance : Generator Int
@@ -172,9 +167,6 @@ generator r =
             let
                 opponent =
                     opponent_ who ongoing
-
-                otherOpponent =
-                    opponent_ (Fight.theOther who) ongoing
             in
             Logic.unarmedChanceToHit
                 { attackerFinalSpecial =
@@ -196,12 +188,6 @@ generator r =
             let
                 availableAp =
                     opponentAp who ongoing
-
-                opponent =
-                    opponent_ who ongoing
-
-                otherOpponent =
-                    opponent_ (Fight.theOther who) ongoing
 
                 shotAndChance : ShotType -> ( Float, ( ShotType, Float ) )
                 shotAndChance shot =
@@ -231,6 +217,9 @@ generator r =
             let
                 opponent =
                     opponent_ who ongoing
+
+                otherOpponent =
+                    opponent_ (Fight.theOther who) ongoing
             in
             Random.int
                 opponent.attackStats.minDamage
@@ -262,12 +251,26 @@ generator r =
                                 0
 
                             armorDamageThreshold =
-                                -- TODO armor
-                                0
+                                toFloat <|
+                                    -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                                    case otherOpponent.type_ of
+                                        Fight.Player _ ->
+                                            -- TODO armor
+                                            0
+
+                                        Fight.Npc enemyType ->
+                                            Enemy.damageThresholdNormal enemyType
 
                             armorDamageResistance =
-                                -- TODO armor
-                                0
+                                toFloat <|
+                                    -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+                                    case otherOpponent.type_ of
+                                        Fight.Player _ ->
+                                            -- TODO armor
+                                            0
+
+                                        Fight.Npc enemyType ->
+                                            Enemy.damageResistanceNormal enemyType
 
                             ammoDamageResistanceModifier =
                                 -- TODO ammo
@@ -305,12 +308,6 @@ generator r =
                         let
                             apCost =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
-
-                            opponent =
-                                opponent_ who ongoing
-
-                            otherOpponent =
-                                opponent_ other ongoing
                         in
                         if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost then
                             Random.Bool.weightedBool chance
@@ -418,13 +415,17 @@ generator r =
         finalizeFight : OngoingFight -> Fight
         finalizeFight ongoing =
             let
+                targetIsPlayer : Bool
+                targetIsPlayer =
+                    Fight.isPlayer ongoing.target.type_
+
                 result : FightResult
                 result =
                     if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
                         BothDead
 
                     else if ongoing.attacker.hp <= 0 then
-                        if Fight.isPlayer ongoing.target.type_ then
+                        if targetIsPlayer then
                             TargetWon
                                 { capsGained = ongoing.attacker.caps
                                 , xpGained = Logic.xpGained { damageDealt = r.attacker.hp }
@@ -438,10 +439,18 @@ generator r =
                                 }
 
                     else if ongoing.target.hp <= 0 then
-                        AttackerWon
-                            { capsGained = ongoing.target.caps
-                            , xpGained = Logic.xpGained { damageDealt = r.target.hp }
-                            }
+                        case ongoing.target.type_ of
+                            Fight.Player _ ->
+                                AttackerWon
+                                    { capsGained = ongoing.target.caps
+                                    , xpGained = Logic.xpGained { damageDealt = r.target.hp }
+                                    }
+
+                            Fight.Npc enemyType ->
+                                AttackerWon
+                                    { capsGained = ongoing.target.caps
+                                    , xpGained = Enemy.xp enemyType
+                                    }
 
                     else
                         NobodyDead

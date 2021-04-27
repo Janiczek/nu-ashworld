@@ -183,6 +183,11 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
+        AskToUseItem itemId ->
+            ( model
+            , Lamdera.sendToBackend <| UseItem itemId
+            )
+
         AskToWander ->
             ( model
             , Lamdera.sendToBackend Wander
@@ -2289,7 +2294,15 @@ inventoryView _ player =
         itemView item =
             H.li
                 [ HA.class "inventory-item" ]
-                [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
+                [ H.span
+                    [ HA.class "inventory-item-label" ]
+                    [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
+                , H.button
+                    [ HA.class "inventory-item-use-btn"
+                    , HE.onClick <| AskToUseItem item.id
+                    ]
+                    [ H.text "[Use]" ]
+                ]
     in
     [ pageTitleView "Inventory"
     , if Dict.isEmpty player.items then

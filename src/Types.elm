@@ -5,7 +5,6 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Barter as Barter
-import Data.Enemy as Enemy
 import Data.Fight exposing (FightInfo)
 import Data.Fight.Generator exposing (Fight)
 import Data.Item as Item
@@ -72,6 +71,7 @@ type FrontendMsg
     | GotTime Time.Posix
     | AskToFight PlayerName
     | AskToHeal
+    | AskToUseItem Item.Id
     | AskToWander
     | AskForExport
     | ImportButtonClicked
@@ -118,6 +118,7 @@ type ToBackend
     | LogMeOut
     | Fight PlayerName
     | HealMe
+    | UseItem Item.Id
     | Wander
     | RefreshPlease
     | TagSkill Skill

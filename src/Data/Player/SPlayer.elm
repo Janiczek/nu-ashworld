@@ -1,5 +1,6 @@
 module Data.Player.SPlayer exposing
     ( addCaps
+    , addHp
     , addItem
     , addMessage
     , addXp
@@ -13,7 +14,6 @@ module Data.Player.SPlayer exposing
     , setHp
     , setLocation
     , subtractCaps
-    , subtractHp
     , subtractTicks
     , tagSkill
     , tick
@@ -44,11 +44,6 @@ addTicks n player =
 addHp : Int -> SPlayer -> SPlayer
 addHp n player =
     { player | hp = (player.hp + n) |> min player.maxHp }
-
-
-subtractHp : Int -> SPlayer -> SPlayer
-subtractHp n player =
-    { player | hp = (player.hp - n) |> max 0 }
 
 
 setHp : Int -> SPlayer -> SPlayer

@@ -518,10 +518,13 @@ updateFromFrontend sessionId clientId msg model =
             )
 
         Fight otherPlayerName ->
-            withLoggedInCreatedPlayer (fight otherPlayerName)
+            withLoggedInCreatedPlayer <| fight otherPlayerName
 
         HealMe ->
             withLoggedInCreatedPlayer healMe
+
+        UseItem itemId ->
+            withLoggedInCreatedPlayer <| useItem itemId
 
         Wander ->
             withLoggedInCreatedPlayer wander
@@ -1063,6 +1066,52 @@ healMe clientId player model =
                 )
             )
         |> Maybe.withDefault ( model, Cmd.none )
+
+
+useItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+useItem itemId clientId player model =
+    case Dict.get itemId player.items of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just item ->
+            let
+                effects : List Item.Effect
+                effects =
+                    Item.usageEffects item.kind
+            in
+            if List.isEmpty effects then
+                ( model, Cmd.none )
+
+            else
+                let
+                    handleEffect : Item.Effect -> (SPlayer -> SPlayer)
+                    handleEffect effect =
+                        case effect of
+                            Item.Heal amount ->
+                                SPlayer.addHp amount
+
+                            Item.RemoveAfterUse ->
+                                SPlayer.removeItem itemId 1
+
+                    combinedEffects : SPlayer -> SPlayer
+                    combinedEffects =
+                        effects
+                            |> List.map handleEffect
+                            |> List.foldl (>>) identity
+
+                    newModel =
+                        model
+                            |> updatePlayer combinedEffects player.name
+                in
+                getWorldLoggedIn player.name newModel
+                    |> Maybe.map
+                        (\world ->
+                            ( newModel
+                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                            )
+                        )
+                    |> Maybe.withDefault ( model, Cmd.none )
 
 
 wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
