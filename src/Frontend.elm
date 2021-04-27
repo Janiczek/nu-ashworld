@@ -2294,14 +2294,15 @@ inventoryView _ player =
         itemView item =
             H.li
                 [ HA.class "inventory-item" ]
-                [ H.span
-                    [ HA.class "inventory-item-label" ]
-                    [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
-                , H.button
+                [ H.button
                     [ HA.class "inventory-item-use-btn"
                     , HE.onClick <| AskToUseItem item.id
+                    , HA.disabled <| List.isEmpty <| Item.usageEffects item.kind
                     ]
                     [ H.text "[Use]" ]
+                , H.span
+                    [ HA.class "inventory-item-label" ]
+                    [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
                 ]
     in
     [ pageTitleView "Inventory"

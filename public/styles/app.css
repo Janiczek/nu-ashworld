@@ -934,3 +934,10 @@ table tbody tr:hover td {
 #character-help {
   margin-top: 20px;
 }
+
+.inventory-item-use-btn {
+  margin-right: 2ch;
+}
+.inventory-item-use-btn:disabled {
+  color: var(--fg03);
+}
