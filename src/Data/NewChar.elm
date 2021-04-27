@@ -32,6 +32,7 @@ type alias NewChar =
 type CreationError
     = DoesNotHaveThreeTaggedSkills
     | HasSpecialPointsLeft
+    | UsedMoreSpecialPointsThanAvailable
     | HasSpecialOutOfRange
     | HasMoreThanTwoTraits
 
@@ -126,6 +127,9 @@ error err =
 
         HasSpecialPointsLeft ->
             "You need to distribute all your SPECIAL points."
+
+        UsedMoreSpecialPointsThanAvailable ->
+            "[Possible cheater] You used more SPECIAL points than were available to you."
 
         HasSpecialOutOfRange ->
             "Your SPECIAL attributes need to be in the 1..10 range."

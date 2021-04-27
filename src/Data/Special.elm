@@ -15,6 +15,7 @@ module Data.Special exposing
     , label
     , map
     , mapWithoutClamp
+    , sum
     )
 
 import Json.Decode as JD exposing (Decoder)
@@ -217,3 +218,8 @@ isInRange special =
 isValueInRange : Int -> Bool
 isValueInRange value =
     value >= 1 && value <= 10
+
+
+sum : Special -> Int
+sum special =
+    List.sum <| List.map (\t -> get t special) all

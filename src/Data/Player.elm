@@ -295,6 +295,9 @@ fromNewChar currentTime auth newChar =
     else if newChar.availableSpecial > 0 then
         Err NewChar.HasSpecialPointsLeft
 
+    else if Special.sum newChar.baseSpecial > 40 then
+        Err NewChar.UsedMoreSpecialPointsThanAvailable
+
     else if not <| Special.isInRange finalSpecial then
         Err NewChar.HasSpecialOutOfRange
 
