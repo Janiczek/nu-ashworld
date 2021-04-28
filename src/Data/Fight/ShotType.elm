@@ -151,7 +151,7 @@ decoder =
                         JD.succeed NormalShot
 
                     "AimedShot" ->
-                        JD.map AimedShot aimedShotDecoder
+                        JD.map AimedShot (JD.field "aimedShot" aimedShotDecoder)
 
                     _ ->
                         JD.fail <| "Unknown ShotType: '" ++ type_ ++ "'"
