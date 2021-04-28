@@ -21,7 +21,7 @@ import Evergreen.V71.Data.Trait
 import Evergreen.V71.Data.Vendor
 import Evergreen.V71.Data.World
 import Evergreen.V71.Frontend.Route
-import File exposing (File)
+import File
 import Lamdera
 import Set
 import Time
