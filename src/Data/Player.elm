@@ -40,7 +40,7 @@ import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp exposing (Level, Xp)
 import Dict exposing (Dict)
-import Dict.Json as Dict
+import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE

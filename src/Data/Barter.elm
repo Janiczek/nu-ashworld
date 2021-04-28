@@ -12,6 +12,7 @@ module Data.Barter exposing
     , dismissMessage
     , doubleArrow
     , empty
+    , encode
     , messageText
     , removePlayerCaps
     , removePlayerItem
@@ -25,8 +26,12 @@ module Data.Barter exposing
     )
 
 import AssocList as Dict_
+import AssocList.ExtraExtra as Dict_
 import Data.Item as Item
 import Dict exposing (Dict)
+import Dict.ExtraExtra as Dict
+import Json.Encode as JE
+import Json.Encode.Extra as JE
 
 
 type Message
@@ -267,3 +272,73 @@ setTransferNHover position state =
 unsetTransferNHover : State -> State
 unsetTransferNHover state =
     { state | transferNHover = Nothing }
+
+
+encode : State -> JE.Value
+encode state =
+    JE.object
+        [ ( "playerItems", Dict.encode JE.int JE.int state.playerItems )
+        , ( "vendorItems", Dict.encode JE.int JE.int state.vendorItems )
+        , ( "playerCaps", JE.int state.playerCaps )
+        , ( "vendorCaps", JE.int state.vendorCaps )
+        , ( "lastMessage", JE.maybe encodeMessage state.lastMessage )
+        , ( "transferNInputs", Dict_.encode encodeTransferNPosition JE.string state.transferNInputs )
+        , ( "transferNHover", JE.maybe encodeTransferNPosition state.transferNHover )
+        ]
+
+
+encodeTransferNPosition : TransferNPosition -> JE.Value
+encodeTransferNPosition position =
+    case position of
+        PlayerKeptItem itemId ->
+            JE.object
+                [ ( "type", JE.string "PlayerKeptItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        VendorKeptItem itemId ->
+            JE.object
+                [ ( "type", JE.string "VendorKeptItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        PlayerTradedItem itemId ->
+            JE.object
+                [ ( "type", JE.string "PlayerTradedItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        VendorTradedItem itemId ->
+            JE.object
+                [ ( "type", JE.string "VendorTradedItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        PlayerKeptCaps ->
+            JE.object
+                [ ( "type", JE.string "PlayerKeptCaps" ) ]
+
+        VendorKeptCaps ->
+            JE.object
+                [ ( "type", JE.string "VendorKeptCaps" ) ]
+
+        PlayerTradedCaps ->
+            JE.object
+                [ ( "type", JE.string "PlayerTradedCaps" ) ]
+
+        VendorTradedCaps ->
+            JE.object
+                [ ( "type", JE.string "VendorTradedCaps" ) ]
+
+
+encodeMessage : Message -> JE.Value
+encodeMessage message =
+    case message of
+        BarterIsEmpty ->
+            JE.string "BarterIsEmpty"
+
+        PlayerOfferNotValuableEnough ->
+            JE.string "PlayerOfferNotValuableEnough"
+
+        YouGaveStuffForFree ->
+            JE.string "YouGaveStuffForFree"

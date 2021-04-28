@@ -3,6 +3,7 @@ module Data.NewChar exposing
     , NewChar
     , decSpecial
     , dismissError
+    , encode
     , error
     , incSpecial
     , init
@@ -13,9 +14,11 @@ module Data.NewChar exposing
 
 import AssocSet as Set_
 import AssocSet.Extra as Set_
-import Data.Skill exposing (Skill)
+import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special, SpecialType)
 import Data.Trait as Trait exposing (Trait)
+import Json.Encode as JE
+import Json.Encode.Extra as JE
 import Logic
 
 
@@ -146,3 +149,34 @@ setError error_ char =
 dismissError : NewChar -> NewChar
 dismissError char =
     { char | error = Nothing }
+
+
+encode : NewChar -> JE.Value
+encode newChar =
+    JE.object
+        [ ( "baseSpecial", Special.encode newChar.baseSpecial )
+        , ( "availableSpecial", JE.int newChar.availableSpecial )
+        , ( "taggedSkills", Set_.encode Skill.encode newChar.taggedSkills )
+        , ( "traits", Set_.encode Trait.encode newChar.traits )
+        , ( "error", JE.maybe encodeCreationError newChar.error )
+        ]
+
+
+encodeCreationError : CreationError -> JE.Value
+encodeCreationError err =
+    JE.string <|
+        case err of
+            DoesNotHaveThreeTaggedSkills ->
+                "DoesNotHaveThreeTaggedSkills"
+
+            HasSpecialPointsLeft ->
+                "HasSpecialPointsLeft"
+
+            UsedMoreSpecialPointsThanAvailable ->
+                "UsedMoreSpecialPointsThanAvailable"
+
+            HasSpecialOutOfRange ->
+                "HasSpecialOutOfRange"
+
+            HasMoreThanTwoTraits ->
+                "HasMoreThanTwoTraits"

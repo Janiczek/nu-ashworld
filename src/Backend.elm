@@ -18,8 +18,8 @@ import Data.Map as Map exposing (TileCoords)
 import Data.Map.Chunk as Chunk
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
-import Data.Message exposing (Message)
-import Data.NewChar exposing (NewChar)
+import Data.Message as Message exposing (Message)
+import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk
 import Data.Player as Player
     exposing
@@ -42,6 +42,8 @@ import Data.World
         )
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
+import Env
+import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
@@ -50,6 +52,7 @@ import Logic
 import Random exposing (Generator)
 import Random.List
 import Set exposing (Set)
+import Set.ExtraExtra as Set
 import Task
 import Time exposing (Posix)
 import Types exposing (..)
@@ -63,7 +66,7 @@ app =
     Lamdera.backend
         { init = init
         , update = update
-        , updateFromFrontend = updateFromFrontend
+        , updateFromFrontend = logAndUpdateFromFrontend
         , subscriptions = subscriptions
         }
 
@@ -349,6 +352,9 @@ update msg model =
             , Cmd.none
             )
 
+        LoggedToBackendMsg ->
+            ( model, Cmd.none )
+
 
 processTick : Model -> ( Model, Cmd BackendMsg )
 processTick model =
@@ -369,6 +375,136 @@ withLoggedInPlayer_ model clientId fn =
         |> Maybe.andThen (\name -> Dict.get name model.players)
         |> Maybe.map (\player -> fn clientId player model)
         |> Maybe.withDefault ( model, Cmd.none )
+
+
+logAndUpdateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+logAndUpdateFromFrontend sessionId clientId msg model =
+    let
+        playerName : String
+        playerName =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.withDefault ""
+
+        logMsgCmd : Cmd BackendMsg
+        logMsgCmd =
+            Http.request
+                { method = "POST"
+                , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
+                , headers = [ Http.header "X-Api-Key" Env.loggingApiKey ]
+                , body =
+                    Http.jsonBody <|
+                        JE.object
+                            [ ( "session-id", JE.string sessionId )
+                            , ( "client-id", JE.string clientId )
+                            , ( "player-name", JE.string playerName )
+                            , ( "to-backend-msg", JE.string <| JE.encode 0 <| encodeToBackendMsg msg )
+                            ]
+                , expect = Http.expectWhatever (always LoggedToBackendMsg)
+                , tracker = Nothing
+                , timeout = Nothing
+                }
+
+        ( newModel, normalCmd ) =
+            updateFromFrontend sessionId clientId msg model
+    in
+    ( newModel, Cmd.batch [ logMsgCmd, normalCmd ] )
+
+
+encodeToBackendMsg : ToBackend -> JE.Value
+encodeToBackendMsg msg =
+    case msg of
+        LogMeIn auth ->
+            JE.object
+                [ ( "type", JE.string "LogMeIn" )
+                , ( "auth", Auth.encode auth )
+                ]
+
+        RegisterMe auth ->
+            JE.object
+                [ ( "type", JE.string "RegisterMe" )
+                , ( "auth", Auth.encode auth )
+                ]
+
+        CreateNewChar newChar ->
+            JE.object
+                [ ( "type", JE.string "CreateNewChar" )
+                , ( "newChar", NewChar.encode newChar )
+                ]
+
+        LogMeOut ->
+            JE.object
+                [ ( "type", JE.string "LogMeOut" ) ]
+
+        Fight playerName ->
+            JE.object
+                [ ( "type", JE.string "Fight" )
+                , ( "playerName", JE.string playerName )
+                ]
+
+        HealMe ->
+            JE.object
+                [ ( "type", JE.string "HealMe" ) ]
+
+        UseItem itemId ->
+            JE.object
+                [ ( "type", JE.string "UseItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        Wander ->
+            JE.object
+                [ ( "type", JE.string "Wander" ) ]
+
+        RefreshPlease ->
+            JE.object
+                [ ( "type", JE.string "RefreshPlease" ) ]
+
+        TagSkill skill ->
+            JE.object
+                [ ( "type", JE.string "TagSkill" )
+                , ( "skill", Skill.encode skill )
+                ]
+
+        IncSkill skill ->
+            JE.object
+                [ ( "type", JE.string "IncSkill" )
+                , ( "skill", Skill.encode skill )
+                ]
+
+        MoveTo coords path ->
+            JE.object
+                [ ( "type", JE.string "MoveTo" )
+                , ( "coords", Map.encodeCoords coords )
+                , ( "path", Set.encode Map.encodeCoords path )
+                ]
+
+        MessageWasRead message ->
+            JE.object
+                [ ( "type", JE.string "MessageWasRead" )
+                , ( "message", Message.encode message )
+                ]
+
+        RemoveMessage message ->
+            JE.object
+                [ ( "type", JE.string "RemoveMessage" )
+                , ( "message", Message.encode message )
+                ]
+
+        Barter barterState ->
+            JE.object
+                [ ( "type", JE.string "Barter" )
+                , ( "barterState", Barter.encode barterState )
+                ]
+
+        AdminToBackend ExportJson ->
+            JE.object
+                [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
+
+        AdminToBackend (ImportJson json) ->
+            JE.object
+                [ ( "type", JE.string "AdminToBackend ImportJson" )
+                , ( "json", JE.string "<omitted>" )
+                ]
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )

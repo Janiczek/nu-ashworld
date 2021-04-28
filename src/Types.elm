@@ -142,6 +142,7 @@ type BackendMsg
     | GeneratedNewVendorsStock ( Dict_.Dict Vendor.Name Vendor, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
+    | LoggedToBackendMsg
 
 
 type ToFrontend
