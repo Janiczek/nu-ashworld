@@ -11,6 +11,7 @@ import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
+import Data.Perk exposing (Perk)
 import Data.Player
     exposing
         ( Player
@@ -73,6 +74,7 @@ type FrontendMsg
     | AskToHeal
     | AskToUseItem Item.Id
     | AskToWander
+    | AskToChoosePerk Perk
     | AskForExport
     | ImportButtonClicked
     | ImportFileSelected File
@@ -123,6 +125,7 @@ type ToBackend
     | RefreshPlease
     | TagSkill Skill
     | IncSkill Skill
+    | ChoosePerk Perk
     | MoveTo TileCoords (Set TileCoords)
     | MessageWasRead Message
     | RemoveMessage Message

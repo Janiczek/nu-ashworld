@@ -228,6 +228,11 @@ update msg model =
             , Lamdera.sendToBackend <| IncSkill skill
             )
 
+        AskToChoosePerk perk ->
+            ( model
+            , Lamdera.sendToBackend <| ChoosePerk perk
+            )
+
         SetAuthName newName ->
             ( { model
                 | world =
@@ -1920,8 +1925,57 @@ newCharSkillsView newChar =
 
 characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 characterView _ player =
+    let
+        level =
+            Xp.currentLevel player.xp
+
+        finalSpecial =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        applicablePerks : List Perk
+        applicablePerks =
+            Perk.allApplicable
+                { level = level
+                , finalSpecial = finalSpecial
+                , addedSkillPercentages = player.addedSkillPercentages
+                , perks = player.perks
+                }
+    in
     [ pageTitleView "Character"
-    , H.div
+    , if player.availablePerks > 0 && not (List.isEmpty applicablePerks) then
+        choosePerkView applicablePerks
+
+      else
+        normalCharacterView player
+    ]
+
+
+choosePerkView : List Perk -> Html FrontendMsg
+choosePerkView applicablePerks =
+    let
+        perkView perk =
+            H.li
+                [ HE.onClick <| AskToChoosePerk perk
+                , HA.class "character-choose-perk-item"
+                ]
+                [ H.text <| Perk.name perk ]
+    in
+    H.div
+        []
+        [ H.h3 [] [ H.text "Choose a perk!" ]
+        , H.ul [] (List.map perkView applicablePerks)
+        ]
+
+
+normalCharacterView : CPlayer -> Html FrontendMsg
+normalCharacterView player =
+    H.div
         [ HA.id "character-grid" ]
         [ H.div
             [ HA.class "character-column" ]
@@ -1939,7 +1993,6 @@ characterView _ player =
             , charHelpView
             ]
         ]
-    ]
 
 
 charTraitsView : Set_.Set Trait -> Html FrontendMsg

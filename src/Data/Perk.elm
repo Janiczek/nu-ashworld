@@ -1,13 +1,17 @@
 module Data.Perk exposing
     ( Perk(..)
+    , allApplicable
     , decoder
     , encode
+    , isApplicable
     , maxRank
     , name
     , rank
     )
 
 import AssocList as Dict_
+import Data.Skill as Skill exposing (Skill)
+import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 
@@ -17,8 +21,6 @@ import Json.Encode as JE
    https://fallout.fandom.com/wiki/Fallout_2_perks
    and implement all missing and applicable
 -}
--- TODO allow adding the perks in Character view
--- TODO conditions
 
 
 type Perk
@@ -27,6 +29,16 @@ type Perk
     | Educated
     | BonusHthDamage
     | MasterTrader
+
+
+all : List Perk
+all =
+    [ EarlierSequence
+    , Tag
+    , Educated
+    , BonusHthDamage
+    , MasterTrader
+    ]
 
 
 name : Perk -> String
@@ -114,3 +126,54 @@ rank : Perk -> Dict_.Dict Perk Int -> Int
 rank perk perks =
     Dict_.get perk perks
         |> Maybe.withDefault 0
+
+
+allApplicable :
+    { level : Int
+    , finalSpecial : Special
+    , addedSkillPercentages : Dict_.Dict Skill Int
+    , perks : Dict_.Dict Perk Int
+    }
+    -> List Perk
+allApplicable r =
+    List.filter (isApplicable r) all
+
+
+isApplicable :
+    { level : Int
+    , finalSpecial : Special
+    , addedSkillPercentages : Dict_.Dict Skill Int
+    , perks : Dict_.Dict Perk Int
+    }
+    -> Perk
+    -> Bool
+isApplicable r perk =
+    let
+        skill : Skill -> Int
+        skill =
+            Skill.get r.finalSpecial r.addedSkillPercentages
+
+        s =
+            r.finalSpecial
+
+        currentRank : Int
+        currentRank =
+            rank perk r.perks
+    in
+    (currentRank < maxRank perk)
+        && (case perk of
+                EarlierSequence ->
+                    r.level >= 3 && s.perception >= 6
+
+                Tag ->
+                    r.level >= 12
+
+                Educated ->
+                    r.level >= 6 && s.intelligence >= 6
+
+                BonusHthDamage ->
+                    r.level >= 3 && s.strength >= 6 && s.agility >= 6
+
+                MasterTrader ->
+                    r.level >= 12 && s.charisma >= 7 && skill Skill.Barter >= 75
+           )

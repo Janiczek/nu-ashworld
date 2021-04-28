@@ -17,7 +17,6 @@ import Json.Encode as JE
    https://fallout.fandom.com/wiki/Fallout_2_traits
    and implement all missing and applicable
 -}
--- TODO Skilled - perk rate (per 4 levels instead of per 3 levels)
 -- TODO Small Frame - carry weight
 -- TODO Heavy Handed - critical hit chance
 

@@ -6,6 +6,7 @@ module Logic exposing
     , healingRate
     , hitpoints
     , maxTraits
+    , perkRate
     , price
     , sequence
     , skillPointCost
@@ -470,3 +471,12 @@ special r =
 maxTraits : Int
 maxTraits =
     2
+
+
+perkRate : { hasSkilledTrait : Bool } -> Int
+perkRate { hasSkilledTrait } =
+    if hasSkilledTrait then
+        4
+
+    else
+        3

@@ -74,6 +74,7 @@ type alias SPlayer =
       addedSkillPercentages : Dict_.Dict Skill Int
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
+    , availablePerks : Int
     }
 
 
@@ -96,6 +97,7 @@ type alias CPlayer =
       addedSkillPercentages : Dict_.Dict Skill Int
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
+    , availablePerks : Int
     }
 
 
@@ -145,6 +147,7 @@ encodeSPlayer player =
         , ( "addedSkillPercentages", Dict_.encode Skill.encode JE.int player.addedSkillPercentages )
         , ( "taggedSkills", Set_.encode Skill.encode player.taggedSkills )
         , ( "availableSkillPoints", JE.int player.availableSkillPoints )
+        , ( "availablePerks", JE.int player.availablePerks )
         ]
 
 
@@ -170,7 +173,9 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV1 ]
+        [ sPlayerDecoderV2
+        , sPlayerDecoderV1
+        ]
 
 
 {-| with skills we are getting a reset!
@@ -196,6 +201,33 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.succeed 0)
+
+
+{-| adding `availablePerks`
+-}
+sPlayerDecoderV2 : Decoder SPlayer
+sPlayerDecoderV2 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "baseSpecial" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
 
 
 serverToClient : SPlayer -> CPlayer
@@ -217,6 +249,7 @@ serverToClient p =
     , addedSkillPercentages = p.addedSkillPercentages
     , taggedSkills = p.taggedSkills
     , availableSkillPoints = p.availableSkillPoints
+    , availablePerks = p.availablePerks
     }
 
 
@@ -324,7 +357,7 @@ fromNewChar currentTime auth newChar =
             , password = auth.password
             , hp = hp
             , maxHp = hp
-            , xp = 0
+            , xp = 20000
             , baseSpecial = newChar.baseSpecial
             , caps = 15
             , ticks = 10
@@ -342,4 +375,5 @@ fromNewChar currentTime auth newChar =
                     }
             , taggedSkills = newChar.taggedSkills
             , availableSkillPoints = 0
+            , availablePerks = 3
             }

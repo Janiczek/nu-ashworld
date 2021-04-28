@@ -941,3 +941,7 @@ table tbody tr:hover td {
 .inventory-item-use-btn:disabled {
   color: var(--fg03);
 }
+
+.character-choose-perk-item:hover {
+  color: var(--fg-highlight);
+}

@@ -20,7 +20,7 @@ import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
-import Data.Perk as Perk
+import Data.Perk as Perk exposing (Perk)
 import Data.Player as Player
     exposing
         ( Player(..)
@@ -40,6 +40,7 @@ import Data.World
         , WorldLoggedInData
         , WorldLoggedOutData
         )
+import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Env
@@ -496,6 +497,12 @@ encodeToBackendMsg msg =
                 , ( "barterState", Barter.encode barterState )
                 ]
 
+        ChoosePerk perk ->
+            JE.object
+                [ ( "type", JE.string "ChoosePerk" )
+                , ( "perk", Perk.encode perk )
+                ]
+
         AdminToBackend ExportJson ->
             JE.object
                 [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
@@ -664,6 +671,9 @@ updateFromFrontend sessionId clientId msg model =
 
         Wander ->
             withLoggedInCreatedPlayer wander
+
+        ChoosePerk perk ->
+            withLoggedInCreatedPlayer <| choosePerk perk
 
         RefreshPlease ->
             let
@@ -1293,6 +1303,53 @@ wander clientId player model =
                     )
             )
         )
+
+
+choosePerk : Perk -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+choosePerk perk clientId player model =
+    let
+        level =
+            Xp.currentLevel player.xp
+
+        finalSpecial =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+    in
+    if
+        Perk.isApplicable
+            { addedSkillPercentages = player.addedSkillPercentages
+            , finalSpecial = finalSpecial
+            , level = level
+            , perks = player.perks
+            }
+            perk
+    then
+        let
+            newModel =
+                model
+                    |> updatePlayer
+                        (identity
+                            >> SPlayer.incPerkRank perk
+                            >> SPlayer.decAvailablePerks
+                        )
+                        player.name
+        in
+        getWorldLoggedIn player.name newModel
+            |> Maybe.map
+                (\world ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                    )
+                )
+            |> Maybe.withDefault ( model, Cmd.none )
+
+    else
+        ( model, Cmd.none )
 
 
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

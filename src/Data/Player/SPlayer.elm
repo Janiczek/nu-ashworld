@@ -4,8 +4,10 @@ module Data.Player.SPlayer exposing
     , addItem
     , addMessage
     , addXp
+    , decAvailablePerks
     , healUsingTick
     , incLosses
+    , incPerkRank
     , incSkill
     , incWins
     , readMessage
@@ -24,7 +26,7 @@ import AssocSet as Set_
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
-import Data.Perk as Perk
+import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
@@ -73,9 +75,9 @@ addXp n currentTime player =
     in
     { player | xp = newXp }
         |> (if levelsDiff > 0 then
-                -- TODO later add perks, etc.
                 recalculateHpOnLevelup
                     >> addSkillPointsOnLevelup levelsDiff
+                    >> addPerksOnLevelup newLevel
                     >> addMessage
                         (Message.new
                             currentTime
@@ -173,6 +175,28 @@ addSkillPointsOnLevelup levelsDiff player =
                     , intelligence = special.intelligence
                     }
             )
+
+
+addPerksOnLevelup : Int -> SPlayer -> SPlayer
+addPerksOnLevelup newLevel player =
+    let
+        hasSkilledTrait =
+            Trait.isSelected Trait.Skilled player.traits
+
+        totalPerkRanks =
+            List.sum <| Dict_.values player.perks
+
+        perkRate =
+            Logic.perkRate { hasSkilledTrait = hasSkilledTrait }
+
+        totalAvailablePerks =
+            newLevel // perkRate
+
+        newAvailablePerks =
+            totalAvailablePerks - totalPerkRanks
+    in
+    player
+        |> setAvailablePerks newAvailablePerks
 
 
 tick : SPlayer -> SPlayer
@@ -339,3 +363,30 @@ incSkill skill player =
 addSkillPoints : Int -> SPlayer -> SPlayer
 addSkillPoints points player =
     { player | availableSkillPoints = player.availableSkillPoints + points }
+
+
+setAvailablePerks : Int -> SPlayer -> SPlayer
+setAvailablePerks perks player =
+    { player | availablePerks = perks }
+
+
+decAvailablePerks : SPlayer -> SPlayer
+decAvailablePerks player =
+    { player | availablePerks = max 0 <| player.availablePerks - 1 }
+
+
+incPerkRank : Perk -> SPlayer -> SPlayer
+incPerkRank perk player =
+    { player
+        | perks =
+            Dict_.update perk
+                (\maybeRank ->
+                    case maybeRank of
+                        Nothing ->
+                            Just 1
+
+                        Just n ->
+                            Just <| n + 1
+                )
+                player.perks
+    }
