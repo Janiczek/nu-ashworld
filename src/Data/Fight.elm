@@ -152,7 +152,7 @@ opponentTypeDecoder =
                         JD.map Npc Enemy.typeDecoder
 
                     "player" ->
-                        JD.map Player JD.string
+                        JD.map Player (JD.field "name" JD.string)
 
                     _ ->
                         JD.fail <| "Unknown Opponent type: '" ++ type_ ++ "'"
