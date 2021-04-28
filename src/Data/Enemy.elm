@@ -358,7 +358,7 @@ caps type_ =
             common { average = 20, maxDeviation = 12 }
 
         LesserRadscorpion ->
-            common { average = 15, maxDeviation = 9 }
+            common { average = 25, maxDeviation = 13 }
 
         Radscorpion ->
-            common { average = 40, maxDeviation = 25 }
+            common { average = 60, maxDeviation = 30 }
