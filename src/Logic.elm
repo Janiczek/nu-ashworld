@@ -10,12 +10,12 @@ module Logic exposing
     , healingRate
     , hitpoints
     , maxTraits
+    , newCharSpecial
     , perkRate
     , price
     , sequence
     , skillPointCost
     , skillPointsPerLevel
-    , special
     , totalTags
     , unarmedAttackStats
     , unarmedChanceToHit
@@ -35,13 +35,13 @@ import Maybe.Extra as Maybe
 
 hitpoints :
     { level : Int
-    , finalSpecial : Special
+    , special : Special
     }
     -> Int
 hitpoints r =
     let
         { strength, endurance } =
-            r.finalSpecial
+            r.special
     in
     15
         + (2 * endurance)
@@ -50,13 +50,13 @@ hitpoints r =
 
 
 healingRate :
-    { finalSpecial : Special
+    { special : Special
     , fasterHealingPerkRanks : Int
     }
     -> Int
 healingRate r =
     tickHealingRateMultiplier
-        * (max 1 (r.finalSpecial.endurance // 3)
+        * (max 1 (r.special.endurance // 3)
             + (2 * r.fasterHealingPerkRanks)
           )
 
@@ -67,7 +67,7 @@ tickHealingRateMultiplier =
 
 
 armorClass :
-    { finalSpecial : Special
+    { special : Special
     , hasKamikazeTrait : Bool
     }
     -> Int
@@ -78,14 +78,14 @@ armorClass r =
                 0
 
             else
-                r.finalSpecial.agility
+                r.special.agility
     in
     -- TODO take armor into account once we have it
     initial
 
 
 actionPoints :
-    { finalSpecial : Special
+    { special : Special
     , hasBruiserTrait : Bool
     }
     -> Int
@@ -98,7 +98,7 @@ actionPoints r =
             else
                 0
     in
-    (5 + r.finalSpecial.agility // 2)
+    (5 + r.special.agility // 2)
         - bruiserPenalty
 
 
@@ -129,7 +129,7 @@ darknessPenalty isItDark distanceHexes =
 
 unarmedChanceToHit :
     { attackerAddedSkillPercentages : Dict_.Dict Skill Int
-    , attackerFinalSpecial : Special
+    , attackerSpecial : Special
     , distanceHexes : Int
     , shotType : ShotType
     , targetArmorClass : Int
@@ -149,7 +149,7 @@ unarmedChanceToHit r =
         let
             skillPercentage : Int
             skillPercentage =
-                Skill.get r.attackerFinalSpecial r.attackerAddedSkillPercentages Skill.Unarmed
+                Skill.get r.attackerSpecial r.attackerAddedSkillPercentages Skill.Unarmed
 
             shotPenalty : Int
             shotPenalty =
@@ -212,7 +212,7 @@ type alias AttackStats =
 
 
 unarmedAttackStats :
-    { finalSpecial : Special
+    { special : Special
     , unarmedSkill : Int
     , traits : Set_.Set Trait
     , perks : Dict_.Dict Perk Int
@@ -223,7 +223,7 @@ unarmedAttackStats :
 unarmedAttackStats r =
     let
         { strength, agility } =
-            r.finalSpecial
+            r.special
 
         heavyHandedTraitBonus : Int
         heavyHandedTraitBonus =
@@ -430,16 +430,15 @@ addedSkillPercentages { taggedSkills, hasGiftedTrait } =
             Dict_.empty
 
 
-special :
+newCharSpecial :
     { -- doesn't contain bonunses from traits, perks, armor, drugs, etc.
       baseSpecial : Special
     , hasBruiserTrait : Bool
     , hasGiftedTrait : Bool
     , hasSmallFrameTrait : Bool
-    , isNewChar : Bool
     }
     -> Special
-special r =
+newCharSpecial r =
     let
         strengthBonus =
             if r.hasBruiserTrait then
@@ -461,22 +460,15 @@ special r =
 
             else
                 0
-
-        map =
-            if r.isNewChar then
-                Special.mapWithoutClamp
-
-            else
-                Special.map
     in
     r.baseSpecial
-        |> map ((+) (strengthBonus + allBonus)) Special.Strength
-        |> map ((+) allBonus) Special.Perception
-        |> map ((+) allBonus) Special.Endurance
-        |> map ((+) allBonus) Special.Charisma
-        |> map ((+) allBonus) Special.Intelligence
-        |> map ((+) (agilityBonus + allBonus)) Special.Agility
-        |> map ((+) allBonus) Special.Luck
+        |> Special.mapWithoutClamp ((+) (strengthBonus + allBonus)) Special.Strength
+        |> Special.mapWithoutClamp ((+) allBonus) Special.Perception
+        |> Special.mapWithoutClamp ((+) allBonus) Special.Endurance
+        |> Special.mapWithoutClamp ((+) allBonus) Special.Charisma
+        |> Special.mapWithoutClamp ((+) allBonus) Special.Intelligence
+        |> Special.mapWithoutClamp ((+) (agilityBonus + allBonus)) Special.Agility
+        |> Special.mapWithoutClamp ((+) allBonus) Special.Luck
 
 
 maxTraits : Int
@@ -530,7 +522,7 @@ canUseItem :
     { p
         | hp : Int
         , maxHp : Int
-        , baseSpecial : Special
+        , special : Special
         , traits : Set_.Set Trait
         , ticks : Int
     }
@@ -538,20 +530,10 @@ canUseItem :
     -> Result ItemNotUsableReason ()
 canUseItem p kind =
     let
-        finalSpecial : Special
-        finalSpecial =
-            special
-                { baseSpecial = p.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser p.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted p.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame p.traits
-                , isNewChar = False
-                }
-
         bookUseTickCost_ : Int
         bookUseTickCost_ =
             bookUseTickCost
-                { intelligence = finalSpecial.intelligence }
+                { intelligence = p.special.intelligence }
 
         youreAtFullHp : Maybe ItemNotUsableReason
         youreAtFullHp =

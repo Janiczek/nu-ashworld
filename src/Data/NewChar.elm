@@ -55,12 +55,11 @@ incSpecial type_ char =
     let
         specialAfterTraits : Special
         specialAfterTraits =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = char.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser char.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted char.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame char.traits
-                , isNewChar = True
                 }
     in
     if Special.canIncrement char.availableSpecial type_ specialAfterTraits then
@@ -78,12 +77,11 @@ decSpecial type_ char =
     let
         specialAfterTraits : Special
         specialAfterTraits =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = char.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser char.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted char.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame char.traits
-                , isNewChar = True
                 }
     in
     if Special.canDecrement type_ specialAfterTraits then

@@ -306,20 +306,10 @@ update msg model =
                     case world.player of
                         Player cPlayer ->
                             let
-                                finalSpecial : Special
-                                finalSpecial =
-                                    Logic.special
-                                        { baseSpecial = cPlayer.baseSpecial
-                                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser cPlayer.traits
-                                        , hasGiftedTrait = Trait.isSelected Trait.Gifted cPlayer.traits
-                                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame cPlayer.traits
-                                        , isNewChar = False
-                                        }
-
                                 perceptionLevel : PerceptionLevel
                                 perceptionLevel =
                                     Perception.level
-                                        { perception = finalSpecial.perception
+                                        { perception = cPlayer.special.perception
                                         , hasAwarenessPerk = Perk.rank Perk.Awareness cPlayer.perks > 0
                                         }
 
@@ -869,20 +859,10 @@ mapView :
     -> List (Html FrontendMsg)
 mapView mouseCoords _ player =
     let
-        finalSpecial : Special
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         perceptionLevel : PerceptionLevel
         perceptionLevel =
             Perception.level
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
 
@@ -1140,16 +1120,6 @@ townStoreView barter location world player =
 
         Just vendor ->
             let
-                special : Special
-                special =
-                    Logic.special
-                        { baseSpecial = player.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                        , isNewChar = False
-                        }
-
                 playerKeptCaps : Int
                 playerKeptCaps =
                     player.caps - barter.playerCaps
@@ -1191,7 +1161,7 @@ townStoreView barter location world player =
                                             Logic.price
                                                 { itemCount = count
                                                 , itemKind = kind
-                                                , playerBarterSkill = Skill.get special player.addedSkillPercentages Skill.Barter
+                                                , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
                                                 }
@@ -1715,12 +1685,11 @@ newCharDerivedStatsView : NewChar -> Html FrontendMsg
 newCharDerivedStatsView newChar =
     let
         finalSpecial =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
-                , isNewChar = True
                 }
 
         itemView : ( String, String, Maybe String ) -> Html FrontendMsg
@@ -1759,14 +1728,14 @@ newCharDerivedStatsView newChar =
                   , String.fromInt <|
                         Logic.hitpoints
                             { level = 1
-                            , finalSpecial = finalSpecial
+                            , special = finalSpecial
                             }
                   , Nothing
                   )
                 , ( "Healing rate"
                   , (String.fromInt <|
                         Logic.healingRate
-                            { finalSpecial = finalSpecial
+                            { special = finalSpecial
                             , fasterHealingPerkRanks = 0
                             }
                     )
@@ -1781,7 +1750,7 @@ newCharDerivedStatsView newChar =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
-                            , finalSpecial = finalSpecial
+                            , special = finalSpecial
                             }
                   , Nothing
                   )
@@ -1793,12 +1762,11 @@ newCharSpecialView : NewChar -> Html FrontendMsg
 newCharSpecialView newChar =
     let
         finalSpecial =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
-                , isNewChar = True
                 }
 
         specialItemView type_ =
@@ -1921,12 +1889,11 @@ newCharSkillsView newChar =
     let
         finalSpecial : Special
         finalSpecial =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
-                , isNewChar = True
                 }
     in
     skillsView_
@@ -1950,20 +1917,11 @@ characterView _ player =
         level =
             Xp.currentLevel player.xp
 
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         applicablePerks : List Perk
         applicablePerks =
             Perk.allApplicable
                 { level = level
-                , finalSpecial = finalSpecial
+                , special = player.special
                 , addedSkillPercentages = player.addedSkillPercentages
                 , perks = player.perks
                 }
@@ -2054,16 +2012,6 @@ charHelpView =
 charDerivedStatsView : CPlayer -> Html FrontendMsg
 charDerivedStatsView player =
     let
-        finalSpecial : Special
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         itemView : ( String, String, Maybe String ) -> Html FrontendMsg
         itemView ( label, value, tooltip ) =
             let
@@ -2085,7 +2033,7 @@ charDerivedStatsView player =
         perceptionLevel : PerceptionLevel
         perceptionLevel =
             Perception.level
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
@@ -2100,14 +2048,14 @@ charDerivedStatsView player =
                   , String.fromInt <|
                         Logic.hitpoints
                             { level = 1
-                            , finalSpecial = finalSpecial
+                            , special = player.special
                             }
                   , Nothing
                   )
                 , ( "Healing rate"
                   , (String.fromInt <|
                         Logic.healingRate
-                            { finalSpecial = finalSpecial
+                            { special = player.special
                             , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
                             }
                     )
@@ -2122,7 +2070,7 @@ charDerivedStatsView player =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                            , finalSpecial = finalSpecial
+                            , special = player.special
                             }
                   , Nothing
                   )
@@ -2133,19 +2081,10 @@ charDerivedStatsView player =
 charSpecialView : CPlayer -> Html FrontendMsg
 charSpecialView player =
     let
-        special =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         specialItemView type_ =
             let
                 value =
-                    Special.get type_ special
+                    Special.get type_ player.special
             in
             H.tr
                 [ HA.class "character-special-attribute" ]
@@ -2312,20 +2251,9 @@ skillsView_ r =
 
 charSkillsView : CPlayer -> Html FrontendMsg
 charSkillsView player =
-    let
-        special : Special
-        special =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-    in
     skillsView_
         { addedSkillPercentages = player.addedSkillPercentages
-        , special = special
+        , special = player.special
         , taggedSkills = player.taggedSkills
         , hasTagPerk = Perk.rank Perk.Tag player.perks > 0
         , availableSkillPoints = player.availableSkillPoints
@@ -2497,18 +2425,9 @@ messagesView currentTime zone _ player =
 messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 messageView zone message _ player =
     let
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         perceptionLevel =
             Perception.level
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
@@ -2560,18 +2479,9 @@ fightView fight _ player =
         youAreAttacker =
             fight.attacker == Fight.Player player.name
 
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         perceptionLevel =
             Perception.level
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
@@ -2716,21 +2626,10 @@ ladderTableView { loggedInPlayer, players } =
                             , loggedInPlayer
                                 |> H.viewMaybe
                                     (\loggedInPlayer_ ->
-                                        let
-                                            special : Special
-                                            special =
-                                                Logic.special
-                                                    { baseSpecial = loggedInPlayer_.baseSpecial
-                                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser loggedInPlayer_.traits
-                                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted loggedInPlayer_.traits
-                                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame loggedInPlayer_.traits
-                                                    , isNewChar = False
-                                                    }
-                                        in
                                         H.td
                                             [ HA.class "ladder-status"
                                             , HA.title <|
-                                                if special.perception <= 1 then
+                                                if loggedInPlayer_.special.perception <= 1 then
                                                     "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
 
                                                 else

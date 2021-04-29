@@ -72,15 +72,7 @@ generator r =
 
         attackerPerceptionWithBonuses : Int
         attackerPerceptionWithBonuses =
-            (Logic.special
-                { baseSpecial = r.attacker.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser r.attacker.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted r.attacker.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame r.attacker.traits
-                , isNewChar = False
-                }
-                |> .perception
-            )
+            r.attacker.special.perception
                 + (if attackerHasCautiousNaturePerk then
                     3
 
@@ -90,15 +82,7 @@ generator r =
 
         targetPerceptionWithBonuses : Int
         targetPerceptionWithBonuses =
-            (Logic.special
-                { baseSpecial = r.target.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser r.target.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted r.target.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame r.target.traits
-                , isNewChar = False
-                }
-                |> .perception
-            )
+            r.target.special.perception
                 + (if targetHasCautiousNaturePerk then
                     3
 
@@ -220,14 +204,7 @@ generator r =
                     opponent_ who ongoing
             in
             Logic.unarmedChanceToHit
-                { attackerFinalSpecial =
-                    Logic.special
-                        { baseSpecial = opponent.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser opponent.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted opponent.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame opponent.traits
-                        , isNewChar = False
-                        }
+                { attackerSpecial = opponent.special
                 , attackerAddedSkillPercentages = opponent.addedSkillPercentages
                 , distanceHexes = ongoing.distanceHexes
                 , shotType = shot
@@ -610,7 +587,7 @@ enemyOpponentGenerator enemyType =
             , attackStats =
                 -- TODO for now it's all unarmed
                 Logic.unarmedAttackStats
-                    { finalSpecial = special
+                    { special = special
                     , unarmedSkill = unarmedSkill
                     , traits = traits
                     , perks = Dict_.empty
@@ -620,7 +597,7 @@ enemyOpponentGenerator enemyType =
                     , extraBonus = Enemy.meleeDamageBonus enemyType
                     }
             , addedSkillPercentages = addedSkillPercentages
-            , baseSpecial =
+            , special =
                 -- Enemies never have anything else than base special (no traits, perks, ...)
                 special
             }
@@ -631,27 +608,17 @@ enemyOpponentGenerator enemyType =
 playerOpponent : SPlayer -> Opponent
 playerOpponent player =
     let
-        finalSpecial : Special
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         armorClass : Int
         armorClass =
             Logic.armorClass
                 { hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
-                , finalSpecial = finalSpecial
+                , special = player.special
                 }
 
         sequence : Int
         sequence =
             Logic.sequence
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
                 , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
                 }
@@ -660,14 +627,14 @@ playerOpponent player =
         actionPoints =
             Logic.actionPoints
                 { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , finalSpecial = finalSpecial
+                , special = player.special
                 }
 
         attackStats : AttackStats
         attackStats =
             Logic.unarmedAttackStats
-                { finalSpecial = finalSpecial
-                , unarmedSkill = Skill.get finalSpecial player.addedSkillPercentages Skill.Unarmed
+                { special = player.special
+                , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed
                 , level = Xp.currentLevel player.xp
                 , perks = player.perks
                 , traits = player.traits
@@ -685,5 +652,5 @@ playerOpponent player =
     , armorClass = armorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages
-    , baseSpecial = player.baseSpecial
+    , special = player.special
     }

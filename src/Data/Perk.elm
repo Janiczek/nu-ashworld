@@ -209,7 +209,7 @@ rank perk perks =
 
 allApplicable :
     { level : Int
-    , finalSpecial : Special
+    , special : Special
     , addedSkillPercentages : Dict_.Dict Skill Int
     , perks : Dict_.Dict Perk Int
     }
@@ -220,7 +220,7 @@ allApplicable r =
 
 isApplicable :
     { level : Int
-    , finalSpecial : Special
+    , special : Special
     , addedSkillPercentages : Dict_.Dict Skill Int
     , perks : Dict_.Dict Perk Int
     }
@@ -230,10 +230,10 @@ isApplicable r perk =
     let
         skill : Skill -> Int
         skill =
-            Skill.get r.finalSpecial r.addedSkillPercentages
+            Skill.get r.special r.addedSkillPercentages
 
         s =
-            r.finalSpecial
+            r.special
 
         currentRank : Int
         currentRank =

@@ -60,8 +60,7 @@ type alias SPlayer =
     , hp : Int
     , maxHp : Int
     , xp : Int
-    , -- doesn't contain bonunses from traits, perks, armor, drugs, etc.
-      baseSpecial : Special
+    , special : Special
     , caps : Int
     , ticks : Int
     , wins : Int
@@ -71,7 +70,7 @@ type alias SPlayer =
     , messages : List Message
     , items : Dict Item.Id Item
     , traits : Set_.Set Trait
-    , -- doesn't contain Special skill percentages:
+    , -- doesn't contain Special base skill % values:
       addedSkillPercentages : Dict_.Dict Skill Int
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
@@ -84,7 +83,7 @@ type alias CPlayer =
     , maxHp : Int
     , xp : Xp
     , name : PlayerName
-    , baseSpecial : Special
+    , special : Special
     , caps : Int
     , ticks : Int
     , wins : Int
@@ -94,7 +93,7 @@ type alias CPlayer =
     , messages : List Message
     , items : Dict Item.Id Item
     , traits : Set_.Set Trait
-    , -- doesn't contain Special skill percentages:
+    , -- doesn't contain Special base skill % values:
       addedSkillPercentages : Dict_.Dict Skill Int
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
@@ -135,7 +134,7 @@ encodeSPlayer player =
         , ( "hp", JE.int player.hp )
         , ( "maxHp", JE.int player.maxHp )
         , ( "xp", JE.int player.xp )
-        , ( "baseSpecial", Special.encode player.baseSpecial )
+        , ( "special", Special.encode player.special )
         , ( "caps", JE.int player.caps )
         , ( "ticks", JE.int player.ticks )
         , ( "wins", JE.int player.wins )
@@ -174,7 +173,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV2
+        [ sPlayerDecoderV3
+        , sPlayerDecoderV2
         , sPlayerDecoderV1
         ]
 
@@ -203,6 +203,19 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.succeed 0)
+        |> JD.map
+            (\player ->
+                let
+                    finalSpecial =
+                        Logic.newCharSpecial
+                            { baseSpecial = player.special
+                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                            }
+                in
+                { player | special = finalSpecial }
+            )
 
 
 {-| adding `availablePerks`
@@ -229,6 +242,46 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.map
+            (\player ->
+                let
+                    finalSpecial =
+                        Logic.newCharSpecial
+                            { baseSpecial = player.special
+                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                            }
+                in
+                { player | special = finalSpecial }
+            )
+
+
+{-| Renamed `baseSpecial` to `special`, it now has the final values, not the
+base ones before traits.
+-}
+sPlayerDecoderV3 : Decoder SPlayer
+sPlayerDecoderV3 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
 
 
 serverToClient : SPlayer -> CPlayer
@@ -237,7 +290,7 @@ serverToClient p =
     , maxHp = p.maxHp
     , xp = p.xp
     , name = p.name
-    , baseSpecial = p.baseSpecial
+    , special = p.special
     , caps = p.caps
     , ticks = p.ticks
     , wins = p.wins
@@ -315,12 +368,11 @@ fromNewChar currentTime auth newChar =
     let
         finalSpecial : Special
         finalSpecial =
-            Logic.special
+            Logic.newCharSpecial
                 { baseSpecial = newChar.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
-                , isNewChar = True
                 }
     in
     if Set_.size newChar.taggedSkills /= 3 then
@@ -345,7 +397,7 @@ fromNewChar currentTime auth newChar =
                 hp =
                     Logic.hitpoints
                         { level = 1
-                        , finalSpecial = finalSpecial
+                        , special = finalSpecial
                         }
 
                 startingTileNum : TileNum
@@ -359,7 +411,7 @@ fromNewChar currentTime auth newChar =
             , hp = hp
             , maxHp = hp
             , xp = 0
-            , baseSpecial = newChar.baseSpecial
+            , special = finalSpecial
             , caps = 0
             , ticks = 50
             , wins = 0

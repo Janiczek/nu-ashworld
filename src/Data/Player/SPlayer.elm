@@ -124,14 +124,7 @@ recalculateHpOnLevelup player =
         newMaxHp =
             Logic.hitpoints
                 { level = Xp.currentLevel player.xp
-                , finalSpecial =
-                    Logic.special
-                        { baseSpecial = player.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                        , isNewChar = False
-                        }
+                , special = player.special
                 }
 
         diff =
@@ -153,17 +146,6 @@ recalculateHpOnLevelup player =
 
 addSkillPointsOnLevelup : Int -> SPlayer -> SPlayer
 addSkillPointsOnLevelup levelsDiff player =
-    let
-        special : Special
-        special =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-    in
     player
         |> addSkillPoints
             (levelsDiff
@@ -171,7 +153,7 @@ addSkillPointsOnLevelup levelsDiff player =
                     { hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
                     , hasSkilledTrait = Trait.isSelected Trait.Skilled player.traits
                     , educatedPerkRanks = Perk.rank Perk.Educated player.perks
-                    , intelligence = special.intelligence
+                    , intelligence = player.special.intelligence
                     }
             )
 
@@ -206,14 +188,7 @@ tick player =
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp
                     (Logic.healingRate
-                        { finalSpecial =
-                            Logic.special
-                                { baseSpecial = player.baseSpecial
-                                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                                , isNewChar = False
-                                }
+                        { special = player.special
                         , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
                         }
                     )
@@ -327,19 +302,9 @@ useSkillPoints skill player =
         neededPoints =
             Logic.skillPointCost skillPercent
 
-        special : Special
-        special =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         skillPercent : Int
         skillPercent =
-            Skill.get special player.addedSkillPercentages skill
+            Skill.get player.special player.addedSkillPercentages skill
     in
     if skillPercent < 300 && player.availableSkillPoints >= neededPoints then
         addSkillPercentage
@@ -354,19 +319,9 @@ useSkillPoints skill player =
 addSkillPercentage : Int -> Skill -> SPlayer -> SPlayer
 addSkillPercentage percentToAdd skill player =
     let
-        special : Special
-        special =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         skillPercent : Int
         skillPercent =
-            Skill.get special player.addedSkillPercentages skill
+            Skill.get player.special player.addedSkillPercentages skill
     in
     if skillPercent < 300 then
         { player

@@ -52,7 +52,7 @@ type alias Opponent =
     , armorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : Dict_.Dict Skill Int
-    , baseSpecial : Special
+    , special : Special
     }
 
 

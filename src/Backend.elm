@@ -137,18 +137,8 @@ getWorldLoggedIn_ player model =
             Player.getPlayerData player
                 |> Maybe.map
                     (\player_ ->
-                        let
-                            finalSpecial =
-                                Logic.special
-                                    { baseSpecial = player_.baseSpecial
-                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player_.traits
-                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player_.traits
-                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player_.traits
-                                    , isNewChar = False
-                                    }
-                        in
                         Perception.level
-                            { perception = finalSpecial.perception
+                            { perception = player_.special.perception
                             , hasAwarenessPerk = Perk.rank Perk.Awareness player_.perks > 0
                             }
                     )
@@ -773,16 +763,6 @@ barter barterState clientId location player model =
 
         Just vendor ->
             let
-                playerSpecial : Special
-                playerSpecial =
-                    Logic.special
-                        { baseSpecial = player.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                        , isNewChar = False
-                        }
-
                 barterNotEmpty : Bool
                 barterNotEmpty =
                     barterState /= Barter.empty
@@ -839,7 +819,7 @@ barter barterState clientId location player model =
                                             Logic.price
                                                 { itemCount = count
                                                 , itemKind = item.kind
-                                                , playerBarterSkill = Skill.get playerSpecial player.addedSkillPercentages Skill.Barter
+                                                , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
                                                 }
@@ -1041,16 +1021,6 @@ removeMessage message clientId player model =
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 moveTo newCoords pathTaken clientId player model =
     let
-        finalSpecial : Special
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
-
         currentCoords : TileCoords
         currentCoords =
             Map.toTileCoords player.location
@@ -1066,7 +1036,7 @@ moveTo newCoords pathTaken clientId player model =
         perceptionLevel : PerceptionLevel
         perceptionLevel =
             Perception.level
-                { perception = finalSpecial.perception
+                { perception = player.special.perception
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
 
@@ -1231,16 +1201,6 @@ useItem itemId clientId player model =
 
         Just item ->
             let
-                finalSpecial : Special
-                finalSpecial =
-                    Logic.special
-                        { baseSpecial = player.baseSpecial
-                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                        , isNewChar = False
-                        }
-
                 effects : List Item.Effect
                 effects =
                     Item.usageEffects item.kind
@@ -1263,12 +1223,12 @@ useItem itemId clientId player model =
                                 Item.BookRemoveTicks ->
                                     SPlayer.subtractTicks <|
                                         Logic.bookUseTickCost
-                                            { intelligence = finalSpecial.intelligence }
+                                            { intelligence = player.special.intelligence }
 
                                 Item.BookAddSkillPercent skill ->
                                     SPlayer.addSkillPercentage
                                         (Logic.bookAddedSkillPercentage
-                                            { currentPercentage = Skill.get finalSpecial player.addedSkillPercentages skill
+                                            { currentPercentage = Skill.get player.special player.addedSkillPercentages skill
                                             , hasComprehensionPerk = Perk.rank Perk.Comprehension player.perks > 0
                                             }
                                         )
@@ -1344,20 +1304,11 @@ choosePerk perk clientId player model =
     let
         level =
             Xp.currentLevel player.xp
-
-        finalSpecial =
-            Logic.special
-                { baseSpecial = player.baseSpecial
-                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                , isNewChar = False
-                }
     in
     if
         Perk.isApplicable
             { addedSkillPercentages = player.addedSkillPercentages
-            , finalSpecial = finalSpecial
+            , special = player.special
             , level = level
             , perks = player.perks
             }
