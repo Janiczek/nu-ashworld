@@ -5,7 +5,9 @@ module Data.Vendor exposing
     , addItem
     , emptyVendors
     , encodeVendors
+    , forLocation
     , getFrom
+    , isInLocation
     , name
     , removeItem
     , restockVendors
@@ -17,6 +19,7 @@ import AssocList as Dict_
 import AssocList.ExtraExtra as Dict_
 import AssocSet as Set_
 import Data.Item as Item exposing (Item)
+import Data.Map.Location as Location exposing (Location)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
@@ -338,3 +341,30 @@ name name_ =
 
         DenFlick ->
             "Flick (Den)"
+
+
+location : Name -> Location
+location name_ =
+    case name_ of
+        KlamathMaidaBuckner ->
+            Location.Klamath
+
+        DenFlick ->
+            Location.Den
+
+
+locationsWithVendors : Dict_.Dict Location Name
+locationsWithVendors =
+    all
+        |> List.map (\name_ -> ( location name_, name_ ))
+        |> Dict_.fromList
+
+
+forLocation : Location -> Maybe Name
+forLocation loc =
+    Dict_.get loc locationsWithVendors
+
+
+isInLocation : Location -> Bool
+isInLocation loc =
+    Dict_.member loc locationsWithVendors

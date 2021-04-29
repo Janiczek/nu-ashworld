@@ -4,15 +4,12 @@ module Data.Map.Location exposing
     , allLocations
     , coords
     , default
-    , getVendor
-    , hasVendor
     , location
     , name
     , size
     )
 
 import Data.Map as Map exposing (TileCoords, TileNum)
-import Data.Vendor as Vendor
 import Dict exposing (Dict)
 
 
@@ -299,21 +296,6 @@ name loc =
 
         VaultCity ->
             "Vault City"
-
-
-getVendor : Location -> Maybe Vendor.Name
-getVendor loc =
-    case loc of
-        Klamath ->
-            Just Vendor.KlamathMaidaBuckner
-
-        _ ->
-            Nothing
-
-
-hasVendor : Location -> Bool
-hasVendor loc =
-    getVendor loc /= Nothing
 
 
 dict : Dict TileNum Location

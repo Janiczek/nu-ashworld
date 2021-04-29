@@ -1016,7 +1016,7 @@ locationView maybePlayer location =
 
         hasVendor : Bool
         hasVendor =
-            Location.hasVendor location
+            Vendor.isInLocation location
 
         isCurrent : Bool
         isCurrent =
@@ -1115,16 +1115,15 @@ mapLoggedOutView =
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView location _ _ =
     [ pageTitleView <| "Town: " ++ Location.name location
-    , case Location.getVendor location of
-        Nothing ->
-            H.div [] [ H.text "No vendor in this town..." ]
+    , if Vendor.isInLocation location then
+        H.div []
+            [ H.button
+                [ HE.onClick (GoToRoute (Route.Town (Route.Store { barter = Barter.empty }))) ]
+                [ H.text "[Visit store]" ]
+            ]
 
-        Just _ ->
-            H.div []
-                [ H.button
-                    [ HE.onClick (GoToRoute (Route.Town (Route.Store { barter = Barter.empty }))) ]
-                    [ H.text "[Visit store]" ]
-                ]
+      else
+        H.div [] [ H.text "No vendor in this town..." ]
     ]
 
 
@@ -1135,7 +1134,7 @@ townStoreView :
     -> CPlayer
     -> List (Html FrontendMsg)
 townStoreView barter location world player =
-    case Maybe.map (Vendor.getFrom world.vendors) (Location.getVendor location) of
+    case Maybe.map (Vendor.getFrom world.vendors) (Vendor.forLocation location) of
         Nothing ->
             contentUnavailableWhenNotInTownView
 

@@ -767,7 +767,7 @@ isAdmin sessionId clientId { adminLoggedIn } =
 
 barter : Barter.State -> ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 barter barterState clientId location player model =
-    case Maybe.map (Vendor.getFrom model.vendors) (Location.getVendor location) of
+    case Maybe.map (Vendor.getFrom model.vendors) (Vendor.forLocation location) of
         Nothing ->
             ( model, Cmd.none )
 
@@ -1451,7 +1451,7 @@ updateVendor : (Vendor -> Vendor) -> Location -> Model -> Model
 updateVendor fn location model =
     { model
         | vendors =
-            case Location.getVendor location of
+            case Vendor.forLocation location of
                 Nothing ->
                     model.vendors
 
