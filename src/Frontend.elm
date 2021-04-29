@@ -1764,7 +1764,12 @@ newCharDerivedStatsView newChar =
                   , Nothing
                   )
                 , ( "Healing rate"
-                  , (String.fromInt <| Logic.healingRate finalSpecial)
+                  , (String.fromInt <|
+                        Logic.healingRate
+                            { finalSpecial = finalSpecial
+                            , fasterHealingPerkRanks = 0
+                            }
+                    )
                         ++ " HP/tick"
                   , Nothing
                   )
@@ -2100,7 +2105,12 @@ charDerivedStatsView player =
                   , Nothing
                   )
                 , ( "Healing rate"
-                  , (String.fromInt <| Logic.healingRate finalSpecial)
+                  , (String.fromInt <|
+                        Logic.healingRate
+                            { finalSpecial = finalSpecial
+                            , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                            }
+                    )
                         ++ " HP/tick"
                   , Nothing
                   )

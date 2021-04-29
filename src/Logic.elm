@@ -49,10 +49,16 @@ hitpoints r =
         + (r.level * (2 + endurance // 2))
 
 
-healingRate : Special -> Int
-healingRate { endurance } =
+healingRate :
+    { finalSpecial : Special
+    , fasterHealingPerkRanks : Int
+    }
+    -> Int
+healingRate r =
     tickHealingRateMultiplier
-        * max 1 (endurance // 3)
+        * (max 1 (r.finalSpecial.endurance // 3)
+            + (2 * r.fasterHealingPerkRanks)
+          )
 
 
 tickHealingRateMultiplier : Int

@@ -208,14 +208,16 @@ tick player =
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp
                     (Logic.healingRate
-                        (Logic.special
-                            { baseSpecial = player.baseSpecial
-                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
-                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
-                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
-                            , isNewChar = False
-                            }
-                        )
+                        { finalSpecial =
+                            Logic.special
+                                { baseSpecial = player.baseSpecial
+                                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                                , isNewChar = False
+                                }
+                        , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                        }
                     )
 
             else

@@ -24,26 +24,31 @@ import Json.Encode as JE
 
 
 type Perk
-    = EarlierSequence
-    | Tag
-    | Educated
-    | BonusHthDamage
+    = -- lvl 3
+      BonusHthDamage
     | MasterTrader
     | Awareness
     | CautiousNature
     | Comprehension
+    | EarlierSequence
+    | FasterHealing
+      -- lvl 6
+    | Educated
+      -- lvl 12
+    | Tag
 
 
 all : List Perk
 all =
-    [ EarlierSequence
-    , Tag
-    , Educated
+    [ Awareness
     , BonusHthDamage
-    , MasterTrader
-    , Awareness
     , CautiousNature
     , Comprehension
+    , EarlierSequence
+    , Educated
+    , FasterHealing
+    , MasterTrader
+    , Tag
     ]
 
 
@@ -74,6 +79,9 @@ name perk =
         Comprehension ->
             "Comprehension"
 
+        FasterHealing ->
+            "Faster Healing"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -82,6 +90,7 @@ multipleRankPerks =
         [ ( EarlierSequence, 3 )
         , ( Educated, 3 )
         , ( BonusHthDamage, 3 )
+        , ( FasterHealing, 3 )
         ]
 
 
@@ -119,6 +128,9 @@ encode perk =
             Comprehension ->
                 "comprehension"
 
+            FasterHealing ->
+                "faster-healing"
+
 
 decoder : Decoder Perk
 decoder =
@@ -149,6 +161,9 @@ decoder =
 
                     "comprehension" ->
                         JD.succeed Comprehension
+
+                    "faster-healing" ->
+                        JD.succeed FasterHealing
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -218,4 +233,7 @@ isApplicable r perk =
 
                 Comprehension ->
                     r.level >= 3 && s.intelligence >= 6
+
+                FasterHealing ->
+                    r.level >= 3 && s.endurance >= 6
            )
