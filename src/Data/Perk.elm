@@ -32,6 +32,8 @@ type Perk
     | Comprehension
     | EarlierSequence
     | FasterHealing
+      -- TODO Healer - needs usage of First Aid / Doctor skills
+    | HereAndNow
       -- lvl 6
     | Educated
       -- lvl 12
@@ -47,6 +49,7 @@ all =
     , EarlierSequence
     , Educated
     , FasterHealing
+    , HereAndNow
     , MasterTrader
     , Tag
     ]
@@ -81,6 +84,9 @@ name perk =
 
         FasterHealing ->
             "Faster Healing"
+
+        HereAndNow ->
+            "Here and Now"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -131,6 +137,9 @@ encode perk =
             FasterHealing ->
                 "faster-healing"
 
+            HereAndNow ->
+                "here-and-now"
+
 
 decoder : Decoder Perk
 decoder =
@@ -164,6 +173,9 @@ decoder =
 
                     "faster-healing" ->
                         JD.succeed FasterHealing
+
+                    "here-and-now" ->
+                        JD.succeed HereAndNow
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -236,4 +248,7 @@ isApplicable r perk =
 
                 FasterHealing ->
                     r.level >= 3 && s.endurance >= 6
+
+                HereAndNow ->
+                    r.level >= 3
            )

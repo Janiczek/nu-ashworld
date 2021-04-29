@@ -1370,6 +1370,12 @@ choosePerk perk clientId player model =
                         (identity
                             >> SPlayer.incPerkRank perk
                             >> SPlayer.decAvailablePerks
+                            >> (if perk == Perk.HereAndNow then
+                                    SPlayer.levelUpHereAndNow model.time
+
+                                else
+                                    identity
+                               )
                         )
                         player.name
         in

@@ -10,6 +10,7 @@ module Data.Player.SPlayer exposing
     , incLosses
     , incPerkRank
     , incWins
+    , levelUpHereAndNow
     , readMessage
     , removeItem
     , removeMessage
@@ -76,14 +77,11 @@ addXp n currentTime player =
     in
     { player | xp = newXp }
         |> (if levelsDiff > 0 then
-                recalculateHpOnLevelup
-                    >> addSkillPointsOnLevelup levelsDiff
-                    >> addPerksOnLevelup newLevel
-                    >> addMessage
-                        (Message.new
-                            currentTime
-                            (YouAdvancedLevel { newLevel = newLevel })
-                        )
+                levelUpConsequences
+                    { newLevel = newLevel
+                    , levelsDiff = levelsDiff
+                    , currentTime = currentTime
+                    }
 
             else
                 identity
@@ -419,3 +417,38 @@ incPerkRank perk player =
                 )
                 player.perks
     }
+
+
+levelUpHereAndNow : Posix -> SPlayer -> SPlayer
+levelUpHereAndNow currentTime player =
+    let
+        nextXp =
+            Xp.nextLevelXp player.xp
+
+        newLevel =
+            Xp.currentLevel nextXp
+    in
+    { player | xp = nextXp }
+        |> levelUpConsequences
+            { newLevel = newLevel
+            , levelsDiff = 1
+            , currentTime = currentTime
+            }
+
+
+levelUpConsequences :
+    { newLevel : Int
+    , levelsDiff : Int
+    , currentTime : Posix
+    }
+    -> SPlayer
+    -> SPlayer
+levelUpConsequences { newLevel, levelsDiff, currentTime } =
+    recalculateHpOnLevelup
+        >> addSkillPointsOnLevelup levelsDiff
+        >> addPerksOnLevelup newLevel
+        >> addMessage
+            (Message.new
+                currentTime
+                (YouAdvancedLevel { newLevel = newLevel })
+            )
