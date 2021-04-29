@@ -187,12 +187,7 @@ tick player =
         |> addTicks (Tick.ticksAddedPerInterval player.ticks)
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
-                addHp
-                    (Logic.healingRate
-                        { special = player.special
-                        , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
-                        }
-                    )
+                addHp Logic.healPerTick
 
             else
                 identity
@@ -205,9 +200,17 @@ healUsingTick player =
         player
 
     else
+        let
+            tickHealPercentage : Int
+            tickHealPercentage =
+                Logic.tickHealPercentage
+                    { endurance = player.special.endurance
+                    , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                    }
+        in
         player
             |> subtractTicks 1
-            |> setHp player.maxHp
+            |> addHp (round <| toFloat tickHealPercentage / 100 * toFloat player.maxHp)
 
 
 addMessage : Message -> SPlayer -> SPlayer

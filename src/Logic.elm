@@ -7,7 +7,7 @@ module Logic exposing
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canUseItem
-    , healingRate
+    , healPerTick
     , hitpoints
     , maxTraits
     , newCharSpecial
@@ -16,6 +16,7 @@ module Logic exposing
     , sequence
     , skillPointCost
     , skillPointsPerLevel
+    , tickHealPercentage
     , totalTags
     , unarmedAttackStats
     , unarmedChanceToHit
@@ -49,21 +50,20 @@ hitpoints r =
         + (r.level * (2 + endurance // 2))
 
 
-healingRate :
-    { special : Special
+tickHealPercentage :
+    { endurance : Int
     , fasterHealingPerkRanks : Int
     }
     -> Int
-healingRate r =
-    tickHealingRateMultiplier
-        * (max 1 (r.special.endurance // 3)
-            + (2 * r.fasterHealingPerkRanks)
-          )
+tickHealPercentage r =
+    50
+        + (r.endurance * 2)
+        + (r.fasterHealingPerkRanks * 10)
 
 
-tickHealingRateMultiplier : Int
-tickHealingRateMultiplier =
-    2
+healPerTick : Int
+healPerTick =
+    4
 
 
 armorClass :

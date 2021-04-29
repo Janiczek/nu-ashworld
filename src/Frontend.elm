@@ -1732,14 +1732,14 @@ newCharDerivedStatsView newChar =
                             }
                   , Nothing
                   )
-                , ( "Healing rate"
+                , ( "Tick heal percentage"
                   , (String.fromInt <|
-                        Logic.healingRate
-                            { special = finalSpecial
+                        Logic.tickHealPercentage
+                            { endurance = finalSpecial.endurance
                             , fasterHealingPerkRanks = 0
                             }
                     )
-                        ++ " HP/tick"
+                        ++ " % of max HP"
                   , Nothing
                   )
                 , ( "Perception Level"
@@ -2052,14 +2052,14 @@ charDerivedStatsView player =
                             }
                   , Nothing
                   )
-                , ( "Healing rate"
+                , ( "Tick heal percentage"
                   , (String.fromInt <|
-                        Logic.healingRate
-                            { special = player.special
+                        Logic.tickHealPercentage
+                            { endurance = player.special.endurance
                             , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
                             }
                     )
-                        ++ " HP/tick"
+                        ++ " % of max HP"
                   , Nothing
                   )
                 , ( "Perception Level"
@@ -2898,19 +2898,28 @@ loggedInLinksView player currentRoute =
 
                 Player p ->
                     let
+                        tickHealPercentage =
+                            Logic.tickHealPercentage
+                                { endurance = p.special.endurance
+                                , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
+                                }
+
+                        hpHealed =
+                            round <| toFloat tickHealPercentage / 100 * toFloat p.maxHp
+
                         ( healTooltip, healDisabled ) =
                             if p.hp >= p.maxHp then
-                                ( Just "Heal your HP fully. Cost: 1 tick. You are at full HP!"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
                                 , True
                                 )
 
                             else if p.ticks < 1 then
-                                ( Just "Heal your HP fully. Cost: 1 tick. You have no ticks left!"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
                                 , True
                                 )
 
                             else
-                                ( Just "Heal your HP fully. Cost: 1 tick"
+                                ( Just "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
                                 , False
                                 )
 
