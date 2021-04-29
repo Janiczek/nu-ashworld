@@ -31,6 +31,7 @@ type Perk
     | MasterTrader
     | Awareness
     | CautiousNature
+    | Comprehension
 
 
 all : List Perk
@@ -42,6 +43,7 @@ all =
     , MasterTrader
     , Awareness
     , CautiousNature
+    , Comprehension
     ]
 
 
@@ -68,6 +70,9 @@ name perk =
 
         CautiousNature ->
             "Cautious Nature"
+
+        Comprehension ->
+            "Comprehension"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -111,6 +116,9 @@ encode perk =
             CautiousNature ->
                 "cautious-nature"
 
+            Comprehension ->
+                "comprehension"
+
 
 decoder : Decoder Perk
 decoder =
@@ -138,6 +146,9 @@ decoder =
 
                     "cautious-nature" ->
                         JD.succeed CautiousNature
+
+                    "comprehension" ->
+                        JD.succeed Comprehension
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -204,4 +215,7 @@ isApplicable r perk =
 
                 CautiousNature ->
                     r.level >= 3 && s.perception >= 6
+
+                Comprehension ->
+                    r.level >= 3 && s.intelligence >= 6
            )

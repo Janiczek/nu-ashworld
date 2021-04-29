@@ -30,6 +30,7 @@ import Random.List
 
 type Name
     = KlamathMaidaBuckner
+    | DenFlick
 
 
 type alias Vendor =
@@ -41,14 +42,16 @@ type alias Vendor =
 
 
 type alias VendorSpec =
-    { normalSpec : NormalIntSpec
+    { caps : NormalIntSpec
     , stock : List { uniqueKey : Item.UniqueKey, maxCount : Int }
     }
 
 
 all : List Name
 all =
-    [ KlamathMaidaBuckner ]
+    [ KlamathMaidaBuckner
+    , DenFlick
+    ]
 
 
 spec : Name -> VendorSpec
@@ -57,12 +60,18 @@ spec name_ =
         KlamathMaidaBuckner ->
             klamathSpec
 
+        DenFlick ->
+            denSpec
+
 
 barterSkill : Name -> Int
 barterSkill name_ =
     case name_ of
         KlamathMaidaBuckner ->
             55
+
+        DenFlick ->
+            80
 
 
 getFrom : Dict_.Dict Name Vendor -> Name -> Vendor
@@ -88,8 +97,8 @@ emptyVendor name_ =
 
 
 capsGenerator : VendorSpec -> Generator Int
-capsGenerator { normalSpec } =
-    Random.normallyDistributedInt normalSpec
+capsGenerator { caps } =
+    Random.normallyDistributedInt caps
 
 
 stockGenerator : VendorSpec -> Generator (List ( Item.UniqueKey, Int ))
@@ -108,11 +117,12 @@ stockGenerator { stock } =
                 chosen
                     |> List.map
                         (\{ uniqueKey, maxCount } ->
-                            halfOrMore maxCount
+                            Random.int 0 maxCount
                                 |> Random.map (Tuple.pair uniqueKey)
                         )
                     |> Random.Extra.sequence
             )
+        |> Random.map (List.filter (\( _, count ) -> count > 0))
 
 
 restockVendors : Int -> Dict_.Dict Name Vendor -> Generator ( Dict_.Dict Name Vendor, Int )
@@ -203,6 +213,9 @@ encodeName name_ =
             KlamathMaidaBuckner ->
                 "klamath-maida-buckner"
 
+            DenFlick ->
+                "den-flick"
+
 
 nameDecoder : Decoder Name
 nameDecoder =
@@ -212,6 +225,9 @@ nameDecoder =
                 case name_ of
                     "klamath-maida-buckner" ->
                         JD.succeed KlamathMaidaBuckner
+
+                    "den-flick" ->
+                        JD.succeed DenFlick
 
                     _ ->
                         JD.fail <| "unknown Vendor.Name: '" ++ name_ ++ "'"
@@ -239,8 +255,25 @@ decoder =
 
 klamathSpec : VendorSpec
 klamathSpec =
-    { normalSpec = { average = 1000, maxDeviation = 500 }
-    , stock = [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 } ]
+    { caps = { average = 150, maxDeviation = 80 }
+    , stock =
+        [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
+        , { uniqueKey = { kind = Item.FirstAidBook }, maxCount = 1 }
+        , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
+        , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 1 }
+        ]
+    }
+
+
+denSpec : VendorSpec
+denSpec =
+    { caps = { average = 280, maxDeviation = 120 }
+    , stock =
+        [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
+        , { uniqueKey = { kind = Item.BigBookOfScience }, maxCount = 1 }
+        , { uniqueKey = { kind = Item.DeansElectronics }, maxCount = 1 }
+        , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
+        ]
     }
 
 
@@ -302,3 +335,6 @@ name name_ =
     case name_ of
         KlamathMaidaBuckner ->
             "Maida Buckner (Klamath)"
+
+        DenFlick ->
+            "Flick (Den)"

@@ -468,9 +468,9 @@ encodeToBackendMsg msg =
                 , ( "skill", Skill.encode skill )
                 ]
 
-        IncSkill skill ->
+        UseSkillPoints skill ->
             JE.object
-                [ ( "type", JE.string "IncSkill" )
+                [ ( "type", JE.string "UseSkillPoints" )
                 , ( "skill", Skill.encode skill )
                 ]
 
@@ -707,8 +707,8 @@ updateFromFrontend sessionId clientId msg model =
         TagSkill skill ->
             withLoggedInCreatedPlayer (tagSkill skill)
 
-        IncSkill skill ->
-            withLoggedInCreatedPlayer (incSkill skill)
+        UseSkillPoints skill ->
+            withLoggedInCreatedPlayer (useSkillPoints skill)
 
         CreateNewChar newChar ->
             withLoggedInPlayer (createNewChar newChar)
@@ -1188,13 +1188,13 @@ tagSkill skill clientId player model =
         ( model, Cmd.none )
 
 
-incSkill : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-incSkill skill clientId player model =
+useSkillPoints : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+useSkillPoints skill clientId player model =
     let
         newModel : Model
         newModel =
             model
-                |> updatePlayer (SPlayer.incSkill skill) player.name
+                |> updatePlayer (SPlayer.useSkillPoints skill) player.name
     in
     getWorldLoggedIn player.name newModel
         |> Maybe.map
@@ -1231,42 +1231,67 @@ useItem itemId clientId player model =
 
         Just item ->
             let
+                finalSpecial : Special
+                finalSpecial =
+                    Logic.special
+                        { baseSpecial = player.baseSpecial
+                        , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                        , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                        , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                        , isNewChar = False
+                        }
+
                 effects : List Item.Effect
                 effects =
                     Item.usageEffects item.kind
             in
-            if List.isEmpty effects then
-                ( model, Cmd.none )
+            case Logic.canUseItem player item.kind of
+                Err _ ->
+                    ( model, Cmd.none )
 
-            else
-                let
-                    handleEffect : Item.Effect -> (SPlayer -> SPlayer)
-                    handleEffect effect =
-                        case effect of
-                            Item.Heal amount ->
-                                SPlayer.addHp amount
+                Ok () ->
+                    let
+                        handleEffect : Item.Effect -> (SPlayer -> SPlayer)
+                        handleEffect effect =
+                            case effect of
+                                Item.Heal amount ->
+                                    SPlayer.addHp amount
 
-                            Item.RemoveAfterUse ->
-                                SPlayer.removeItem itemId 1
+                                Item.RemoveAfterUse ->
+                                    SPlayer.removeItem itemId 1
 
-                    combinedEffects : SPlayer -> SPlayer
-                    combinedEffects =
-                        effects
-                            |> List.map handleEffect
-                            |> List.foldl (>>) identity
+                                Item.BookRemoveTicks ->
+                                    SPlayer.subtractTicks <|
+                                        Logic.bookUseTickCost
+                                            { intelligence = finalSpecial.intelligence }
 
-                    newModel =
-                        model
-                            |> updatePlayer combinedEffects player.name
-                in
-                getWorldLoggedIn player.name newModel
-                    |> Maybe.map
-                        (\world ->
-                            ( newModel
-                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                Item.BookAddSkillPercent skill ->
+                                    SPlayer.addSkillPercentage
+                                        (Logic.bookAddedSkillPercentage
+                                            { currentPercentage = Skill.get finalSpecial player.addedSkillPercentages skill
+                                            , hasComprehensionPerk = Perk.rank Perk.Comprehension player.perks > 0
+                                            }
+                                        )
+                                        skill
+
+                        combinedEffects : SPlayer -> SPlayer
+                        combinedEffects =
+                            effects
+                                |> List.map handleEffect
+                                |> List.foldl (>>) identity
+
+                        newModel =
+                            model
+                                |> updatePlayer combinedEffects player.name
+                    in
+                    getWorldLoggedIn player.name newModel
+                        |> Maybe.map
+                            (\world ->
+                                ( newModel
+                                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                )
                             )
-                        )
-                    |> Maybe.withDefault ( model, Cmd.none )
+                        |> Maybe.withDefault ( model, Cmd.none )
 
 
 wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

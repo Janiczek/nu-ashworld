@@ -14,6 +14,7 @@ module Data.Item exposing
     , usageEffects
     )
 
+import Data.Skill as Skill exposing (Skill)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)
@@ -38,11 +39,18 @@ type alias Id =
 
 type Kind
     = Stimpak
+    | BigBookOfScience
+    | DeansElectronics
+    | FirstAidBook
+    | GunsAndBullets
+    | ScoutHandbook
 
 
 type Effect
     = Heal Int
     | RemoveAfterUse
+    | BookRemoveTicks
+    | BookAddSkillPercent Skill
 
 
 basePrice : Kind -> Int
@@ -50,6 +58,21 @@ basePrice kind =
     case kind of
         Stimpak ->
             175
+
+        BigBookOfScience ->
+            400
+
+        DeansElectronics ->
+            130
+
+        FirstAidBook ->
+            175
+
+        GunsAndBullets ->
+            425
+
+        ScoutHandbook ->
+            200
 
 
 encode : Item -> JE.Value
@@ -75,6 +98,21 @@ encodeKind kind =
         Stimpak ->
             JE.string "stimpak"
 
+        BigBookOfScience ->
+            JE.string "big-book-of-science"
+
+        DeansElectronics ->
+            JE.string "deans-electronics"
+
+        FirstAidBook ->
+            JE.string "first-aid-book"
+
+        GunsAndBullets ->
+            JE.string "guns-and-bullets"
+
+        ScoutHandbook ->
+            JE.string "scout-handbook"
+
 
 kindDecoder : Decoder Kind
 kindDecoder =
@@ -84,6 +122,21 @@ kindDecoder =
                 case kind of
                     "stimpak" ->
                         JD.succeed Stimpak
+
+                    "big-book-of-science" ->
+                        JD.succeed BigBookOfScience
+
+                    "deans-electronics" ->
+                        JD.succeed DeansElectronics
+
+                    "first-aid-book" ->
+                        JD.succeed FirstAidBook
+
+                    "guns-and-bullets" ->
+                        JD.succeed GunsAndBullets
+
+                    "scout-handbook" ->
+                        JD.succeed ScoutHandbook
 
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
@@ -95,6 +148,21 @@ name kind =
     case kind of
         Stimpak ->
             "Stimpak"
+
+        BigBookOfScience ->
+            "Big Book of Science"
+
+        DeansElectronics ->
+            "Dean's Electronics"
+
+        FirstAidBook ->
+            "First Aid Book"
+
+        GunsAndBullets ->
+            "Guns and Bullets"
+
+        ScoutHandbook ->
+            "Scout Handbook"
 
 
 create :
@@ -156,4 +224,34 @@ usageEffects kind =
         Stimpak ->
             [ Heal 15
             , RemoveAfterUse
+            ]
+
+        BigBookOfScience ->
+            [ RemoveAfterUse
+            , BookRemoveTicks
+            , BookAddSkillPercent Skill.Science
+            ]
+
+        DeansElectronics ->
+            [ RemoveAfterUse
+            , BookRemoveTicks
+            , BookAddSkillPercent Skill.Repair
+            ]
+
+        FirstAidBook ->
+            [ RemoveAfterUse
+            , BookRemoveTicks
+            , BookAddSkillPercent Skill.FirstAid
+            ]
+
+        GunsAndBullets ->
+            [ RemoveAfterUse
+            , BookRemoveTicks
+            , BookAddSkillPercent Skill.SmallGuns
+            ]
+
+        ScoutHandbook ->
+            [ RemoveAfterUse
+            , BookRemoveTicks
+            , BookAddSkillPercent Skill.Outdoorsman
             ]

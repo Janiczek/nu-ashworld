@@ -81,7 +81,7 @@ type FrontendMsg
     | AskToImport String
     | Refresh
     | AskToTagSkill Skill
-    | AskToIncSkill Skill
+    | AskToUseSkillPoints Skill
     | SetAuthName String
     | SetAuthPassword String
     | CreateChar
@@ -124,7 +124,7 @@ type ToBackend
     | Wander
     | RefreshPlease
     | TagSkill Skill
-    | IncSkill Skill
+    | UseSkillPoints Skill
     | ChoosePerk Perk
     | MoveTo TileCoords (Set TileCoords)
     | MessageWasRead Message

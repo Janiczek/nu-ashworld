@@ -16,12 +16,36 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1619693804
+    [ { date = 1619718120
+      , title = "Books, more perks, and a new merchant"
+      , text = """
+I've been **adding more perks,** prioritizing those unlocked at level 3 (I have
+enough time to do those at lvl 6/9/12/... - you guys don't level up that fast
+;) ). One of them is related to
+[books!](https://fallout.fandom.com/wiki/Fallout_2_skill_books) Which means, I
+went and also implemented books. If you go look in the **Klamath** or **Den**
+stores (yeah, there's now a vendor in Den!), you might get lucky and find one
+of them.
+
+The books will give you up to 10% to their respective skills, capping somewhere
+around 91%. After that, the book for that particular skill is useless to you.
+
+Note that using a book requires some ticks, related to your Intelligence
+attribute.
+
+Oh and I've also slowed the game again. We now know 60x is too fast! (Duh.)
+
+~janiczek
+"""
+      }
+    , { date = 1619693804
       , title = "Perks and a fast testing round"
       , text = """
-Perks can now be added from within the **Character** screen (if you have perks available - usually every 3 levels). Take them for a spin!
+Perks can now be added from within the **Character** screen (if you have perks
+available - usually every 3 levels). Take them for a spin!
 
-I'm also making the game run a bit faster for a limited time, to let folks test it and give me some feedback before I make a bigger marketing push :)
+I'm also making the game run a bit faster for a limited time, to let folks test
+it and give me some feedback before I make a bigger marketing push :)
 
 So, enjoy a game tick every minute!
 

@@ -1,5 +1,6 @@
 module Data.Tick exposing
-    ( nextTick
+    ( limit
+    , nextTick
     , ticksAddedPerInterval
     )
 
@@ -20,19 +21,24 @@ nextTick time =
 
 tickFrequency : Time.Interval
 tickFrequency =
-    Time.Minute
+    Time.Hour
+
+
+limit : Int
+limit =
+    200
 
 
 ticksAddedPerInterval : Int -> Int
 ticksAddedPerInterval currentTicks =
-    if currentTicks < 50 then
-        -- 0-50 will take ~1 day to fill
+    if currentTicks < (limit // 4) then
+        -- 0-50 will take ~0.5 day to fill
+        4
+
+    else if currentTicks < limit then
+        -- 50-200 will take ~3 days to fill
         2
 
-    else if currentTicks < 200 then
-        -- 50-200 will take ~6 days to fill
-        1
-
     else
-        -- hard cap at 200 = takes 175 hours to max = ~week
+        -- hard cap at 200 = takes 87.5 hours to max = ~half a week
         0

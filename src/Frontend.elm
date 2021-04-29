@@ -56,7 +56,7 @@ import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
-import Logic
+import Logic exposing (ItemNotUsableReason(..))
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -223,9 +223,9 @@ update msg model =
             , Lamdera.sendToBackend <| TagSkill skill
             )
 
-        AskToIncSkill skill ->
+        AskToUseSkillPoints skill ->
             ( model
-            , Lamdera.sendToBackend <| IncSkill skill
+            , Lamdera.sendToBackend <| UseSkillPoints skill
             )
 
         AskToChoosePerk perk ->
@@ -2251,7 +2251,7 @@ skillsView_ r =
                         [ H.text <| String.fromInt percent ++ "%" ]
                     , H.viewIf (not r.isNewChar) <|
                         H.button
-                            [ HE.onClickStopPropagation <| AskToIncSkill skill
+                            [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
                             , HA.class "character-skill-inc-btn"
                             , HA.disabled isIncButtonDisabled
                             , HA.attributeIf isIncButtonDisabled <|
@@ -2365,12 +2365,29 @@ inventoryView _ player =
     let
         itemView : Item -> Html FrontendMsg
         itemView item =
+            let
+                ( isDisabled, tooltip ) =
+                    case Logic.canUseItem player item.kind of
+                        Ok () ->
+                            ( False, Nothing )
+
+                        Err ItemHasNoUse ->
+                            ( True, Just "This item has no use." )
+
+                        Err (YouNeedTicks n) ->
+                            ( True, Just <| "You need " ++ String.fromInt n ++ " ticks to use this item." )
+
+                        Err YoureAtFullHp ->
+                            ( True, Just "You're at full HP." )
+            in
             H.li
-                [ HA.class "inventory-item" ]
+                [ HA.class "inventory-item"
+                , HA.attributeMaybe HA.title tooltip
+                ]
                 [ H.button
                     [ HA.class "inventory-item-use-btn"
                     , HE.onClick <| AskToUseItem item.id
-                    , HA.disabled <| List.isEmpty <| Item.usageEffects item.kind
+                    , HA.disabled isDisabled
                     ]
                     [ H.text "[Use]" ]
                 , H.span

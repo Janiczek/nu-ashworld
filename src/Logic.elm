@@ -1,8 +1,12 @@
 module Logic exposing
     ( AttackStats
+    , ItemNotUsableReason(..)
     , actionPoints
     , addedSkillPercentages
     , armorClass
+    , bookAddedSkillPercentage
+    , bookUseTickCost
+    , canUseItem
     , healingRate
     , hitpoints
     , maxTraits
@@ -21,11 +25,12 @@ module Logic exposing
 import AssocList as Dict_
 import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
-import Data.Item as Item
+import Data.Item as Item exposing (Kind(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
+import Maybe.Extra as Maybe
 
 
 hitpoints :
@@ -480,3 +485,112 @@ perkRate { hasSkilledTrait } =
 
     else
         3
+
+
+{-| Reading a book at 7 INT costs 1+(10-7) = 4 ticks
+-}
+bookUseTickCost : { intelligence : Int } -> Int
+bookUseTickCost { intelligence } =
+    1 + (10 - intelligence)
+
+
+{-| Bounds the level you can upgrade your skill to with books to 91%
+-}
+bookAddedSkillPercentage :
+    { currentPercentage : Int
+    , hasComprehensionPerk : Bool
+    }
+    -> Int
+bookAddedSkillPercentage { currentPercentage, hasComprehensionPerk } =
+    let
+        comprehensionBonus =
+            if hasComprehensionPerk then
+                1.5
+
+            else
+                1
+    in
+    ((100 - toFloat currentPercentage) / 10 * comprehensionBonus)
+        |> round
+
+
+type ItemNotUsableReason
+    = YouNeedTicks Int
+    | YoureAtFullHp
+    | ItemHasNoUse
+
+
+canUseItem :
+    { p
+        | hp : Int
+        , maxHp : Int
+        , baseSpecial : Special
+        , traits : Set_.Set Trait
+        , ticks : Int
+    }
+    -> Item.Kind
+    -> Result ItemNotUsableReason ()
+canUseItem p kind =
+    let
+        finalSpecial : Special
+        finalSpecial =
+            special
+                { baseSpecial = p.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser p.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted p.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame p.traits
+                , isNewChar = False
+                }
+
+        bookUseTickCost_ : Int
+        bookUseTickCost_ =
+            bookUseTickCost
+                { intelligence = finalSpecial.intelligence }
+
+        youreAtFullHp : Maybe ItemNotUsableReason
+        youreAtFullHp =
+            if p.hp >= p.maxHp then
+                Just YoureAtFullHp
+
+            else
+                Nothing
+
+        youNeedTicks : Maybe ItemNotUsableReason
+        youNeedTicks =
+            if p.ticks < bookUseTickCost_ then
+                Just <| YouNeedTicks bookUseTickCost_
+
+            else
+                Nothing
+
+        combineErrors : List (Maybe ItemNotUsableReason) -> Result ItemNotUsableReason ()
+        combineErrors errors =
+            case List.head (Maybe.values errors) of
+                Nothing ->
+                    Ok ()
+
+                Just err ->
+                    Err err
+    in
+    if List.isEmpty (Item.usageEffects kind) then
+        Err ItemHasNoUse
+
+    else
+        case kind of
+            Stimpak ->
+                combineErrors [ youreAtFullHp ]
+
+            BigBookOfScience ->
+                combineErrors [ youNeedTicks ]
+
+            DeansElectronics ->
+                combineErrors [ youNeedTicks ]
+
+            FirstAidBook ->
+                combineErrors [ youNeedTicks ]
+
+            GunsAndBullets ->
+                combineErrors [ youNeedTicks ]
+
+            ScoutHandbook ->
+                combineErrors [ youNeedTicks ]

@@ -3,12 +3,12 @@ module Data.Player.SPlayer exposing
     , addHp
     , addItem
     , addMessage
+    , addSkillPercentage
     , addXp
     , decAvailablePerks
     , healUsingTick
     , incLosses
     , incPerkRank
-    , incSkill
     , incWins
     , readMessage
     , removeItem
@@ -19,6 +19,7 @@ module Data.Player.SPlayer exposing
     , subtractTicks
     , tagSkill
     , tick
+    , useSkillPoints
     )
 
 import AssocList as Dict_
@@ -40,7 +41,7 @@ import Time exposing (Posix)
 
 addTicks : Int -> SPlayer -> SPlayer
 addTicks n player =
-    { player | ticks = player.ticks + n }
+    { player | ticks = min Tick.limit <| player.ticks + n }
 
 
 addHp : Int -> SPlayer -> SPlayer
@@ -307,12 +308,24 @@ tagSkill skill player =
     { player | taggedSkills = Set_.insert skill player.taggedSkills }
 
 
-incSkill : Skill -> SPlayer -> SPlayer
-incSkill skill player =
+useSkillPoints : Skill -> SPlayer -> SPlayer
+useSkillPoints skill player =
     let
         isTagged : Bool
         isTagged =
             Set_.member skill player.taggedSkills
+
+        percentToAdd : Int
+        percentToAdd =
+            if isTagged then
+                2
+
+            else
+                1
+
+        neededPoints : Int
+        neededPoints =
+            Logic.skillPointCost skillPercent
 
         special : Special
         special =
@@ -327,20 +340,35 @@ incSkill skill player =
         skillPercent : Int
         skillPercent =
             Skill.get special player.addedSkillPercentages skill
-
-        neededPoints : Int
-        neededPoints =
-            Logic.skillPointCost skillPercent
-
-        percentToAdd : Int
-        percentToAdd =
-            if isTagged then
-                2
-
-            else
-                1
     in
     if skillPercent < 300 && player.availableSkillPoints >= neededPoints then
+        addSkillPercentage
+            percentToAdd
+            skill
+            { player | availableSkillPoints = player.availableSkillPoints - neededPoints }
+
+    else
+        player
+
+
+addSkillPercentage : Int -> Skill -> SPlayer -> SPlayer
+addSkillPercentage percentToAdd skill player =
+    let
+        special : Special
+        special =
+            Logic.special
+                { baseSpecial = player.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
+                , isNewChar = False
+                }
+
+        skillPercent : Int
+        skillPercent =
+            Skill.get special player.addedSkillPercentages skill
+    in
+    if skillPercent < 300 then
         { player
             | addedSkillPercentages =
                 Dict_.update skill
@@ -353,7 +381,6 @@ incSkill skill player =
                                 Just <| percent + percentToAdd
                     )
                     player.addedSkillPercentages
-            , availableSkillPoints = player.availableSkillPoints - neededPoints
         }
 
     else
