@@ -222,7 +222,7 @@ usageEffects : Kind -> List Effect
 usageEffects kind =
     case kind of
         Stimpak ->
-            [ Heal 15
+            [ Heal 30
             , RemoveAfterUse
             ]
 
