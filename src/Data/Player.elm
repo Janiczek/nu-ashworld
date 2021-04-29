@@ -357,7 +357,7 @@ fromNewChar currentTime auth newChar =
             , password = auth.password
             , hp = hp
             , maxHp = hp
-            , xp = 20000
+            , xp = 0
             , baseSpecial = newChar.baseSpecial
             , caps = 15
             , ticks = 10
@@ -375,5 +375,5 @@ fromNewChar currentTime auth newChar =
                     }
             , taggedSkills = newChar.taggedSkills
             , availableSkillPoints = 0
-            , availablePerks = 3
+            , availablePerks = 0
             }
