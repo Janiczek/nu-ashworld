@@ -20,7 +20,7 @@ nextTick time =
 
 tickFrequency : Time.Interval
 tickFrequency =
-    Time.Hour
+    Time.Minute
 
 
 ticksAddedPerInterval : Int -> Int

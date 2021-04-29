@@ -16,7 +16,19 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1619480881
+    [ { date = 1619693804
+      , title = "Perks and a fast testing round"
+      , text = """
+Perks can now be added from within the **Character** screen (if you have perks available - usually every 3 levels). Take them for a spin!
+
+I'm also making the game run a bit faster for a limited time, to let folks test it and give me some feedback before I make a bigger marketing push :)
+
+So, enjoy a game tick every minute!
+
+~janiczek
+"""
+      }
+    , { date = 1619480881
       , title = "PvM fights"
       , text = """
 You can now fight some NPC enemies and get those sweet caps flowing into the
