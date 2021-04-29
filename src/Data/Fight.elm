@@ -16,6 +16,7 @@ import AssocList as Dict_
 import AssocSet as Set_
 import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
@@ -46,6 +47,7 @@ type alias Opponent =
     , maxAp : Int
     , sequence : Int
     , traits : Set_.Set Trait
+    , perks : Dict_.Dict Perk Int
     , caps : Int
     , armorClass : Int
     , attackStats : AttackStats

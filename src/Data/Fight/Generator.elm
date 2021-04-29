@@ -28,6 +28,7 @@ import Data.Xp as Xp
 import Logic exposing (AttackStats)
 import Random exposing (Generator)
 import Random.Bool
+import Random.FloatExtra as Random
 import Time exposing (Posix)
 
 
@@ -61,11 +62,61 @@ generator r =
         attackerName =
             Fight.opponentName r.attacker.type_
 
+        attackerHasCautiousNaturePerk : Bool
+        attackerHasCautiousNaturePerk =
+            Perk.rank Perk.CautiousNature r.attacker.perks > 0
+
+        targetHasCautiousNaturePerk : Bool
+        targetHasCautiousNaturePerk =
+            Perk.rank Perk.CautiousNature r.target.perks > 0
+
+        attackerPerceptionWithBonuses : Int
+        attackerPerceptionWithBonuses =
+            (Logic.special
+                { baseSpecial = r.attacker.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser r.attacker.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted r.attacker.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame r.attacker.traits
+                , isNewChar = False
+                }
+                |> .perception
+            )
+                + (if attackerHasCautiousNaturePerk then
+                    3
+
+                   else
+                    0
+                  )
+
+        targetPerceptionWithBonuses : Int
+        targetPerceptionWithBonuses =
+            (Logic.special
+                { baseSpecial = r.target.baseSpecial
+                , hasBruiserTrait = Trait.isSelected Trait.Bruiser r.target.traits
+                , hasGiftedTrait = Trait.isSelected Trait.Gifted r.target.traits
+                , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame r.target.traits
+                , isNewChar = False
+                }
+                |> .perception
+            )
+                + (if targetHasCautiousNaturePerk then
+                    3
+
+                   else
+                    0
+                  )
+
+        averageStartingDistance : Int
+        averageStartingDistance =
+            max attackerPerceptionWithBonuses targetPerceptionWithBonuses
+
         -- TODO for non-unarmed attacks check that the range is <= weapon's range
         startingDistance : Generator Int
         startingDistance =
-            -- TODO vary this based on the Perception / perks / Outdoorsman / ...?
-            Random.int 10 20
+            Random.normallyDistributedInt
+                { average = averageStartingDistance
+                , maxDeviation = 5
+                }
 
         initialFight : Generator OngoingFight
         initialFight =
@@ -553,6 +604,7 @@ enemyOpponentGenerator enemyType =
             , maxAp = Enemy.actionPoints enemyType
             , sequence = Enemy.sequence enemyType
             , traits = traits
+            , perks = Dict_.empty
             , caps = caps
             , armorClass = Enemy.armorClass enemyType
             , attackStats =
@@ -628,6 +680,7 @@ playerOpponent player =
     , maxAp = actionPoints
     , sequence = sequence
     , traits = player.traits
+    , perks = player.perks
     , caps = player.caps
     , armorClass = armorClass
     , attackStats = attackStats
