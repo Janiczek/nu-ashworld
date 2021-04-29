@@ -15,7 +15,7 @@ module Data.NewChar exposing
 import AssocSet as Set_
 import AssocSet.Extra as Set_
 import Data.Skill as Skill exposing (Skill)
-import Data.Special as Special exposing (Special, SpecialType)
+import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Json.Encode as JE
 import Json.Encode.Extra as JE
@@ -50,7 +50,7 @@ init =
     }
 
 
-incSpecial : SpecialType -> NewChar -> NewChar
+incSpecial : Special.Type -> NewChar -> NewChar
 incSpecial type_ char =
     let
         specialAfterTraits : Special
@@ -72,7 +72,7 @@ incSpecial type_ char =
         char
 
 
-decSpecial : SpecialType -> NewChar -> NewChar
+decSpecial : Special.Type -> NewChar -> NewChar
 decSpecial type_ char =
     let
         specialAfterTraits : Special
@@ -86,7 +86,7 @@ decSpecial type_ char =
     in
     if Special.canDecrement type_ specialAfterTraits then
         { char
-            | baseSpecial = Special.decrement type_ char.baseSpecial
+            | baseSpecial = Special.decrementNewChar type_ char.baseSpecial
             , availableSpecial = char.availableSpecial + 1
         }
 

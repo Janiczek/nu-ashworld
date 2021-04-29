@@ -29,10 +29,9 @@ import Data.Player as Player
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
 import Data.Skill as Skill exposing (Skill)
-import Data.Special exposing (Special)
+import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
-import Data.Trait as Trait
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.World
     exposing
@@ -1299,6 +1298,21 @@ wander clientId player model =
         )
 
 
+oneTimePerkEffects : Posix -> Dict_.Dict Perk (SPlayer -> SPlayer)
+oneTimePerkEffects currentTime =
+    Dict_.fromList
+        [ ( Perk.HereAndNow, SPlayer.levelUpHereAndNow currentTime )
+        , ( Perk.Survivalist, SPlayer.addSkillPercentage 25 Skill.Outdoorsman )
+        , ( Perk.GainStrength, SPlayer.incSpecial Special.Strength )
+        , ( Perk.GainPerception, SPlayer.incSpecial Special.Perception )
+        , ( Perk.GainEndurance, SPlayer.incSpecial Special.Endurance )
+        , ( Perk.GainCharisma, SPlayer.incSpecial Special.Charisma )
+        , ( Perk.GainIntelligence, SPlayer.incSpecial Special.Intelligence )
+        , ( Perk.GainAgility, SPlayer.incSpecial Special.Agility )
+        , ( Perk.GainLuck, SPlayer.incSpecial Special.Luck )
+        ]
+
+
 choosePerk : Perk -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 choosePerk perk clientId player model =
     let
@@ -1321,17 +1335,12 @@ choosePerk perk clientId player model =
                         (identity
                             >> SPlayer.incPerkRank perk
                             >> SPlayer.decAvailablePerks
-                            >> (if perk == Perk.HereAndNow then
-                                    SPlayer.levelUpHereAndNow model.time
+                            >> (case Dict_.get perk (oneTimePerkEffects model.time) of
+                                    Nothing ->
+                                        identity
 
-                                else
-                                    identity
-                               )
-                            >> (if perk == Perk.Survivalist then
-                                    SPlayer.addSkillPercentage 25 Skill.Outdoorsman
-
-                                else
-                                    identity
+                                    Just effect ->
+                                        effect
                                )
                         )
                         player.name

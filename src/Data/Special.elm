@@ -1,11 +1,11 @@
 module Data.Special exposing
     ( Special
-    , SpecialType(..)
+    , Type(..)
     , all
     , canDecrement
     , canIncrement
     , decoder
-    , decrement
+    , decrementNewChar
     , encode
     , get
     , increment
@@ -13,7 +13,6 @@ module Data.Special exposing
     , isInRange
     , isValueInRange
     , label
-    , map
     , mapWithoutClamp
     , sum
     )
@@ -34,7 +33,7 @@ type alias Special =
     }
 
 
-type SpecialType
+type Type
     = Strength
     | Perception
     | Endurance
@@ -44,7 +43,7 @@ type SpecialType
     | Luck
 
 
-label : SpecialType -> String
+label : Type -> String
 label type_ =
     case type_ of
         Strength ->
@@ -69,7 +68,7 @@ label type_ =
             "Luck"
 
 
-all : List SpecialType
+all : List Type
 all =
     [ Strength
     , Perception
@@ -81,7 +80,7 @@ all =
     ]
 
 
-get : SpecialType -> (Special -> Int)
+get : Type -> (Special -> Int)
 get type_ =
     case type_ of
         Strength ->
@@ -106,38 +105,46 @@ get type_ =
             .luck
 
 
-canIncrement : Int -> SpecialType -> Special -> Bool
+canIncrement : Int -> Type -> Special -> Bool
 canIncrement availablePoints type_ special =
     availablePoints > 0 && get type_ special < 10
 
 
-canDecrement : SpecialType -> Special -> Bool
+canDecrement : Type -> Special -> Bool
 canDecrement type_ special =
     get type_ special > 1
 
 
-increment : SpecialType -> Special -> Special
+increment : Type -> Special -> Special
 increment =
-    mapWithoutClamp (\x -> x + 1)
+    map (\x -> x + 1)
 
 
-decrement : SpecialType -> Special -> Special
-decrement =
+{-| NewChar Special can go below 0.
+Imagine this sequence:
+
+  - Select traits Bruiser and Gifted (= +3 Strength)
+  - decrement Strength so that after traits it's 1
+  - it's "real" value is -2
+
+-}
+decrementNewChar : Type -> Special -> Special
+decrementNewChar =
     mapWithoutClamp (\x -> x - 1)
 
 
-mapWithoutClamp : (Int -> Int) -> SpecialType -> Special -> Special
+mapWithoutClamp : (Int -> Int) -> Type -> Special -> Special
 mapWithoutClamp =
-    map_ False
+    map_ { shouldClamp = False }
 
 
-map : (Int -> Int) -> SpecialType -> Special -> Special
+map : (Int -> Int) -> Type -> Special -> Special
 map =
-    map_ True
+    map_ { shouldClamp = True }
 
 
-map_ : Bool -> (Int -> Int) -> SpecialType -> Special -> Special
-map_ shouldClamp fn type_ special =
+map_ : { shouldClamp : Bool } -> (Int -> Int) -> Type -> Special -> Special
+map_ { shouldClamp } fn type_ special =
     let
         clampedFn : Int -> Int
         clampedFn =
@@ -203,7 +210,7 @@ decoder =
 isInRange : Special -> Bool
 isInRange special =
     let
-        isTypeInRange : SpecialType -> Bool
+        isTypeInRange : Type -> Bool
         isTypeInRange type_ =
             let
                 value : Int

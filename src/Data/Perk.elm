@@ -47,6 +47,13 @@ type Perk
     | Educated
       -- lvl 12
     | Tag
+    | GainStrength
+    | GainPerception
+    | GainEndurance
+    | GainCharisma
+    | GainIntelligence
+    | GainAgility
+    | GainLuck
 
 
 all : List Perk
@@ -62,6 +69,13 @@ all =
     , MasterTrader
     , Survivalist
     , Tag
+    , GainStrength
+    , GainPerception
+    , GainEndurance
+    , GainCharisma
+    , GainIntelligence
+    , GainAgility
+    , GainLuck
     ]
 
 
@@ -100,6 +114,27 @@ name perk =
 
         Survivalist ->
             "Survivalist"
+
+        GainStrength ->
+            "Gain Strength"
+
+        GainPerception ->
+            "Gain Perception"
+
+        GainEndurance ->
+            "Gain Endurance"
+
+        GainCharisma ->
+            "Gain Charisma"
+
+        GainIntelligence ->
+            "Gain Intelligence"
+
+        GainAgility ->
+            "Gain Agility"
+
+        GainLuck ->
+            "Gain Luck"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -156,6 +191,27 @@ encode perk =
             Survivalist ->
                 "survivalist"
 
+            GainStrength ->
+                "gain-strength"
+
+            GainPerception ->
+                "gain-perception"
+
+            GainEndurance ->
+                "gain-endurance"
+
+            GainCharisma ->
+                "gain-charisma"
+
+            GainIntelligence ->
+                "gain-intelligence"
+
+            GainAgility ->
+                "gain-agility"
+
+            GainLuck ->
+                "gain-luck"
+
 
 decoder : Decoder Perk
 decoder =
@@ -195,6 +251,27 @@ decoder =
 
                     "survivalist" ->
                         JD.succeed Survivalist
+
+                    "gain-strength" ->
+                        JD.succeed GainStrength
+
+                    "gain-perception" ->
+                        JD.succeed GainPerception
+
+                    "gain-endurance" ->
+                        JD.succeed GainEndurance
+
+                    "gain-charisma" ->
+                        JD.succeed GainCharisma
+
+                    "gain-intelligence" ->
+                        JD.succeed GainIntelligence
+
+                    "gain-agility" ->
+                        JD.succeed GainAgility
+
+                    "gain-luck" ->
+                        JD.succeed GainLuck
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -273,4 +350,25 @@ isApplicable r perk =
 
                 Survivalist ->
                     r.level >= 3 && s.endurance >= 6 && s.intelligence >= 6 && skill Skill.Outdoorsman >= 40
+
+                GainStrength ->
+                    r.level >= 12 && s.strength < 10
+
+                GainPerception ->
+                    r.level >= 12 && s.perception < 10
+
+                GainEndurance ->
+                    r.level >= 12 && s.endurance < 10
+
+                GainCharisma ->
+                    r.level >= 12 && s.charisma < 10
+
+                GainIntelligence ->
+                    r.level >= 12 && s.intelligence < 10
+
+                GainAgility ->
+                    r.level >= 12 && s.agility < 10
+
+                GainLuck ->
+                    r.level >= 12 && s.luck < 10
            )

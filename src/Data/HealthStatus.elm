@@ -5,7 +5,7 @@ module Data.HealthStatus exposing
     , label
     )
 
-import Data.Special.Perception as Perception exposing (PerceptionLevel(..))
+import Data.Special.Perception exposing (PerceptionLevel(..))
 
 
 type HealthStatus

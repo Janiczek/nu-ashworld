@@ -19,7 +19,7 @@ import Data.Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
-import Data.Special exposing (SpecialType)
+import Data.Special as Special
 import Data.Trait exposing (Trait)
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.World
@@ -85,8 +85,8 @@ type FrontendMsg
     | SetAuthName String
     | SetAuthPassword String
     | CreateChar
-    | NewCharIncSpecial SpecialType
-    | NewCharDecSpecial SpecialType
+    | NewCharIncSpecial Special.Type
+    | NewCharDecSpecial Special.Type
     | NewCharToggleTaggedSkill Skill
     | NewCharToggleTrait Trait
     | MapMouseAtCoords TileCoords

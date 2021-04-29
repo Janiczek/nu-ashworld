@@ -9,6 +9,7 @@ module Data.Player.SPlayer exposing
     , healUsingTick
     , incLosses
     , incPerkRank
+    , incSpecial
     , incWins
     , levelUpHereAndNow
     , readMessage
@@ -31,7 +32,7 @@ import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
-import Data.Special exposing (Special)
+import Data.Special as Special
 import Data.Tick as Tick
 import Data.Trait as Trait
 import Data.Xp as Xp
@@ -407,3 +408,8 @@ levelUpConsequences { newLevel, levelsDiff, currentTime } =
                 currentTime
                 (YouAdvancedLevel { newLevel = newLevel })
             )
+
+
+incSpecial : Special.Type -> SPlayer -> SPlayer
+incSpecial specialType player =
+    { player | special = Special.increment specialType player.special }
