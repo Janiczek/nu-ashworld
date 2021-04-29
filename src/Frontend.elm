@@ -2919,7 +2919,7 @@ loggedInLinksView player currentRoute =
                                 )
 
                             else
-                                ( Just "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
                                 , False
                                 )
 
