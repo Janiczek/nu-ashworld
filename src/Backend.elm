@@ -507,7 +507,7 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
 
-        AdminToBackend (ImportJson json) ->
+        AdminToBackend (ImportJson _) ->
             JE.object
                 [ ( "type", JE.string "AdminToBackend ImportJson" )
                 , ( "json", JE.string "<omitted>" )
