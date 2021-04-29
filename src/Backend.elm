@@ -1376,6 +1376,12 @@ choosePerk perk clientId player model =
                                 else
                                     identity
                                )
+                            >> (if perk == Perk.Survivalist then
+                                    SPlayer.addSkillPercentage 25 Skill.Outdoorsman
+
+                                else
+                                    identity
+                               )
                         )
                         player.name
         in

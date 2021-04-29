@@ -34,6 +34,15 @@ type Perk
     | FasterHealing
       -- TODO Healer - needs usage of First Aid / Doctor skills
     | HereAndNow
+      -- TODO Kama Sutra Master - probably not...
+      -- TODO Night Vision - needs darkness tracked and to play a role in fights
+      -- TODO Presence - would need dialog with NPCs
+      -- TODO Quick Pockets - would need inventory handling in combat
+      -- TODO Scout - what should it do in NuAshworld?
+      -- TODO Smooth Talker - would need dialog with NPCs
+      -- TODO Stonewall - would need knockback in combat
+      -- TODO Strong Back - would need carry weight implemented
+    | Survivalist
       -- lvl 6
     | Educated
       -- lvl 12
@@ -51,6 +60,7 @@ all =
     , FasterHealing
     , HereAndNow
     , MasterTrader
+    , Survivalist
     , Tag
     ]
 
@@ -87,6 +97,9 @@ name perk =
 
         HereAndNow ->
             "Here and Now"
+
+        Survivalist ->
+            "Survivalist"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -140,6 +153,9 @@ encode perk =
             HereAndNow ->
                 "here-and-now"
 
+            Survivalist ->
+                "survivalist"
+
 
 decoder : Decoder Perk
 decoder =
@@ -176,6 +192,9 @@ decoder =
 
                     "here-and-now" ->
                         JD.succeed HereAndNow
+
+                    "survivalist" ->
+                        JD.succeed Survivalist
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -251,4 +270,7 @@ isApplicable r perk =
 
                 HereAndNow ->
                     r.level >= 3
+
+                Survivalist ->
+                    r.level >= 3 && s.endurance >= 6 && s.intelligence >= 6 && skill Skill.Outdoorsman >= 40
            )
