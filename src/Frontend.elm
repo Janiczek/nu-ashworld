@@ -306,14 +306,21 @@ update msg model =
                     case world.player of
                         Player cPlayer ->
                             let
-                                special : Special
-                                special =
+                                finalSpecial : Special
+                                finalSpecial =
                                     Logic.special
                                         { baseSpecial = cPlayer.baseSpecial
                                         , hasBruiserTrait = Trait.isSelected Trait.Bruiser cPlayer.traits
                                         , hasGiftedTrait = Trait.isSelected Trait.Gifted cPlayer.traits
                                         , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame cPlayer.traits
                                         , isNewChar = False
+                                        }
+
+                                perceptionLevel : PerceptionLevel
+                                perceptionLevel =
+                                    Perception.level
+                                        { perception = finalSpecial.perception
+                                        , hasAwarenessPerk = Perk.rank Perk.Awareness cPlayer.perks > 0
                                         }
 
                                 playerCoords =
@@ -324,7 +331,7 @@ update msg model =
                                     Just
                                         ( mouseCoords
                                         , Pathfinding.path
-                                            (Perception.level special.perception)
+                                            perceptionLevel
                                             { from = playerCoords
                                             , to = mouseCoords
                                             }
@@ -765,7 +772,7 @@ contentView model =
                         data.players
                             |> List.filterMap Player.getPlayerData
                             |> Ladder.sort
-                            |> List.map (Player.serverToClientOther { perception = 10 })
+                            |> List.map (Player.serverToClientOther Perception.Perfect)
                     }
 
             ( Route.Ladder, WorldNotInitialized _ ) ->
@@ -862,14 +869,21 @@ mapView :
     -> List (Html FrontendMsg)
 mapView mouseCoords _ player =
     let
-        special : Special
-        special =
+        finalSpecial : Special
+        finalSpecial =
             Logic.special
                 { baseSpecial = player.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
                 , isNewChar = False
+                }
+
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
 
         playerCoords : TileCoords
@@ -914,7 +928,7 @@ mapView mouseCoords _ player =
                     (List.map pathTileView
                         (Set.toList (Set.remove mouseCoords_ pathTaken))
                     )
-                , H.viewIf (Perception.atLeast Perception.Good special.perception) <|
+                , H.viewIf (Perception.atLeast Perception.Good perceptionLevel) <|
                     H.div
                         [ HA.id "map-cost-info"
                         , cssVars
@@ -1730,7 +1744,10 @@ newCharDerivedStatsView newChar =
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Perception.level finalSpecial.perception
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = False
+                }
     in
     H.div
         [ HA.id "new-character-derived-stats" ]
@@ -2063,7 +2080,10 @@ charDerivedStatsView player =
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Perception.level finalSpecial.perception
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                }
     in
     H.div
         [ HA.id "character-derived-stats" ]
@@ -2451,13 +2471,19 @@ messagesView currentTime zone _ player =
 messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 messageView zone message _ player =
     let
-        special =
+        finalSpecial =
             Logic.special
                 { baseSpecial = player.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
                 , hasGiftedTrait = Trait.isSelected Trait.Gifted player.traits
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
                 , isNewChar = False
+                }
+
+        perceptionLevel =
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
     [ pageTitleView "Message"
@@ -2469,7 +2495,7 @@ messageView zone message _ player =
         [ H.text <| Message.fullDate zone message ]
     , Message.content
         [ HA.id "message-content" ]
-        special.perception
+        perceptionLevel
         message
     , H.button
         [ HE.onClick <| GoToRoute Route.Messages
@@ -2516,6 +2542,12 @@ fightView fight _ player =
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player.traits
                 , isNewChar = False
                 }
+
+        perceptionLevel =
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                }
     in
     [ pageTitleView "Fight"
     , H.div []
@@ -2540,7 +2572,7 @@ fightView fight _ player =
                         " (you)"
                    )
         ]
-    , Data.Fight.View.view finalSpecial.perception fight player.name
+    , Data.Fight.View.view perceptionLevel fight player.name
     , H.button
         [ HE.onClick <| GoToRoute Route.Ladder
         , HA.id "fight-back-button"

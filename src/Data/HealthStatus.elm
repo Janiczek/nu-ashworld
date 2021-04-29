@@ -53,9 +53,9 @@ label status =
             "-"
 
 
-check : Int -> { a | hp : Int, maxHp : Int } -> HealthStatus
-check perception player =
-    case Perception.level perception of
+check : PerceptionLevel -> { a | hp : Int, maxHp : Int } -> HealthStatus
+check perceptionLevel player =
+    case perceptionLevel of
         Perfect ->
             ExactHp
                 { current = player.hp

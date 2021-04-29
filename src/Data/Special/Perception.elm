@@ -15,9 +15,13 @@ type PerceptionLevel
     | Atrocious
 
 
-level : Int -> PerceptionLevel
-level perception =
-    if perception >= 10 then
+level :
+    { perception : Int
+    , hasAwarenessPerk : Bool
+    }
+    -> PerceptionLevel
+level { perception, hasAwarenessPerk } =
+    if hasAwarenessPerk || perception >= 10 then
         Perfect
 
     else if perception >= 7 then
@@ -52,9 +56,9 @@ toComparable level_ =
             5
 
 
-atLeast : PerceptionLevel -> Int -> Bool
-atLeast neededLevel perception =
-    toComparable (level perception) >= toComparable neededLevel
+atLeast : PerceptionLevel -> PerceptionLevel -> Bool
+atLeast neededLevel currentLevel =
+    toComparable currentLevel >= toComparable neededLevel
 
 
 label : PerceptionLevel -> String

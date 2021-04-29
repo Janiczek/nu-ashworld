@@ -37,6 +37,7 @@ import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
+import Data.Special.Perception exposing (PerceptionLevel)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp exposing (Level, Xp)
 import Dict exposing (Dict)
@@ -253,13 +254,13 @@ serverToClient p =
     }
 
 
-serverToClientOther : { perception : Int } -> SPlayer -> COtherPlayer
-serverToClientOther { perception } p =
+serverToClientOther : PerceptionLevel -> SPlayer -> COtherPlayer
+serverToClientOther perceptionLevel p =
     { level = Xp.currentLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
-    , healthStatus = HealthStatus.check perception p
+    , healthStatus = HealthStatus.check perceptionLevel p
     }
 
 

@@ -12,6 +12,7 @@ module Data.Message exposing
 import Data.Fight as Fight exposing (FightInfo, FightResult(..))
 import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
 import Html exposing (Attribute, Html)
 import Iso8601
@@ -143,8 +144,8 @@ summary message =
                     "You were attacked by " ++ r.attacker ++ " and both stayed alive"
 
 
-content : List (Attribute msg) -> Int -> Message -> Html msg
-content attributes perception message =
+content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
+content attributes perceptionLevel message =
     case message.type_ of
         Welcome ->
             Markdown.toHtml attributes
@@ -161,7 +162,7 @@ Your current level is """
         YouWereAttacked r ->
             Html.div attributes
                 [ Data.Fight.View.view
-                    perception
+                    perceptionLevel
                     r.fightInfo
                     (Fight.opponentName r.fightInfo.target)
                 ]

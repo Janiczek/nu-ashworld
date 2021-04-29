@@ -29,6 +29,7 @@ type Perk
     | Educated
     | BonusHthDamage
     | MasterTrader
+    | Awareness
 
 
 all : List Perk
@@ -38,6 +39,7 @@ all =
     , Educated
     , BonusHthDamage
     , MasterTrader
+    , Awareness
     ]
 
 
@@ -58,6 +60,9 @@ name perk =
 
         MasterTrader ->
             "Master Trader"
+
+        Awareness ->
+            "Awareness"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -95,6 +100,9 @@ encode perk =
             MasterTrader ->
                 "master-trader"
 
+            Awareness ->
+                "awareness"
+
 
 decoder : Decoder Perk
 decoder =
@@ -116,6 +124,9 @@ decoder =
 
                     "master-trader" ->
                         JD.succeed MasterTrader
+
+                    "awareness" ->
+                        JD.succeed Awareness
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -176,4 +187,7 @@ isApplicable r perk =
 
                 MasterTrader ->
                     r.level >= 12 && s.charisma >= 7 && skill Skill.Barter >= 75
+
+                Awareness ->
+                    r.level >= 3 && s.perception >= 5
            )

@@ -9,7 +9,7 @@ import Data.Fight as Fight
         )
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Special.Perception as Perception
+import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import List.Extra
@@ -53,8 +53,8 @@ addS verb =
         verb ++ "s"
 
 
-view : Int -> FightInfo -> PlayerName -> Html msg
-view perception fight yourName =
+view : PerceptionLevel -> FightInfo -> PlayerName -> Html msg
+view perceptionLevel fight yourName =
     let
         attackerName : String
         attackerName =
@@ -140,7 +140,7 @@ view perception fight yourName =
                                         action_ =
                                             case action of
                                                 Start { distanceHexes } ->
-                                                    if Perception.atLeast Perception.Great perception then
+                                                    if Perception.atLeast Perception.Great perceptionLevel then
                                                         names_.subject.verbPresent "initiate"
                                                             ++ " the fight from "
                                                             ++ String.fromInt distanceHexes
@@ -151,7 +151,7 @@ view perception fight yourName =
                                                             ++ " the fight."
 
                                                 ComeCloser { hexes, remainingDistanceHexes } ->
-                                                    if Perception.atLeast Perception.Great perception then
+                                                    if Perception.atLeast Perception.Great perceptionLevel then
                                                         names_.subject.verbPresent "come"
                                                             ++ " closer "
                                                             ++ String.fromInt hexes
@@ -180,7 +180,7 @@ view perception fight yourName =
                                                         ++ " for "
                                                         ++ String.fromInt damage
                                                         ++ " damage."
-                                                        ++ (if Perception.atLeast Perception.Great perception then
+                                                        ++ (if Perception.atLeast Perception.Great perceptionLevel then
                                                                 " Remaining HP: "
                                                                     ++ String.fromInt remainingHp
                                                                     ++ "."

@@ -30,7 +30,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
-import Data.Special.Perception as Perception
+import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Trait as Trait
 import Data.Vendor as Vendor exposing (Vendor)
@@ -115,11 +115,7 @@ getWorldLoggedOut model =
             |> Dict.values
             |> List.filterMap Player.getPlayerData
             |> Ladder.sort
-            |> List.map
-                (Player.serverToClientOther
-                    -- no info about alive/dead!
-                    { perception = 1 }
-                )
+            |> List.map (Player.serverToClientOther Perception.Atrocious)
     }
 
 
@@ -136,21 +132,27 @@ getWorldLoggedIn_ player model =
         auth =
             Player.getAuth player
 
-        perception : Int
-        perception =
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
             Player.getPlayerData player
                 |> Maybe.map
                     (\player_ ->
-                        Logic.special
-                            { baseSpecial = player_.baseSpecial
-                            , hasBruiserTrait = Trait.isSelected Trait.Bruiser player_.traits
-                            , hasGiftedTrait = Trait.isSelected Trait.Gifted player_.traits
-                            , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player_.traits
-                            , isNewChar = False
+                        let
+                            finalSpecial =
+                                Logic.special
+                                    { baseSpecial = player_.baseSpecial
+                                    , hasBruiserTrait = Trait.isSelected Trait.Bruiser player_.traits
+                                    , hasGiftedTrait = Trait.isSelected Trait.Gifted player_.traits
+                                    , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame player_.traits
+                                    , isNewChar = False
+                                    }
+                        in
+                        Perception.level
+                            { perception = finalSpecial.perception
+                            , hasAwarenessPerk = Perk.rank Perk.Awareness player_.perks > 0
                             }
-                            |> .perception
                     )
-                |> Maybe.withDefault 1
+                |> Maybe.withDefault Perception.Atrocious
 
         sortedPlayers =
             model.players
@@ -181,7 +183,7 @@ getWorldLoggedIn_ player model =
                     else
                         Just <|
                             Player.serverToClientOther
-                                { perception = perception }
+                                perceptionLevel
                                 otherPlayer
                 )
     , vendors = model.vendors
@@ -1039,8 +1041,8 @@ removeMessage message clientId player model =
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 moveTo newCoords pathTaken clientId player model =
     let
-        special : Special
-        special =
+        finalSpecial : Special
+        finalSpecial =
             Logic.special
                 { baseSpecial = player.baseSpecial
                 , hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
@@ -1061,12 +1063,19 @@ moveTo newCoords pathTaken clientId player model =
         isSamePosition =
             currentCoords == newCoords
 
+        perceptionLevel : PerceptionLevel
+        perceptionLevel =
+            Perception.level
+                { perception = finalSpecial.perception
+                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                }
+
         pathDoesntAgree : Bool
         pathDoesntAgree =
             pathTaken
                 /= Set.remove currentCoords
                     (Pathfinding.path
-                        (Perception.level special.perception)
+                        perceptionLevel
                         { from = currentCoords
                         , to = newCoords
                         }
