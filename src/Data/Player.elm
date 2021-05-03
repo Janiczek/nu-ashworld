@@ -45,6 +45,7 @@ import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import Json.Encode.Extra as JE
 import Logic
 import Time exposing (Posix)
 
@@ -75,6 +76,7 @@ type alias SPlayer =
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
     , availablePerks : Int
+    , equippedArmor : Maybe Item
     }
 
 
@@ -98,6 +100,7 @@ type alias CPlayer =
     , taggedSkills : Set_.Set Skill
     , availableSkillPoints : Int
     , availablePerks : Int
+    , equippedArmor : Maybe Item
     }
 
 
@@ -148,6 +151,7 @@ encodeSPlayer player =
         , ( "taggedSkills", Set_.encode Skill.encode player.taggedSkills )
         , ( "availableSkillPoints", JE.int player.availableSkillPoints )
         , ( "availablePerks", JE.int player.availablePerks )
+        , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
         ]
 
 
@@ -173,7 +177,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV3
+        [ sPlayerDecoderV4
+        , sPlayerDecoderV3
         , sPlayerDecoderV2
         , sPlayerDecoderV1
         ]
@@ -203,6 +208,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.succeed 0)
+        |> JD.andMap (JD.succeed Nothing)
         |> JD.map
             (\player ->
                 let
@@ -242,6 +248,7 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.succeed Nothing)
         |> JD.map
             (\player ->
                 let
@@ -282,6 +289,34 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.succeed Nothing)
+
+
+{-| Adding equippedArmor
+-}
+sPlayerDecoderV4 : Decoder SPlayer
+sPlayerDecoderV4 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -304,6 +339,7 @@ serverToClient p =
     , taggedSkills = p.taggedSkills
     , availableSkillPoints = p.availableSkillPoints
     , availablePerks = p.availablePerks
+    , equippedArmor = p.equippedArmor
     }
 
 
@@ -429,4 +465,5 @@ fromNewChar currentTime auth newChar =
             , taggedSkills = newChar.taggedSkills
             , availableSkillPoints = 0
             , availablePerks = 0
+            , equippedArmor = Nothing
             }

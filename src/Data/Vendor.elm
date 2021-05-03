@@ -34,6 +34,8 @@ import Random.List
 type Name
     = KlamathMaidaBuckner
     | DenFlick
+    | ModocJo
+    | VaultCityHappyHarry
 
 
 type alias Vendor =
@@ -54,6 +56,8 @@ all : List Name
 all =
     [ KlamathMaidaBuckner
     , DenFlick
+    , ModocJo
+    , VaultCityHappyHarry
     ]
 
 
@@ -61,10 +65,43 @@ spec : Name -> VendorSpec
 spec name_ =
     case name_ of
         KlamathMaidaBuckner ->
-            klamathSpec
+            { caps = { average = 150, maxDeviation = 80 }
+            , stock =
+                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
+                , { uniqueKey = { kind = Item.BigBookOfScience }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.DeansElectronics }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.Robes }, maxCount = 1 }
+                ]
+            }
 
         DenFlick ->
-            denSpec
+            { caps = { average = 280, maxDeviation = 120 }
+            , stock =
+                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
+                , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.LeatherJacket }, maxCount = 1 }
+                ]
+            }
+
+        ModocJo ->
+            { caps = { average = 500, maxDeviation = 200 }
+            , stock =
+                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 5 }
+                , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.FirstAidBook }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.LeatherArmor }, maxCount = 1 }
+                ]
+            }
+
+        VaultCityHappyHarry ->
+            { caps = { average = 300, maxDeviation = 120 }
+            , stock =
+                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
+                , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 2 }
+                , { uniqueKey = { kind = Item.MetalArmor }, maxCount = 1 }
+                ]
+            }
 
 
 barterSkill : Name -> Int
@@ -74,6 +111,12 @@ barterSkill name_ =
             55
 
         DenFlick ->
+            80
+
+        ModocJo ->
+            100
+
+        VaultCityHappyHarry ->
             80
 
 
@@ -219,6 +262,12 @@ encodeName name_ =
             DenFlick ->
                 "den-flick"
 
+            ModocJo ->
+                "modoc-jo"
+
+            VaultCityHappyHarry ->
+                "vault-city-happy-harry"
+
 
 nameDecoder : Decoder Name
 nameDecoder =
@@ -231,6 +280,12 @@ nameDecoder =
 
                     "den-flick" ->
                         JD.succeed DenFlick
+
+                    "modoc-jo" ->
+                        JD.succeed ModocJo
+
+                    "vault-city-happy-harry" ->
+                        JD.succeed VaultCityHappyHarry
 
                     _ ->
                         JD.fail <| "unknown Vendor.Name: '" ++ name_ ++ "'"
@@ -254,30 +309,6 @@ decoder =
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "caps" JD.int)
         |> JD.andMap (JD.field "barterSkill" JD.int)
-
-
-klamathSpec : VendorSpec
-klamathSpec =
-    { caps = { average = 150, maxDeviation = 80 }
-    , stock =
-        [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
-        , { uniqueKey = { kind = Item.FirstAidBook }, maxCount = 1 }
-        , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
-        , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 1 }
-        ]
-    }
-
-
-denSpec : VendorSpec
-denSpec =
-    { caps = { average = 280, maxDeviation = 120 }
-    , stock =
-        [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
-        , { uniqueKey = { kind = Item.BigBookOfScience }, maxCount = 1 }
-        , { uniqueKey = { kind = Item.DeansElectronics }, maxCount = 1 }
-        , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
-        ]
-    }
 
 
 subtractCaps : Int -> Vendor -> Vendor
@@ -342,6 +373,12 @@ name name_ =
         DenFlick ->
             "Flick (Den)"
 
+        ModocJo ->
+            "Jo (Modoc)"
+
+        VaultCityHappyHarry ->
+            "Happy Harry (Vault City)"
+
 
 location : Name -> Location
 location name_ =
@@ -351,6 +388,12 @@ location name_ =
 
         DenFlick ->
             Location.Den
+
+        ModocJo ->
+            Location.Modoc
+
+        VaultCityHappyHarry ->
+            Location.VaultCity
 
 
 locationsWithVendors : Dict_.Dict Location Name

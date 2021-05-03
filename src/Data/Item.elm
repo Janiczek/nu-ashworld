@@ -4,8 +4,11 @@ module Data.Item exposing
     , Item
     , Kind(..)
     , UniqueKey
+    , armorClass
     , basePrice
     , create
+    , damageResistance
+    , damageThreshold
     , decoder
     , encode
     , findMergeableId
@@ -44,6 +47,10 @@ type Kind
     | FirstAidBook
     | GunsAndBullets
     | ScoutHandbook
+    | Robes
+    | LeatherJacket
+    | LeatherArmor
+    | MetalArmor
 
 
 type Effect
@@ -73,6 +80,112 @@ basePrice kind =
 
         ScoutHandbook ->
             200
+
+        Robes ->
+            90
+
+        LeatherJacket ->
+            250
+
+        LeatherArmor ->
+            700
+
+        MetalArmor ->
+            1100
+
+
+armorClass : Kind -> Int
+armorClass kind =
+    case kind of
+        Robes ->
+            5
+
+        LeatherJacket ->
+            8
+
+        LeatherArmor ->
+            15
+
+        MetalArmor ->
+            10
+
+        _ ->
+            0
+
+
+damageThreshold : Kind -> Int
+damageThreshold kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            2
+
+        MetalArmor ->
+            4
+
+        _ ->
+            0
+
+
+damageResistance : Kind -> Int
+damageResistance kind =
+    {- TODO this is for the normal damage type. TODO add all other kinds
+       (laser, ...)
+    -}
+    case kind of
+        Robes ->
+            20
+
+        LeatherJacket ->
+            20
+
+        LeatherArmor ->
+            25
+
+        MetalArmor ->
+            30
+
+        _ ->
+            0
+
+
+isArmor : Kind -> Bool
+isArmor kind =
+    case kind of
+        Stimpak ->
+            False
+
+        BigBookOfScience ->
+            False
+
+        DeansElectronics ->
+            False
+
+        FirstAidBook ->
+            False
+
+        GunsAndBullets ->
+            False
+
+        ScoutHandbook ->
+            False
+
+        Robes ->
+            True
+
+        LeatherJacket ->
+            True
+
+        LeatherArmor ->
+            True
+
+        MetalArmor ->
+            True
 
 
 encode : Item -> JE.Value
@@ -113,6 +226,18 @@ encodeKind kind =
         ScoutHandbook ->
             JE.string "scout-handbook"
 
+        Robes ->
+            JE.string "robes"
+
+        LeatherJacket ->
+            JE.string "leather-jacket"
+
+        LeatherArmor ->
+            JE.string "leather-armor"
+
+        MetalArmor ->
+            JE.string "metal-armor"
+
 
 kindDecoder : Decoder Kind
 kindDecoder =
@@ -137,6 +262,18 @@ kindDecoder =
 
                     "scout-handbook" ->
                         JD.succeed ScoutHandbook
+
+                    "robes" ->
+                        JD.succeed Robes
+
+                    "leather-jacket" ->
+                        JD.succeed LeatherJacket
+
+                    "leather-armor" ->
+                        JD.succeed LeatherArmor
+
+                    "metal-armor" ->
+                        JD.succeed MetalArmor
 
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
@@ -163,6 +300,18 @@ name kind =
 
         ScoutHandbook ->
             "Scout Handbook"
+
+        Robes ->
+            "Robes"
+
+        LeatherJacket ->
+            "Leather Jacket"
+
+        LeatherArmor ->
+            "Leather Armor"
+
+        MetalArmor ->
+            "Metal Armor"
 
 
 create :
@@ -255,3 +404,15 @@ usageEffects kind =
             , BookRemoveTicks
             , BookAddSkillPercent Skill.Outdoorsman
             ]
+
+        Robes ->
+            []
+
+        LeatherJacket ->
+            []
+
+        LeatherArmor ->
+            []
+
+        MetalArmor ->
+            []

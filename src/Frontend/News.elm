@@ -16,7 +16,20 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1619718120
+    [ { date = 1620065638
+      , title = "Armor!"
+      , text = """
+I have added a few kinds of **armor** to the game and a few new merchants that
+can sell it. You can equip it in the Inventory screen - it should make you a
+bit more durable in the battle.
+
+As a reminder, vendors change their stock every tick (so, every hour). May the
+odds be ever in your favour :)
+
+~janiczek
+"""
+      }
+    , { date = 1619718120
       , title = "Books, more perks, and a new merchant"
       , text = """
 I've been **adding more perks,** prioritizing those unlocked at level 3 (I have

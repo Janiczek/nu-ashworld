@@ -535,50 +535,44 @@ canUseItem p kind =
             bookUseTickCost
                 { intelligence = p.special.intelligence }
 
-        youreAtFullHp : Maybe ItemNotUsableReason
-        youreAtFullHp =
-            if p.hp >= p.maxHp then
-                Just YoureAtFullHp
+        checkEffect : Item.Effect -> Result ItemNotUsableReason ()
+        checkEffect eff =
+            case eff of
+                Item.Heal _ ->
+                    if p.hp >= p.maxHp then
+                        Err YoureAtFullHp
 
-            else
-                Nothing
+                    else
+                        Ok ()
 
-        youNeedTicks : Maybe ItemNotUsableReason
-        youNeedTicks =
-            if p.ticks < bookUseTickCost_ then
-                Just <| YouNeedTicks bookUseTickCost_
-
-            else
-                Nothing
-
-        combineErrors : List (Maybe ItemNotUsableReason) -> Result ItemNotUsableReason ()
-        combineErrors errors =
-            case List.head (Maybe.values errors) of
-                Nothing ->
+                Item.RemoveAfterUse ->
                     Ok ()
 
-                Just err ->
-                    Err err
+                Item.BookRemoveTicks ->
+                    if p.ticks < bookUseTickCost_ then
+                        Err <| YouNeedTicks bookUseTickCost_
+
+                    else
+                        Ok ()
+
+                Item.BookAddSkillPercent _ ->
+                    Ok ()
+
+        effects =
+            Item.usageEffects kind
     in
-    if List.isEmpty (Item.usageEffects kind) then
+    if List.isEmpty effects then
         Err ItemHasNoUse
 
     else
-        case kind of
-            Stimpak ->
-                combineErrors [ youreAtFullHp ]
+        List.foldl
+            (\eff acc ->
+                case acc of
+                    Err _ ->
+                        acc
 
-            BigBookOfScience ->
-                combineErrors [ youNeedTicks ]
-
-            DeansElectronics ->
-                combineErrors [ youNeedTicks ]
-
-            FirstAidBook ->
-                combineErrors [ youNeedTicks ]
-
-            GunsAndBullets ->
-                combineErrors [ youNeedTicks ]
-
-            ScoutHandbook ->
-                combineErrors [ youNeedTicks ]
+                    Ok () ->
+                        checkEffect eff
+            )
+            (Ok ())
+            effects
