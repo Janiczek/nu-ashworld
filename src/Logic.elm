@@ -515,7 +515,7 @@ bookAddedSkillPercentage { currentPercentage, hasComprehensionPerk } =
 type ItemNotUsableReason
     = YouNeedTicks Int
     | YoureAtFullHp
-    | ItemHasNoUse
+    | ItemCannotByUsedDirectly
 
 
 canUseItem :
@@ -562,7 +562,7 @@ canUseItem p kind =
             Item.usageEffects kind
     in
     if List.isEmpty effects then
-        Err ItemHasNoUse
+        Err ItemCannotByUsedDirectly
 
     else
         List.foldl

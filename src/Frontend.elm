@@ -2308,8 +2308,8 @@ inventoryView _ player =
                         Ok () ->
                             ( False, Nothing )
 
-                        Err ItemHasNoUse ->
-                            ( True, Just "This item has no use." )
+                        Err ItemCannotByUsedDirectly ->
+                            ( True, Just "This item cannot be used directly." )
 
                         Err (YouNeedTicks n) ->
                             ( True, Just <| "You need " ++ String.fromInt n ++ " ticks to use this item." )
