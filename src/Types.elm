@@ -75,6 +75,7 @@ type FrontendMsg
     | AskToUseItem Item.Id
     | AskToWander
     | AskToChoosePerk Perk
+    | AskToUnequipArmor
     | AskForExport
     | ImportButtonClicked
     | ImportFileSelected File
@@ -122,6 +123,7 @@ type ToBackend
     | HealMe
     | UseItem Item.Id
     | Wander
+    | UnequipArmor
     | RefreshPlease
     | TagSkill Skill
     | UseSkillPoints Skill

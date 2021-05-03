@@ -21,6 +21,7 @@ module Data.Player.SPlayer exposing
     , subtractTicks
     , tagSkill
     , tick
+    , unequipArmor
     , useSkillPoints
     )
 
@@ -416,3 +417,14 @@ levelUpConsequences { newLevel, levelsDiff, currentTime } =
 incSpecial : Special.Type -> SPlayer -> SPlayer
 incSpecial specialType player =
     { player | special = Special.increment specialType player.special }
+
+
+unequipArmor : SPlayer -> SPlayer
+unequipArmor player =
+    case player.equippedArmor of
+        Nothing ->
+            player
+
+        Just armor ->
+            { player | equippedArmor = Nothing }
+                |> addItem armor

@@ -447,6 +447,10 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "Wander" ) ]
 
+        UnequipArmor ->
+            JE.object
+                [ ( "type", JE.string "UnequipArmor" ) ]
+
         RefreshPlease ->
             JE.object
                 [ ( "type", JE.string "RefreshPlease" ) ]
@@ -662,6 +666,9 @@ updateFromFrontend sessionId clientId msg model =
 
         Wander ->
             withLoggedInCreatedPlayer wander
+
+        UnequipArmor ->
+            withLoggedInCreatedPlayer unequipArmor
 
         ChoosePerk perk ->
             withLoggedInCreatedPlayer <| choosePerk perk
@@ -1251,6 +1258,28 @@ useItem itemId clientId player model =
                                 )
                             )
                         |> Maybe.withDefault ( model, Cmd.none )
+
+
+unequipArmor : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+unequipArmor clientId player model =
+    case player.equippedArmor of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just armor ->
+            let
+                newModel =
+                    model
+                        |> updatePlayer SPlayer.unequipArmor player.name
+            in
+            getWorldLoggedIn player.name newModel
+                |> Maybe.map
+                    (\world ->
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
 
 
 wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

@@ -183,6 +183,11 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
+        AskToUnequipArmor ->
+            ( model
+            , Lamdera.sendToBackend UnequipArmor
+            )
+
         AskToUseItem itemId ->
             ( model
             , Lamdera.sendToBackend <| UseItem itemId
@@ -2340,6 +2345,24 @@ inventoryView _ player =
         H.ul
             [ HA.id "inventory-list" ]
             (List.map itemView <| Dict.values player.items)
+    , H.h3
+        [ HA.id "inventory-equip" ]
+        [ H.text "Equip" ]
+    , H.div
+        [ HA.id "inventory-equip-armor" ]
+        [ H.text "Armor: "
+        , case player.equippedArmor of
+            Nothing ->
+                H.text "None"
+
+            Just armor ->
+                H.span []
+                    [ H.text <| Item.name armor.kind
+                    , H.button
+                        [ HE.onClick AskToUnequipArmor ]
+                        [ H.text "[Unequip]" ]
+                    ]
+        ]
     ]
 
 
