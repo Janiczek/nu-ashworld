@@ -31,7 +31,6 @@ import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
-import Maybe.Extra as Maybe
 
 
 hitpoints :

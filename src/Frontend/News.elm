@@ -26,6 +26,9 @@ bit more durable in the battle.
 As a reminder, vendors change their stock every tick (so, every hour). May the
 odds be ever in your favour :)
 
+Oh and we now have **Healing Powder** (Hakunin in **Arroyo** sells a bunch of
+it) in an attempt to balance the healing in this damn game a bit.
+
 ~janiczek
 """
       }

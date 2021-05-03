@@ -1,5 +1,6 @@
 module Data.Item exposing
     ( Effect(..)
+    , EquippableType(..)
     , Id
     , Item
     , Kind(..)
@@ -7,12 +8,14 @@ module Data.Item exposing
     , armorClass
     , basePrice
     , create
-    , damageResistance
-    , damageThreshold
+    , damageResistanceNormal
+    , damageThresholdNormal
     , decoder
     , encode
+    , equippableType
     , findMergeableId
     , getUniqueKey
+    , isEquippable
     , name
     , usageEffects
     )
@@ -41,7 +44,8 @@ type alias Id =
 
 
 type Kind
-    = Stimpak
+    = HealingPowder
+    | Stimpak
     | BigBookOfScience
     | DeansElectronics
     | FirstAidBook
@@ -63,6 +67,9 @@ type Effect
 basePrice : Kind -> Int
 basePrice kind =
     case kind of
+        HealingPowder ->
+            20
+
         Stimpak ->
             175
 
@@ -113,8 +120,8 @@ armorClass kind =
             0
 
 
-damageThreshold : Kind -> Int
-damageThreshold kind =
+damageThresholdNormal : Kind -> Int
+damageThresholdNormal kind =
     case kind of
         Robes ->
             0
@@ -132,11 +139,8 @@ damageThreshold kind =
             0
 
 
-damageResistance : Kind -> Int
-damageResistance kind =
-    {- TODO this is for the normal damage type. TODO add all other kinds
-       (laser, ...)
-    -}
+damageResistanceNormal : Kind -> Int
+damageResistanceNormal kind =
     case kind of
         Robes ->
             20
@@ -152,40 +156,6 @@ damageResistance kind =
 
         _ ->
             0
-
-
-isArmor : Kind -> Bool
-isArmor kind =
-    case kind of
-        Stimpak ->
-            False
-
-        BigBookOfScience ->
-            False
-
-        DeansElectronics ->
-            False
-
-        FirstAidBook ->
-            False
-
-        GunsAndBullets ->
-            False
-
-        ScoutHandbook ->
-            False
-
-        Robes ->
-            True
-
-        LeatherJacket ->
-            True
-
-        LeatherArmor ->
-            True
-
-        MetalArmor ->
-            True
 
 
 encode : Item -> JE.Value
@@ -208,6 +178,9 @@ decoder =
 encodeKind : Kind -> JE.Value
 encodeKind kind =
     case kind of
+        HealingPowder ->
+            JE.string "healing-powder"
+
         Stimpak ->
             JE.string "stimpak"
 
@@ -245,6 +218,9 @@ kindDecoder =
         |> JD.andThen
             (\kind ->
                 case kind of
+                    "healing-powder" ->
+                        JD.succeed HealingPowder
+
                     "stimpak" ->
                         JD.succeed Stimpak
 
@@ -283,6 +259,9 @@ kindDecoder =
 name : Kind -> String
 name kind =
     case kind of
+        HealingPowder ->
+            "Healing Powder"
+
         Stimpak ->
             "Stimpak"
 
@@ -370,8 +349,14 @@ findMergeableId item items =
 usageEffects : Kind -> List Effect
 usageEffects kind =
     case kind of
-        Stimpak ->
+        HealingPowder ->
+            -- TODO temporary perception -1?
             [ Heal 30
+            , RemoveAfterUse
+            ]
+
+        Stimpak ->
+            [ Heal 80
             , RemoveAfterUse
             ]
 
@@ -416,3 +401,51 @@ usageEffects kind =
 
         MetalArmor ->
             []
+
+
+type EquippableType
+    = -- TODO | LeftHand
+      -- TODO | RightHand
+      Armor
+
+
+equippableType : Kind -> Maybe EquippableType
+equippableType kind =
+    case kind of
+        HealingPowder ->
+            Nothing
+
+        Stimpak ->
+            Nothing
+
+        BigBookOfScience ->
+            Nothing
+
+        DeansElectronics ->
+            Nothing
+
+        FirstAidBook ->
+            Nothing
+
+        GunsAndBullets ->
+            Nothing
+
+        ScoutHandbook ->
+            Nothing
+
+        Robes ->
+            Just Armor
+
+        LeatherJacket ->
+            Just Armor
+
+        LeatherArmor ->
+            Just Armor
+
+        MetalArmor ->
+            Just Armor
+
+
+isEquippable : Kind -> Bool
+isEquippable kind =
+    equippableType kind /= Nothing

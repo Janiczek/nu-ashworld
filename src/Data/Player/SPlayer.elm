@@ -6,6 +6,7 @@ module Data.Player.SPlayer exposing
     , addSkillPercentage
     , addXp
     , decAvailablePerks
+    , equipItem
     , healUsingTick
     , incLosses
     , incPerkRank
@@ -428,3 +429,27 @@ unequipArmor player =
         Just armor ->
             { player | equippedArmor = Nothing }
                 |> addItem armor
+
+
+equipItem : Item -> SPlayer -> SPlayer
+equipItem { id } player =
+    -- just to be sure...
+    case Dict.get id player.items of
+        Nothing ->
+            player
+
+        Just item ->
+            case Item.equippableType item.kind of
+                Nothing ->
+                    player
+
+                Just Item.Armor ->
+                    player
+                        |> (if player.equippedArmor /= Nothing then
+                                unequipArmor
+
+                            else
+                                identity
+                           )
+                        |> removeItem item.id 1
+                        |> (\p -> { p | equippedArmor = Just { item | count = 1 } })

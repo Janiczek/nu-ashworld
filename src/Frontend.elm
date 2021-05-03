@@ -183,6 +183,11 @@ update msg model =
             , Lamdera.sendToBackend HealMe
             )
 
+        AskToEquipItem itemId ->
+            ( model
+            , Lamdera.sendToBackend <| EquipItem itemId
+            )
+
         AskToUnequipArmor ->
             ( model
             , Lamdera.sendToBackend UnequipArmor
@@ -2332,6 +2337,12 @@ inventoryView _ player =
                     , HA.disabled isDisabled
                     ]
                     [ H.text "[Use]" ]
+                , H.viewIf (Item.isEquippable item.kind) <|
+                    H.button
+                        [ HA.class "inventory-item-equip-btn"
+                        , HE.onClick <| AskToEquipItem item.id
+                        ]
+                        [ H.text "[Equip]" ]
                 , H.span
                     [ HA.class "inventory-item-label" ]
                     [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
@@ -2346,10 +2357,10 @@ inventoryView _ player =
             [ HA.id "inventory-list" ]
             (List.map itemView <| Dict.values player.items)
     , H.h3
-        [ HA.id "inventory-equip" ]
-        [ H.text "Equip" ]
+        [ HA.id "inventory-equipment" ]
+        [ H.text "Equipment" ]
     , H.div
-        [ HA.id "inventory-equip-armor" ]
+        [ HA.id "inventory-equipment-armor" ]
         [ H.text "Armor: "
         , case player.equippedArmor of
             Nothing ->
@@ -2359,10 +2370,16 @@ inventoryView _ player =
                 H.span []
                     [ H.text <| Item.name armor.kind
                     , H.button
-                        [ HE.onClick AskToUnequipArmor ]
+                        [ HE.onClick AskToUnequipArmor
+                        , HA.class "inventory-equipment-unequip-btn"
+                        ]
                         [ H.text "[Unequip]" ]
                     ]
         ]
+    , H.h3
+        [ HA.id "inventory-stats" ]
+        [ H.text "Stats" ]
+    , H.div [] [ H.text "TODO" ]
     ]
 
 

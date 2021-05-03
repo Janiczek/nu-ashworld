@@ -32,7 +32,8 @@ import Random.List
 
 
 type Name
-    = KlamathMaidaBuckner
+    = ArroyoHakunin
+    | KlamathMaidaBuckner
     | DenFlick
     | ModocJo
     | VaultCityHappyHarry
@@ -54,7 +55,8 @@ type alias VendorSpec =
 
 all : List Name
 all =
-    [ KlamathMaidaBuckner
+    [ ArroyoHakunin
+    , KlamathMaidaBuckner
     , DenFlick
     , ModocJo
     , VaultCityHappyHarry
@@ -64,20 +66,30 @@ all =
 spec : Name -> VendorSpec
 spec name_ =
     case name_ of
+        ArroyoHakunin ->
+            { caps = { average = 50, maxDeviation = 20 }
+            , stock =
+                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 4 }
+                , { uniqueKey = { kind = Item.Robes }, maxCount = 1 }
+                ]
+            }
+
         KlamathMaidaBuckner ->
             { caps = { average = 150, maxDeviation = 80 }
             , stock =
-                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
+                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 3 }
+                , { uniqueKey = { kind = Item.Stimpak }, maxCount = 2 }
                 , { uniqueKey = { kind = Item.BigBookOfScience }, maxCount = 1 }
                 , { uniqueKey = { kind = Item.DeansElectronics }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.Robes }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.Robes }, maxCount = 2 }
                 ]
             }
 
         DenFlick ->
             { caps = { average = 280, maxDeviation = 120 }
             , stock =
-                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
+                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
                 , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 1 }
                 , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
                 , { uniqueKey = { kind = Item.LeatherJacket }, maxCount = 1 }
@@ -90,6 +102,7 @@ spec name_ =
                 [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 5 }
                 , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
                 , { uniqueKey = { kind = Item.FirstAidBook }, maxCount = 1 }
+                , { uniqueKey = { kind = Item.LeatherJacket }, maxCount = 1 }
                 , { uniqueKey = { kind = Item.LeatherArmor }, maxCount = 1 }
                 ]
             }
@@ -107,6 +120,9 @@ spec name_ =
 barterSkill : Name -> Int
 barterSkill name_ =
     case name_ of
+        ArroyoHakunin ->
+            30
+
         KlamathMaidaBuckner ->
             55
 
@@ -256,6 +272,9 @@ encodeName : Name -> JE.Value
 encodeName name_ =
     JE.string <|
         case name_ of
+            ArroyoHakunin ->
+                "arroyo-hakunin"
+
             KlamathMaidaBuckner ->
                 "klamath-maida-buckner"
 
@@ -275,6 +294,9 @@ nameDecoder =
         |> JD.andThen
             (\name_ ->
                 case name_ of
+                    "arroyo-hakunin" ->
+                        JD.succeed ArroyoHakunin
+
                     "klamath-maida-buckner" ->
                         JD.succeed KlamathMaidaBuckner
 
@@ -367,6 +389,9 @@ addItem item vendor =
 name : Name -> String
 name name_ =
     case name_ of
+        ArroyoHakunin ->
+            "Hakunin (Arroyo)"
+
         KlamathMaidaBuckner ->
             "Maida Buckner (Klamath)"
 
@@ -383,6 +408,9 @@ name name_ =
 location : Name -> Location
 location name_ =
     case name_ of
+        ArroyoHakunin ->
+            Location.Arroyo
+
         KlamathMaidaBuckner ->
             Location.Klamath
 

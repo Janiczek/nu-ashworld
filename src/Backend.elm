@@ -447,6 +447,12 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "Wander" ) ]
 
+        EquipItem itemId ->
+            JE.object
+                [ ( "type", JE.string "EquipItem" )
+                , ( "itemId", JE.int itemId )
+                ]
+
         UnequipArmor ->
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
@@ -666,6 +672,9 @@ updateFromFrontend sessionId clientId msg model =
 
         Wander ->
             withLoggedInCreatedPlayer wander
+
+        EquipItem itemId ->
+            withLoggedInCreatedPlayer <| equipItem itemId
 
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
@@ -1197,6 +1206,32 @@ healMe clientId player model =
                 )
             )
         |> Maybe.withDefault ( model, Cmd.none )
+
+
+equipItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipItem itemId clientId player model =
+    case Dict.get itemId player.items of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just item ->
+            if Item.isEquippable item.kind then
+                let
+                    newModel =
+                        model
+                            |> updatePlayer (SPlayer.equipItem item) player.name
+                in
+                getWorldLoggedIn player.name newModel
+                    |> Maybe.map
+                        (\world ->
+                            ( newModel
+                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                            )
+                        )
+                    |> Maybe.withDefault ( model, Cmd.none )
+
+            else
+                ( model, Cmd.none )
 
 
 useItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

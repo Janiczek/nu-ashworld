@@ -18,6 +18,7 @@ import Data.Fight as Fight
         , Who(..)
         )
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
+import Data.Item as Item
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
@@ -202,13 +203,24 @@ generator r =
             let
                 opponent =
                     opponent_ who ongoing
+
+                armorClassNatural =
+                    opponent.armorClass
+
+                armorClassFromArmor =
+                    opponent.equippedArmor
+                        |> Maybe.map Item.armorClass
+                        |> Maybe.withDefault 0
+
+                armorClass =
+                    armorClassNatural + armorClassFromArmor
             in
             Logic.unarmedChanceToHit
                 { attackerSpecial = opponent.special
                 , attackerAddedSkillPercentages = opponent.addedSkillPercentages
                 , distanceHexes = ongoing.distanceHexes
                 , shotType = shot
-                , targetArmorClass = opponent.armorClass
+                , targetArmorClass = armorClass
                 }
 
         shotType : Who -> OngoingFight -> Generator ( ShotType, Float )
@@ -278,18 +290,27 @@ generator r =
                                 -- TODO armor ignoring attacks
                                 0
 
-                            armorDamageThreshold =
+                            naturalDamageThreshold =
                                 toFloat <|
                                     -- TODO we're not dealing with plasma/... right now, only _normal_ DT
                                     case otherOpponent.type_ of
                                         Fight.Player _ ->
-                                            -- TODO armor
                                             0
 
                                         Fight.Npc enemyType ->
                                             Enemy.damageThresholdNormal enemyType
 
-                            armorDamageResistance =
+                            armorDamageThreshold =
+                                -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                                otherOpponent.equippedArmor
+                                    |> Maybe.map Item.damageThresholdNormal
+                                    |> Maybe.withDefault 0
+                                    |> toFloat
+
+                            damageThreshold =
+                                naturalDamageThreshold + armorDamageThreshold
+
+                            naturalDamageResistance =
                                 toFloat <|
                                     -- TODO we're not dealing with plasma/... right now, only _normal_ DR
                                     case otherOpponent.type_ of
@@ -299,6 +320,16 @@ generator r =
 
                                         Fight.Npc enemyType ->
                                             Enemy.damageResistanceNormal enemyType
+
+                            armorDamageResistance =
+                                -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                                otherOpponent.equippedArmor
+                                    |> Maybe.map Item.damageResistanceNormal
+                                    |> Maybe.withDefault 0
+                                    |> toFloat
+
+                            damageResistance =
+                                naturalDamageResistance + armorDamageResistance
 
                             ammoDamageResistanceModifier =
                                 -- TODO ammo
@@ -312,10 +343,10 @@ generator r =
                                 * (criticalHitDamageMultiplier / 2)
                               -- * (combatDifficultyMultiplier / 100)
                              )
-                                - (armorDamageThreshold / max 1 (5 * armorIgnore))
+                                - (damageThreshold / max 1 (5 * armorIgnore))
                             )
                                 * ((100
-                                        - max 0 (armorDamageResistance / max 1 (5 * armorIgnore))
+                                        - max 0 (damageResistance / max 1 (5 * armorIgnore))
                                         + ammoDamageResistanceModifier
                                    )
                                     / 100
@@ -583,6 +614,7 @@ enemyOpponentGenerator enemyType =
             , traits = traits
             , perks = Dict_.empty
             , caps = caps
+            , equippedArmor = Enemy.equippedArmor enemyType
             , armorClass = Enemy.armorClass enemyType
             , attackStats =
                 -- TODO for now it's all unarmed
@@ -649,6 +681,7 @@ playerOpponent player =
     , traits = player.traits
     , perks = player.perks
     , caps = player.caps
+    , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , armorClass = armorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages

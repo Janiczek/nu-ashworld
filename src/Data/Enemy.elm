@@ -8,6 +8,7 @@ module Data.Enemy exposing
     , damageThresholdNormal
     , default
     , encodeType
+    , equippedArmor
     , forChunk
     , hp
     , meleeDamageBonus
@@ -19,6 +20,7 @@ module Data.Enemy exposing
     )
 
 import AssocList as Dict_
+import Data.Item as Item
 import Data.Map.Chunk exposing (Chunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special)
@@ -362,3 +364,19 @@ caps type_ =
 
         Radscorpion ->
             common { average = 60, maxDeviation = 30 }
+
+
+equippedArmor : Type -> Maybe Item.Kind
+equippedArmor type_ =
+    case type_ of
+        GiantAnt ->
+            Nothing
+
+        ToughGiantAnt ->
+            Nothing
+
+        LesserRadscorpion ->
+            Nothing
+
+        Radscorpion ->
+            Nothing

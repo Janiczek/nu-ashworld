@@ -935,11 +935,17 @@ table tbody tr:hover td {
   margin-top: 20px;
 }
 
-.inventory-item-use-btn {
+.inventory-item button {
+  margin-right: 1ch;
+}
+.inventory-item button:last-child {
   margin-right: 2ch;
 }
 .inventory-item-use-btn:disabled {
   color: var(--fg03);
+}
+.inventory-equipment-unequip-btn {
+  margin-left: 1ch;
 }
 
 .character-choose-perk-item:hover {
