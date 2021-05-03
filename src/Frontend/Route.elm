@@ -35,8 +35,7 @@ type TownRoute
 
 
 type AdminRoute
-    = Players
-    | LoggedIn
+    = LoggedIn
 
 
 needsLogin : Route -> Bool

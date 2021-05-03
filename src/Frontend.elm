@@ -818,9 +818,6 @@ contentView model =
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Admin Route.Players, WorldAdmin _ ) ->
-                adminPlayersView
-
             ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
                 adminLoggedInView data
 
@@ -839,13 +836,6 @@ pageTitleView title =
 aboutView : List (Html FrontendMsg)
 aboutView =
     [ pageTitleView "About"
-    , H.text "TODO"
-    ]
-
-
-adminPlayersView : List (Html FrontendMsg)
-adminPlayersView =
-    [ pageTitleView "Admin :: Players"
     , H.text "TODO"
     ]
 
@@ -3075,7 +3065,6 @@ adminLinksView currentRoute =
     let
         links =
             [ linkMsg "Refresh" Refresh Nothing False
-            , linkIn "Players" (Route.Admin Route.Players) Nothing False
             , linkIn "Logged In" (Route.Admin Route.LoggedIn) Nothing False
             , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
