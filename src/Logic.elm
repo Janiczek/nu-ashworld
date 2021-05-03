@@ -22,6 +22,7 @@ module Logic exposing
     , tickHealPercentage
     , totalTags
     , unarmedAttackStats
+    , unarmedBaseCriticalChance
     , unarmedChanceToHit
     , xpGained
     )
@@ -289,6 +290,44 @@ unarmedAttackStats r =
     , maxDamage = maxDamage
     , criticalChanceBonus = criticalChanceBonus
     }
+
+
+unarmedBaseCriticalChance :
+    { special : Special
+    , hasFinesseTrait : Bool
+    , moreCriticalPerkRanks : Int
+    , hasSlayerPerk : Bool
+    }
+    -> Int
+unarmedBaseCriticalChance r =
+    -- TODO sniper perk and non-unarmed combat
+    let
+        fromSpecial =
+            r.special.luck
+
+        fromFinesse =
+            if r.hasFinesseTrait then
+                10
+
+            else
+                0
+
+        fromMoreCriticals =
+            r.moreCriticalPerkRanks * 5
+
+        fromSlayer =
+            if r.hasSlayerPerk then
+                100
+
+            else
+                0
+    in
+    (fromSpecial
+        + fromFinesse
+        + fromMoreCriticals
+        + fromSlayer
+    )
+        |> min 100
 
 
 price :

@@ -18,7 +18,8 @@ import Json.Encode as JE
    and implement all missing and applicable
 -}
 -- TODO Small Frame - carry weight
--- TODO Heavy Handed - critical hit chance
+-- TODO Finesse + critical chance +10%
+-- TODO Finesse - damage -30%
 
 
 type Trait
@@ -28,6 +29,7 @@ type Trait
     | SmallFrame
     | Skilled
     | HeavyHanded
+    | Finesse
 
 
 all : List Trait
@@ -39,6 +41,7 @@ all =
     , SmallFrame
     , Skilled
     , HeavyHanded
+    , Finesse
     ]
 
 
@@ -63,6 +66,9 @@ name trait =
         HeavyHanded ->
             "Heavy Handed"
 
+        Finesse ->
+            "Finesse"
+
 
 encode : Trait -> JE.Value
 encode trait =
@@ -85,6 +91,9 @@ encode trait =
 
             HeavyHanded ->
                 "heavy-handed"
+
+            Finesse ->
+                "finesse"
 
 
 decoder : Decoder Trait
@@ -110,6 +119,9 @@ decoder =
 
                     "heavy-handed" ->
                         JD.succeed HeavyHanded
+
+                    "finesse" ->
+                        JD.succeed Finesse
 
                     _ ->
                         JD.fail <| "unknown Trait: '" ++ trait ++ "'"

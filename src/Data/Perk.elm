@@ -45,6 +45,9 @@ type Perk
     | Survivalist
       -- lvl 6
     | Educated
+    | MoreCriticals
+      -- lvl 9
+    | BetterCriticals
       -- lvl 12
     | Tag
     | GainStrength
@@ -54,28 +57,33 @@ type Perk
     | GainIntelligence
     | GainAgility
     | GainLuck
+      -- lvl 24
+    | Slayer
 
 
 all : List Perk
 all =
     [ Awareness
+    , BetterCriticals
     , BonusHthDamage
     , CautiousNature
     , Comprehension
     , EarlierSequence
     , Educated
     , FasterHealing
+    , GainAgility
+    , GainCharisma
+    , GainEndurance
+    , GainIntelligence
+    , GainLuck
+    , GainPerception
+    , GainStrength
     , HereAndNow
     , MasterTrader
+    , MoreCriticals
+    , Slayer
     , Survivalist
     , Tag
-    , GainStrength
-    , GainPerception
-    , GainEndurance
-    , GainCharisma
-    , GainIntelligence
-    , GainAgility
-    , GainLuck
     ]
 
 
@@ -136,6 +144,15 @@ name perk =
         GainLuck ->
             "Gain Luck"
 
+        Slayer ->
+            "Slayer"
+
+        MoreCriticals ->
+            "More Criticals"
+
+        BetterCriticals ->
+            "Better Criticals"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -145,6 +162,7 @@ multipleRankPerks =
         , ( Educated, 3 )
         , ( BonusHthDamage, 3 )
         , ( FasterHealing, 3 )
+        , ( MoreCriticals, 3 )
         ]
 
 
@@ -212,6 +230,15 @@ encode perk =
             GainLuck ->
                 "gain-luck"
 
+            Slayer ->
+                "slayer"
+
+            MoreCriticals ->
+                "more-criticals"
+
+            BetterCriticals ->
+                "better-criticals"
+
 
 decoder : Decoder Perk
 decoder =
@@ -272,6 +299,15 @@ decoder =
 
                     "gain-luck" ->
                         JD.succeed GainLuck
+
+                    "slayer" ->
+                        JD.succeed Slayer
+
+                    "more-criticals" ->
+                        JD.succeed MoreCriticals
+
+                    "better-criticals" ->
+                        JD.succeed BetterCriticals
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -371,4 +407,13 @@ isApplicable r perk =
 
                 GainLuck ->
                     r.level >= 12 && s.luck < 10
+
+                Slayer ->
+                    r.level >= 24 && s.agility >= 8 && s.strength >= 8 && skill Skill.Unarmed >= 80
+
+                MoreCriticals ->
+                    r.level >= 6 && s.luck >= 6
+
+                BetterCriticals ->
+                    r.level >= 9 && s.luck >= 6 && s.perception >= 6 && s.agility >= 4
            )

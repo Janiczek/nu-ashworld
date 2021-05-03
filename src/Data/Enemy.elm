@@ -2,7 +2,9 @@ module Data.Enemy exposing
     ( Type(..)
     , actionPoints
     , addedSkillPercentages
+    , aimedShotName
     , caps
+    , criticalSpec
     , damageResistanceNormal
     , damageThresholdNormal
     , default
@@ -20,10 +22,12 @@ module Data.Enemy exposing
     )
 
 import AssocList as Dict_
+import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
+import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item
 import Data.Map.Chunk exposing (Chunk)
 import Data.Skill exposing (Skill(..))
-import Data.Special exposing (Special)
+import Data.Special exposing (Special, Type(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Random exposing (Generator)
@@ -380,3 +384,963 @@ equippedArmor type_ =
 
         Radscorpion ->
             Nothing
+
+
+criticalSpec : Type -> AimedShot -> Critical.EffectCategory -> Critical.Spec
+criticalSpec enemyType =
+    let
+        giantAnt aimedShot effectCategory =
+            case ( aimedShot, effectCategory ) of
+                ( Head, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "ripping some of its antennae off."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "ripping some of its antennae off."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect3 ) ->
+                    { damageMultiplier = 5
+                    , effects = [ BypassArmor ]
+                    , message = "breaking some of its feelers."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect4 ) ->
+                    { damageMultiplier = 5
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "breaking some of its feelers."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockout, BypassArmor ]
+                    , message = "breaking some of its feelers."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 0
+                            , failureEffect = Blinded
+                            , failureMessage = "crushing the temple. Good night, Gracie."
+                            }
+                    }
+
+                ( Head, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "breaking some of its feelers."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ LoseNextTurn ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledLeftArm
+                            , failureMessage = "crippling the left arm."
+                            }
+                    }
+
+                ( LeftArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ LoseNextTurn ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "which really hurts."
+                            }
+                    }
+
+                ( RightArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "breaking past the ant's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the ant's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "knocking it around a bit."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "knocking it around a bit."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockout, BypassArmor ]
+                    , message = "knocking it around a bit."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "knocking it around a bit."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "bowling him over and cripples that leg."
+                            }
+                    }
+
+                ( RightLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "bowling him over and cripples that leg."
+                            }
+                    }
+
+                ( RightLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                            }
+                    }
+
+                ( RightLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "bowling him over and cripples that leg."
+                            }
+                    }
+
+                ( LeftLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "bowling him over and cripples that leg."
+                            }
+                    }
+
+                ( LeftLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                            }
+                    }
+
+                ( LeftLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "breaking past the ant's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 4
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "damaging some of its exoskeleton."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 3
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect3 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ BypassArmor ]
+                    , message = "ripping some of its antennae off."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 2
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect4 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Blinded, BypassArmor, LoseNextTurn ]
+                    , message = "ripping some of its antennae off."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect5 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Knockout, Blinded, BypassArmor ]
+                    , message = "ripping some of its antennae off."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect6 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Death ]
+                    , message = "ripping some of its antennae off."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "breaking past the ant's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the ant's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockdown
+                            , failureMessage = "and without protection he falls over, groaning in agony."
+                            }
+                    }
+
+                ( Groin, Effect3 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "breaking past the ant's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "the pain is too much for him and he collapses like a rag."
+                            }
+                    }
+
+                ( Groin, Effect4 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockout ]
+                    , message = "damaging its health."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "damaging its health."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "the pain is too much for him and he collapses like a rag."
+                            }
+                    }
+
+                ( Groin, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, BypassArmor ]
+                    , message = "damaging its health."
+                    , statCheck = Nothing
+                    }
+
+        radscorpion aimedShot effectCategory =
+            case ( aimedShot, effectCategory ) of
+                ( Head, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 3
+                            , failureEffect = Knockdown
+                            , failureMessage = "and the attack sends the radscorpion flying on its back."
+                            }
+                    }
+
+                ( Head, Effect3 ) ->
+                    { damageMultiplier = 5
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockdown
+                            , failureMessage = "and the attack sends the radscorpion flying on its back."
+                            }
+                    }
+
+                ( Head, Effect4 ) ->
+                    { damageMultiplier = 5
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockdown
+                            , failureMessage = "and the attack sends the radscorpion flying on its back."
+                            }
+                    }
+
+                ( Head, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockdown ]
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "separating the head from the carapace."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftArm
+                            , failureMessage = "seriously damaging the tail."
+                            }
+                    }
+
+                ( LeftArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm ]
+                    , message = "seriously damaging the tail."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm ]
+                    , message = "seriously damaging the tail."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 2
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "putting a major hurt on its claws."
+                            }
+                    }
+
+                ( RightArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "putting a major hurt on its claws."
+                            }
+                    }
+
+                ( RightArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm ]
+                    , message = "putting a major hurt on its claws."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "making the blow slip between the cracks of the radscorpion's tough carapace."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "striking through the tough carapace without pausing."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "striking through the tough carapace without pausing."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 0
+                            , failureEffect = Knockdown
+                            , failureMessage = "passing through the natural armor and knocking the radscorpion over."
+                            }
+                    }
+
+                ( Torso, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Death ]
+                    , message = "and the radscorpion cannot cope with a new sensation, like missing internal organs."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 2
+                            , failureEffect = Knockdown
+                            , failureMessage = "sending the radscorpion flying on its back."
+                            }
+                    }
+
+                ( RightLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown ]
+                    , message = "sending the radscorpion flying on its back."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "crippling some of its legs."
+                            }
+                    }
+
+                ( RightLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightLeg, BypassArmor ]
+                    , message = "cutting through an unprotected joint on the leg, severing it."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "sending the radscorpion flying and crippling some of its legs."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "sending the radscorpion flying and crippling some of its legs."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 2
+                            , failureEffect = Knockdown
+                            , failureMessage = "sending the radscorpion flying on its back."
+                            }
+                    }
+
+                ( LeftLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "sending the radscorpion flying on its back."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "crippling some of its legs."
+                            }
+                    }
+
+                ( LeftLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftLeg, BypassArmor ]
+                    , message = "cutting through an unprotected joint on the leg, severing it."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "sending the radscorpion flying and crippling some of its legs."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "sending the radscorpion flying and crippling some of its legs."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 3
+                            , failureEffect = Blinded
+                            , failureMessage = "seriously wounding and blinding the mutant creature."
+                            }
+                    }
+
+                ( Eyes, Effect3 ) ->
+                    { damageMultiplier = 6
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 0
+                            , failureEffect = Blinded
+                            , failureMessage = "seriously wounding and blinding the mutant creature."
+                            }
+                    }
+
+                ( Eyes, Effect4 ) ->
+                    { damageMultiplier = 6
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = -3
+                            , failureEffect = Blinded
+                            , failureMessage = "seriously wounding and blinding the mutant creature."
+                            }
+                    }
+
+                ( Eyes, Effect5 ) ->
+                    { damageMultiplier = 8
+                    , effects = []
+                    , message = "penetrating almost to the brain. Talk about squashing a bug."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = -3
+                            , failureEffect = Blinded
+                            , failureMessage = "almost penetrating to the brain, but blinding the creature instead."
+                            }
+                    }
+
+                ( Eyes, Effect6 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Death ]
+                    , message = "in a fiendish attack, far too sophisticated for this simple creature."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and if it was human, you would swear it's pretty pissed off."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and if it was human, you would swear it's pretty pissed off."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "and if it was human, you would swear it's pretty pissed off."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout ]
+                    , message = "knocking the poor creature senseless."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout ]
+                    , message = "knocking the poor creature senseless."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Death ]
+                    , message = "spiking the brain to the floor."
+                    , statCheck = Nothing
+                    }
+    in
+    case enemyType of
+        GiantAnt ->
+            giantAnt
+
+        ToughGiantAnt ->
+            giantAnt
+
+        LesserRadscorpion ->
+            radscorpion
+
+        Radscorpion ->
+            radscorpion
+
+
+aimedShotName : Type -> AimedShot -> String
+aimedShotName enemyType =
+    let
+        giantAnt aimedShot =
+            case aimedShot of
+                Head ->
+                    "head"
+
+                Torso ->
+                    "abdomen"
+
+                Eyes ->
+                    "feelers"
+
+                Groin ->
+                    "metathorax"
+
+                LeftArm ->
+                    "left foreleg"
+
+                RightArm ->
+                    "right foreleg"
+
+                LeftLeg ->
+                    "left hindleg"
+
+                RightLeg ->
+                    "right hindleg"
+
+        radscorpion aimedShot =
+            case aimedShot of
+                Head ->
+                    "head"
+
+                Torso ->
+                    "carapace"
+
+                Eyes ->
+                    "eyes"
+
+                Groin ->
+                    "brain"
+
+                LeftArm ->
+                    "tail"
+
+                RightArm ->
+                    "claw"
+
+                LeftLeg ->
+                    "hindlegs"
+
+                RightLeg ->
+                    "forelegs"
+    in
+    case enemyType of
+        GiantAnt ->
+            giantAnt
+
+        ToughGiantAnt ->
+            giantAnt
+
+        LesserRadscorpion ->
+            radscorpion
+
+        Radscorpion ->
+            radscorpion

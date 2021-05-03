@@ -28,7 +28,7 @@ import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
 import Logic exposing (AttackStats)
 import Random exposing (Generator)
-import Random.Bool
+import Random.Bool as Random
 import Random.FloatExtra as Random
 import Time exposing (Posix)
 
@@ -337,6 +337,9 @@ generator r =
         attack : Who -> OngoingFight -> Generator OngoingFight
         attack who ongoing =
             let
+                opponent =
+                    opponent_ who ongoing
+
                 other : Who
                 other =
                     Fight.theOther who
@@ -350,24 +353,81 @@ generator r =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
                         in
                         if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost then
-                            Random.Bool.weightedBool chance
+                            Random.int 1 100
                                 |> Random.andThen
-                                    (\hasHit ->
+                                    (\roll ->
+                                        let
+                                            hasHit : Bool
+                                            hasHit =
+                                                roll <= chance
+                                        in
                                         -- TODO critical misses, critical hits according to inspiration/fo2-calc/fo2calg.pdf
                                         if hasHit then
-                                            rollDamage who ongoing shot
-                                                |> Random.map
-                                                    (\damage ->
-                                                        ongoing
-                                                            |> addLog who
-                                                                (Attack
-                                                                    { damage = damage
-                                                                    , shotType = shot
-                                                                    , remainingHp = .hp (opponent_ other ongoing) - damage
-                                                                    }
-                                                                )
-                                                            |> subtractAp who apCost
-                                                            |> updateOpponent other (subtractHp damage)
+                                            let
+                                                rollCriticalChanceBonus : Int
+                                                rollCriticalChanceBonus =
+                                                    (chance - roll) // 10
+
+                                                baseCriticalChance : Int
+                                                baseCriticalChance =
+                                                    Logic.unarmedBaseCriticalChance
+                                                        { special = opponent.special
+                                                        , hasFinesseTrait = Trait.isSelected Trait.Finesse opponent.traits
+                                                        , moreCriticalPerkRanks = Perk.rank Perk.MoreCriticals opponent.perks
+                                                        , hasSlayerPerk = Perk.rank Perk.Slayer opponent.perks > 0
+                                                        }
+
+                                                criticalChance : Int
+                                                criticalChance =
+                                                    min 100 <| baseCriticalChance + rollCriticalChanceBonus
+                                            in
+                                            Random.weightedBool (toFloat criticalChance / 100)
+                                                |> Random.andThen
+                                                    (\isCritical ->
+                                                        if isCritical then
+                                                            let
+                                                                betterCriticalsPerkBonus : Int
+                                                                betterCriticalsPerkBonus =
+                                                                    if Perk.rank Perk.BetterCriticals opponent.perks > 0 then
+                                                                        20
+
+                                                                    else
+                                                                        0
+
+                                                                heavyHandedTraitPenalty : Int
+                                                                heavyHandedTraitPenalty =
+                                                                    if Trait.isSelected Trait.HeavyHanded opponent.traits then
+                                                                        -30
+
+                                                                    else
+                                                                        0
+
+                                                                baseCriticalEffect : Generator Int
+                                                                baseCriticalEffect =
+                                                                    Random.int 1 100
+                                                            in
+                                                            baseCriticalEffect
+                                                                |> Random.map (\base -> base + betterCriticalsPerkBonus + heavyHandedTraitPenalty)
+                                                                |> Random.andThen
+                                                                    (\x ->
+                                                                        rollDamage who ongoing shot
+                                                                            |> Random.map
+                                                                                (\damage ->
+                                                                                    ongoing
+                                                                                        |> addLog who
+                                                                                            (Attack
+                                                                                                { damage = damage
+                                                                                                , shotType = shot
+                                                                                                , remainingHp = .hp (opponent_ other ongoing) - damage
+                                                                                                }
+                                                                                            )
+                                                                                        |> subtractAp who apCost
+                                                                                        |> updateOpponent other (subtractHp damage)
+                                                                                )
+                                                                    )
+
+                                                        else
+                                                            1
                                                     )
 
                                         else
