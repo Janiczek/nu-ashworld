@@ -7,9 +7,12 @@ module Logic exposing
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canUseItem
+    , damageResistanceNormal
+    , damageThresholdNormal
     , healPerTick
     , hitpoints
     , maxTraits
+    , naturalArmorClass
     , newCharSpecial
     , perkRate
     , price
@@ -65,22 +68,32 @@ healPerTick =
     4
 
 
-armorClass :
+naturalArmorClass :
     { special : Special
     , hasKamikazeTrait : Bool
     }
     -> Int
+naturalArmorClass r =
+    if r.hasKamikazeTrait then
+        0
+
+    else
+        r.special.agility
+
+
+armorClass :
+    { naturalArmorClass : Int
+    , equippedArmor : Maybe Item.Kind
+    }
+    -> Int
 armorClass r =
     let
-        initial =
-            if r.hasKamikazeTrait then
-                0
-
-            else
-                r.special.agility
+        armorClassFromArmor =
+            r.equippedArmor
+                |> Maybe.map Item.armorClass
+                |> Maybe.withDefault 0
     in
-    -- TODO take armor into account once we have it
-    initial
+    r.naturalArmorClass + armorClassFromArmor
 
 
 actionPoints :
@@ -216,7 +229,7 @@ unarmedAttackStats :
     , traits : Set_.Set Trait
     , perks : Dict_.Dict Perk Int
     , level : Int
-    , extraBonus : Int -- for NPCs
+    , npcExtraBonus : Int
     }
     -> AttackStats
 unarmedAttackStats r =
@@ -267,7 +280,7 @@ unarmedAttackStats r =
 
         maxDamage : Int
         maxDamage =
-            minDamage + bonusMeleeDamage + r.extraBonus
+            minDamage + bonusMeleeDamage + r.npcExtraBonus
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks
@@ -575,3 +588,33 @@ canUseItem p kind =
             )
             (Ok ())
             effects
+
+
+damageThresholdNormal :
+    { naturalDamageThresholdNormal : Int
+    , equippedArmor : Maybe Item.Kind
+    }
+    -> Int
+damageThresholdNormal r =
+    let
+        armorDamageThreshold =
+            r.equippedArmor
+                |> Maybe.map Item.damageThresholdNormal
+                |> Maybe.withDefault 0
+    in
+    r.naturalDamageThresholdNormal + armorDamageThreshold
+
+
+damageResistanceNormal :
+    { naturalDamageResistanceNormal : Int
+    , equippedArmor : Maybe Item.Kind
+    }
+    -> Int
+damageResistanceNormal r =
+    let
+        armorDamageResistance =
+            r.equippedArmor
+                |> Maybe.map Item.damageResistanceNormal
+                |> Maybe.withDefault 0
+    in
+    r.naturalDamageResistanceNormal + armorDamageResistance

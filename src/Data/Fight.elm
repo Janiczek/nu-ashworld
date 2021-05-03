@@ -51,7 +51,7 @@ type alias Opponent =
     , perks : Dict_.Dict Perk Int
     , caps : Int
     , equippedArmor : Maybe Item.Kind
-    , armorClass : Int
+    , naturalArmorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : Dict_.Dict Skill Int
     , special : Special

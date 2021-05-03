@@ -2,7 +2,6 @@ module Data.Enemy exposing
     ( Type(..)
     , actionPoints
     , addedSkillPercentages
-    , armorClass
     , caps
     , damageResistanceNormal
     , damageThresholdNormal
@@ -13,6 +12,7 @@ module Data.Enemy exposing
     , hp
     , meleeDamageBonus
     , name
+    , naturalArmorClass
     , sequence
     , special
     , typeDecoder
@@ -144,8 +144,8 @@ hp type_ =
             26
 
 
-armorClass : Type -> Int
-armorClass type_ =
+naturalArmorClass : Type -> Int
+naturalArmorClass type_ =
     case type_ of
         GiantAnt ->
             4

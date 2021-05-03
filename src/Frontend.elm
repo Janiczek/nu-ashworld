@@ -7,6 +7,7 @@ import Browser.Navigation as Nav
 import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.Fight as Fight exposing (FightInfo)
+import Data.Fight.ShotType as ShotType
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
@@ -56,7 +57,7 @@ import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
-import Logic exposing (ItemNotUsableReason(..))
+import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -2347,6 +2348,54 @@ inventoryView _ player =
                     [ HA.class "inventory-item-label" ]
                     [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
                 ]
+
+        armorClass =
+            Logic.armorClass
+                { naturalArmorClass =
+                    Logic.naturalArmorClass
+                        { special = player.special
+                        , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
+                        }
+                , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                }
+
+        damageThreshold : Int
+        damageThreshold =
+            -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+            Logic.damageThresholdNormal
+                { naturalDamageThresholdNormal = 0
+                , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                }
+
+        damageResistance : Int
+        damageResistance =
+            -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+            Logic.damageResistanceNormal
+                { naturalDamageResistanceNormal = 0
+                , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                }
+
+        attackStats : AttackStats
+        attackStats =
+            Logic.unarmedAttackStats
+                { special = player.special
+                , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed
+                , traits = player.traits
+                , perks = player.perks
+                , level = Xp.currentLevel player.xp
+                , npcExtraBonus = 0
+                }
+
+        chanceToHitAtArmorClass : Int -> Int
+        chanceToHitAtArmorClass targetArmorClass =
+            Logic.unarmedChanceToHit
+                { attackerAddedSkillPercentages = player.addedSkillPercentages
+                , attackerSpecial = player.special
+                , -- TODO parameterize by this after we get non-unarmed combat
+                  distanceHexes = 0
+                , shotType = ShotType.NormalShot
+                , targetArmorClass = targetArmorClass
+                }
     in
     [ pageTitleView "Inventory"
     , if Dict.isEmpty player.items then
@@ -2378,8 +2427,24 @@ inventoryView _ player =
         ]
     , H.h3
         [ HA.id "inventory-stats" ]
-        [ H.text "Stats" ]
-    , H.div [] [ H.text "TODO" ]
+        [ H.text "Defence stats" ]
+    , H.ul
+        []
+        [ H.li [] [ H.text <| "Armor Class: " ++ String.fromInt armorClass ]
+        , H.li [] [ H.text <| "Damage Threshold: " ++ String.fromInt damageThreshold ]
+        , H.li [] [ H.text <| "Damage Resistance: " ++ String.fromInt damageResistance ]
+        ]
+    , H.h3
+        [ HA.id "inventory-stats" ]
+        [ H.text "Attack stats" ]
+    , H.ul
+        []
+        [ H.li [] [ H.text <| "Min Damage: " ++ String.fromInt attackStats.minDamage ]
+        , H.li [] [ H.text <| "Max Damage: " ++ String.fromInt attackStats.maxDamage ]
+        , H.li [] [ H.text <| "Chance to hit at target armor class 0: " ++ String.fromInt (chanceToHitAtArmorClass 0) ++ "%" ]
+        , H.li [] [ H.text <| "Chance to hit at target armor class 10: " ++ String.fromInt (chanceToHitAtArmorClass 10) ++ "%" ]
+        , H.li [] [ H.text <| "Chance to hit at target armor class 20: " ++ String.fromInt (chanceToHitAtArmorClass 20) ++ "%" ]
+        ]
     ]
 
 

@@ -204,16 +204,11 @@ generator r =
                 opponent =
                     opponent_ who ongoing
 
-                armorClassNatural =
-                    opponent.armorClass
-
-                armorClassFromArmor =
-                    opponent.equippedArmor
-                        |> Maybe.map Item.armorClass
-                        |> Maybe.withDefault 0
-
                 armorClass =
-                    armorClassNatural + armorClassFromArmor
+                    Logic.armorClass
+                        { naturalArmorClass = opponent.naturalArmorClass
+                        , equippedArmor = opponent.equippedArmor
+                        }
             in
             Logic.unarmedChanceToHit
                 { attackerSpecial = opponent.special
@@ -290,46 +285,33 @@ generator r =
                                 -- TODO armor ignoring attacks
                                 0
 
-                            naturalDamageThreshold =
-                                toFloat <|
-                                    -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                                    case otherOpponent.type_ of
-                                        Fight.Player _ ->
-                                            0
-
-                                        Fight.Npc enemyType ->
-                                            Enemy.damageThresholdNormal enemyType
-
-                            armorDamageThreshold =
-                                -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                                otherOpponent.equippedArmor
-                                    |> Maybe.map Item.damageThresholdNormal
-                                    |> Maybe.withDefault 0
-                                    |> toFloat
-
                             damageThreshold =
-                                naturalDamageThreshold + armorDamageThreshold
-
-                            naturalDamageResistance =
-                                toFloat <|
-                                    -- TODO we're not dealing with plasma/... right now, only _normal_ DR
-                                    case otherOpponent.type_ of
-                                        Fight.Player _ ->
-                                            -- TODO armor
-                                            0
-
-                                        Fight.Npc enemyType ->
-                                            Enemy.damageResistanceNormal enemyType
-
-                            armorDamageResistance =
                                 -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                                otherOpponent.equippedArmor
-                                    |> Maybe.map Item.damageResistanceNormal
-                                    |> Maybe.withDefault 0
-                                    |> toFloat
+                                toFloat <|
+                                    Logic.damageThresholdNormal
+                                        { naturalDamageThresholdNormal =
+                                            case otherOpponent.type_ of
+                                                Fight.Player _ ->
+                                                    0
+
+                                                Fight.Npc enemyType ->
+                                                    Enemy.damageThresholdNormal enemyType
+                                        , equippedArmor = otherOpponent.equippedArmor
+                                        }
 
                             damageResistance =
-                                naturalDamageResistance + armorDamageResistance
+                                -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+                                toFloat <|
+                                    Logic.damageResistanceNormal
+                                        { naturalDamageResistanceNormal =
+                                            case otherOpponent.type_ of
+                                                Fight.Player _ ->
+                                                    0
+
+                                                Fight.Npc enemyType ->
+                                                    Enemy.damageResistanceNormal enemyType
+                                        , equippedArmor = otherOpponent.equippedArmor
+                                        }
 
                             ammoDamageResistanceModifier =
                                 -- TODO ammo
@@ -341,7 +323,6 @@ generator r =
                             (((damage_ + rangedBonus)
                                 * (ammoDamageMultiplier / ammoDamageDivisor)
                                 * (criticalHitDamageMultiplier / 2)
-                              -- * (combatDifficultyMultiplier / 100)
                              )
                                 - (damageThreshold / max 1 (5 * armorIgnore))
                             )
@@ -615,7 +596,7 @@ enemyOpponentGenerator enemyType =
             , perks = Dict_.empty
             , caps = caps
             , equippedArmor = Enemy.equippedArmor enemyType
-            , armorClass = Enemy.armorClass enemyType
+            , naturalArmorClass = Enemy.naturalArmorClass enemyType
             , attackStats =
                 -- TODO for now it's all unarmed
                 Logic.unarmedAttackStats
@@ -626,7 +607,7 @@ enemyOpponentGenerator enemyType =
                     , level =
                         -- TODO what to do? What damage ranges do enemies really have in FO2?
                         1
-                    , extraBonus = Enemy.meleeDamageBonus enemyType
+                    , npcExtraBonus = Enemy.meleeDamageBonus enemyType
                     }
             , addedSkillPercentages = addedSkillPercentages
             , special =
@@ -640,9 +621,9 @@ enemyOpponentGenerator enemyType =
 playerOpponent : SPlayer -> Opponent
 playerOpponent player =
     let
-        armorClass : Int
-        armorClass =
-            Logic.armorClass
+        naturalArmorClass : Int
+        naturalArmorClass =
+            Logic.naturalArmorClass
                 { hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
                 , special = player.special
                 }
@@ -670,7 +651,7 @@ playerOpponent player =
                 , level = Xp.currentLevel player.xp
                 , perks = player.perks
                 , traits = player.traits
-                , extraBonus = 0 -- this is only for NPCs
+                , npcExtraBonus = 0
                 }
     in
     { type_ = Fight.Player player.name
@@ -682,7 +663,7 @@ playerOpponent player =
     , perks = player.perks
     , caps = player.caps
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
-    , armorClass = armorClass
+    , naturalArmorClass = naturalArmorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages
     , special = player.special
