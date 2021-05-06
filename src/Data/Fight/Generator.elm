@@ -17,13 +17,14 @@ import Data.Fight as Fight
         , Opponent
         , Who(..)
         )
-import Data.Fight.ShotType as ShotType exposing (ShotType(..))
+import Data.Fight.Critical as Critical exposing (Critical)
+import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
-import Data.Special exposing (Special)
+import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
 import Logic exposing (AttackStats)
@@ -218,20 +219,20 @@ generator r =
                 , targetArmorClass = armorClass
                 }
 
-        shotType : Who -> OngoingFight -> Generator ( ShotType, Float )
+        shotType : Who -> OngoingFight -> Generator ( ShotType, Int )
         shotType who ongoing =
             let
                 availableAp =
                     opponentAp who ongoing
 
-                shotAndChance : ShotType -> ( Float, ( ShotType, Float ) )
+                shotAndChance : ShotType -> ( Float, ( ShotType, Int ) )
                 shotAndChance shot =
                     let
-                        chance : Float
+                        chance : Int
                         chance =
-                            toFloat (chanceToHit who ongoing shot) / 100
+                            chanceToHit who ongoing shot
                     in
-                    ( chance, ( shot, chance ) )
+                    ( toFloat chance, ( shot, chance ) )
             in
             Random.weighted
                 (shotAndChance NormalShot)
@@ -247,92 +248,131 @@ generator r =
         attackApCost r_ =
             baseApCost + ShotType.apCostPenalty r_
 
-        rollDamage : Who -> OngoingFight -> ShotType -> Generator Int
-        rollDamage who ongoing _ =
+        rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
+        rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
             let
                 opponent =
                     opponent_ who ongoing
 
                 otherOpponent =
                     opponent_ (Fight.theOther who) ongoing
-            in
-            Random.int
-                opponent.attackStats.minDamage
-                opponent.attackStats.maxDamage
-                |> Random.map
-                    (\damage ->
-                        let
-                            damage_ =
-                                toFloat damage
 
-                            rangedBonus =
-                                -- TODO ranged attacks and perks
-                                0
+                criticalSpec : Maybe Critical.Spec
+                criticalSpec =
+                    maybeCriticalEffectCategory
+                        |> Maybe.map
+                            (\criticalEffectCategory ->
+                                let
+                                    aimedShot : AimedShot
+                                    aimedShot =
+                                        ShotType.toAimed shotType_
+                                in
+                                case otherOpponent.type_ of
+                                    Fight.Player _ ->
+                                        -- TODO gender -> womanCriticalSpec
+                                        Enemy.manCriticalSpec aimedShot criticalEffectCategory
 
-                            ammoDamageMultiplier =
-                                -- TODO ammo in combat
-                                1
-
-                            ammoDamageDivisor =
-                                -- TODO ammo in combat
-                                1
-
-                            criticalHitDamageMultiplier =
-                                -- TODO critical hits
-                                2
-
-                            armorIgnore =
-                                -- TODO armor ignoring attacks
-                                0
-
-                            damageThreshold =
-                                -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                                toFloat <|
-                                    Logic.damageThresholdNormal
-                                        { naturalDamageThresholdNormal =
-                                            case otherOpponent.type_ of
-                                                Fight.Player _ ->
-                                                    0
-
-                                                Fight.Npc enemyType ->
-                                                    Enemy.damageThresholdNormal enemyType
-                                        , equippedArmor = otherOpponent.equippedArmor
-                                        }
-
-                            damageResistance =
-                                -- TODO we're not dealing with plasma/... right now, only _normal_ DR
-                                toFloat <|
-                                    Logic.damageResistanceNormal
-                                        { naturalDamageResistanceNormal =
-                                            case otherOpponent.type_ of
-                                                Fight.Player _ ->
-                                                    0
-
-                                                Fight.Npc enemyType ->
-                                                    Enemy.damageResistanceNormal enemyType
-                                        , equippedArmor = otherOpponent.equippedArmor
-                                        }
-
-                            ammoDamageResistanceModifier =
-                                -- TODO ammo
-                                0
-                        in
-                        -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
-                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                        round <|
-                            (((damage_ + rangedBonus)
-                                * (ammoDamageMultiplier / ammoDamageDivisor)
-                                * (criticalHitDamageMultiplier / 2)
-                             )
-                                - (damageThreshold / max 1 (5 * armorIgnore))
+                                    Fight.Npc enemyType ->
+                                        Enemy.criticalSpec enemyType aimedShot criticalEffectCategory
                             )
-                                * ((100
-                                        - max 0 (damageResistance / max 1 (5 * armorIgnore))
-                                        + ammoDamageResistanceModifier
-                                   )
-                                    / 100
-                                  )
+
+                criticalGenerator : Generator (Maybe Critical)
+                criticalGenerator =
+                    case criticalSpec of
+                        Nothing ->
+                            Random.constant Nothing
+
+                        Just spec ->
+                            Random.map Just <| rollCritical spec otherOpponent
+            in
+            Random.map2
+                (\damage maybeCritical ->
+                    let
+                        damage_ =
+                            toFloat damage
+
+                        rangedBonus =
+                            -- TODO ranged attacks and perks
+                            0
+
+                        ammoDamageMultiplier =
+                            -- TODO ammo in combat
+                            1
+
+                        ammoDamageDivisor =
+                            -- TODO ammo in combat
+                            1
+
+                        armorIgnore =
+                            -- TODO armor ignoring attacks
+                            0
+
+                        damageThreshold =
+                            -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                            toFloat <|
+                                Logic.damageThresholdNormal
+                                    { naturalDamageThresholdNormal =
+                                        case otherOpponent.type_ of
+                                            Fight.Player _ ->
+                                                0
+
+                                            Fight.Npc enemyType ->
+                                                Enemy.damageThresholdNormal enemyType
+                                    , equippedArmor = otherOpponent.equippedArmor
+                                    }
+
+                        damageResistance =
+                            -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+                            toFloat <|
+                                Logic.damageResistanceNormal
+                                    { naturalDamageResistanceNormal =
+                                        case otherOpponent.type_ of
+                                            Fight.Player _ ->
+                                                0
+
+                                            Fight.Npc enemyType ->
+                                                Enemy.damageResistanceNormal enemyType
+                                    , equippedArmor = otherOpponent.equippedArmor
+                                    }
+
+                        ammoDamageResistanceModifier =
+                            -- TODO ammo
+                            0
+
+                        criticalHitDamageMultiplier : Int
+                        criticalHitDamageMultiplier =
+                            maybeCritical
+                                |> Maybe.map .damageMultiplier
+                                |> Maybe.withDefault 2
+
+                        maybeCriticalInfo =
+                            Maybe.map
+                                (\critical -> ( critical.effects, critical.message ))
+                                maybeCritical
+                    in
+                    ( -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
+                      -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
+                      round <|
+                        (((damage_ + rangedBonus)
+                            * (ammoDamageMultiplier / ammoDamageDivisor)
+                            * (toFloat criticalHitDamageMultiplier / 2)
+                         )
+                            - (damageThreshold / max 1 (5 * armorIgnore))
+                        )
+                            * ((100
+                                    - max 0 (damageResistance / max 1 (5 * armorIgnore))
+                                    + ammoDamageResistanceModifier
+                               )
+                                / 100
+                              )
+                    , maybeCriticalInfo
                     )
+                )
+                (Random.int
+                    opponent.attackStats.minDamage
+                    opponent.attackStats.maxDamage
+                )
+                criticalGenerator
 
         attack : Who -> OngoingFight -> Generator OngoingFight
         attack who ongoing =
@@ -361,7 +401,7 @@ generator r =
                                             hasHit =
                                                 roll <= chance
                                         in
-                                        -- TODO critical misses, critical hits according to inspiration/fo2-calc/fo2calg.pdf
+                                        -- TODO critical misses according to inspiration/fo2-calc/fo2calg.pdf
                                         if hasHit then
                                             let
                                                 rollCriticalChanceBonus : Int
@@ -384,50 +424,58 @@ generator r =
                                             Random.weightedBool (toFloat criticalChance / 100)
                                                 |> Random.andThen
                                                     (\isCritical ->
-                                                        if isCritical then
-                                                            let
-                                                                betterCriticalsPerkBonus : Int
-                                                                betterCriticalsPerkBonus =
-                                                                    if Perk.rank Perk.BetterCriticals opponent.perks > 0 then
-                                                                        20
+                                                        let
+                                                            criticalEffectCategory =
+                                                                if isCritical then
+                                                                    let
+                                                                        betterCriticalsPerkBonus : Int
+                                                                        betterCriticalsPerkBonus =
+                                                                            if Perk.rank Perk.BetterCriticals opponent.perks > 0 then
+                                                                                20
 
-                                                                    else
-                                                                        0
+                                                                            else
+                                                                                0
 
-                                                                heavyHandedTraitPenalty : Int
-                                                                heavyHandedTraitPenalty =
-                                                                    if Trait.isSelected Trait.HeavyHanded opponent.traits then
-                                                                        -30
+                                                                        heavyHandedTraitPenalty : Int
+                                                                        heavyHandedTraitPenalty =
+                                                                            if Trait.isSelected Trait.HeavyHanded opponent.traits then
+                                                                                -30
 
-                                                                    else
-                                                                        0
+                                                                            else
+                                                                                0
 
-                                                                baseCriticalEffect : Generator Int
-                                                                baseCriticalEffect =
-                                                                    Random.int 1 100
-                                                            in
-                                                            baseCriticalEffect
-                                                                |> Random.map (\base -> base + betterCriticalsPerkBonus + heavyHandedTraitPenalty)
-                                                                |> Random.andThen
-                                                                    (\x ->
-                                                                        rollDamage who ongoing shot
-                                                                            |> Random.map
-                                                                                (\damage ->
-                                                                                    ongoing
-                                                                                        |> addLog who
-                                                                                            (Attack
-                                                                                                { damage = damage
-                                                                                                , shotType = shot
-                                                                                                , remainingHp = .hp (opponent_ other ongoing) - damage
-                                                                                                }
-                                                                                            )
-                                                                                        |> subtractAp who apCost
-                                                                                        |> updateOpponent other (subtractHp damage)
-                                                                                )
-                                                                    )
+                                                                        baseCriticalEffect : Generator Int
+                                                                        baseCriticalEffect =
+                                                                            Random.int 1 100
+                                                                    in
+                                                                    baseCriticalEffect
+                                                                        |> Random.map
+                                                                            (\base ->
+                                                                                Just <|
+                                                                                    Critical.toCategory <|
+                                                                                        base
+                                                                                            + betterCriticalsPerkBonus
+                                                                                            + heavyHandedTraitPenalty
+                                                                            )
 
-                                                        else
-                                                            1
+                                                                else
+                                                                    Random.constant Nothing
+                                                        in
+                                                        criticalEffectCategory
+                                                            |> Random.andThen (rollDamageAndCriticalInfo who ongoing shot)
+                                                            |> Random.map
+                                                                (\( damage, maybeCriticalEffectsAndMessage ) ->
+                                                                    ongoing
+                                                                        |> addLog who
+                                                                            (Attack
+                                                                                { damage = damage
+                                                                                , shotType = shot
+                                                                                , remainingHp = .hp (opponent_ other ongoing) - damage
+                                                                                }
+                                                                            )
+                                                                        |> subtractAp who apCost
+                                                                        |> updateOpponent other (subtractHp damage)
+                                                                )
                                                     )
 
                                         else
@@ -728,3 +776,40 @@ playerOpponent player =
     , addedSkillPercentages = player.addedSkillPercentages
     , special = player.special
     }
+
+
+rollCritical : Critical.Spec -> Opponent -> Generator Critical
+rollCritical spec opponent =
+    let
+        withoutStatCheck =
+            { damageMultiplier = spec.damageMultiplier
+            , effects = spec.effects
+            , message = spec.message
+            }
+    in
+    case spec.statCheck of
+        Nothing ->
+            Random.constant withoutStatCheck
+
+        Just check ->
+            let
+                currentStat : Int
+                currentStat =
+                    Special.get check.stat opponent.special
+
+                modifiedStat : Int
+                modifiedStat =
+                    clamp 1 10 <| currentStat + check.modifier
+            in
+            Random.int 1 10
+                |> Random.map
+                    (\rolledStat ->
+                        if rolledStat <= modifiedStat then
+                            { damageMultiplier = spec.damageMultiplier
+                            , effects = check.failureEffect :: spec.effects
+                            , message = check.failureMessage
+                            }
+
+                        else
+                            withoutStatCheck
+                    )

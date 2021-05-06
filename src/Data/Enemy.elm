@@ -12,6 +12,7 @@ module Data.Enemy exposing
     , equippedArmor
     , forChunk
     , hp
+    , manCriticalSpec
     , meleeDamageBonus
     , name
     , naturalArmorClass
@@ -388,6 +389,7 @@ equippedArmor type_ =
 
 criticalSpec : Type -> AimedShot -> Critical.EffectCategory -> Critical.Spec
 criticalSpec enemyType =
+    -- https://falloutmods.fandom.com/wiki/Critical_hit_tables
     let
         giantAnt aimedShot effectCategory =
             case ( aimedShot, effectCategory ) of
@@ -1344,3 +1346,452 @@ aimedShotName enemyType =
 
         Radscorpion ->
             radscorpion
+
+
+manCriticalSpec : AimedShot -> Critical.EffectCategory -> Critical.Spec
+manCriticalSpec aimedShot effectCategory =
+    -- TODO woman critical spec? https://falloutmods.fandom.com/wiki/Critical_hit_tables#Women
+    case ( aimedShot, effectCategory ) of
+        ( Head, Effect1 ) ->
+            { damageMultiplier = 4
+            , effects = []
+            , message = "inflicting a serious wound."
+            , statCheck = Nothing
+            }
+
+        ( Head, Effect2 ) ->
+            { damageMultiplier = 4
+            , effects = [ BypassArmor ]
+            , message = "bypassing the armor defenses."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = Knockout
+                    , failureMessage = "knocking him unconscious."
+                    }
+            }
+
+        ( Head, Effect3 ) ->
+            { damageMultiplier = 5
+            , effects = [ Knockout ]
+            , message = "bypassing the armor defenses."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = Knockout
+                    , failureMessage = "knocking him unconscious."
+                    }
+            }
+
+        ( Head, Effect4 ) ->
+            { damageMultiplier = 5
+            , effects = [ Knockdown, BypassArmor ]
+            , message = "knocking him to the ground."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = Knockout
+                    , failureMessage = "knocking him unconscious."
+                    }
+            }
+
+        ( Head, Effect5 ) ->
+            { damageMultiplier = 6
+            , effects = [ Knockout, BypassArmor ]
+            , message = "and the strong blow to the head knocks him out."
+            , statCheck =
+                Just
+                    { stat = Luck
+                    , modifier = 0
+                    , failureEffect = Blinded
+                    , failureMessage = "and the attack crushes the temple. Good night, Gracie."
+                    }
+            }
+
+        ( Head, Effect6 ) ->
+            { damageMultiplier = 6
+            , effects = [ Death ]
+            , message = "resulting in instantaneous death."
+            , statCheck = Nothing
+            }
+
+        ( LeftArm, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = []
+            , message = "causing severe tennis elbow."
+            , statCheck = Nothing
+            }
+
+        ( LeftArm, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ LoseNextTurn ]
+            , message = "pushing the arm out of the way."
+            , statCheck = Nothing
+            }
+
+        ( LeftArm, Effect3 ) ->
+            { damageMultiplier = 4
+            , effects = []
+            , message = "leaving a big bruise."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = CrippledLeftArm
+                    , failureMessage = "crippling the left arm."
+                    }
+            }
+
+        ( LeftArm, Effect4 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledLeftArm, BypassArmor ]
+            , message = "leaving the left arm dangling by the skin."
+            , statCheck = Nothing
+            }
+
+        ( LeftArm, Effect5 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledLeftArm, BypassArmor ]
+            , message = "leaving the left arm dangling by the skin."
+            , statCheck = Nothing
+            }
+
+        ( LeftArm, Effect6 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledLeftArm, BypassArmor ]
+            , message = "leaving the left arm looking like a bloody stump."
+            , statCheck = Nothing
+            }
+
+        ( RightArm, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = []
+            , message = "causing severe tennis elbow."
+            , statCheck = Nothing
+            }
+
+        ( RightArm, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ LoseNextTurn ]
+            , message = "pushing the arm out of the way."
+            , statCheck = Nothing
+            }
+
+        ( RightArm, Effect3 ) ->
+            { damageMultiplier = 4
+            , effects = []
+            , message = "which really hurts."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = CrippledRightArm
+                    , failureMessage = "leaving a crippled right arm."
+                    }
+            }
+
+        ( RightArm, Effect4 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledRightArm, BypassArmor ]
+            , message = "pulverizing his right arm by this powerful blow."
+            , statCheck = Nothing
+            }
+
+        ( RightArm, Effect5 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledRightArm, BypassArmor ]
+            , message = "pulverizing his right arm by this powerful blow."
+            , statCheck = Nothing
+            }
+
+        ( RightArm, Effect6 ) ->
+            { damageMultiplier = 4
+            , effects = [ CrippledRightArm, BypassArmor ]
+            , message = "leaving the right arm looking like a bloody stump."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = []
+            , message = "in a forceful blow."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ BypassArmor ]
+            , message = "blowing through the armor."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect3 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, BypassArmor ]
+            , message = "bypassing the armor, knocking the combatant to the ground."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect4 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, BypassArmor ]
+            , message = "bypassing the armor, knocking the combatant to the ground."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect5 ) ->
+            { damageMultiplier = 6
+            , effects = [ Knockout, BypassArmor ]
+            , message = "knocking the air out, and he slumps to the ground out of the fight."
+            , statCheck = Nothing
+            }
+
+        ( Torso, Effect6 ) ->
+            { damageMultiplier = 6
+            , effects = [ Death ]
+            , message = "and unfortunately his spine is now clearly visible from the front."
+            , statCheck = Nothing
+            }
+
+        ( RightLeg, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck = Nothing
+            }
+
+        ( RightLeg, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = CrippledRightLeg
+                    , failureMessage = "bowling him over and crippling that leg."
+                    }
+            }
+
+        ( RightLeg, Effect3 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = CrippledRightLeg
+                    , failureMessage = "bowling him over and crippling that leg."
+                    }
+            }
+
+        ( RightLeg, Effect4 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+            , message = "smashing the knee into the next town. He falls."
+            , statCheck = Nothing
+            }
+
+        ( RightLeg, Effect5 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+            , message = "smashing the knee into the next town. He falls."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = Knockout
+                    , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                    }
+            }
+
+        ( RightLeg, Effect6 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockout, CrippledRightLeg, BypassArmor ]
+            , message = "and the intense pain of having a leg removed causes him to quit."
+            , statCheck = Nothing
+            }
+
+        ( LeftLeg, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck = Nothing
+            }
+
+        ( LeftLeg, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = CrippledLeftLeg
+                    , failureMessage = "bowling him over and crippling that leg."
+                    }
+            }
+
+        ( LeftLeg, Effect3 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown ]
+            , message = "knocking him to the ground like a bowling pin in a league game."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = CrippledLeftLeg
+                    , failureMessage = "bowling him over and crippling that leg."
+                    }
+            }
+
+        ( LeftLeg, Effect4 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+            , message = "smashing the knee into the next town. He falls."
+            , statCheck = Nothing
+            }
+
+        ( LeftLeg, Effect5 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+            , message = "smashing the knee into the next town. He falls."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = Knockout
+                    , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                    }
+            }
+
+        ( LeftLeg, Effect6 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockout, CrippledLeftLeg, BypassArmor ]
+            , message = "and the intense pain of having a leg removed causes him to quit."
+            , statCheck = Nothing
+            }
+
+        ( Eyes, Effect1 ) ->
+            { damageMultiplier = 4
+            , effects = []
+            , message = "inflicting some extra pain."
+            , statCheck =
+                Just
+                    { stat = Luck
+                    , modifier = 4
+                    , failureEffect = Blinded
+                    , failureMessage = "causing blindness, unluckily for him."
+                    }
+            }
+
+        ( Eyes, Effect2 ) ->
+            { damageMultiplier = 4
+            , effects = [ BypassArmor ]
+            , message = "with no protection there, causing serious pain."
+            , statCheck =
+                Just
+                    { stat = Luck
+                    , modifier = 3
+                    , failureEffect = Blinded
+                    , failureMessage = "causing blindness, unluckily for him."
+                    }
+            }
+
+        ( Eyes, Effect3 ) ->
+            { damageMultiplier = 6
+            , effects = [ BypassArmor ]
+            , message = "with no protection there, causing serious pain."
+            , statCheck =
+                Just
+                    { stat = Luck
+                    , modifier = 2
+                    , failureEffect = Blinded
+                    , failureMessage = "causing blindness, unluckily for him."
+                    }
+            }
+
+        ( Eyes, Effect4 ) ->
+            { damageMultiplier = 6
+            , effects = [ Blinded, BypassArmor, LoseNextTurn ]
+            , message = "blinding him with a stunning blow."
+            , statCheck = Nothing
+            }
+
+        ( Eyes, Effect5 ) ->
+            { damageMultiplier = 8
+            , effects = [ Knockout, Blinded, BypassArmor ]
+            , message = "the loss of an eye is too much for him, and he falls to the ground."
+            , statCheck = Nothing
+            }
+
+        ( Eyes, Effect6 ) ->
+            { damageMultiplier = 8
+            , effects = [ Death ]
+            , message = "and sadly he is too busy feeling the rush of air on the brain to notice death approaching."
+            , statCheck = Nothing
+            }
+
+        ( Groin, Effect1 ) ->
+            { damageMultiplier = 3
+            , effects = []
+            , message = "which had to hurt."
+            , statCheck = Nothing
+            }
+
+        ( Groin, Effect2 ) ->
+            { damageMultiplier = 3
+            , effects = [ BypassArmor ]
+            , message = "and he's not wearing a cup, either."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = Knockdown
+                    , failureMessage = "and without protection, he falls over, groaning in agony."
+                    }
+            }
+
+        ( Groin, Effect3 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockdown ]
+            , message = "and without protection, he falls over, groaning in agony."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = -3
+                    , failureEffect = Knockout
+                    , failureMessage = "the pain is too much for him and he collapses like a rag."
+                    }
+            }
+
+        ( Groin, Effect4 ) ->
+            { damageMultiplier = 3
+            , effects = [ Knockout ]
+            , message = "the pain is too much for him and he collapses like a rag."
+            , statCheck = Nothing
+            }
+
+        ( Groin, Effect5 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockdown, BypassArmor ]
+            , message = "and without protection, he falls over, groaning in agony."
+            , statCheck =
+                Just
+                    { stat = Endurance
+                    , modifier = 0
+                    , failureEffect = Knockout
+                    , failureMessage = "the pain is too much for him and he collapses like a rag."
+                    }
+            }
+
+        ( Groin, Effect6 ) ->
+            { damageMultiplier = 4
+            , effects = [ Knockout, BypassArmor ]
+            , message = "he mumbles 'Mother', as his eyes roll into the back of his head."
+            , statCheck = Nothing
+            }

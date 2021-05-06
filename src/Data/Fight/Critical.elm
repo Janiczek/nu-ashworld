@@ -1,5 +1,6 @@
 module Data.Fight.Critical exposing
-    ( Effect(..)
+    ( Critical
+    , Effect(..)
     , EffectCategory(..)
     , Spec
     , toCategory
@@ -53,8 +54,7 @@ type Effect
 
 
 type alias Spec =
-    { -- TODO this damage multiplier must be divided by 2 !!!
-      damageMultiplier : Int
+    { damageMultiplier : Int
     , effects : List Effect
     , message : String
     , statCheck :
@@ -64,4 +64,14 @@ type alias Spec =
             , failureEffect : Effect
             , failureMessage : String
             }
+    }
+
+
+type alias Critical =
+    -- = rolled spec
+    { damageMultiplier : Int
+
+    -- effects and message are _after_  the stat check
+    , effects : List Effect
+    , message : String
     }

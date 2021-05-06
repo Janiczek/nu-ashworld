@@ -8,6 +8,7 @@ module Data.Fight.ShotType exposing
     , encode
     , isAimed
     , label
+    , toAimed
     )
 
 import Json.Decode as JD exposing (Decoder)
@@ -219,3 +220,13 @@ aimedShotDecoder =
                     _ ->
                         JD.fail <| "Unknown AimedShot: '" ++ type_ ++ "'"
             )
+
+
+toAimed : ShotType -> AimedShot
+toAimed shotType =
+    case shotType of
+        NormalShot ->
+            Torso
+
+        AimedShot aimedShot ->
+            aimedShot

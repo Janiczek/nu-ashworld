@@ -887,6 +887,14 @@ mapView mouseCoords _ player =
                 tooDistant : Bool
                 tooDistant =
                     cost > player.ticks
+
+                ticksString : String
+                ticksString =
+                    if cost == 1 then
+                        "tick"
+
+                    else
+                        "ticks"
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -922,7 +930,7 @@ mapView mouseCoords _ player =
 
                           else
                             H.div []
-                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " ticks" ]
+                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
                                 ]
