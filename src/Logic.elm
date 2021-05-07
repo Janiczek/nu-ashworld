@@ -114,6 +114,7 @@ armorClass r =
 actionPoints :
     { special : Special
     , hasBruiserTrait : Bool
+    , actionBoyPerkRanks : Int
     }
     -> Int
 actionPoints r =
@@ -124,9 +125,13 @@ actionPoints r =
 
             else
                 0
+
+        actionBoyBonus =
+            r.actionBoyPerkRanks
     in
     (5 + r.special.agility // 2)
         - bruiserPenalty
+        + actionBoyBonus
 
 
 distancePenalty : Int -> Int

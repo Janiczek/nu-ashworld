@@ -798,6 +798,7 @@ playerOpponent player =
         actionPoints =
             Logic.actionPoints
                 { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                , actionBoyPerkRanks = Perk.rank Perk.ActionBoy player.perks
                 , special = player.special
                 }
 

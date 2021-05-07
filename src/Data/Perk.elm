@@ -83,6 +83,7 @@ type Perk
       -- TODO Sharpshooter -- would need ranged combat
     | Speaker
       -- lvl 12
+    | ActionBoy
     | Tag
     | GainStrength
     | GainPerception
@@ -98,6 +99,7 @@ type Perk
 all : List Perk
 all =
     [ AdrenalineRush
+    , ActionBoy
     , Awareness
     , BetterCriticals
     , BonusHthDamage
@@ -235,6 +237,9 @@ name perk =
         Speaker ->
             "Speaker"
 
+        ActionBoy ->
+            "Action Boy"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -248,6 +253,7 @@ multipleRankPerks =
         , ( SwiftLearner, 3 )
         , ( Toughness, 3 )
         , ( Pathfinder, 2 )
+        , ( ActionBoy, 2 )
         ]
 
 
@@ -360,6 +366,9 @@ encode perk =
             Speaker ->
                 "speaker"
 
+            ActionBoy ->
+                "action-boy"
+
 
 decoder : Decoder Perk
 decoder =
@@ -465,6 +474,9 @@ decoder =
 
                     "speaker" ->
                         JD.succeed Speaker
+
+                    "action-boy" ->
+                        JD.succeed ActionBoy
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -609,4 +621,7 @@ isApplicable r perk =
 
                 Speaker ->
                     r.level >= 9 && skill Skill.Speech >= 50
+
+                ActionBoy ->
+                    r.level >= 12 && s.agility >= 5
            )

@@ -1762,6 +1762,7 @@ newCharDerivedStatsView newChar =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser newChar.traits
+                            , actionBoyPerkRanks = 0
                             , special = finalSpecial
                             }
                   , Nothing
@@ -2089,6 +2090,7 @@ charDerivedStatsView player =
                   , String.fromInt <|
                         Logic.actionPoints
                             { hasBruiserTrait = Trait.isSelected Trait.Bruiser player.traits
+                            , actionBoyPerkRanks = Perk.rank Perk.ActionBoy player.perks
                             , special = player.special
                             }
                   , Nothing
