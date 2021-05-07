@@ -61,6 +61,8 @@ type Perk
       -- TODO Magnetic Personality -- would need party members
     | MoreCriticals
     | Negotiator
+      -- TODO Pack Rat -- would need carry weight
+    | Pathfinder
       -- lvl 9
     | BetterCriticals
       -- lvl 12
@@ -100,6 +102,7 @@ all =
     , MasterTrader
     , MoreCriticals
     , Negotiator
+    , Pathfinder
     , Slayer
     , Survivalist
     , SwiftLearner
@@ -196,6 +199,9 @@ name perk =
         Negotiator ->
             "Negotiator"
 
+        Pathfinder ->
+            "Pathfinder"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -208,6 +214,7 @@ multipleRankPerks =
         , ( MoreCriticals, 3 )
         , ( SwiftLearner, 3 )
         , ( Toughness, 3 )
+        , ( Pathfinder, 2 )
         ]
 
 
@@ -305,6 +312,9 @@ encode perk =
             Negotiator ->
                 "negotiator"
 
+            Pathfinder ->
+                "pathfinder"
+
 
 decoder : Decoder Perk
 decoder =
@@ -395,6 +405,9 @@ decoder =
 
                     "negotiator" ->
                         JD.succeed Negotiator
+
+                    "pathfinder" ->
+                        JD.succeed Pathfinder
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -524,4 +537,7 @@ isApplicable r perk =
 
                 Negotiator ->
                     r.level >= 6 && skill Skill.Barter >= 50 && skill Skill.Speech >= 50
+
+                Pathfinder ->
+                    r.level >= 6 && s.endurance >= 6 && skill Skill.Outdoorsman >= 40
            )

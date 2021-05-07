@@ -12,13 +12,27 @@ import Set exposing (Set)
 import Vendored.AStar as AStar
 
 
-tickCost : Set TileCoords -> Int
-tickCost pathTaken =
-    pathTaken
-        |> Set.toList
-        |> List.map (Terrain.forCoords >> Terrain.tickCost)
-        |> List.sum
-        |> ceiling
+tickCost :
+    { pathTaken : Set TileCoords
+    , pathfinderPerkRanks : Int
+    }
+    -> Int
+tickCost { pathTaken, pathfinderPerkRanks } =
+    if Set.isEmpty pathTaken then
+        0
+
+    else
+        let
+            pathfinderMultiplier =
+                1 - (0.25 * toFloat pathfinderPerkRanks)
+        in
+        pathTaken
+            |> Set.toList
+            |> List.map (Terrain.forCoords >> Terrain.tickCost)
+            |> List.sum
+            |> (*) pathfinderMultiplier
+            |> ceiling
+            |> max 1
 
 
 path :

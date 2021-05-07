@@ -882,7 +882,10 @@ mapView mouseCoords _ player =
 
                 cost : Int
                 cost =
-                    Pathfinding.tickCost pathTaken
+                    Pathfinding.tickCost
+                        { pathTaken = pathTaken
+                        , pathfinderPerkRanks = Perk.rank Perk.Pathfinder player.perks
+                        }
 
                 tooDistant : Bool
                 tooDistant =

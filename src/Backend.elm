@@ -1042,7 +1042,10 @@ moveTo newCoords pathTaken clientId player model =
 
         tickCost : Int
         tickCost =
-            Pathfinding.tickCost pathTaken
+            Pathfinding.tickCost
+                { pathTaken = pathTaken
+                , pathfinderPerkRanks = Perk.rank Perk.Pathfinder player.perks
+                }
 
         isSamePosition : Bool
         isSamePosition =
@@ -1471,6 +1474,9 @@ oneTimePerkEffects currentTime =
                     Nothing
 
                 Perk.FortuneFinder ->
+                    Nothing
+
+                Perk.Pathfinder ->
                     Nothing
     in
     Perk.all
