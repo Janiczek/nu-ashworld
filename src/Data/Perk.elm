@@ -66,6 +66,7 @@ type Perk
       -- TODO Quick Recovery -- would need knockdown effect implemented
       -- TODO Rad Resistance -- would need rad resistance stat tracked
     | Ranger
+    | Salesman
       -- lvl 9
     | BetterCriticals
       -- lvl 12
@@ -107,6 +108,7 @@ all =
     , Negotiator
     , Pathfinder
     , Ranger
+    , Salesman
     , Slayer
     , Survivalist
     , SwiftLearner
@@ -208,6 +210,9 @@ name perk =
 
         Ranger ->
             "Ranger"
+
+        Salesman ->
+            "Salesman"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -325,6 +330,9 @@ encode perk =
             Ranger ->
                 "ranger"
 
+            Salesman ->
+                "salesman"
+
 
 decoder : Decoder Perk
 decoder =
@@ -421,6 +429,9 @@ decoder =
 
                     "ranger" ->
                         JD.succeed Ranger
+
+                    "salesman" ->
+                        JD.succeed Salesman
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -556,4 +567,7 @@ isApplicable r perk =
 
                 Ranger ->
                     r.level >= 6 && s.perception >= 6
+
+                Salesman ->
+                    r.level >= 6 && skill Skill.Barter >= 50
            )
