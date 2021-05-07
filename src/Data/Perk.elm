@@ -63,6 +63,9 @@ type Perk
     | Negotiator
       -- TODO Pack Rat -- would need carry weight
     | Pathfinder
+      -- TODO Quick Recovery -- would need knockdown effect implemented
+      -- TODO Rad Resistance -- would need rad resistance stat tracked
+    | Ranger
       -- lvl 9
     | BetterCriticals
       -- lvl 12
@@ -103,6 +106,7 @@ all =
     , MoreCriticals
     , Negotiator
     , Pathfinder
+    , Ranger
     , Slayer
     , Survivalist
     , SwiftLearner
@@ -201,6 +205,9 @@ name perk =
 
         Pathfinder ->
             "Pathfinder"
+
+        Ranger ->
+            "Ranger"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -315,6 +322,9 @@ encode perk =
             Pathfinder ->
                 "pathfinder"
 
+            Ranger ->
+                "ranger"
+
 
 decoder : Decoder Perk
 decoder =
@@ -408,6 +418,9 @@ decoder =
 
                     "pathfinder" ->
                         JD.succeed Pathfinder
+
+                    "ranger" ->
+                        JD.succeed Ranger
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -540,4 +553,7 @@ isApplicable r perk =
 
                 Pathfinder ->
                     r.level >= 6 && s.endurance >= 6 && skill Skill.Outdoorsman >= 40
+
+                Ranger ->
+                    r.level >= 6 && s.perception >= 6
            )
