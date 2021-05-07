@@ -49,7 +49,11 @@ type Perk
     | Toughness
       -- lvl 6
     | AdrenalineRush
+      -- TODO Bonus Move -- would need move-only APs and some intelligent use of movement in combat
+      -- TODO Bonus Ranged Damage -- would need ranged combat
     | Educated
+      -- TODO Empathy -- would need dialogues
+    | FortuneFinder
     | MoreCriticals
       -- lvl 9
     | BetterCriticals
@@ -77,6 +81,7 @@ all =
     , EarlierSequence
     , Educated
     , FasterHealing
+    , FortuneFinder
     , GainAgility
     , GainCharisma
     , GainEndurance
@@ -173,6 +178,9 @@ name perk =
 
         AdrenalineRush ->
             "Adrenaline Rush"
+
+        FortuneFinder ->
+            "Fortune Finder"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -274,6 +282,9 @@ encode perk =
             AdrenalineRush ->
                 "adrenaline-rush"
 
+            FortuneFinder ->
+                "fortune-finder"
+
 
 decoder : Decoder Perk
 decoder =
@@ -355,6 +366,9 @@ decoder =
 
                     "adrenaline-rush" ->
                         JD.succeed AdrenalineRush
+
+                    "fortune-finder" ->
+                        JD.succeed FortuneFinder
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -475,4 +489,7 @@ isApplicable r perk =
 
                 AdrenalineRush ->
                     r.level >= 6 && s.strength < 10
+
+                FortuneFinder ->
+                    r.level >= 6 && s.luck >= 8
            )

@@ -711,60 +711,68 @@ subtractHp hp opponent =
     { opponent | hp = max 0 <| opponent.hp - hp }
 
 
-enemyOpponentGenerator : Enemy.Type -> Generator Opponent
-enemyOpponentGenerator enemyType =
-    Random.map
-        (\caps ->
-            let
-                hp : Int
-                hp =
-                    Enemy.hp enemyType
+enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Enemy.Type -> Generator Opponent
+enemyOpponentGenerator r enemyType =
+    Enemy.caps enemyType
+        |> Random.map
+            (\caps ->
+                let
+                    caps_ : Int
+                    caps_ =
+                        if r.hasFortuneFinderPerk then
+                            caps * 2
 
-                addedSkillPercentages : Dict_.Dict Skill Int
-                addedSkillPercentages =
-                    Enemy.addedSkillPercentages enemyType
+                        else
+                            caps
 
-                traits : Set_.Set Trait
-                traits =
-                    Set_.empty
+                    hp : Int
+                    hp =
+                        Enemy.hp enemyType
 
-                special : Special
-                special =
-                    Enemy.special enemyType
+                    addedSkillPercentages : Dict_.Dict Skill Int
+                    addedSkillPercentages =
+                        Enemy.addedSkillPercentages enemyType
 
-                unarmedSkill : Int
-                unarmedSkill =
-                    Skill.get special addedSkillPercentages Skill.Unarmed
-            in
-            { type_ = Fight.Npc enemyType
-            , hp = hp
-            , maxHp = hp
-            , maxAp = Enemy.actionPoints enemyType
-            , sequence = Enemy.sequence enemyType
-            , traits = traits
-            , perks = Dict_.empty
-            , caps = caps
-            , equippedArmor = Enemy.equippedArmor enemyType
-            , naturalArmorClass = Enemy.naturalArmorClass enemyType
-            , attackStats =
-                -- TODO for now it's all unarmed
-                Logic.unarmedAttackStats
-                    { special = special
-                    , unarmedSkill = unarmedSkill
-                    , traits = traits
-                    , perks = Dict_.empty
-                    , level =
-                        -- TODO what to do? What damage ranges do enemies really have in FO2?
-                        1
-                    , npcExtraBonus = Enemy.meleeDamageBonus enemyType
-                    }
-            , addedSkillPercentages = addedSkillPercentages
-            , special =
-                -- Enemies never have anything else than base special (no traits, perks, ...)
-                special
-            }
-        )
-        (Enemy.caps enemyType)
+                    traits : Set_.Set Trait
+                    traits =
+                        Set_.empty
+
+                    special : Special
+                    special =
+                        Enemy.special enemyType
+
+                    unarmedSkill : Int
+                    unarmedSkill =
+                        Skill.get special addedSkillPercentages Skill.Unarmed
+                in
+                { type_ = Fight.Npc enemyType
+                , hp = hp
+                , maxHp = hp
+                , maxAp = Enemy.actionPoints enemyType
+                , sequence = Enemy.sequence enemyType
+                , traits = traits
+                , perks = Dict_.empty
+                , caps = caps_
+                , equippedArmor = Enemy.equippedArmor enemyType
+                , naturalArmorClass = Enemy.naturalArmorClass enemyType
+                , attackStats =
+                    -- TODO for now it's all unarmed
+                    Logic.unarmedAttackStats
+                        { special = special
+                        , unarmedSkill = unarmedSkill
+                        , traits = traits
+                        , perks = Dict_.empty
+                        , level =
+                            -- TODO what to do? What damage ranges do enemies really have in FO2?
+                            1
+                        , npcExtraBonus = Enemy.meleeDamageBonus enemyType
+                        }
+                , addedSkillPercentages = addedSkillPercentages
+                , special =
+                    -- Enemies never have anything else than base special (no traits, perks, ...)
+                    special
+                }
+            )
 
 
 playerOpponent : SPlayer -> Opponent

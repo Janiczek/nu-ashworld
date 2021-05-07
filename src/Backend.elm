@@ -1349,7 +1349,10 @@ wander clientId player model =
         , Random.generate
             (GeneratedFight clientId player)
             (enemyTypeGenerator
-                |> Random.andThen FightGen.enemyOpponentGenerator
+                |> Random.andThen
+                    (FightGen.enemyOpponentGenerator
+                        { hasFortuneFinderPerk = Perk.rank Perk.FortuneFinder player.perks > 0 }
+                    )
                 |> Random.andThen
                     (\enemyOpponent ->
                         FightGen.generator
@@ -1455,6 +1458,9 @@ oneTimePerkEffects currentTime =
                     Nothing
 
                 Perk.Slayer ->
+                    Nothing
+
+                Perk.FortuneFinder ->
                     Nothing
     in
     Perk.all
