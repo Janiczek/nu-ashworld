@@ -1437,6 +1437,9 @@ oneTimePerkEffects currentTime =
                 Perk.Salesman ->
                     Just <| SPlayer.addSkillPercentage 20 Skill.Barter
 
+                Perk.Speaker ->
+                    Just <| SPlayer.addSkillPercentage 20 Skill.Speech
+
                 Perk.BonusHthDamage ->
                     Nothing
 

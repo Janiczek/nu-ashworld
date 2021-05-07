@@ -73,6 +73,15 @@ type Perk
     | BetterCriticals
       -- TODO Demolition Expert -- would need traps implemented
     | Dodger
+      -- TODO Explorer -- probably not applicable, or perhaps might give x% chance that wandering or fighting won't consume a tick?
+      -- TODO Karma Beacon -- would need karma tracked
+      -- TODO Light Step -- would need traps implemented
+      -- TODO Mutate -- just a bit tricky to implement (char screen forcing player to choose one)
+      -- TODO Mysterious Stranger -- would need combat to allow more than 2 opponents
+      -- TODO Pyromaniac -- would need fire ranged combat
+      -- TODO Scrounger -- would need ammo drops from combat
+      -- TODO Sharpshooter -- would need ranged combat
+    | Speaker
       -- lvl 12
     | Tag
     | GainStrength
@@ -115,6 +124,7 @@ all =
     , Ranger
     , Salesman
     , Slayer
+    , Speaker
     , Survivalist
     , SwiftLearner
     , Tag
@@ -221,6 +231,9 @@ name perk =
 
         Dodger ->
             "Dodger"
+
+        Speaker ->
+            "Speaker"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -344,6 +357,9 @@ encode perk =
             Dodger ->
                 "dodger"
 
+            Speaker ->
+                "speaker"
+
 
 decoder : Decoder Perk
 decoder =
@@ -446,6 +462,9 @@ decoder =
 
                     "dodger" ->
                         JD.succeed Dodger
+
+                    "speaker" ->
+                        JD.succeed Speaker
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -587,4 +606,7 @@ isApplicable r perk =
 
                 Dodger ->
                     r.level >= 9 && s.agility >= 6
+
+                Speaker ->
+                    r.level >= 9 && skill Skill.Speech >= 50
            )
