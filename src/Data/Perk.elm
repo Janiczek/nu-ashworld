@@ -54,6 +54,7 @@ type Perk
     | Educated
       -- TODO Empathy -- would need dialogues
     | FortuneFinder
+    | Gambler
     | MoreCriticals
       -- lvl 9
     | BetterCriticals
@@ -89,6 +90,7 @@ all =
     , GainLuck
     , GainPerception
     , GainStrength
+    , Gambler
     , HereAndNow
     , MasterTrader
     , MoreCriticals
@@ -181,6 +183,9 @@ name perk =
 
         FortuneFinder ->
             "Fortune Finder"
+
+        Gambler ->
+            "Gambler"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -285,6 +290,9 @@ encode perk =
             FortuneFinder ->
                 "fortune-finder"
 
+            Gambler ->
+                "gambler"
+
 
 decoder : Decoder Perk
 decoder =
@@ -369,6 +377,9 @@ decoder =
 
                     "fortune-finder" ->
                         JD.succeed FortuneFinder
+
+                    "gambler" ->
+                        JD.succeed Gambler
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -492,4 +503,7 @@ isApplicable r perk =
 
                 FortuneFinder ->
                     r.level >= 6 && s.luck >= 8
+
+                Gambler ->
+                    r.level >= 6 && skill Skill.Gambling >= 50
            )

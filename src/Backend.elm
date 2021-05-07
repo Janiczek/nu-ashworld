@@ -1418,6 +1418,9 @@ oneTimePerkEffects currentTime =
                                 }
                                 player
 
+                Perk.Gambler ->
+                    Just <| SPlayer.addSkillPercentage 20 Skill.Gambling
+
                 Perk.BonusHthDamage ->
                     Nothing
 
