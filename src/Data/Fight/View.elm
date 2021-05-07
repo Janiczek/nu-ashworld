@@ -1,12 +1,6 @@
 module Data.Fight.View exposing (view)
 
-import Data.Fight as Fight
-    exposing
-        ( FightAction(..)
-        , FightInfo
-        , FightResult(..)
-        , Who(..)
-        )
+import Data.Fight as Fight exposing (Who(..))
 import Data.Fight.ShotType as ShotType exposing (ShotType(..))
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -53,7 +47,7 @@ addS verb =
         verb ++ "s"
 
 
-view : PerceptionLevel -> FightInfo -> PlayerName -> Html msg
+view : PerceptionLevel -> Fight.Info -> PlayerName -> Html msg
 view perceptionLevel fight yourName =
     let
         attackerName : String
@@ -139,7 +133,7 @@ view perceptionLevel fight yourName =
                                         action_ : String
                                         action_ =
                                             case action of
-                                                Start { distanceHexes } ->
+                                                Fight.Start { distanceHexes } ->
                                                     if Perception.atLeast Perception.Great perceptionLevel then
                                                         names_.subject.verbPresent "initiate"
                                                             ++ " the fight from "
@@ -150,7 +144,7 @@ view perceptionLevel fight yourName =
                                                         names_.subject.verbPresent "initiate"
                                                             ++ " the fight."
 
-                                                ComeCloser { hexes, remainingDistanceHexes } ->
+                                                Fight.ComeCloser { hexes, remainingDistanceHexes } ->
                                                     if Perception.atLeast Perception.Great perceptionLevel then
                                                         names_.subject.verbPresent "come"
                                                             ++ " closer "
@@ -163,7 +157,7 @@ view perceptionLevel fight yourName =
                                                         names_.subject.verbPresent "come"
                                                             ++ " closer."
 
-                                                Attack { damage, remainingHp, shotType } ->
+                                                Fight.Attack { damage, remainingHp, shotType } ->
                                                     (case shotType of
                                                         NormalShot ->
                                                             ""
@@ -189,7 +183,7 @@ view perceptionLevel fight yourName =
                                                                 ""
                                                            )
 
-                                                Miss { shotType } ->
+                                                Fight.Miss { shotType } ->
                                                     (case shotType of
                                                         NormalShot ->
                                                             ""
@@ -222,7 +216,7 @@ view perceptionLevel fight yourName =
             [ H.text <|
                 "Result: "
                     ++ (case fight.result of
-                            AttackerWon { xpGained, capsGained } ->
+                            Fight.AttackerWon { xpGained, capsGained } ->
                                 if youAreAttacker then
                                     "You won! You gained "
                                         ++ String.fromInt xpGained
@@ -237,7 +231,7 @@ view perceptionLevel fight yourName =
                                         ++ String.fromInt capsGained
                                         ++ " caps."
 
-                            TargetWon { xpGained, capsGained } ->
+                            Fight.TargetWon { xpGained, capsGained } ->
                                 if youAreAttacker then
                                     if Fight.isPlayer fight.target then
                                         "You lost! Your target gained "
@@ -256,17 +250,17 @@ view perceptionLevel fight yourName =
                                         ++ String.fromInt capsGained
                                         ++ " caps."
 
-                            TargetAlreadyDead ->
+                            Fight.TargetAlreadyDead ->
                                 if youAreAttacker then
                                     "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
 
                                 else
                                     attackerName ++ " wanted to fight you but due to their low Perception didn't realize you're already dead. Ashamed, they quickly ran away and will deny this ever happened."
 
-                            BothDead ->
+                            Fight.BothDead ->
                                 "You both end up dead."
 
-                            NobodyDead ->
+                            Fight.NobodyDead ->
                                 "You both get out of the fight alive."
                        )
             ]

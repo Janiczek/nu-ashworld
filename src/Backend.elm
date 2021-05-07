@@ -10,7 +10,7 @@ import Data.Auth as Auth
         )
 import Data.Barter as Barter
 import Data.Enemy as Enemy
-import Data.Fight as Fight exposing (FightResult(..), Opponent)
+import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.Generator as FightGen
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
@@ -263,16 +263,16 @@ update msg model =
                             )
                             fight_.finalTarget
                         |> (case fight_.fightInfo.result of
-                                BothDead ->
+                                Fight.BothDead ->
                                     identity
 
-                                NobodyDead ->
+                                Fight.NobodyDead ->
                                     identity
 
-                                TargetAlreadyDead ->
+                                Fight.TargetAlreadyDead ->
                                     identity
 
-                                AttackerWon { xpGained, capsGained } ->
+                                Fight.AttackerWon { xpGained, capsGained } ->
                                     identity
                                         >> updateIfPlayer
                                             (\player ->
@@ -295,7 +295,7 @@ update msg model =
                                             )
                                             fight_.finalTarget
 
-                                TargetWon { xpGained, capsGained } ->
+                                Fight.TargetWon { xpGained, capsGained } ->
                                     identity
                                         >> updateIfPlayer
                                             (\player ->

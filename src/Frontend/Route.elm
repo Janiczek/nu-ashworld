@@ -10,7 +10,7 @@ module Frontend.Route exposing
     )
 
 import Data.Barter as Barter
-import Data.Fight exposing (FightInfo)
+import Data.Fight as Fight
 import Data.Message exposing (Message)
 
 
@@ -22,7 +22,7 @@ type Route
     | Town TownRoute
     | About
     | News
-    | Fight FightInfo
+    | Fight Fight.Info
     | Messages
     | Message Message
     | CharCreation

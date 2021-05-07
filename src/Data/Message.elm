@@ -9,7 +9,7 @@ module Data.Message exposing
     , summary
     )
 
-import Data.Fight as Fight exposing (FightInfo, FightResult(..))
+import Data.Fight as Fight
 import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception exposing (PerceptionLevel)
@@ -39,7 +39,7 @@ type Type
         }
     | YouWereAttacked
         { attacker : PlayerName
-        , fightInfo : FightInfo
+        , fightInfo : Fight.Info
         }
 
 
@@ -76,7 +76,7 @@ encodeType type_ =
             JE.object
                 [ ( "type", JE.string "YouWereAttacked" )
                 , ( "attacker", JE.string r.attacker )
-                , ( "fightInfo", Fight.encodeFightInfo r.fightInfo )
+                , ( "fightInfo", Fight.encodeInfo r.fightInfo )
                 ]
 
 
@@ -102,7 +102,7 @@ typeDecoder =
                                     }
                             )
                             (JD.field "attacker" JD.string)
-                            (JD.field "fightInfo" Fight.fightInfoDecoder)
+                            (JD.field "fightInfo" Fight.infoDecoder)
 
                     _ ->
                         JD.fail <| "Unknown Log Type: '" ++ type_ ++ "'"
@@ -128,19 +128,19 @@ summary message =
 
         YouWereAttacked r ->
             case r.fightInfo.result of
-                AttackerWon _ ->
+                Fight.AttackerWon _ ->
                     "You were attacked by " ++ r.attacker ++ " and lost"
 
-                TargetWon _ ->
+                Fight.TargetWon _ ->
                     "You were attacked by " ++ r.attacker ++ " and won"
 
-                TargetAlreadyDead ->
+                Fight.TargetAlreadyDead ->
                     "You were attacked by " ++ r.attacker ++ " but were already dead"
 
-                BothDead ->
+                Fight.BothDead ->
                     "You were attacked by " ++ r.attacker ++ " and both died"
 
-                NobodyDead ->
+                Fight.NobodyDead ->
                     "You were attacked by " ++ r.attacker ++ " and both stayed alive"
 
 

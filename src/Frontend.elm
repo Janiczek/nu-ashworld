@@ -6,7 +6,7 @@ import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Data.Auth as Auth
 import Data.Barter as Barter
-import Data.Fight as Fight exposing (FightInfo)
+import Data.Fight as Fight
 import Data.Fight.ShotType as ShotType
 import Data.Fight.View
 import Data.HealthStatus as HealthStatus
@@ -2576,7 +2576,7 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-fightView : FightInfo -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+fightView : Fight.Info -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 fightView fight _ player =
     let
         youAreAttacker =

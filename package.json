@@ -1,5 +1,8 @@
 {
   "license": "UNLICENSED",
+  "scripts": {
+    "postinstall": "elm-tooling install"
+  },
   "devDependencies": {
     "elm-review": "^2.5.0"
   }

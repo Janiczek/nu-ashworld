@@ -5,6 +5,7 @@ module Data.Item exposing
     , Item
     , Kind(..)
     , UniqueKey
+    , allKinds
     , armorClass
     , basePrice
     , create
@@ -55,6 +56,22 @@ type Kind
     | LeatherJacket
     | LeatherArmor
     | MetalArmor
+
+
+allKinds : List Kind
+allKinds =
+    [ HealingPowder
+    , Stimpak
+    , BigBookOfScience
+    , DeansElectronics
+    , FirstAidBook
+    , GunsAndBullets
+    , ScoutHandbook
+    , Robes
+    , LeatherJacket
+    , LeatherArmor
+    , MetalArmor
+    ]
 
 
 type Effect

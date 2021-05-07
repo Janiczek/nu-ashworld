@@ -3,6 +3,7 @@ module Data.Enemy exposing
     , actionPoints
     , addedSkillPercentages
     , aimedShotName
+    , allTypes
     , caps
     , criticalSpec
     , damageResistanceNormal
@@ -102,6 +103,15 @@ type Type
       --| TODO LesserBlackRadscorpion
     | LesserRadscorpion
     | Radscorpion
+
+
+allTypes : List Type
+allTypes =
+    [ GiantAnt
+    , ToughGiantAnt
+    , LesserRadscorpion
+    , Radscorpion
+    ]
 
 
 forChunk : Chunk -> List Type

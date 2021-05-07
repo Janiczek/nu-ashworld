@@ -9,14 +9,7 @@ module Data.Fight.Generator exposing
 import AssocList as Dict_
 import AssocSet as Set_
 import Data.Enemy as Enemy
-import Data.Fight as Fight
-    exposing
-        ( FightAction(..)
-        , FightInfo
-        , FightResult(..)
-        , Opponent
-        , Who(..)
-        )
+import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item
@@ -37,7 +30,7 @@ import Time exposing (Posix)
 type alias Fight =
     { finalAttacker : Opponent
     , finalTarget : Opponent
-    , fightInfo : FightInfo
+    , fightInfo : Fight.Info
     , messageForTarget : Message
     }
 
@@ -48,7 +41,7 @@ type alias OngoingFight =
     , target : Opponent
     , attackerAp : Int
     , targetAp : Int
-    , reverseLog : List ( Who, FightAction )
+    , reverseLog : List ( Who, Fight.Action )
     }
 
 
@@ -114,7 +107,7 @@ generator r =
                         , target = r.target
                         , attackerAp = r.attacker.maxAp
                         , targetAp = r.target.maxAp
-                        , reverseLog = [ ( Attacker, Start { distanceHexes = distance } ) ]
+                        , reverseLog = [ ( Attacker, Fight.Start { distanceHexes = distance } ) ]
                         }
                     )
 
@@ -181,7 +174,7 @@ generator r =
             else
                 Random.constant ongoing
 
-        addLog : Who -> FightAction -> OngoingFight -> OngoingFight
+        addLog : Who -> Fight.Action -> OngoingFight -> OngoingFight
         addLog who action ongoing =
             { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
 
@@ -303,9 +296,18 @@ generator r =
                             -- TODO ammo in combat
                             1
 
-                        armorIgnore =
+                        shouldIgnoreArmor : Bool
+                        shouldIgnoreArmor =
                             -- TODO armor ignoring attacks
-                            0
+                            False
+
+                        armorIgnore =
+                            -- we'll later divide DT by this
+                            if shouldIgnoreArmor then
+                                5
+
+                            else
+                                1
 
                         damageThreshold =
                             -- TODO we're not dealing with plasma/... right now, only _normal_ DT
@@ -349,22 +351,27 @@ generator r =
                             Maybe.map
                                 (\critical -> ( critical.effects, critical.message ))
                                 maybeCritical
+
+                        finalDamageResistance =
+                            damageResistance - ammoDamageResistanceModifier
+
+                        damageBeforeDamageResistance =
+                            ((damage_ + rangedBonus)
+                                * (ammoDamageMultiplier / ammoDamageDivisor)
+                                * (toFloat criticalHitDamageMultiplier / 2)
+                            )
+                                - (damageThreshold / armorIgnore)
                     in
                     ( -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
                       -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                      round <|
-                        (((damage_ + rangedBonus)
-                            * (ammoDamageMultiplier / ammoDamageDivisor)
-                            * (toFloat criticalHitDamageMultiplier / 2)
-                         )
-                            - (damageThreshold / max 1 (5 * armorIgnore))
-                        )
-                            * ((100
-                                    - max 0 (damageResistance / max 1 (5 * armorIgnore))
-                                    + ammoDamageResistanceModifier
-                               )
-                                / 100
-                              )
+                      if damageBeforeDamageResistance > 0 then
+                        max 1 <|
+                            round <|
+                                damageBeforeDamageResistance
+                                    * ((100 - min 90 finalDamageResistance) / 100)
+
+                      else
+                        0
                     , maybeCriticalInfo
                     )
                 )
@@ -417,9 +424,13 @@ generator r =
                                                         , hasSlayerPerk = Perk.rank Perk.Slayer opponent.perks > 0
                                                         }
 
+                                                attackStatsCriticalChanceBonus : Int
+                                                attackStatsCriticalChanceBonus =
+                                                    opponent.attackStats.criticalChanceBonus
+
                                                 criticalChance : Int
                                                 criticalChance =
-                                                    min 100 <| baseCriticalChance + rollCriticalChanceBonus
+                                                    min 100 <| baseCriticalChance + rollCriticalChanceBonus + attackStatsCriticalChanceBonus
                                             in
                                             Random.weightedBool (toFloat criticalChance / 100)
                                                 |> Random.andThen
@@ -467,7 +478,7 @@ generator r =
                                                                 (\( damage, maybeCriticalEffectsAndMessage ) ->
                                                                     ongoing
                                                                         |> addLog who
-                                                                            (Attack
+                                                                            (Fight.Attack
                                                                                 { damage = damage
                                                                                 , shotType = shot
                                                                                 , remainingHp = .hp (opponent_ other ongoing) - damage
@@ -480,7 +491,7 @@ generator r =
 
                                         else
                                             ongoing
-                                                |> addLog who (Miss { shotType = shot })
+                                                |> addLog who (Fight.Miss { shotType = shot })
                                                 |> subtractAp who apCost
                                                 |> Random.constant
                                     )
@@ -507,7 +518,7 @@ generator r =
                 in
                 ongoing
                     |> addLog who
-                        (ComeCloser
+                        (Fight.ComeCloser
                             { hexes = maxPossibleMove
                             , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
                             }
@@ -567,21 +578,21 @@ generator r =
                 targetIsPlayer =
                     Fight.isPlayer ongoing.target.type_
 
-                result : FightResult
+                result : Fight.Result
                 result =
                     if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
-                        BothDead
+                        Fight.BothDead
 
                     else if ongoing.attacker.hp <= 0 then
                         if targetIsPlayer then
-                            TargetWon
+                            Fight.TargetWon
                                 { capsGained = ongoing.attacker.caps
                                 , xpGained = Logic.xpGained { damageDealt = r.attacker.hp }
                                 }
 
                         else
                             -- Enemies have no use for your caps, so let's not make you lose them
-                            TargetWon
+                            Fight.TargetWon
                                 { capsGained = 0
                                 , xpGained = 0
                                 }
@@ -589,21 +600,21 @@ generator r =
                     else if ongoing.target.hp <= 0 then
                         case ongoing.target.type_ of
                             Fight.Player _ ->
-                                AttackerWon
+                                Fight.AttackerWon
                                     { capsGained = ongoing.target.caps
                                     , xpGained = Logic.xpGained { damageDealt = r.target.hp }
                                     }
 
                             Fight.Npc enemyType ->
-                                AttackerWon
+                                Fight.AttackerWon
                                     { capsGained = ongoing.target.caps
                                     , xpGained = Enemy.xp enemyType
                                     }
 
                     else
-                        NobodyDead
+                        Fight.NobodyDead
 
-                fightInfo : FightInfo
+                fightInfo : Fight.Info
                 fightInfo =
                     { attacker = r.attacker.type_
                     , target = r.target.type_
@@ -649,7 +660,7 @@ targetAlreadyDead { attacker, target, currentTime } =
             { attacker = Fight.Player <| Fight.opponentName attacker.type_
             , target = Fight.Player <| Fight.opponentName target.type_
             , log = []
-            , result = TargetAlreadyDead
+            , result = Fight.TargetAlreadyDead
             }
     in
     { finalAttacker = attacker

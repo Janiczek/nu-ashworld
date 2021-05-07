@@ -1,12 +1,13 @@
 module Data.Fight exposing
-    ( FightAction(..)
-    , FightInfo
-    , FightResult(..)
+    ( Action(..)
+    , Info
     , Opponent
     , OpponentType(..)
+    , Result(..)
     , Who(..)
-    , encodeFightInfo
-    , fightInfoDecoder
+    , actionDamage
+    , encodeInfo
+    , infoDecoder
     , isPlayer
     , opponentName
     , theOther
@@ -28,11 +29,11 @@ import Json.Encode as JE
 import Logic exposing (AttackStats)
 
 
-type alias FightInfo =
+type alias Info =
     { attacker : OpponentType
     , target : OpponentType
-    , log : List ( Who, FightAction )
-    , result : FightResult
+    , log : List ( Who, Action )
+    , result : Result
     }
 
 
@@ -58,7 +59,7 @@ type alias Opponent =
     }
 
 
-type FightResult
+type Result
     = AttackerWon { xpGained : Int, capsGained : Int }
     | TargetWon { xpGained : Int, capsGained : Int }
     | TargetAlreadyDead
@@ -71,7 +72,7 @@ type Who
     | Target
 
 
-type FightAction
+type Action
     = -- TODO later Reload, Heal, WalkAway, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
     | ComeCloser
@@ -96,37 +97,37 @@ theOther who =
             Attacker
 
 
-fightInfoDecoder : Decoder FightInfo
-fightInfoDecoder =
+infoDecoder : Decoder Info
+infoDecoder =
     let
-        logItemDecoder : Decoder ( Who, FightAction )
+        logItemDecoder : Decoder ( Who, Action )
         logItemDecoder =
             JD.map2 Tuple.pair
                 (JD.field "who" whoDecoder)
-                (JD.field "action" fightActionDecoder)
+                (JD.field "action" actionDecoder)
     in
-    JD.succeed FightInfo
+    JD.succeed Info
         |> JD.andMap (JD.field "attacker" opponentTypeDecoder)
         |> JD.andMap (JD.field "target" opponentTypeDecoder)
         |> JD.andMap (JD.field "log" (JD.list logItemDecoder))
-        |> JD.andMap (JD.field "result" fightResultDecoder)
+        |> JD.andMap (JD.field "result" resultDecoder)
 
 
-encodeFightInfo : FightInfo -> JE.Value
-encodeFightInfo info =
+encodeInfo : Info -> JE.Value
+encodeInfo info =
     let
-        encodeLogItem : ( Who, FightAction ) -> JE.Value
+        encodeLogItem : ( Who, Action ) -> JE.Value
         encodeLogItem ( who, action ) =
             JE.object
                 [ ( "who", encodeWho who )
-                , ( "action", encodeFightAction action )
+                , ( "action", encodeAction action )
                 ]
     in
     JE.object
         [ ( "attacker", encodeOpponentType info.attacker )
         , ( "target", encodeOpponentType info.target )
         , ( "log", JE.list encodeLogItem info.log )
-        , ( "result", encodeFightResult info.result )
+        , ( "result", encodeResult info.result )
         ]
 
 
@@ -163,8 +164,8 @@ opponentTypeDecoder =
             )
 
 
-encodeFightResult : FightResult -> JE.Value
-encodeFightResult result =
+encodeResult : Result -> JE.Value
+encodeResult result =
     case result of
         AttackerWon r ->
             JE.object
@@ -190,8 +191,8 @@ encodeFightResult result =
             JE.object [ ( "type", JE.string "NobodyDead" ) ]
 
 
-fightResultDecoder : Decoder FightResult
-fightResultDecoder =
+resultDecoder : Decoder Result
+resultDecoder =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -228,7 +229,7 @@ fightResultDecoder =
                         JD.succeed NobodyDead
 
                     _ ->
-                        JD.fail <| "Unknown FightResult: '" ++ type_ ++ "'"
+                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
             )
 
 
@@ -259,8 +260,8 @@ whoDecoder =
             )
 
 
-encodeFightAction : FightAction -> JE.Value
-encodeFightAction action =
+encodeAction : Action -> JE.Value
+encodeAction action =
     case action of
         Start r ->
             JE.object
@@ -290,8 +291,8 @@ encodeFightAction action =
                 ]
 
 
-fightActionDecoder : Decoder FightAction
-fightActionDecoder =
+actionDecoder : Decoder Action
+actionDecoder =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -329,7 +330,7 @@ fightActionDecoder =
                             |> JD.map (\shotType -> Miss { shotType = shotType })
 
                     _ ->
-                        JD.fail <| "Unknown FightAction: '" ++ type_ ++ "'"
+                        JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"
             )
 
 
@@ -351,3 +352,13 @@ isPlayer opponentType =
 
         Player _ ->
             True
+
+
+actionDamage : Action -> Maybe Int
+actionDamage action =
+    case action of
+        Attack { damage } ->
+            Just damage
+
+        _ ->
+            Nothing

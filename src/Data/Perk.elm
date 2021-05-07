@@ -1,5 +1,6 @@
 module Data.Perk exposing
     ( Perk(..)
+    , all
     , allApplicable
     , decoder
     , encode

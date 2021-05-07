@@ -5,7 +5,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
 import Data.Barter as Barter
-import Data.Fight exposing (FightInfo)
+import Data.Fight as Fight
 import Data.Fight.Generator exposing (Fight)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
@@ -157,7 +157,7 @@ type ToFrontend
     | InitWorld WorldLoggedOutData
     | RefreshedLoggedOut WorldLoggedOutData
     | CurrentAdminData AdminData
-    | YourFightResult ( FightInfo, WorldLoggedInData )
+    | YourFightResult ( Fight.Info, WorldLoggedInData )
     | YoureLoggedIn WorldLoggedInData
     | YoureRegistered WorldLoggedInData
     | CharCreationError NewChar.CreationError
