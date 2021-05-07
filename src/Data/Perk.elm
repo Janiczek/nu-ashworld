@@ -46,6 +46,7 @@ type Perk
     | Survivalist
     | SwiftLearner
     | Thief
+    | Toughness
       -- lvl 6
     | Educated
     | MoreCriticals
@@ -89,6 +90,7 @@ all =
     , SwiftLearner
     , Tag
     , Thief
+    , Toughness
     ]
 
 
@@ -164,6 +166,9 @@ name perk =
         Thief ->
             "Thief"
 
+        Toughness ->
+            "Toughness"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -175,6 +180,7 @@ multipleRankPerks =
         , ( FasterHealing, 3 )
         , ( MoreCriticals, 3 )
         , ( SwiftLearner, 3 )
+        , ( Toughness, 3 )
         ]
 
 
@@ -257,6 +263,9 @@ encode perk =
             Thief ->
                 "thief"
 
+            Toughness ->
+                "toughness"
+
 
 decoder : Decoder Perk
 decoder =
@@ -332,6 +341,9 @@ decoder =
 
                     "thief" ->
                         JD.succeed Thief
+
+                    "toughness" ->
+                        JD.succeed Toughness
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -446,4 +458,7 @@ isApplicable r perk =
 
                 Thief ->
                     r.level >= 3
+
+                Toughness ->
+                    r.level >= 3 && s.endurance >= 6 && s.luck >= 6
            )

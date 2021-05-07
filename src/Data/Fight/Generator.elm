@@ -336,6 +336,7 @@ generator r =
                                             Fight.Npc enemyType ->
                                                 Enemy.damageResistanceNormal enemyType
                                     , equippedArmor = otherOpponent.equippedArmor
+                                    , toughnessPerkRanks = Perk.rank Perk.Toughness otherOpponent.perks
                                     }
 
                         ammoDamageResistanceModifier =

@@ -662,13 +662,17 @@ damageThresholdNormal r =
 damageResistanceNormal :
     { naturalDamageResistanceNormal : Int
     , equippedArmor : Maybe Item.Kind
+    , toughnessPerkRanks : Int
     }
     -> Int
 damageResistanceNormal r =
     let
-        armorDamageResistance =
+        fromArmor =
             r.equippedArmor
                 |> Maybe.map Item.damageResistanceNormal
                 |> Maybe.withDefault 0
+
+        fromToughnessPerk =
+            r.toughnessPerkRanks * 10
     in
-    r.naturalDamageResistanceNormal + armorDamageResistance
+    r.naturalDamageResistanceNormal + fromArmor + fromToughnessPerk

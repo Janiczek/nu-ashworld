@@ -2371,6 +2371,7 @@ inventoryView _ player =
             Logic.damageResistanceNormal
                 { naturalDamageResistanceNormal = 0
                 , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                , toughnessPerkRanks = Perk.rank Perk.Toughness player.perks
                 }
 
         attackStats : AttackStats
