@@ -431,6 +431,10 @@ table tbody tr:hover td {
   color: var(--fg-highlight);
 }
 
+.news-item-text li:not(first-child) {
+  margin-top: 1em;
+}
+
 .character-special-attribute-value {
   padding-left: 2ch;
   width: 2ch;
