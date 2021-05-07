@@ -18,8 +18,6 @@ import Json.Encode as JE
    and implement all missing and applicable
 -}
 -- TODO Small Frame - carry weight
--- TODO Finesse + critical chance +10%
--- TODO Finesse - damage -30%
 
 
 type Trait

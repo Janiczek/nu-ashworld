@@ -280,6 +280,8 @@ generator r =
             Random.map2
                 (\damage maybeCritical ->
                     let
+                        -- Damage formulas taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
+                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
                         damage_ =
                             toFloat damage
 
@@ -351,8 +353,17 @@ generator r =
                                 (\critical -> ( critical.effects, critical.message ))
                                 maybeCritical
 
+                        finesseDamageResistanceModifier =
+                            if Trait.isSelected Trait.Finesse opponent.traits then
+                                30
+
+                            else
+                                0
+
                         finalDamageResistance =
-                            damageResistance - ammoDamageResistanceModifier
+                            -- TODO how should this be ignored by armor-bypassing attacks?
+                            -- TODO beware the +/- signs for the ammo modifier
+                            damageResistance + ammoDamageResistanceModifier + finesseDamageResistanceModifier
 
                         damageBeforeDamageResistance =
                             ((damage_ + rangedBonus)
@@ -360,17 +371,18 @@ generator r =
                                 * (toFloat criticalHitDamageMultiplier / 2)
                             )
                                 - (damageThreshold / armorIgnore)
-                    in
-                    ( -- Taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
-                      -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                      if damageBeforeDamageResistance > 0 then
-                        max 1 <|
-                            round <|
-                                damageBeforeDamageResistance
-                                    * ((100 - min 90 finalDamageResistance) / 100)
 
-                      else
-                        0
+                        finalDamage =
+                            if damageBeforeDamageResistance > 0 then
+                                max 1 <|
+                                    round <|
+                                        damageBeforeDamageResistance
+                                            * ((100 - min 90 finalDamageResistance) / 100)
+
+                            else
+                                0
+                    in
+                    ( finalDamage
                     , maybeCriticalInfo
                     )
                 )
