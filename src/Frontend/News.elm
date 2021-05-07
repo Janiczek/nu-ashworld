@@ -16,7 +16,44 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1620065638
+    [ { date = 1620348829
+      , title = "Critical hits"
+      , text = """
+The game now properly tracks **critical hits**. You'll find that both you and
+your enemies have a chance of hitting each other extra hard (**damage
+multiplier** 1.5x to 4x depending on chance and whether you have some of the
+critical-enhancing perks).
+
+As always, it has generated a bunch of TODOs for me to go through - mainly
+status effects like crippled legs, knockback / knockout, blindness etc. - well,
+one day maybe they'll come! :)
+
+I've been given feedback by ~djetelina that it would be nice to have
+changelogs. So, here goes!
+
+Changelog:
+* fights now correctly name body parts. So, no more ants with arms.
+* critical hits: ocassionally damage is multiplied. You'll see which hit was
+critical in the fight log.
+* fixed damage formula: damage resistance is not affected by armor-ignoring
+attacks (those don't exist yet anyways!)
+* new perk: Better Criticals. Upgrades your critical hits' effects -- but not
+chance for a critical happening. Reqs: lvl 9, luck 6, perception 6, agility 4
+* new perk: More Criticals. Max 3 ranks, each rank gives you 5% extra chance to
+score a critical hit. Reqs: lvl 6, luck 6
+* new perk: Slayer. All non-miss unarmed/melee hits are upgraded to criticals.
+Reqs: lvl 24, agility 8, strength 8, unarmed 80%
+* trait Heavy Handed now has its critical hit effect debuff implemented. Note
+this debuff is larger (-30) than the buff given by Better Criticals (+20).
+* new trait: Finesse. Critical chance increased by 10%, but all damage is
+reduced by 30%.
+* map tooltip now correctly pluralizes ticks, so no more "1 ticks".
+* fixed bug where damage in a fight could sometimes be negative (healing you)
+
+~janiczek
+"""
+      }
+    , { date = 1620065638
       , title = "Armor!"
       , text = """
 I have added a few kinds of **armor** to the game and a few new merchants that
