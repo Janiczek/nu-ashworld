@@ -23,6 +23,7 @@ module Data.Player.SPlayer exposing
     , tagSkill
     , tick
     , unequipArmor
+    , updateStrengthForAdrenalineRush
     , useSkillPoints
     )
 
@@ -50,17 +51,105 @@ addTicks n player =
 
 addHp : Int -> SPlayer -> SPlayer
 addHp n player =
-    { player | hp = (player.hp + n) |> min player.maxHp }
+    let
+        newHp : Int
+        newHp =
+            (player.hp + n)
+                |> min player.maxHp
+    in
+    { player | hp = newHp }
+        |> updateStrengthForAdrenalineRush
+            { oldHp = player.hp
+            , oldMaxHp = player.maxHp
+            , newHp = newHp
+            , newMaxHp = player.maxHp
+            }
+
+
+{-| TODO it feels like this will be buggy because of the SPECIAL clamping, and
+drugs/armor enhancing SPECIAL or whatever.
+
+It would be probably safer to have some kind of `effects : Set Effect` and this
+`AdrenalineRushIncreasedStrength` to live there, instead of updating the live
+SPECIAL?
+
+-}
+updateStrengthForAdrenalineRush :
+    { oldHp : Int
+    , oldMaxHp : Int
+    , newHp : Int
+    , newMaxHp : Int
+    }
+    -> SPlayer
+    -> SPlayer
+updateStrengthForAdrenalineRush { oldHp, oldMaxHp, newHp, newMaxHp } player =
+    let
+        hasAdrenalineRushPerk : Bool
+        hasAdrenalineRushPerk =
+            Perk.rank Perk.AdrenalineRush player.perks > 0
+
+        oldHalfMaxHp : Int
+        oldHalfMaxHp =
+            oldMaxHp // 2
+
+        newHalfMaxHp : Int
+        newHalfMaxHp =
+            newMaxHp // 2
+    in
+    if hasAdrenalineRushPerk then
+        if oldHp < oldHalfMaxHp && newHp >= newHalfMaxHp then
+            player
+                |> decSpecial Special.Strength
+
+        else if oldHp >= oldHalfMaxHp && newHp < newHalfMaxHp then
+            player
+                |> incSpecial Special.Strength
+
+        else
+            player
+
+    else
+        player
+
+
+setHpAndMaxHp : { newHp : Int, newMaxHp : Int } -> SPlayer -> SPlayer
+setHpAndMaxHp { newHp, newMaxHp } player =
+    { player
+        | hp = newHp
+        , maxHp = newMaxHp
+    }
+        |> updateStrengthForAdrenalineRush
+            { oldHp = player.hp
+            , oldMaxHp = player.maxHp
+            , newHp = newHp
+            , newMaxHp = newMaxHp
+            }
 
 
 setHp : Int -> SPlayer -> SPlayer
 setHp newHp player =
-    { player | hp = clamp 0 player.maxHp newHp }
+    let
+        newHp_ =
+            clamp 0 player.maxHp newHp
+    in
+    { player | hp = newHp_ }
+        |> updateStrengthForAdrenalineRush
+            { oldHp = player.hp
+            , oldMaxHp = player.maxHp
+            , newHp = newHp_
+            , newMaxHp = player.maxHp
+            }
 
 
 setMaxHp : Int -> SPlayer -> SPlayer
 setMaxHp newMaxHp player =
     { player | maxHp = newMaxHp }
+        |> updateStrengthForAdrenalineRush
+            { oldHp = player.hp
+            , oldMaxHp = player.maxHp
+            , newHp = player.hp
+            , newMaxHp = newMaxHp
+            }
 
 
 addXp : Int -> Posix -> SPlayer -> SPlayer
@@ -121,8 +210,8 @@ setLocation tileNum player =
     { player | location = tileNum }
 
 
-recalculateHpOnLevelup : SPlayer -> SPlayer
-recalculateHpOnLevelup player =
+recalculateHp : SPlayer -> SPlayer
+recalculateHp player =
     let
         newMaxHp =
             Logic.hitpoints
@@ -143,8 +232,8 @@ recalculateHpOnLevelup player =
                 min player.hp newMaxHp
     in
     player
-        |> setMaxHp newMaxHp
-        |> setHp newHp
+        -- combined together because of the Adrenaline Rush check
+        |> setHpAndMaxHp { newMaxHp = newMaxHp, newHp = newHp }
 
 
 addSkillPointsOnLevelup : Int -> SPlayer -> SPlayer
@@ -405,7 +494,7 @@ levelUpConsequences :
     -> SPlayer
     -> SPlayer
 levelUpConsequences { newLevel, levelsDiff, currentTime } =
-    recalculateHpOnLevelup
+    recalculateHp
         >> addSkillPointsOnLevelup levelsDiff
         >> addPerksOnLevelup newLevel
         >> addMessage
@@ -418,6 +507,13 @@ levelUpConsequences { newLevel, levelsDiff, currentTime } =
 incSpecial : Special.Type -> SPlayer -> SPlayer
 incSpecial specialType player =
     { player | special = Special.increment specialType player.special }
+        |> recalculateHp
+
+
+decSpecial : Special.Type -> SPlayer -> SPlayer
+decSpecial specialType player =
+    { player | special = Special.decrement specialType player.special }
+        |> recalculateHp
 
 
 unequipArmor : SPlayer -> SPlayer

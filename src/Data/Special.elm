@@ -5,6 +5,7 @@ module Data.Special exposing
     , canDecrement
     , canIncrement
     , decoder
+    , decrement
     , decrementNewChar
     , encode
     , get
@@ -118,6 +119,11 @@ canDecrement type_ special =
 increment : Type -> Special -> Special
 increment =
     map (\x -> x + 1)
+
+
+decrement : Type -> Special -> Special
+decrement =
+    map (\x -> x - 1)
 
 
 {-| NewChar Special can go below 0.

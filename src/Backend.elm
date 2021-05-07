@@ -1404,6 +1404,17 @@ oneTimePerkEffects currentTime =
                                 |> SPlayer.addSkillPercentage 10 Skill.Steal
                                 |> SPlayer.addSkillPercentage 10 Skill.Traps
 
+                Perk.AdrenalineRush ->
+                    Just <|
+                        \player ->
+                            SPlayer.updateStrengthForAdrenalineRush
+                                { oldHp = player.maxHp
+                                , oldMaxHp = player.maxHp
+                                , newHp = player.hp
+                                , newMaxHp = player.maxHp
+                                }
+                                player
+
                 Perk.BonusHthDamage ->
                     Nothing
 

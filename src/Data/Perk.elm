@@ -48,6 +48,7 @@ type Perk
     | Thief
     | Toughness
       -- lvl 6
+    | AdrenalineRush
     | Educated
     | MoreCriticals
       -- lvl 9
@@ -67,7 +68,8 @@ type Perk
 
 all : List Perk
 all =
-    [ Awareness
+    [ AdrenalineRush
+    , Awareness
     , BetterCriticals
     , BonusHthDamage
     , CautiousNature
@@ -169,6 +171,9 @@ name perk =
         Toughness ->
             "Toughness"
 
+        AdrenalineRush ->
+            "Adrenaline Rush"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -266,6 +271,9 @@ encode perk =
             Toughness ->
                 "toughness"
 
+            AdrenalineRush ->
+                "adrenaline-rush"
+
 
 decoder : Decoder Perk
 decoder =
@@ -344,6 +352,9 @@ decoder =
 
                     "toughness" ->
                         JD.succeed Toughness
+
+                    "adrenaline-rush" ->
+                        JD.succeed AdrenalineRush
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -461,4 +472,7 @@ isApplicable r perk =
 
                 Toughness ->
                     r.level >= 3 && s.endurance >= 6 && s.luck >= 6
+
+                AdrenalineRush ->
+                    r.level >= 6 && s.strength < 10
            )
