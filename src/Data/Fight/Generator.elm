@@ -482,8 +482,7 @@ generator r =
                                                                                 { damage = damage
                                                                                 , shotType = shot
                                                                                 , remainingHp = .hp (opponent_ other ongoing) - damage
-
-                                                                                -- TODO , critical = maybeCriticalEffectsAndMessage /= Nothing
+                                                                                , isCritical = maybeCriticalEffectsAndMessage /= Nothing
                                                                                 }
                                                                             )
                                                                         |> subtractAp who apCost

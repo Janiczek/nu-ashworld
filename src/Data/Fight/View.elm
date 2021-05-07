@@ -181,7 +181,7 @@ view perceptionLevel fight yourName =
                                                         names_.subject.verbPresent "come"
                                                             ++ " closer."
 
-                                                Fight.Attack { damage, remainingHp, shotType } ->
+                                                Fight.Attack { damage, remainingHp, shotType, isCritical } ->
                                                     (case shotType of
                                                         NormalShot ->
                                                             ""
@@ -192,6 +192,12 @@ view perceptionLevel fight yourName =
                                                                 ++ aimedShotName other aimed
                                                                 ++ " and "
                                                     )
+                                                        ++ (if isCritical then
+                                                                "critically "
+
+                                                            else
+                                                                ""
+                                                           )
                                                         ++ names_.subject.verbPresent "attack"
                                                         ++ " "
                                                         ++ name names_.object.name

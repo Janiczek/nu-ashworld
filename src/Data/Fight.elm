@@ -83,6 +83,7 @@ type Action
         { damage : Int
         , shotType : ShotType
         , remainingHp : Int
+        , isCritical : Bool -- TODO the string
         }
     | Miss { shotType : ShotType }
 
@@ -282,6 +283,7 @@ encodeAction action =
                 , ( "damage", JE.int r.damage )
                 , ( "shotType", ShotType.encode r.shotType )
                 , ( "remainingHp", JE.int r.remainingHp )
+                , ( "isCritical", JE.bool r.isCritical )
                 ]
 
         Miss r ->
@@ -313,17 +315,7 @@ actionDecoder =
                             (JD.field "remainingDistanceHexes" JD.int)
 
                     "Attack" ->
-                        JD.map3
-                            (\damage shotType remainingHp ->
-                                Attack
-                                    { damage = damage
-                                    , shotType = shotType
-                                    , remainingHp = remainingHp
-                                    }
-                            )
-                            (JD.field "damage" JD.int)
-                            (JD.field "shotType" ShotType.decoder)
-                            (JD.field "remainingHp" JD.int)
+                        attackActionDecoder
 
                     "Miss" ->
                         JD.field "shotType" ShotType.decoder
@@ -332,6 +324,47 @@ actionDecoder =
                     _ ->
                         JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"
             )
+
+
+attackActionDecoder : Decoder Action
+attackActionDecoder =
+    JD.oneOf
+        [ attackActionDecoderV2
+        , attackActionDecoderV1
+        ]
+
+
+attackActionDecoderV1 : Decoder Action
+attackActionDecoderV1 =
+    JD.map3
+        (\damage shotType remainingHp ->
+            Attack
+                { damage = damage
+                , shotType = shotType
+                , remainingHp = remainingHp
+                , isCritical = False
+                }
+        )
+        (JD.field "damage" JD.int)
+        (JD.field "shotType" ShotType.decoder)
+        (JD.field "remainingHp" JD.int)
+
+
+attackActionDecoderV2 : Decoder Action
+attackActionDecoderV2 =
+    JD.map4
+        (\damage shotType remainingHp isCritical ->
+            Attack
+                { damage = damage
+                , shotType = shotType
+                , remainingHp = remainingHp
+                , isCritical = isCritical
+                }
+        )
+        (JD.field "damage" JD.int)
+        (JD.field "shotType" ShotType.decoder)
+        (JD.field "remainingHp" JD.int)
+        (JD.field "isCritical" JD.bool)
 
 
 opponentName : OpponentType -> String
