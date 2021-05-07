@@ -2363,6 +2363,7 @@ inventoryView _ player =
                     Logic.naturalArmorClass
                         { special = player.special
                         , hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
+                        , hasDodgerPerk = Perk.rank Perk.Dodger player.perks > 0
                         }
                 , equippedArmor = player.equippedArmor |> Maybe.map .kind
                 }

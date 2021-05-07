@@ -67,8 +67,12 @@ type Perk
       -- TODO Rad Resistance -- would need rad resistance stat tracked
     | Ranger
     | Salesman
+      -- TODO Silent Running -- probably not applicable in the game? maybe with some sneak mechanics
+      -- TODO Snakeater -- would need poinson resistance stat tracked
       -- lvl 9
     | BetterCriticals
+      -- TODO Demolition Expert -- would need traps implemented
+    | Dodger
       -- lvl 12
     | Tag
     | GainStrength
@@ -90,6 +94,7 @@ all =
     , BonusHthDamage
     , CautiousNature
     , Comprehension
+    , Dodger
     , EarlierSequence
     , Educated
     , FasterHealing
@@ -214,6 +219,9 @@ name perk =
         Salesman ->
             "Salesman"
 
+        Dodger ->
+            "Dodger"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -333,6 +341,9 @@ encode perk =
             Salesman ->
                 "salesman"
 
+            Dodger ->
+                "dodger"
+
 
 decoder : Decoder Perk
 decoder =
@@ -432,6 +443,9 @@ decoder =
 
                     "salesman" ->
                         JD.succeed Salesman
+
+                    "dodger" ->
+                        JD.succeed Dodger
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -570,4 +584,7 @@ isApplicable r perk =
 
                 Salesman ->
                     r.level >= 6 && skill Skill.Barter >= 50
+
+                Dodger ->
+                    r.level >= 9 && s.agility >= 6
            )

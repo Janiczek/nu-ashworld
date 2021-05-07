@@ -783,6 +783,7 @@ playerOpponent player =
             Logic.naturalArmorClass
                 { hasKamikazeTrait = Trait.isSelected Trait.Kamikaze player.traits
                 , special = player.special
+                , hasDodgerPerk = Perk.rank Perk.Dodger player.perks > 0
                 }
 
         sequence : Int

@@ -1484,6 +1484,9 @@ oneTimePerkEffects currentTime =
 
                 Perk.Pathfinder ->
                     Nothing
+
+                Perk.Dodger ->
+                    Nothing
     in
     Perk.all
         |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))

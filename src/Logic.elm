@@ -74,14 +74,26 @@ healPerTick =
 naturalArmorClass :
     { special : Special
     , hasKamikazeTrait : Bool
+    , hasDodgerPerk : Bool
     }
     -> Int
 naturalArmorClass r =
-    if r.hasKamikazeTrait then
-        0
+    let
+        natural =
+            if r.hasKamikazeTrait then
+                0
 
-    else
-        r.special.agility
+            else
+                r.special.agility
+
+        fromDodger =
+            if r.hasDodgerPerk then
+                5
+
+            else
+                0
+    in
+    natural + fromDodger
 
 
 armorClass :
