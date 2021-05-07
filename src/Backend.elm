@@ -1421,6 +1421,13 @@ oneTimePerkEffects currentTime =
                 Perk.Gambler ->
                     Just <| SPlayer.addSkillPercentage 20 Skill.Gambling
 
+                Perk.Negotiator ->
+                    Just <|
+                        \player ->
+                            player
+                                |> SPlayer.addSkillPercentage 10 Skill.Speech
+                                |> SPlayer.addSkillPercentage 10 Skill.Barter
+
                 Perk.BonusHthDamage ->
                     Nothing
 

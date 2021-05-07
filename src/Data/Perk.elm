@@ -55,7 +55,12 @@ type Perk
       -- TODO Empathy -- would need dialogues
     | FortuneFinder
     | Gambler
+      -- TODO Ghost -- would need darkness tracking
+      -- TODO Harmless -- would need Karma (or maybe we can decide to ignore that req)
+      -- TODO Heave Ho! -- would need ranged combat
+      -- TODO Magnetic Personality -- would need party members
     | MoreCriticals
+    | Negotiator
       -- lvl 9
     | BetterCriticals
       -- lvl 12
@@ -94,6 +99,7 @@ all =
     , HereAndNow
     , MasterTrader
     , MoreCriticals
+    , Negotiator
     , Slayer
     , Survivalist
     , SwiftLearner
@@ -186,6 +192,9 @@ name perk =
 
         Gambler ->
             "Gambler"
+
+        Negotiator ->
+            "Negotiator"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -293,6 +302,9 @@ encode perk =
             Gambler ->
                 "gambler"
 
+            Negotiator ->
+                "negotiator"
+
 
 decoder : Decoder Perk
 decoder =
@@ -380,6 +392,9 @@ decoder =
 
                     "gambler" ->
                         JD.succeed Gambler
+
+                    "negotiator" ->
+                        JD.succeed Negotiator
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -506,4 +521,7 @@ isApplicable r perk =
 
                 Gambler ->
                     r.level >= 6 && skill Skill.Gambling >= 50
+
+                Negotiator ->
+                    r.level >= 6 && skill Skill.Barter >= 50 && skill Skill.Speech >= 50
            )
