@@ -31,6 +31,7 @@ import Data.Item as Item
 import Data.Map.Chunk exposing (Chunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special, Type(..))
+import Data.Xp exposing (BaseXp(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Random exposing (Generator)
@@ -128,20 +129,21 @@ forChunk _ =
     ]
 
 
-xp : Type -> Int
+xp : Type -> BaseXp
 xp type_ =
-    case type_ of
-        GiantAnt ->
-            25
+    BaseXp <|
+        case type_ of
+            GiantAnt ->
+                25
 
-        ToughGiantAnt ->
-            50
+            ToughGiantAnt ->
+                50
 
-        LesserRadscorpion ->
-            60
+            LesserRadscorpion ->
+                60
 
-        Radscorpion ->
-            110
+            Radscorpion ->
+                110
 
 
 hp : Type -> Int

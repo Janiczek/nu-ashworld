@@ -1,5 +1,6 @@
 module Data.Xp exposing
-    ( Level
+    ( BaseXp(..)
+    , Level
     , Xp
     , currentLevel
     , nextLevelXp
@@ -10,6 +11,13 @@ import List.Extra
 
 type alias Xp =
     Int
+
+
+{-| Prevents us from using these base (non-adjusted for Swift Learner) XP
+values elsewhere in the codebase.
+-}
+type BaseXp
+    = BaseXp Int
 
 
 type alias Level =

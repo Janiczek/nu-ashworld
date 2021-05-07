@@ -15,6 +15,7 @@ module Logic exposing
     , naturalArmorClass
     , newCharSpecial
     , perkRate
+    , playerCombatXpGained
     , price
     , sequence
     , skillPointCost
@@ -35,6 +36,7 @@ import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
+import Data.Xp exposing (BaseXp(..))
 
 
 hitpoints :
@@ -212,9 +214,22 @@ xpPerHpMultiplier =
     10
 
 
-xpGained : { damageDealt : Int } -> Int
-xpGained { damageDealt } =
-    damageDealt * xpPerHpMultiplier
+playerCombatXpGained : { damageDealt : Int } -> BaseXp
+playerCombatXpGained { damageDealt } =
+    BaseXp <| damageDealt * xpPerHpMultiplier
+
+
+xpGained :
+    { baseXpGained : BaseXp
+    , swiftLearnerPerkRanks : Int
+    }
+    -> Int
+xpGained r =
+    let
+        (BaseXp xp) =
+            r.baseXpGained
+    in
+    round <| toFloat xp * (1 + 0.05 * toFloat r.swiftLearnerPerkRanks)
 
 
 type alias AttackStats =

@@ -44,6 +44,7 @@ type Perk
       -- TODO Stonewall - would need knockback in combat
       -- TODO Strong Back - would need carry weight implemented
     | Survivalist
+    | SwiftLearner
       -- lvl 6
     | Educated
     | MoreCriticals
@@ -84,6 +85,7 @@ all =
     , MoreCriticals
     , Slayer
     , Survivalist
+    , SwiftLearner
     , Tag
     ]
 
@@ -154,6 +156,9 @@ name perk =
         BetterCriticals ->
             "Better Criticals"
 
+        SwiftLearner ->
+            "Swift Learner"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -164,6 +169,7 @@ multipleRankPerks =
         , ( BonusHthDamage, 3 )
         , ( FasterHealing, 3 )
         , ( MoreCriticals, 3 )
+        , ( SwiftLearner, 3 )
         ]
 
 
@@ -240,6 +246,9 @@ encode perk =
             BetterCriticals ->
                 "better-criticals"
 
+            SwiftLearner ->
+                "swift-learner"
+
 
 decoder : Decoder Perk
 decoder =
@@ -309,6 +318,9 @@ decoder =
 
                     "better-criticals" ->
                         JD.succeed BetterCriticals
+
+                    "swift-learner" ->
+                        JD.succeed SwiftLearner
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -417,4 +429,7 @@ isApplicable r perk =
 
                 BetterCriticals ->
                     r.level >= 9 && s.luck >= 6 && s.perception >= 6 && s.agility >= 4
+
+                SwiftLearner ->
+                    r.level >= 3 && s.intelligence >= 4
            )

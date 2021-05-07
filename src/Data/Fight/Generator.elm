@@ -600,7 +600,13 @@ generator r =
                         if targetIsPlayer then
                             Fight.TargetWon
                                 { capsGained = ongoing.attacker.caps
-                                , xpGained = Logic.xpGained { damageDealt = r.attacker.hp }
+                                , xpGained =
+                                    Logic.xpGained
+                                        { baseXpGained =
+                                            Logic.playerCombatXpGained
+                                                { damageDealt = r.attacker.hp }
+                                        , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.target.perks
+                                        }
                                 }
 
                         else
@@ -615,13 +621,23 @@ generator r =
                             Fight.Player _ ->
                                 Fight.AttackerWon
                                     { capsGained = ongoing.target.caps
-                                    , xpGained = Logic.xpGained { damageDealt = r.target.hp }
+                                    , xpGained =
+                                        Logic.xpGained
+                                            { baseXpGained =
+                                                Logic.playerCombatXpGained
+                                                    { damageDealt = r.target.hp }
+                                            , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
+                                            }
                                     }
 
                             Fight.Npc enemyType ->
                                 Fight.AttackerWon
                                     { capsGained = ongoing.target.caps
-                                    , xpGained = Enemy.xp enemyType
+                                    , xpGained =
+                                        Logic.xpGained
+                                            { baseXpGained = Enemy.xp enemyType
+                                            , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
+                                            }
                                     }
 
                     else
