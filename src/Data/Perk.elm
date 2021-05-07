@@ -45,6 +45,7 @@ type Perk
       -- TODO Strong Back - would need carry weight implemented
     | Survivalist
     | SwiftLearner
+    | Thief
       -- lvl 6
     | Educated
     | MoreCriticals
@@ -87,6 +88,7 @@ all =
     , Survivalist
     , SwiftLearner
     , Tag
+    , Thief
     ]
 
 
@@ -158,6 +160,9 @@ name perk =
 
         SwiftLearner ->
             "Swift Learner"
+
+        Thief ->
+            "Thief"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -249,6 +254,9 @@ encode perk =
             SwiftLearner ->
                 "swift-learner"
 
+            Thief ->
+                "thief"
+
 
 decoder : Decoder Perk
 decoder =
@@ -321,6 +329,9 @@ decoder =
 
                     "swift-learner" ->
                         JD.succeed SwiftLearner
+
+                    "thief" ->
+                        JD.succeed Thief
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -432,4 +443,7 @@ isApplicable r perk =
 
                 SwiftLearner ->
                     r.level >= 3 && s.intelligence >= 4
+
+                Thief ->
+                    r.level >= 3
            )

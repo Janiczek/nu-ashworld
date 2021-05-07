@@ -1364,17 +1364,91 @@ wander clientId player model =
 
 oneTimePerkEffects : Posix -> Dict_.Dict Perk (SPlayer -> SPlayer)
 oneTimePerkEffects currentTime =
-    Dict_.fromList
-        [ ( Perk.HereAndNow, SPlayer.levelUpHereAndNow currentTime )
-        , ( Perk.Survivalist, SPlayer.addSkillPercentage 25 Skill.Outdoorsman )
-        , ( Perk.GainStrength, SPlayer.incSpecial Special.Strength )
-        , ( Perk.GainPerception, SPlayer.incSpecial Special.Perception )
-        , ( Perk.GainEndurance, SPlayer.incSpecial Special.Endurance )
-        , ( Perk.GainCharisma, SPlayer.incSpecial Special.Charisma )
-        , ( Perk.GainIntelligence, SPlayer.incSpecial Special.Intelligence )
-        , ( Perk.GainAgility, SPlayer.incSpecial Special.Agility )
-        , ( Perk.GainLuck, SPlayer.incSpecial Special.Luck )
-        ]
+    let
+        oneTimeEffect : Perk -> Maybe (SPlayer -> SPlayer)
+        oneTimeEffect perk =
+            case perk of
+                Perk.HereAndNow ->
+                    Just <| SPlayer.levelUpHereAndNow currentTime
+
+                Perk.Survivalist ->
+                    Just <| SPlayer.addSkillPercentage 25 Skill.Outdoorsman
+
+                Perk.GainStrength ->
+                    Just <| SPlayer.incSpecial Special.Strength
+
+                Perk.GainPerception ->
+                    Just <| SPlayer.incSpecial Special.Perception
+
+                Perk.GainEndurance ->
+                    Just <| SPlayer.incSpecial Special.Endurance
+
+                Perk.GainCharisma ->
+                    Just <| SPlayer.incSpecial Special.Charisma
+
+                Perk.GainIntelligence ->
+                    Just <| SPlayer.incSpecial Special.Intelligence
+
+                Perk.GainAgility ->
+                    Just <| SPlayer.incSpecial Special.Agility
+
+                Perk.GainLuck ->
+                    Just <| SPlayer.incSpecial Special.Luck
+
+                Perk.Thief ->
+                    Just <|
+                        \player ->
+                            player
+                                |> SPlayer.addSkillPercentage 10 Skill.Sneak
+                                |> SPlayer.addSkillPercentage 10 Skill.Lockpick
+                                |> SPlayer.addSkillPercentage 10 Skill.Steal
+                                |> SPlayer.addSkillPercentage 10 Skill.Traps
+
+                Perk.BonusHthDamage ->
+                    Nothing
+
+                Perk.MasterTrader ->
+                    Nothing
+
+                Perk.Awareness ->
+                    Nothing
+
+                Perk.CautiousNature ->
+                    Nothing
+
+                Perk.Comprehension ->
+                    Nothing
+
+                Perk.EarlierSequence ->
+                    Nothing
+
+                Perk.FasterHealing ->
+                    Nothing
+
+                Perk.SwiftLearner ->
+                    Nothing
+
+                Perk.Toughness ->
+                    Nothing
+
+                Perk.Educated ->
+                    Nothing
+
+                Perk.MoreCriticals ->
+                    Nothing
+
+                Perk.BetterCriticals ->
+                    Nothing
+
+                Perk.Tag ->
+                    Nothing
+
+                Perk.Slayer ->
+                    Nothing
+    in
+    Perk.all
+        |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))
+        |> Dict_.fromList
 
 
 choosePerk : Perk -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
