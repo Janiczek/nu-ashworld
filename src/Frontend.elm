@@ -2053,22 +2053,29 @@ charDerivedStatsView player =
             [ H.text "Derived stats" ]
         , H.ul [ HA.id "character-derived-stats-list" ] <|
             List.map itemView
-                [ ( "Hitpoints"
+                [ ( "Max HP"
                   , String.fromInt <|
                         Logic.hitpoints
-                            { level = 1
+                            { level = Xp.currentLevel player.xp
                             , special = player.special
                             }
                   , Nothing
                   )
-                , ( "Tick heal percentage"
-                  , (String.fromInt <|
-                        Logic.tickHealPercentage
-                            { endurance = player.special.endurance
-                            , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
-                            }
-                    )
-                        ++ " % of max HP"
+                , ( "Tick heal"
+                  , let
+                        percentage =
+                            Logic.tickHealPercentage
+                                { endurance = player.special.endurance
+                                , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                                }
+
+                        absolute =
+                            round <| toFloat player.maxHp * toFloat percentage / 100
+                    in
+                    String.fromInt absolute
+                        ++ " HP ("
+                        ++ String.fromInt percentage
+                        ++ "% of max HP)"
                   , Nothing
                   )
                 , ( "Perception Level"
