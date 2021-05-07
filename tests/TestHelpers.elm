@@ -27,7 +27,7 @@ oneOfValues values =
     Fuzz.oneOf <| List.map Fuzz.constant values
 
 
-playerNameFuzzer : Fuzzer String
+playerNameFuzzer : Fuzzer PlayerName
 playerNameFuzzer =
     oneOfValues
         [ "janiczek"

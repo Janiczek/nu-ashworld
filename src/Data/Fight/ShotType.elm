@@ -7,7 +7,6 @@ module Data.Fight.ShotType exposing
     , decoder
     , encode
     , isAimed
-    , label
     , toAimed
     )
 
@@ -99,34 +98,6 @@ aimedShotPenalty shot =
 
         RightLeg ->
             20
-
-
-label : AimedShot -> String
-label shot =
-    case shot of
-        Head ->
-            "head"
-
-        Torso ->
-            "torso"
-
-        Eyes ->
-            "eyes"
-
-        Groin ->
-            "groin"
-
-        LeftArm ->
-            "left arm"
-
-        RightArm ->
-            "right arm"
-
-        LeftLeg ->
-            "left leg"
-
-        RightLeg ->
-            "right leg"
 
 
 encode : ShotType -> JE.Value

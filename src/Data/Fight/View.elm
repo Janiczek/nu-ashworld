@@ -1,7 +1,8 @@
 module Data.Fight.View exposing (view)
 
-import Data.Fight as Fight exposing (Who(..))
-import Data.Fight.ShotType as ShotType exposing (ShotType(..))
+import Data.Enemy as Enemy
+import Data.Fight as Fight exposing (OpponentType, Who(..))
+import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
@@ -108,6 +109,25 @@ view perceptionLevel fight yourName =
                     { subject = names You
                     , object = names AttackerVerbatim
                     }
+
+        aimedShotName : Who -> AimedShot -> String
+        aimedShotName who aimedShot =
+            let
+                opponentType : OpponentType
+                opponentType =
+                    case who of
+                        Fight.Attacker ->
+                            fight.attacker
+
+                        Fight.Target ->
+                            fight.target
+            in
+            case opponentType of
+                Fight.Player _ ->
+                    Enemy.humanAimedShotName aimedShot
+
+                Fight.Npc enemyType ->
+                    Enemy.aimedShotName enemyType aimedShot
     in
     H.div [ HA.class "fight-info" ]
         [ fight.log
@@ -123,6 +143,10 @@ view perceptionLevel fight yourName =
                         name n =
                             -- This is then picked up by the CSS
                             "**" ++ n ++ "**"
+
+                        other : Who
+                        other =
+                            Fight.theOther who
                     in
                     H.li []
                         [ H.text <| names_.subject.namePossCap ++ " turn"
@@ -165,7 +189,7 @@ view perceptionLevel fight yourName =
                                                         AimedShot aimed ->
                                                             names_.subject.verbPresent "aim"
                                                                 ++ " for "
-                                                                ++ ShotType.label aimed
+                                                                ++ aimedShotName other aimed
                                                                 ++ " and "
                                                     )
                                                         ++ names_.subject.verbPresent "attack"
@@ -191,7 +215,7 @@ view perceptionLevel fight yourName =
                                                         AimedShot aimed ->
                                                             names_.subject.verbPresent "aim"
                                                                 ++ " for "
-                                                                ++ ShotType.label aimed
+                                                                ++ aimedShotName other aimed
                                                                 ++ " and "
                                                     )
                                                         ++ names_.subject.verbPresent "attack"

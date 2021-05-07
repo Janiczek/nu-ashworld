@@ -12,7 +12,6 @@ import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
-import Data.Item as Item
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
@@ -476,12 +475,15 @@ generator r =
                                                             |> Random.andThen (rollDamageAndCriticalInfo who ongoing shot)
                                                             |> Random.map
                                                                 (\( damage, maybeCriticalEffectsAndMessage ) ->
+                                                                    -- TODO use the critical effects and message!!
                                                                     ongoing
                                                                         |> addLog who
                                                                             (Fight.Attack
                                                                                 { damage = damage
                                                                                 , shotType = shot
                                                                                 , remainingHp = .hp (opponent_ other ongoing) - damage
+
+                                                                                -- TODO , critical = maybeCriticalEffectsAndMessage /= Nothing
                                                                                 }
                                                                             )
                                                                         |> subtractAp who apCost

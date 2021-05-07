@@ -3,7 +3,7 @@ module Data.Fight.GeneratorTest exposing (damageNeverNegative)
 import Data.Fight as Fight
 import Data.Fight.Generator
 import Expect
-import Fuzz exposing (Fuzzer)
+import Fuzz
 import Random
 import Test exposing (Test)
 import TestHelpers exposing (..)

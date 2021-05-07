@@ -13,6 +13,7 @@ module Data.Enemy exposing
     , equippedArmor
     , forChunk
     , hp
+    , humanAimedShotName
     , manCriticalSpec
     , meleeDamageBonus
     , name
@@ -1287,6 +1288,34 @@ criticalSpec enemyType =
 
         Radscorpion ->
             radscorpion
+
+
+humanAimedShotName : AimedShot -> String
+humanAimedShotName shot =
+    case shot of
+        Head ->
+            "head"
+
+        Torso ->
+            "torso"
+
+        Eyes ->
+            "eyes"
+
+        Groin ->
+            "groin"
+
+        LeftArm ->
+            "left arm"
+
+        RightArm ->
+            "right arm"
+
+        LeftLeg ->
+            "left leg"
+
+        RightLeg ->
+            "right leg"
 
 
 aimedShotName : Type -> AimedShot -> String
