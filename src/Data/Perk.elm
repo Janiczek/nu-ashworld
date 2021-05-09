@@ -27,7 +27,6 @@ import Json.Encode as JE
 type Perk
     = -- lvl 3
       BonusHthDamage
-    | MasterTrader
     | Awareness
     | CautiousNature
     | Comprehension
@@ -96,6 +95,7 @@ type Perk
     | Lifegiver
     | LivingAnatomy
     | MasterThief
+    | MasterTrader
     | Tag
       -- lvl 24
     | Slayer
