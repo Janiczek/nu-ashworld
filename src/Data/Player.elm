@@ -434,6 +434,7 @@ fromNewChar currentTime auth newChar =
                     Logic.hitpoints
                         { level = 1
                         , special = finalSpecial
+                        , lifegiverPerkRanks = 0
                         }
 
                 startingTileNum : TileNum

@@ -1440,6 +1440,9 @@ oneTimePerkEffects currentTime =
                 Perk.Speaker ->
                     Just <| SPlayer.addSkillPercentage 20 Skill.Speech
 
+                Perk.Lifegiver ->
+                    Just SPlayer.recalculateHp
+
                 Perk.BonusHthDamage ->
                     Nothing
 

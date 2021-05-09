@@ -1741,6 +1741,7 @@ newCharDerivedStatsView newChar =
                         Logic.hitpoints
                             { level = 1
                             , special = finalSpecial
+                            , lifegiverPerkRanks = 0
                             }
                   , Nothing
                   )
@@ -2062,6 +2063,7 @@ charDerivedStatsView player =
                         Logic.hitpoints
                             { level = Xp.currentLevel player.xp
                             , special = player.special
+                            , lifegiverPerkRanks = Perk.rank Perk.Lifegiver player.perks
                             }
                   , Nothing
                   )

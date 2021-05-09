@@ -93,6 +93,7 @@ type Perk
     | GainAgility
     | GainLuck
     | HthEvade
+    | Lifegiver
     | Tag
       -- lvl 24
     | Slayer
@@ -122,6 +123,7 @@ all =
     , Gambler
     , HereAndNow
     , HthEvade
+    , Lifegiver
     , MasterTrader
     , MoreCriticals
     , Negotiator
@@ -246,6 +248,9 @@ name perk =
         HthEvade ->
             "HtH Evade"
 
+        Lifegiver ->
+            "Lifegiver"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -260,6 +265,7 @@ multipleRankPerks =
         , ( Toughness, 3 )
         , ( Pathfinder, 2 )
         , ( ActionBoy, 2 )
+        , ( Lifegiver, 2 )
         ]
 
 
@@ -378,6 +384,9 @@ encode perk =
             HthEvade ->
                 "hth-evade"
 
+            Lifegiver ->
+                "lifegiver"
+
 
 decoder : Decoder Perk
 decoder =
@@ -489,6 +498,9 @@ decoder =
 
                     "hth-evade" ->
                         JD.succeed HthEvade
+
+                    "lifegiver" ->
+                        JD.succeed Lifegiver
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -639,4 +651,7 @@ isApplicable r perk =
 
                 HthEvade ->
                     r.level >= 12 && skill Skill.Unarmed >= 75
+
+                Lifegiver ->
+                    r.level >= 12 && s.endurance >= 4
            )

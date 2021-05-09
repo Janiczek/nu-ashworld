@@ -14,6 +14,7 @@ module Data.Player.SPlayer exposing
     , incWins
     , levelUpHereAndNow
     , readMessage
+    , recalculateHp
     , removeItem
     , removeMessage
     , setHp
@@ -217,6 +218,7 @@ recalculateHp player =
             Logic.hitpoints
                 { level = Xp.currentLevel player.xp
                 , special = player.special
+                , lifegiverPerkRanks = Perk.rank Perk.Lifegiver player.perks
                 }
 
         diff =

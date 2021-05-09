@@ -42,6 +42,7 @@ import Data.Xp exposing (BaseXp(..))
 hitpoints :
     { level : Int
     , special : Special
+    , lifegiverPerkRanks : Int
     }
     -> Int
 hitpoints r =
@@ -53,6 +54,7 @@ hitpoints r =
         + (2 * endurance)
         + strength
         + (r.level * (2 + endurance // 2))
+        + (r.level * r.lifegiverPerkRanks * 4)
 
 
 tickHealPercentage :
