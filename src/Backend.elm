@@ -1467,6 +1467,9 @@ oneTimePerkEffects currentTime =
                                 |> SPlayer.addSkillPercentage 10 Skill.Repair
                                 |> SPlayer.addSkillPercentage 10 Skill.Science
 
+                Perk.BonusHthAttacks ->
+                    Nothing
+
                 Perk.BonusHthDamage ->
                     Nothing
 

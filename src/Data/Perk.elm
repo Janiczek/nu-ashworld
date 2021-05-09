@@ -99,6 +99,9 @@ type Perk
     | Medic
     | MrFixit
     | Tag
+      -- TODO WeaponHandling -- needs weapons
+      -- lvl 15
+    | BonusHthAttacks
       -- lvl 24
     | Slayer
 
@@ -109,6 +112,7 @@ all =
     , ActionBoy
     , Awareness
     , BetterCriticals
+    , BonusHthAttacks
     , BonusHthDamage
     , CautiousNature
     , Comprehension
@@ -271,6 +275,9 @@ name perk =
         MrFixit ->
             "Mr. Fixit"
 
+        BonusHthAttacks ->
+            "Bonus HtH Attacks"
+
 
 multipleRankPerks : Dict_.Dict Perk Int
 multipleRankPerks =
@@ -419,6 +426,9 @@ encode perk =
             MrFixit ->
                 "mr-fixit"
 
+            BonusHthAttacks ->
+                "bonus-hth-attacks"
+
 
 decoder : Decoder Perk
 decoder =
@@ -545,6 +555,9 @@ decoder =
 
                     "mr-fixit" ->
                         JD.succeed MrFixit
+
+                    "bonus-hth-attacks" ->
+                        JD.succeed BonusHthAttacks
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -710,4 +723,7 @@ isApplicable r perk =
 
                 MrFixit ->
                     r.level >= 12 && (skill Skill.Science >= 40 || skill Skill.Repair >= 40)
+
+                BonusHthAttacks ->
+                    r.level >= 15 && s.agility >= 6
            )

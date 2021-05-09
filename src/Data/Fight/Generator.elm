@@ -157,14 +157,20 @@ generator r =
         attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
         attackWhilePossible who ongoing =
             let
+                opponent =
+                    opponent_ who ongoing
+
                 myHp =
-                    opponent_ who ongoing |> .hp
+                    opponent.hp
 
                 otherHp =
                     opponent_ (Fight.theOther who) ongoing |> .hp
 
                 minApCost =
-                    attackApCost { isAimedShot = False }
+                    attackApCost
+                        { isAimedShot = False
+                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                        }
             in
             if opponentAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
                 Random.constant ongoing
@@ -178,8 +184,8 @@ generator r =
         addLog who action ongoing =
             { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
 
-        apCost : Fight.Action -> Int
-        apCost action =
+        apCost : Opponent -> Fight.Action -> Int
+        apCost opponent action =
             case action of
                 Fight.Start _ ->
                     0
@@ -188,16 +194,22 @@ generator r =
                     hexes
 
                 Fight.Attack r_ ->
-                    attackApCost { isAimedShot = ShotType.isAimed r_.shotType }
+                    attackApCost
+                        { isAimedShot = ShotType.isAimed r_.shotType
+                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                        }
 
                 Fight.Miss r_ ->
-                    attackApCost { isAimedShot = ShotType.isAimed r_.shotType }
+                    attackApCost
+                        { isAimedShot = ShotType.isAimed r_.shotType
+                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                        }
 
         subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
         subtractAp who action ongoing =
             let
                 apToSubtract =
-                    apCost action
+                    apCost (opponent_ who ongoing) action
             in
             case who of
                 Attacker ->
@@ -215,7 +227,7 @@ generator r =
                 usedAp =
                     ongoing.reverseLog
                         |> List.takeWhile (\( w, _ ) -> w == who)
-                        |> List.map (\( _, action ) -> apCost action)
+                        |> List.map (\( _, action ) -> apCost opponent action)
                         |> List.sum
             in
             (opponent.maxAp - usedAp)
@@ -253,6 +265,9 @@ generator r =
         shotType : Who -> OngoingFight -> Generator ( ShotType, Int )
         shotType who ongoing =
             let
+                opponent =
+                    opponent_ who ongoing
+
                 availableAp =
                     opponentAp who ongoing
 
@@ -264,10 +279,17 @@ generator r =
                             chanceToHit who ongoing shot
                     in
                     ( toFloat chance, ( shot, chance ) )
+
+                apCost_ : Int
+                apCost_ =
+                    attackApCost
+                        { isAimedShot = True
+                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                        }
             in
             Random.weighted
                 (shotAndChance NormalShot)
-                (if availableAp >= attackApCost { isAimedShot = True } then
+                (if availableAp >= apCost_ then
                     ShotType.allAimed
                         |> List.map (AimedShot >> shotAndChance)
 
@@ -275,15 +297,29 @@ generator r =
                     []
                 )
 
-        attackApCost : { isAimedShot : Bool } -> Int
+        attackApCost :
+            { isAimedShot : Bool
+            , hasBonusHthAttacksPerk : Bool
+            }
+            -> Int
         attackApCost r_ =
             let
                 baseApCost : Int
                 baseApCost =
                     -- TODO vary this based on weapon / ...
                     3
+
+                fromBonusHthAttacks : Int
+                fromBonusHthAttacks =
+                    if r_.hasBonusHthAttacksPerk then
+                        -1
+
+                    else
+                        0
             in
-            baseApCost + ShotType.apCostPenalty r_
+            baseApCost
+                + ShotType.apCostPenalty { isAimedShot = r_.isAimedShot }
+                + fromBonusHthAttacks
 
         rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
         rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
@@ -464,7 +500,10 @@ generator r =
                     (\( shot, chance ) ->
                         let
                             apCost_ =
-                                attackApCost { isAimedShot = ShotType.isAimed shot }
+                                attackApCost
+                                    { isAimedShot = ShotType.isAimed shot
+                                    , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                                    }
                         in
                         if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost_ then
                             Random.int 1 100
