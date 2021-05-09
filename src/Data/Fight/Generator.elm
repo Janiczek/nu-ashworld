@@ -355,6 +355,14 @@ generator r =
                             else
                                 1
 
+                        livingAnatomyBonus =
+                            -- TODO check if the opponent is a living creature
+                            if Perk.rank Perk.LivingAnatomy opponent.perks > 0 then
+                                5
+
+                            else
+                                0
+
                         damageThreshold =
                             -- TODO we're not dealing with plasma/... right now, only _normal_ DT
                             toFloat <|
@@ -419,14 +427,16 @@ generator r =
                                 - (damageThreshold / armorIgnore)
 
                         finalDamage =
-                            if damageBeforeDamageResistance > 0 then
-                                max 1 <|
-                                    round <|
-                                        damageBeforeDamageResistance
-                                            * ((100 - min 90 finalDamageResistance) / 100)
+                            livingAnatomyBonus
+                                + (if damageBeforeDamageResistance > 0 then
+                                    max 1 <|
+                                        round <|
+                                            damageBeforeDamageResistance
+                                                * ((100 - min 90 finalDamageResistance) / 100)
 
-                            else
-                                0
+                                   else
+                                    0
+                                  )
                     in
                     ( finalDamage
                     , maybeCriticalInfo

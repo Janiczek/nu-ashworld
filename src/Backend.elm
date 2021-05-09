@@ -1443,6 +1443,9 @@ oneTimePerkEffects currentTime =
                 Perk.Lifegiver ->
                     Just SPlayer.recalculateHp
 
+                Perk.LivingAnatomy ->
+                    Just <| SPlayer.addSkillPercentage 10 Skill.Doctor
+
                 Perk.BonusHthDamage ->
                     Nothing
 

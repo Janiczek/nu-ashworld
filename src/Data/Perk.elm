@@ -94,6 +94,7 @@ type Perk
     | GainLuck
     | HthEvade
     | Lifegiver
+    | LivingAnatomy
     | Tag
       -- lvl 24
     | Slayer
@@ -124,6 +125,7 @@ all =
     , HereAndNow
     , HthEvade
     , Lifegiver
+    , LivingAnatomy
     , MasterTrader
     , MoreCriticals
     , Negotiator
@@ -250,6 +252,9 @@ name perk =
 
         Lifegiver ->
             "Lifegiver"
+
+        LivingAnatomy ->
+            "Living Anatomy"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -387,6 +392,9 @@ encode perk =
             Lifegiver ->
                 "lifegiver"
 
+            LivingAnatomy ->
+                "living-anatomy"
+
 
 decoder : Decoder Perk
 decoder =
@@ -501,6 +509,9 @@ decoder =
 
                     "lifegiver" ->
                         JD.succeed Lifegiver
+
+                    "living-anatomy" ->
+                        JD.succeed LivingAnatomy
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -654,4 +665,7 @@ isApplicable r perk =
 
                 Lifegiver ->
                     r.level >= 12 && s.endurance >= 4
+
+                LivingAnatomy ->
+                    r.level >= 12 && skill Skill.Doctor >= 60
            )
