@@ -1453,6 +1453,13 @@ oneTimePerkEffects currentTime =
                                 |> SPlayer.addSkillPercentage 15 Skill.Lockpick
                                 |> SPlayer.addSkillPercentage 15 Skill.Steal
 
+                Perk.Medic ->
+                    Just <|
+                        \player ->
+                            player
+                                |> SPlayer.addSkillPercentage 10 Skill.FirstAid
+                                |> SPlayer.addSkillPercentage 10 Skill.Doctor
+
                 Perk.BonusHthDamage ->
                     Nothing
 

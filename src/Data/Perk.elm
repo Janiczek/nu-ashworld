@@ -96,6 +96,7 @@ type Perk
     | LivingAnatomy
     | MasterThief
     | MasterTrader
+    | Medic
     | Tag
       -- lvl 24
     | Slayer
@@ -129,6 +130,7 @@ all =
     , LivingAnatomy
     , MasterThief
     , MasterTrader
+    , Medic
     , MoreCriticals
     , Negotiator
     , Pathfinder
@@ -260,6 +262,9 @@ name perk =
 
         MasterThief ->
             "Master Thief"
+
+        Medic ->
+            "Medic"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -403,6 +408,9 @@ encode perk =
             MasterThief ->
                 "master-thief"
 
+            Medic ->
+                "medic"
+
 
 decoder : Decoder Perk
 decoder =
@@ -523,6 +531,9 @@ decoder =
 
                     "master-thief" ->
                         JD.succeed MasterThief
+
+                    "medic" ->
+                        JD.succeed Medic
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -682,4 +693,7 @@ isApplicable r perk =
 
                 MasterThief ->
                     r.level >= 12 && skill Skill.Lockpick >= 50 && skill Skill.Steal >= 50
+
+                Medic ->
+                    r.level >= 12 && skill Skill.FirstAid >= 40 && skill Skill.Doctor >= 40
            )
