@@ -84,7 +84,7 @@ type Perk
     | Speaker
       -- lvl 12
     | ActionBoy
-    | Tag
+      -- TODO Cult of Personality -- probably not applicable (or would need quests)
     | GainStrength
     | GainPerception
     | GainEndurance
@@ -92,6 +92,8 @@ type Perk
     | GainIntelligence
     | GainAgility
     | GainLuck
+    | HthEvade
+    | Tag
       -- lvl 24
     | Slayer
 
@@ -119,6 +121,7 @@ all =
     , GainStrength
     , Gambler
     , HereAndNow
+    , HthEvade
     , MasterTrader
     , MoreCriticals
     , Negotiator
@@ -239,6 +242,9 @@ name perk =
 
         ActionBoy ->
             "Action Boy"
+
+        HthEvade ->
+            "HtH Evade"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -369,6 +375,9 @@ encode perk =
             ActionBoy ->
                 "action-boy"
 
+            HthEvade ->
+                "hth-evade"
+
 
 decoder : Decoder Perk
 decoder =
@@ -477,6 +486,9 @@ decoder =
 
                     "action-boy" ->
                         JD.succeed ActionBoy
+
+                    "hth-evade" ->
+                        JD.succeed HthEvade
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -624,4 +636,7 @@ isApplicable r perk =
 
                 ActionBoy ->
                     r.level >= 12 && s.agility >= 5
+
+                HthEvade ->
+                    r.level >= 12 && skill Skill.Unarmed >= 75
            )

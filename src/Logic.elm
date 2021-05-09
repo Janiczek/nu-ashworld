@@ -99,16 +99,39 @@ naturalArmorClass r =
 armorClass :
     { naturalArmorClass : Int
     , equippedArmor : Maybe Item.Kind
+    , hasHthEvadePerk : Bool
+    , unarmedSkill : Int
+    , apFromPreviousTurn : Int
     }
     -> Int
 armorClass r =
     let
-        armorClassFromArmor =
+        fromArmor =
             r.equippedArmor
                 |> Maybe.map Item.armorClass
                 |> Maybe.withDefault 0
+
+        unusedApMultiplier =
+            if r.hasHthEvadePerk then
+                2
+
+            else
+                1
+
+        fromUnusedAp =
+            r.apFromPreviousTurn * unusedApMultiplier
+
+        fromUnarmedSkill =
+            if r.hasHthEvadePerk then
+                r.unarmedSkill // 12
+
+            else
+                0
     in
-    r.naturalArmorClass + armorClassFromArmor
+    r.naturalArmorClass
+        + fromArmor
+        + fromUnusedAp
+        + fromUnarmedSkill
 
 
 actionPoints :

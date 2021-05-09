@@ -19,6 +19,7 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
+import List.Extra as List
 import Logic exposing (AttackStats)
 import Random exposing (Generator)
 import Random.Bool as Random
@@ -177,8 +178,27 @@ generator r =
         addLog who action ongoing =
             { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
 
-        subtractAp : Who -> Int -> OngoingFight -> OngoingFight
-        subtractAp who apToSubtract ongoing =
+        apCost : Fight.Action -> Int
+        apCost action =
+            case action of
+                Fight.Start _ ->
+                    0
+
+                Fight.ComeCloser { hexes } ->
+                    hexes
+
+                Fight.Attack r_ ->
+                    attackApCost { isAimedShot = ShotType.isAimed r_.shotType }
+
+                Fight.Miss r_ ->
+                    attackApCost { isAimedShot = ShotType.isAimed r_.shotType }
+
+        subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
+        subtractAp who action ongoing =
+            let
+                apToSubtract =
+                    apCost action
+            in
             case who of
                 Attacker ->
                     { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
@@ -186,10 +206,20 @@ generator r =
                 Target ->
                     { ongoing | targetAp = ongoing.targetAp - apToSubtract }
 
-        baseApCost : Int
-        baseApCost =
-            -- TODO vary this based on weapon / ...
-            3
+        apFromPreviousTurn : Who -> OngoingFight -> Int
+        apFromPreviousTurn who ongoing =
+            let
+                opponent =
+                    opponent_ who ongoing
+
+                usedAp =
+                    ongoing.reverseLog
+                        |> List.takeWhile (\( w, _ ) -> w == who)
+                        |> List.map (\( _, action ) -> apCost action)
+                        |> List.sum
+            in
+            (opponent.maxAp - usedAp)
+                |> max 0
 
         chanceToHit : Who -> OngoingFight -> ShotType -> Int
         chanceToHit who ongoing shot =
@@ -197,10 +227,19 @@ generator r =
                 opponent =
                     opponent_ who ongoing
 
+                other =
+                    Fight.theOther who
+
+                otherOpponent =
+                    opponent_ other ongoing
+
                 armorClass =
                     Logic.armorClass
-                        { naturalArmorClass = opponent.naturalArmorClass
-                        , equippedArmor = opponent.equippedArmor
+                        { naturalArmorClass = otherOpponent.naturalArmorClass
+                        , equippedArmor = otherOpponent.equippedArmor
+                        , hasHthEvadePerk = Perk.rank Perk.HthEvade otherOpponent.perks > 0
+                        , unarmedSkill = Skill.get otherOpponent.special otherOpponent.addedSkillPercentages Skill.Unarmed
+                        , apFromPreviousTurn = apFromPreviousTurn other ongoing
                         }
             in
             Logic.unarmedChanceToHit
@@ -238,6 +277,12 @@ generator r =
 
         attackApCost : { isAimedShot : Bool } -> Int
         attackApCost r_ =
+            let
+                baseApCost : Int
+                baseApCost =
+                    -- TODO vary this based on weapon / ...
+                    3
+            in
             baseApCost + ShotType.apCostPenalty r_
 
         rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
@@ -408,10 +453,10 @@ generator r =
                 |> Random.andThen
                     (\( shot, chance ) ->
                         let
-                            apCost =
+                            apCost_ =
                                 attackApCost { isAimedShot = ShotType.isAimed shot }
                         in
-                        if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost then
+                        if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost_ then
                             Random.int 1 100
                                 |> Random.andThen
                                     (\roll ->
@@ -488,25 +533,31 @@ generator r =
                                                             |> Random.andThen (rollDamageAndCriticalInfo who ongoing shot)
                                                             |> Random.map
                                                                 (\( damage, maybeCriticalEffectsAndMessage ) ->
-                                                                    -- TODO use the critical effects and message!!
-                                                                    ongoing
-                                                                        |> addLog who
-                                                                            (Fight.Attack
+                                                                    let
+                                                                        action =
+                                                                            Fight.Attack
                                                                                 { damage = damage
                                                                                 , shotType = shot
                                                                                 , remainingHp = .hp (opponent_ other ongoing) - damage
                                                                                 , isCritical = maybeCriticalEffectsAndMessage /= Nothing
                                                                                 }
-                                                                            )
-                                                                        |> subtractAp who apCost
+                                                                    in
+                                                                    -- TODO use the critical effects and message!!
+                                                                    ongoing
+                                                                        |> addLog who action
+                                                                        |> subtractAp who action
                                                                         |> updateOpponent other (subtractHp damage)
                                                                 )
                                                     )
 
                                         else
+                                            let
+                                                action =
+                                                    Fight.Miss { shotType = shot }
+                                            in
                                             ongoing
-                                                |> addLog who (Fight.Miss { shotType = shot })
-                                                |> subtractAp who apCost
+                                                |> addLog who action
+                                                |> subtractAp who action
                                                 |> Random.constant
                                     )
 
@@ -529,16 +580,17 @@ generator r =
                     maxPossibleMove : Int
                     maxPossibleMove =
                         min ongoing.distanceHexes (opponentAp who ongoing)
-                in
-                ongoing
-                    |> addLog who
-                        (Fight.ComeCloser
+
+                    action =
+                        Fight.ComeCloser
                             { hexes = maxPossibleMove
                             , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
                             }
-                        )
+                in
+                ongoing
+                    |> addLog who action
                     |> subtractDistance maxPossibleMove
-                    |> subtractAp who maxPossibleMove
+                    |> subtractAp who action
                     |> Random.constant
 
         subtractDistance : Int -> OngoingFight -> OngoingFight
