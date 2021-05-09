@@ -95,6 +95,7 @@ type Perk
     | HthEvade
     | Lifegiver
     | LivingAnatomy
+    | MasterThief
     | Tag
       -- lvl 24
     | Slayer
@@ -126,6 +127,7 @@ all =
     , HthEvade
     , Lifegiver
     , LivingAnatomy
+    , MasterThief
     , MasterTrader
     , MoreCriticals
     , Negotiator
@@ -255,6 +257,9 @@ name perk =
 
         LivingAnatomy ->
             "Living Anatomy"
+
+        MasterThief ->
+            "Master Thief"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -395,6 +400,9 @@ encode perk =
             LivingAnatomy ->
                 "living-anatomy"
 
+            MasterThief ->
+                "master-thief"
+
 
 decoder : Decoder Perk
 decoder =
@@ -512,6 +520,9 @@ decoder =
 
                     "living-anatomy" ->
                         JD.succeed LivingAnatomy
+
+                    "master-thief" ->
+                        JD.succeed MasterThief
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -668,4 +679,7 @@ isApplicable r perk =
 
                 LivingAnatomy ->
                     r.level >= 12 && skill Skill.Doctor >= 60
+
+                MasterThief ->
+                    r.level >= 12 && skill Skill.Lockpick >= 50 && skill Skill.Steal >= 50
            )

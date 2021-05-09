@@ -1446,6 +1446,13 @@ oneTimePerkEffects currentTime =
                 Perk.LivingAnatomy ->
                     Just <| SPlayer.addSkillPercentage 10 Skill.Doctor
 
+                Perk.MasterThief ->
+                    Just <|
+                        \player ->
+                            player
+                                |> SPlayer.addSkillPercentage 15 Skill.Lockpick
+                                |> SPlayer.addSkillPercentage 15 Skill.Steal
+
                 Perk.BonusHthDamage ->
                     Nothing
 
