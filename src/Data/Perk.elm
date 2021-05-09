@@ -97,6 +97,7 @@ type Perk
     | MasterThief
     | MasterTrader
     | Medic
+    | MrFixit
     | Tag
       -- lvl 24
     | Slayer
@@ -132,6 +133,7 @@ all =
     , MasterTrader
     , Medic
     , MoreCriticals
+    , MrFixit
     , Negotiator
     , Pathfinder
     , Ranger
@@ -265,6 +267,9 @@ name perk =
 
         Medic ->
             "Medic"
+
+        MrFixit ->
+            "Mr. Fixit"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -411,6 +416,9 @@ encode perk =
             Medic ->
                 "medic"
 
+            MrFixit ->
+                "mr-fixit"
+
 
 decoder : Decoder Perk
 decoder =
@@ -534,6 +542,9 @@ decoder =
 
                     "medic" ->
                         JD.succeed Medic
+
+                    "mr-fixit" ->
+                        JD.succeed MrFixit
 
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
@@ -695,5 +706,8 @@ isApplicable r perk =
                     r.level >= 12 && skill Skill.Lockpick >= 50 && skill Skill.Steal >= 50
 
                 Medic ->
-                    r.level >= 12 && skill Skill.FirstAid >= 40 && skill Skill.Doctor >= 40
+                    r.level >= 12 && (skill Skill.FirstAid >= 40 || skill Skill.Doctor >= 40)
+
+                MrFixit ->
+                    r.level >= 12 && (skill Skill.Science >= 40 || skill Skill.Repair >= 40)
            )

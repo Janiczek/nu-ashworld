@@ -1460,6 +1460,13 @@ oneTimePerkEffects currentTime =
                                 |> SPlayer.addSkillPercentage 10 Skill.FirstAid
                                 |> SPlayer.addSkillPercentage 10 Skill.Doctor
 
+                Perk.MrFixit ->
+                    Just <|
+                        \player ->
+                            player
+                                |> SPlayer.addSkillPercentage 10 Skill.Repair
+                                |> SPlayer.addSkillPercentage 10 Skill.Science
+
                 Perk.BonusHthDamage ->
                     Nothing
 
