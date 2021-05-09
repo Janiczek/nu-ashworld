@@ -102,7 +102,12 @@ type Perk
       -- TODO WeaponHandling -- needs weapons
       -- lvl 15
     | BonusHthAttacks
+      -- TODO BonusRateOfFire -- needs weapons
+      -- TODO Pickpocket -- needs stealing mechanic
+      -- lvl 18
+      -- TODO SilentDeath -- needs sneaking in combat
       -- lvl 24
+      -- TODO Sniper -- needs ranged weapons
     | Slayer
 
 
