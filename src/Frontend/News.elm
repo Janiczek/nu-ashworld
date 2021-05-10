@@ -16,7 +16,55 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1620348829
+    [ { date = 1620669882
+      , title = "More perks and UI improvements"
+      , text = """
+I have went through most of the perks in the original game and "ported" the
+applicable ones to NuAshworld. Most other perks that are still missing are
+waiting for non-unarmed combat, actual weapons etc. to be implemented.
+
+There is one big bug fixed: the armor class in fights was computed from the
+attacker, not from the defending party! This is now fixed, so your hard-earned
+metal armor will now finally be useful to you ;)
+
+And the unused Action Points from your turns in fights get converted to bonus
+Armor Class for the next turn - again bringing us closer to what's in Fallout.
+See also the **HtH Evade** perk that upgrades this behaviour and makes your
+Unarmed skill much more useful.
+
+Changelog:
+
+* fixed bug: **Max HP** in Character Screen now shows the proper value instead of one calculated for level 1.
+* UI improvement: **Tick heal** in Character Screen now shows the specific HP value healed in addition to the percentage of max HP.
+* UI improvement: **Perk selection screen** now shows perk descriptions on hover.
+* UI improvement: **Character screen** now shows perk descriptions on hover.
+
+* new perk: **Action Boy**: gives you +1 Action Point per rank (for use in fights etc). Max rank: 2. Reqs: lvl 12, Agility >= 5
+* new perk: **Adrenaline Rush**: gives you +1 Strength whenever your HP drops below 50%. Max rank: 1. Reqs: lvl 6, Strength < 10
+* new perk: **Bonus HtH Attacks**: all your unarmed attacks consume 1 less AP (so, 2 instead of 3 for normal attacks and 3 instead of 4 for aimed attacks). Max rank: 1. Reqs: lvl 15, Agility >= 6
+* new perk: **Dodger**: gives you +5 to Armor Class. Max rank: 1. Reqs: lvl 9, Agility >= 6
+* new perk: **Fortune Finder**: all caps NPC drops are doubled. Max rank: 1. Reqs: lvl 6, Luck >= 8
+* new perk: **Gambler**: gives you +20% to Gambling. Max rank: 1. Reqs: lvl 6, Gambling >= 50%
+* new perk: **HtH Evade**: each Action Point unused in your fight turn gets converted to 2 Armor Class instead of 1. You also gain 1/12 of your Unarmed skill as additional Armor Class. Max rank: 1. Reqs: lvl 12, Unarmed >= 75%
+* new perk: **Lifegiver**: gives you +4 HP per level per rank. Max rank: 2. Reqs: lvl 12, Endurance >= 4
+* new perk: **Living Anatomy**: gives you +10% to Doctor and +5 damage to any attack that lands. Max rank: 1. Reqs: lvl 12, Doctor >= 60%
+* new perk: **Master Thief**: gives you +15% to Lockpick and Steal. Max rank: 1. Reqs: lvl 12, Lockpick >= 50%, Steal >= 50%
+* new perk: **Medic**: gives you +10% to First Aid and Doctor. Max rank: 1. Reqs: lvl 12, First Aid >= 40% or Doctor >= 40%
+* new perk: **Mr. Fixit**: gives you +10% to Repair and Science. Max rank: 1. Reqs: lvl 12, Science >= 40% or Repair >= 40%
+* new perk: **Negotiator**: gives you +10% to Speech and Barter. Max rank: 1. Reqs: lvl 6, Barter >= 50%, Speech >= 50%
+* new perk: **Pathfinder**: your tick cost for map movement is reduced by 25% per rank. Max rank: 2. Reqs: lvl 6, Endurance >= 6, Outdoorsman >= 40%
+* new perk: **Ranger**: gives you +15% to Outdoorsman. Max rank: 1. Reqs: lvl 6, Perception >= 6
+* new perk: **Salesman**: gives you +20% to Barter. Max rank: 1. Reqs: lvl 6, Barter >= 50%
+* new perk: **Speaker**: gives you +20% to Speech. Max rank: 1. Reqs: lvl 9, Speech >= 50%
+* new perk: **Speaker**: gives you +20% to Speech. Max rank: 1. Reqs: lvl 9, Speech >= 50%
+* new perk: **Swift Learner**: gives you 5% more XP per rank. Max rank: 3. Reqs: lvl 3, Intelligence >= 4
+* new perk: **Thief**: gives you +10% to Sneak, Lockpick, Steal and Traps. Max rank: 1. Reqs: lvl 3
+* new perk: **Toughness**: gives you +10 to Damage Resistance per rank. Max rank: 3. Reqs: lvl 3, Endurance >= 6, Luck >= 6
+
+~ janiczek
+"""
+      }
+    , { date = 1620348829
       , title = "Critical hits"
       , text = """
 The game now properly tracks **critical hits**. You'll find that both you and
