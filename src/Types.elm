@@ -47,6 +47,7 @@ type alias FrontendModel =
     , newChar : NewChar
     , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
+    , hoveredPerk : Maybe Perk
     }
 
 
@@ -97,6 +98,8 @@ type FrontendMsg
     | OpenMessage Message
     | AskToRemoveMessage Message
     | BarterMsg BarterMsg
+    | HoverPerk Perk
+    | StopHoveringPerk
 
 
 type BarterMsg

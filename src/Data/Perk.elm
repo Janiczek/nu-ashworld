@@ -3,6 +3,7 @@ module Data.Perk exposing
     , all
     , allApplicable
     , decoder
+    , description
     , encode
     , isApplicable
     , maxRank
@@ -15,13 +16,6 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-
-
-
-{- TODO go through
-   https://fallout.fandom.com/wiki/Fallout_2_perks
-   and implement all missing and applicable
--}
 
 
 type Perk
@@ -113,8 +107,8 @@ type Perk
 
 all : List Perk
 all =
-    [ AdrenalineRush
-    , ActionBoy
+    [ ActionBoy
+    , AdrenalineRush
     , Awareness
     , BetterCriticals
     , BonusHthAttacks
@@ -732,3 +726,131 @@ isApplicable r perk =
                 BonusHthAttacks ->
                     r.level >= 15 && s.agility >= 6
            )
+
+
+description : Perk -> String
+description perk =
+    case perk of
+        ActionBoy ->
+            "Each level of Action Boy gives you an additional AP to spend every combat turn. You can use these generic APs on any task."
+
+        AdrenalineRush ->
+            "With this Perk, you gain +1 to your Strength when you drop below 1/2 of your max hit points."
+
+        Awareness ->
+            "With Awareness, you are given detailed information about any critter you examine. You see their exact hit points and information about any weapon they are equipped with."
+
+        BetterCriticals ->
+            "The critical hits you cause in combat are more devastating. You gain a 20% bonus on the critical hit table, almost ensuring that more damage will be done. This does not affect the chance to cause a critical hit."
+
+        BonusHthAttacks ->
+            "You have learned the secret arts of the East, or you just punch faster. In any case, your hand-to-hand attacks cost 1 AP less to perform."
+
+        BonusHthDamage ->
+            "Experience in unarmed combat has given you the edge when it comes to damage. You cause +2 points of damage with hand-to-hand and melee attacks for each level of this Perk."
+
+        CautiousNature ->
+            "You are more alert outdoors and enemies are less likely to sneak up on you. With this Perk you get a +3 to your perception in random encounters when determining placement. This means the average starting distance in your fights increases."
+
+        Comprehension ->
+            "You pay much closer attention to the smaller details when reading. You gain 50% more skill points when reading books."
+
+        Dodger ->
+            "You are less likely to be hit in combat if you have this Perk. You gain a +5 to your Armor Class, in addition to the AC bonus from any armor worn."
+
+        EarlierSequence ->
+            "You are more likely to move before your opponents in combat, since your Sequence is +2 for each level of this Perk."
+
+        Educated ->
+            "Each level of Educated will add +2 skill points when you gain a new experience level. This Perk works best when purchased early in your adventure."
+
+        FasterHealing ->
+            "With each level of this Perk, the percentage of max HP you heal using a tick increases by 10%."
+
+        FortuneFinder ->
+            "You have the talent of finding money. You will find additional money in random encounters in the desert: all caps drops from PvM combat get doubled."
+
+        GainAgility ->
+            "With this Perk you gain +1 to your Agility."
+
+        GainCharisma ->
+            "With this Perk you gain +1 to your Charisma."
+
+        GainEndurance ->
+            "With this Perk you gain +1 to your Endurance."
+
+        GainIntelligence ->
+            "With this Perk you gain +1 to your Intelligence."
+
+        GainLuck ->
+            "With this Perk you gain +1 to your Luck."
+
+        GainPerception ->
+            "With this Perk you gain +1 to your Perception."
+
+        GainStrength ->
+            "With this Perk you gain +1 to your Strength."
+
+        Gambler ->
+            "You can roll with the best of them. You gain +20% to your gambling skill."
+
+        HereAndNow ->
+            "With this Perk you immediately gain one experience level."
+
+        HthEvade ->
+            -- TODO perhaps in future change to only work if hands are empty?
+            "Each unused action point gives you a +2 instead of +1 towards your Armor Class at the end of your turn, plus 1/12 of your unarmed skill."
+
+        Lifegiver ->
+            "With each level of this Perk, you gain an additional 4 Hit Points every time you advance a level. This is in addition to the Hit Points you already gain per level based off of your Endurance. This also applies retroactively to all the levels you already gained."
+
+        LivingAnatomy ->
+            "You have a better understanding of living creatures and their strengths and weaknesses. You get a one-time bonus of +10% to Doctor, and you do +5 damage per attack to living creatures."
+
+        MasterThief ->
+            "You gain +15 to stealing and lockpicking. Steal from the rich, and give to you."
+
+        MasterTrader ->
+            "You have mastered one aspect of bartering - buying goods far more cheaply than normal. With this Perk, you get a 25% discount when purchasing items from a store or another trader."
+
+        Medic ->
+            "The Medic Perk gives you a one-time bonus of +10% to the First Aid and Doctor skills. Healing skills are a good thing."
+
+        MoreCriticals ->
+            "You are more likely to cause critical hits in combat if you have this Perk. Each level of More Criticals gets you an additional +5% chance to cause a critical hit."
+
+        MrFixit ->
+            "This Perk will give you a one-time bonus of +10% to the Repair and Science skills. A little late night cramming never hurt anybody, especially you."
+
+        Negotiator ->
+            "You are a very skilled negotiator. Not only can you barter with the best of them, but you can talk your way into or out of almost anything. With this Perk you gain +10% to both Barter and Speech."
+
+        Pathfinder ->
+            "The Pathfinder is better able to find the shortest route. With this Perk, your travel cost on the World Map is reduced by 25% for each level."
+
+        Ranger ->
+            "You gain a +15% toward your Outdoorsman skill."
+
+        Salesman ->
+            "You are an adept salesperson. With this Perk you gain +20% towards your Barter skill."
+
+        Slayer ->
+            "The Slayer walks the earth! In hand-to-hand combat all of your hits are upgraded to critical hits, causing destruction and mayhem."
+
+        Speaker ->
+            "Being a Speaker means you have a one-time bonus of +20% to Speech. From the mouth of babes and all that."
+
+        Survivalist ->
+            "You are a master of the outdoors. This Perk confers the ability to survive in hostile environments. You get a +25% bonus to Outdoorsman."
+
+        SwiftLearner ->
+            "You are indeed a Swift Learner with this Perk, as each level gives you an additional +5% bonus whenever you earn experience points. This is best taken early."
+
+        Tag ->
+            "Your skills have improved to the point where you can pick an additional Tag Skill.  Tag skills increase twice as fast."
+
+        Thief ->
+            "The blood of a thief runs through your veins. With the Thief Perk, you get a one-time bonus of +10% to your Sneak, Lockpick, Steal, and Traps skills.  A well rounded thief is a live thief."
+
+        Toughness ->
+            "When you are tough, you take less damage.  Each level of this Perk adds +10% to your general damage resistance."

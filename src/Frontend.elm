@@ -91,6 +91,7 @@ init _ key =
       , newChar = NewChar.init
       , alertMessage = Nothing
       , mapMouseCoords = Nothing
+      , hoveredPerk = Nothing
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -374,6 +375,16 @@ update msg model =
 
         BarterMsg barterMsg ->
             updateBarter barterMsg model
+
+        HoverPerk perk ->
+            ( { model | hoveredPerk = Just perk }
+            , Cmd.none
+            )
+
+        StopHoveringPerk ->
+            ( { model | hoveredPerk = Nothing }
+            , Cmd.none
+            )
 
 
 mapBarter_ : (Barter.State -> Barter.State) -> Model -> Model
@@ -729,7 +740,7 @@ contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                withCreatedPlayer world characterView
+                withCreatedPlayer world (characterView model.hoveredPerk)
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -1925,8 +1936,8 @@ newCharSkillsView newChar =
         }
 
 
-characterView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-characterView _ player =
+characterView : Maybe Perk -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+characterView hoveredPerk _ player =
     let
         level =
             Xp.currentLevel player.xp
@@ -1942,32 +1953,51 @@ characterView _ player =
     in
     [ pageTitleView "Character"
     , if player.availablePerks > 0 && not (List.isEmpty applicablePerks) then
-        choosePerkView applicablePerks
+        choosePerkView hoveredPerk applicablePerks
 
       else
-        normalCharacterView player
+        normalCharacterView hoveredPerk player
     ]
 
 
-choosePerkView : List Perk -> Html FrontendMsg
-choosePerkView applicablePerks =
+choosePerkView : Maybe Perk -> List Perk -> Html FrontendMsg
+choosePerkView hoveredPerk applicablePerks =
     let
         perkView perk =
             H.li
                 [ HE.onClick <| AskToChoosePerk perk
                 , HA.class "character-choose-perk-item"
+                , HE.onMouseOver <| HoverPerk perk
+                , HE.onMouseOut StopHoveringPerk
                 ]
                 [ H.text <| Perk.name perk ]
     in
     H.div
-        []
-        [ H.h3 [] [ H.text "Choose a perk!" ]
-        , H.ul [] (List.map perkView applicablePerks)
+        [ HA.id "character-choose-perk" ]
+        [ H.div
+            [ HA.id "character-choose-perk-columns" ]
+            [ H.div []
+                [ H.h3 [] [ H.text "Choose a perk!" ]
+                , H.ul
+                    [ HA.id "character-choose-perk-list" ]
+                    (List.map perkView applicablePerks)
+                ]
+            , H.viewMaybe perkDescriptionView hoveredPerk
+            ]
         ]
 
 
-normalCharacterView : CPlayer -> Html FrontendMsg
-normalCharacterView player =
+perkDescriptionView : Perk -> Html FrontendMsg
+perkDescriptionView hoveredPerk =
+    H.div
+        [ HA.id "character-perk-description" ]
+        [ H.h3 [] [ H.text <| Perk.name hoveredPerk ]
+        , H.text <| Perk.description hoveredPerk
+        ]
+
+
+normalCharacterView : Maybe Perk -> CPlayer -> Html FrontendMsg
+normalCharacterView hoveredPerk player =
     H.div
         [ HA.id "character-grid" ]
         [ H.div
@@ -1983,7 +2013,7 @@ normalCharacterView player =
         , H.div
             [ HA.class "character-column" ]
             [ charDerivedStatsView player
-            , charHelpView
+            , charHelpView hoveredPerk
             ]
         ]
 
@@ -2012,14 +2042,29 @@ charTraitsView traits =
         ]
 
 
-charHelpView : Html FrontendMsg
-charHelpView =
+charHelpView : Maybe Perk -> Html FrontendMsg
+charHelpView hoveredPerk =
+    let
+        helpContent : Html FrontendMsg
+        helpContent =
+            case hoveredPerk of
+                Nothing ->
+                    H.p [] [ H.text "Hover over a perk to show more information about it here!" ]
+
+                Just perk ->
+                    H.div []
+                        [ H.h4
+                            [ HA.id "character-help-item-title" ]
+                            [ H.text <| Perk.name perk ]
+                        , H.text <| Perk.description perk
+                        ]
+    in
     H.div
         [ HA.id "character-help" ]
         [ H.h3
             [ HA.class "character-section-title" ]
             [ H.text "Help" ]
-        , H.p [] [ H.text "TODO info about hovered item" ]
+        , helpContent
         ]
 
 
@@ -2296,7 +2341,10 @@ charPerksView perks =
                     Perk.maxRank perk
             in
             H.li
-                [ HA.class "character-perks-perk" ]
+                [ HA.class "character-perks-perk"
+                , HE.onMouseOver <| HoverPerk perk
+                , HE.onMouseOut StopHoveringPerk
+                ]
                 [ H.text <|
                     if maxRank == 1 then
                         Perk.name perk
