@@ -3177,7 +3177,7 @@ commonLinksView currentRoute =
         ([ linkIn "News" Route.News Nothing False
          , linkIn "About" Route.About Nothing False
          , linkOut "Wiki    →" "https://nu-ashworld.tiddlyhost.com" Nothing False
-         , linkOut "Discord →" "https://discord.gg/HUmwvnv4xV" Nothing False
+         , linkOut "Discord →" "https://discord.gg/SxymXxvehS" Nothing False
          , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
          , linkOut "GitHub  →" "https://github.com/Janiczek/nu-ashworld" Nothing False
          , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False
