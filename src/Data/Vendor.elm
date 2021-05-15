@@ -3,6 +3,8 @@ module Data.Vendor exposing
     , Vendor
     , addCaps
     , addItem
+    , all
+    , barterSkill
     , emptyVendors
     , encodeVendors
     , forLocation

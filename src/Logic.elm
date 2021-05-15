@@ -388,8 +388,7 @@ unarmedBaseCriticalChance r =
 
 
 price :
-    { itemKind : Item.Kind
-    , itemCount : Int
+    { basePrice : Int
     , playerBarterSkill : Int
     , traderBarterSkill : Int
     , hasMasterTraderPerk : Bool
@@ -413,12 +412,8 @@ price r =
         barterRatio : Float
         barterRatio =
             (toFloat r.traderBarterSkill + 160) / (toFloat r.playerBarterSkill + 160) * 2
-
-        itemTotalPrice : Int
-        itemTotalPrice =
-            Item.basePrice r.itemKind * r.itemCount
     in
-    round (toFloat itemTotalPrice * barterRatio * (toFloat barterPercent * 0.01))
+    round (toFloat r.basePrice * barterRatio * (toFloat barterPercent * 0.01))
 
 
 {-| Cost of increasing a skill 1% (or 2% if tagged)

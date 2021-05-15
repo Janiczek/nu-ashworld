@@ -836,8 +836,7 @@ barter barterState clientId location player model =
                                     |> Maybe.map
                                         (\item ->
                                             Logic.price
-                                                { itemCount = count
-                                                , itemKind = item.kind
+                                                { basePrice = count * Item.basePrice item.kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0

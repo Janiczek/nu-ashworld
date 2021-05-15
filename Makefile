@@ -33,3 +33,10 @@ test-watch-long:
 .PHONY: review
 review:
 	yarn elm-review
+
+.PHONY: build-calculators
+build-calculators: build-calculator-barter-price
+
+.PHONY: build-calculator-barter-price
+build-calculator-barter-price:
+	yarn elm make src/Calculator/BarterPrice.elm --output docs/calc/barter-price.html

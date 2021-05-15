@@ -1184,8 +1184,7 @@ townStoreView barter location world player =
                                     |> Maybe.map
                                         (\{ kind } ->
                                             Logic.price
-                                                { itemCount = count
-                                                , itemKind = kind
+                                                { basePrice = count * Item.basePrice kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0

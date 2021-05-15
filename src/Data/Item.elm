@@ -5,7 +5,7 @@ module Data.Item exposing
     , Item
     , Kind(..)
     , UniqueKey
-    , allKinds
+    , all
     , armorClass
     , basePrice
     , create
@@ -59,8 +59,8 @@ type Kind
     | MetalArmor
 
 
-allKinds : List Kind
-allKinds =
+all : List Kind
+all =
     [ Fruit
     , HealingPowder
     , Stimpak
