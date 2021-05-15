@@ -8,5 +8,7 @@ type Type
     | WildBrahmin
     | GiantAnt
     | ToughGiantAnt
+    | BlackRadscorpion
+    | LesserBlackRadscorpion
     | LesserRadscorpion
     | Radscorpion
