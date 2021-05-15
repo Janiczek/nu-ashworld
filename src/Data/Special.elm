@@ -7,6 +7,7 @@ module Data.Special exposing
     , decoder
     , decrement
     , decrementNewChar
+    , description
     , encode
     , get
     , increment
@@ -236,3 +237,28 @@ isValueInRange value =
 sum : Special -> Int
 sum special =
     List.sum <| List.map (\t -> get t special) all
+
+
+description : Type -> String
+description type_ =
+    case type_ of
+        Strength ->
+            "Raw physical strength. A high Strength is good for physical characters."
+
+        Perception ->
+            "The ability to see, hear, taste and notice unusual things. A high Perception is important for a sharpshooter."
+
+        Endurance ->
+            "Stamina and physical toughness. A character with a high Endurance will survive where others may not."
+
+        Charisma ->
+            "A combination of appearance and charm. A high Charisma is important for characters that want to influence people with words."
+
+        Intelligence ->
+            "Knowledge, wisdom and the ability to think quickly. A high Intelligence is important for any character."
+
+        Agility ->
+            "Coordination and the ability to move well. A high Agility is important for any active character."
+
+        Luck ->
+            "Fate. Karma. An extremely high or low Luck will affect the character - somehow. Events and situations will be changed by how lucky (or unlucky) your character is."

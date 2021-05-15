@@ -31,6 +31,7 @@ import Data.World
         )
 import Dict exposing (Dict)
 import File exposing (File)
+import Frontend.HoveredItem exposing (HoveredItem)
 import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Set exposing (Set)
@@ -47,7 +48,7 @@ type alias FrontendModel =
     , newChar : NewChar
     , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
-    , hoveredPerk : Maybe Perk
+    , hoveredItem : Maybe HoveredItem
     }
 
 
@@ -98,8 +99,8 @@ type FrontendMsg
     | OpenMessage Message
     | AskToRemoveMessage Message
     | BarterMsg BarterMsg
-    | HoverPerk Perk
-    | StopHoveringPerk
+    | HoverItem HoveredItem
+    | StopHoveringItem
 
 
 type BarterMsg

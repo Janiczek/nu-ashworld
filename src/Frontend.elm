@@ -46,6 +46,7 @@ import Dict.Extra as Dict
 import File
 import File.Download
 import File.Select
+import Frontend.HoveredItem as HoveredItem exposing (HoveredItem(..))
 import Frontend.News as News
 import Frontend.Route as Route exposing (Route)
 import Html as H exposing (Attribute, Html)
@@ -58,6 +59,7 @@ import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
+import Markdown
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -91,7 +93,7 @@ init _ key =
       , newChar = NewChar.init
       , alertMessage = Nothing
       , mapMouseCoords = Nothing
-      , hoveredPerk = Nothing
+      , hoveredItem = Nothing
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -376,13 +378,13 @@ update msg model =
         BarterMsg barterMsg ->
             updateBarter barterMsg model
 
-        HoverPerk perk ->
-            ( { model | hoveredPerk = Just perk }
+        HoverItem item ->
+            ( { model | hoveredItem = Just item }
             , Cmd.none
             )
 
-        StopHoveringPerk ->
-            ( { model | hoveredPerk = Nothing }
+        StopHoveringItem ->
+            ( { model | hoveredItem = Nothing }
             , Cmd.none
             )
 
@@ -740,7 +742,7 @@ contentView model =
     H.div [ HA.id "content" ]
         (case ( model.route, model.world ) of
             ( Route.Character, WorldLoggedIn world ) ->
-                withCreatedPlayer world (characterView model.hoveredPerk)
+                withCreatedPlayer world (characterView model.hoveredItem)
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -824,7 +826,7 @@ contentView model =
                 contentUnavailableToLoggedOutView
 
             ( Route.CharCreation, WorldLoggedIn _ ) ->
-                newCharView model.newChar
+                newCharView model.hoveredItem model.newChar
 
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -1652,8 +1654,8 @@ townStoreView barter location world player =
             ]
 
 
-newCharView : NewChar -> List (Html FrontendMsg)
-newCharView newChar =
+newCharView : Maybe HoveredItem -> NewChar -> List (Html FrontendMsg)
+newCharView hoveredItem newChar =
     let
         createBtnView =
             H.div [ HA.id "new-character-create-btn" ]
@@ -1687,20 +1689,39 @@ newCharView newChar =
         , H.div
             [ HA.class "new-character-column" ]
             [ newCharDerivedStatsView newChar
-            , newCharHelpView
+            , newCharHelpView hoveredItem
             ]
         ]
     ]
 
 
-newCharHelpView : Html FrontendMsg
-newCharHelpView =
+newCharHelpView : Maybe HoveredItem -> Html FrontendMsg
+newCharHelpView maybeHoveredItem =
+    let
+        helpContent : Html FrontendMsg
+        helpContent =
+            case maybeHoveredItem of
+                Nothing ->
+                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
+
+                Just hoveredItem ->
+                    let
+                        { title, description } =
+                            HoveredItem.text hoveredItem
+                    in
+                    H.div []
+                        [ H.h4
+                            [ HA.class "hovered-item-title" ]
+                            [ H.text title ]
+                        , Markdown.toHtml [] description
+                        ]
+    in
     H.div
         [ HA.id "new-character-help" ]
         [ H.h3
             [ HA.class "new-character-section-title" ]
             [ H.text "Help" ]
-        , H.p [] [ H.text "TODO info about hovered item" ]
+        , helpContent
         ]
 
 
@@ -1800,7 +1821,10 @@ newCharSpecialView newChar =
                     Special.get type_ finalSpecial
             in
             H.tr
-                [ HA.class "character-special-attribute" ]
+                [ HA.class "character-special-attribute"
+                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+                , HE.onMouseOut StopHoveringItem
+                ]
                 [ H.td
                     [ HA.class "character-special-attribute-dec" ]
                     [ H.button
@@ -1883,6 +1907,8 @@ newCharTraitsView traits =
                     , ( "is-toggled", isToggled )
                     ]
                 , HE.onClick <| NewCharToggleTrait trait
+                , HE.onMouseOver <| HoverItem <| HoveredTrait trait
+                , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
@@ -1936,8 +1962,8 @@ newCharSkillsView newChar =
         }
 
 
-characterView : Maybe Perk -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-characterView hoveredPerk _ player =
+characterView : Maybe HoveredItem -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+characterView maybeHoveredItem _ player =
     let
         level =
             Xp.currentLevel player.xp
@@ -1953,22 +1979,23 @@ characterView hoveredPerk _ player =
     in
     [ pageTitleView "Character"
     , if player.availablePerks > 0 && not (List.isEmpty applicablePerks) then
-        choosePerkView hoveredPerk applicablePerks
+        choosePerkView maybeHoveredItem applicablePerks
 
       else
-        normalCharacterView hoveredPerk player
+        normalCharacterView maybeHoveredItem player
     ]
 
 
-choosePerkView : Maybe Perk -> List Perk -> Html FrontendMsg
-choosePerkView hoveredPerk applicablePerks =
+choosePerkView : Maybe HoveredItem -> List Perk -> Html FrontendMsg
+choosePerkView maybeHoveredItem applicablePerks =
     let
+        perkView : Perk -> Html FrontendMsg
         perkView perk =
             H.li
                 [ HE.onClick <| AskToChoosePerk perk
                 , HA.class "character-choose-perk-item"
-                , HE.onMouseOver <| HoverPerk perk
-                , HE.onMouseOut StopHoveringPerk
+                , HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.text <| Perk.name perk ]
     in
@@ -1982,22 +2009,26 @@ choosePerkView hoveredPerk applicablePerks =
                     [ HA.id "character-choose-perk-list" ]
                     (List.map perkView applicablePerks)
                 ]
-            , H.viewMaybe perkDescriptionView hoveredPerk
+            , H.viewMaybe perkDescriptionView maybeHoveredItem
             ]
         ]
 
 
-perkDescriptionView : Perk -> Html FrontendMsg
-perkDescriptionView hoveredPerk =
+perkDescriptionView : HoveredItem -> Html FrontendMsg
+perkDescriptionView hoveredItem =
+    let
+        { title, description } =
+            HoveredItem.text hoveredItem
+    in
     H.div
         [ HA.id "character-perk-description" ]
-        [ H.h3 [] [ H.text <| Perk.name hoveredPerk ]
-        , H.text <| Perk.description hoveredPerk
+        [ H.h3 [] [ H.text title ]
+        , H.text description
         ]
 
 
-normalCharacterView : Maybe Perk -> CPlayer -> Html FrontendMsg
-normalCharacterView hoveredPerk player =
+normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
+normalCharacterView maybeHoveredItem player =
     H.div
         [ HA.id "character-grid" ]
         [ H.div
@@ -2013,7 +2044,7 @@ normalCharacterView hoveredPerk player =
         , H.div
             [ HA.class "character-column" ]
             [ charDerivedStatsView player
-            , charHelpView hoveredPerk
+            , charHelpView maybeHoveredItem
             ]
         ]
 
@@ -2024,7 +2055,10 @@ charTraitsView traits =
         itemView : Trait -> Html FrontendMsg
         itemView trait =
             H.li
-                [ HA.class "character-traits-trait" ]
+                [ HA.class "character-traits-trait"
+                , HE.onMouseOver <| HoverItem <| HoveredTrait trait
+                , HE.onMouseOut StopHoveringItem
+                ]
                 [ H.text <| Trait.name trait ]
     in
     H.div
@@ -2042,21 +2076,25 @@ charTraitsView traits =
         ]
 
 
-charHelpView : Maybe Perk -> Html FrontendMsg
-charHelpView hoveredPerk =
+charHelpView : Maybe HoveredItem -> Html FrontendMsg
+charHelpView maybeHoveredItem =
     let
         helpContent : Html FrontendMsg
         helpContent =
-            case hoveredPerk of
+            case maybeHoveredItem of
                 Nothing ->
-                    H.p [] [ H.text "Hover over a perk to show more information about it here!" ]
+                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
 
-                Just perk ->
+                Just hoveredItem ->
+                    let
+                        { title, description } =
+                            HoveredItem.text hoveredItem
+                    in
                     H.div []
                         [ H.h4
-                            [ HA.id "character-help-item-title" ]
-                            [ H.text <| Perk.name perk ]
-                        , H.text <| Perk.description perk
+                            [ HA.class "hovered-item-title" ]
+                            [ H.text title ]
+                        , Markdown.toHtml [] description
                         ]
     in
     H.div
@@ -2155,7 +2193,10 @@ charSpecialView player =
                     Special.get type_ player.special
             in
             H.tr
-                [ HA.class "character-special-attribute" ]
+                [ HA.class "character-special-attribute"
+                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+                , HE.onMouseOut StopHoveringItem
+                ]
                 [ H.td
                     [ HA.class "character-special-attribute-label" ]
                     [ H.text <| Special.label type_ ]
@@ -2246,8 +2287,9 @@ skillsView_ r =
                     , ( "is-tagged", isTagged )
                     , ( "is-taggable", showTagButton && not isTaggingDisabled )
                     ]
-                , HA.attributeIf notUseful <| HA.title "This skill is not yet useful in the game."
                 , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
+                , HE.onMouseOver <| HoverItem <| HoveredSkill skill
+                , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.div
                     [ HA.class "character-skill-name" ]
@@ -2342,8 +2384,8 @@ charPerksView perks =
             in
             H.li
                 [ HA.class "character-perks-perk"
-                , HE.onMouseOver <| HoverPerk perk
-                , HE.onMouseOut StopHoveringPerk
+                , HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.text <|
                     if maxRank == 1 then

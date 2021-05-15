@@ -973,7 +973,7 @@ table tbody tr:hover td {
   grid-template-columns: repeat(2, 1fr);
 }
 
-#character-help-item-title {
+.hovered-item-title {
   margin-top: 0;
   color: var(--fg-highlight);
 }

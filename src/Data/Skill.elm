@@ -2,6 +2,7 @@ module Data.Skill exposing
     ( Skill(..)
     , all
     , decoder
+    , description
     , encode
     , get
     , isUseful
@@ -370,3 +371,61 @@ isUseful skill =
 
         Outdoorsman ->
             False
+
+
+description : Skill -> String
+description skill =
+    case skill of
+        SmallGuns ->
+            "The use, care and general knowledge of small firearms - pistols, SMGs and rifles."
+
+        BigGuns ->
+            "The operation and maintenance of really big guns - miniguns, rocket launchers, flamethrowers and such."
+
+        EnergyWeapons ->
+            "The care and feeding of energy-based weapons. How to arm and operate weapons that use laser or plasma technology."
+
+        Unarmed ->
+            "A combination of martial arts, boxing and other hand-to-hand martial arts. Combat with your hands and feet."
+
+        MeleeWeapons ->
+            "Using non-ranged weapons in hand-to-hand, or melee combat - knives, sledgehammers, spears, clubs and so on."
+
+        Throwing ->
+            "The skill of muscle-propelled ranged weapons, such as throwing knives, spears and grenades."
+
+        FirstAid ->
+            "General healing skill. Used to heal small cuts, abrasions and other minor ills. In game terms, the use of first aid can heal more hit points over time than just rest."
+
+        Doctor ->
+            "The healing of major wounds and crippled limbs. Without this skill, it will take a much longer period of time to restore crippled limbs to use."
+
+        Sneak ->
+            "Quiet movement, and the ability to remain unnoticed. If successful, you will be much harder to locate. You cannot run and sneak at the same time."
+
+        Lockpick ->
+            "The skill of opening locks without the proper key. The use of lockpicks or electronic lockpicks will greatly enhance this skill."
+
+        Steal ->
+            "The ability to make the things of others your own. Can be used to steal from people or places."
+
+        Traps ->
+            "The finding and removal of traps. Also the setting of explosives for demolition purposes."
+
+        Science ->
+            "Covers a variety of high technology skills, such as computers, biology, physics and geology."
+
+        Repair ->
+            "The practical application of the Science skill for fixing broken equipment, machinery and electronics."
+
+        Speech ->
+            "The ability to communicate in a practical and efficient manner. The skill of convincing others that your position is correct. The ability to lie and not get caught."
+
+        Barter ->
+            "Trading and trade-related tasks. The ability to get better prices for items you sell, and lower prices for items you buy."
+
+        Gambling ->
+            "The knowledge and practical skills related to wagering. The skill at cards, dice and other games."
+
+        Outdoorsman ->
+            "Practical knowledge of the outdoors, and the ability to live off the land. The knowledge of plants and animals."
