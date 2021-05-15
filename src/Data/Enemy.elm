@@ -105,8 +105,8 @@ type Type
     | GiantAnt
     | ToughGiantAnt
       -- Radscorpions: https://fallout.fandom.com/wiki/Radscorpion_(Fallout)
-      --| TODO BlackRadscorpion
-      --| TODO LesserBlackRadscorpion
+    | BlackRadscorpion
+    | LesserBlackRadscorpion
     | LesserRadscorpion
     | Radscorpion
 
@@ -121,6 +121,8 @@ allTypes =
     , ToughGiantAnt
     , LesserRadscorpion
     , Radscorpion
+    , LesserBlackRadscorpion
+    , BlackRadscorpion
     ]
 
 
@@ -138,6 +140,8 @@ forChunk _ =
     , ToughGiantAnt
     , LesserRadscorpion
     , Radscorpion
+    , LesserBlackRadscorpion
+    , BlackRadscorpion
     ]
 
 
@@ -169,6 +173,12 @@ xp type_ =
             Radscorpion ->
                 110
 
+            BlackRadscorpion ->
+                220
+
+            LesserBlackRadscorpion ->
+                110
+
 
 hp : Type -> Int
 hp type_ =
@@ -195,6 +205,12 @@ hp type_ =
             10
 
         Radscorpion ->
+            26
+
+        BlackRadscorpion ->
+            50
+
+        LesserBlackRadscorpion ->
             26
 
 
@@ -225,6 +241,12 @@ naturalArmorClass type_ =
         Radscorpion ->
             5
 
+        BlackRadscorpion ->
+            5
+
+        LesserBlackRadscorpion ->
+            5
+
 
 sequence : Type -> Int
 sequence type_ =
@@ -251,6 +273,12 @@ sequence type_ =
             4
 
         Radscorpion ->
+            4
+
+        BlackRadscorpion ->
+            6
+
+        LesserBlackRadscorpion ->
             4
 
 
@@ -281,6 +309,12 @@ actionPoints type_ =
         Radscorpion ->
             7
 
+        BlackRadscorpion ->
+            5
+
+        LesserBlackRadscorpion ->
+            7
+
 
 meleeDamageBonus : Type -> Int
 meleeDamageBonus type_ =
@@ -308,6 +342,12 @@ meleeDamageBonus type_ =
 
         Radscorpion ->
             6
+
+        BlackRadscorpion ->
+            12
+
+        LesserBlackRadscorpion ->
+            10
 
 
 damageThresholdNormal : Type -> Int
@@ -337,6 +377,12 @@ damageThresholdNormal type_ =
         Radscorpion ->
             2
 
+        BlackRadscorpion ->
+            4
+
+        LesserBlackRadscorpion ->
+            2
+
 
 damageResistanceNormal : Type -> Int
 damageResistanceNormal type_ =
@@ -363,6 +409,12 @@ damageResistanceNormal type_ =
             0
 
         Radscorpion ->
+            0
+
+        BlackRadscorpion ->
+            10
+
+        LesserBlackRadscorpion ->
             0
 
 
@@ -399,6 +451,12 @@ encodeType type_ =
             Radscorpion ->
                 "radscorpion"
 
+            BlackRadscorpion ->
+                "black-radscorpion"
+
+            LesserBlackRadscorpion ->
+                "lesser-black-radscorpion"
+
 
 typeDecoder : Decoder Type
 typeDecoder =
@@ -429,6 +487,12 @@ typeDecoder =
 
                     "radscorpion" ->
                         JD.succeed Radscorpion
+
+                    "lesser-black-radscorpion" ->
+                        JD.succeed LesserBlackRadscorpion
+
+                    "black-radscorpion" ->
+                        JD.succeed BlackRadscorpion
 
                     _ ->
                         JD.fail <| "Unknown Enemy.Type: '" ++ type_ ++ "'"
@@ -462,6 +526,12 @@ name type_ =
         Radscorpion ->
             "Radscorpion"
 
+        LesserBlackRadscorpion ->
+            "Lesser Black Radscorpion"
+
+        BlackRadscorpion ->
+            "Black Radscorpion"
+
 
 special : Type -> Special
 special type_ =
@@ -489,6 +559,12 @@ special type_ =
 
         Radscorpion ->
             Special 7 2 6 1 1 5 2
+
+        LesserBlackRadscorpion ->
+            Special 5 2 6 1 1 5 2
+
+        BlackRadscorpion ->
+            Special 8 3 7 1 1 5 3
 
 
 addedSkillPercentages : Type -> Dict_.Dict Skill Int
@@ -536,6 +612,16 @@ addedSkillPercentages type_ =
                 [ ( Unarmed, 21 )
                 ]
 
+        LesserBlackRadscorpion ->
+            Dict_.fromList
+                [ ( Unarmed, 25 )
+                ]
+
+        BlackRadscorpion ->
+            Dict_.fromList
+                [ ( Unarmed, 54 )
+                ]
+
 
 equippedArmor : Type -> Maybe Item.Kind
 equippedArmor type_ =
@@ -562,6 +648,12 @@ equippedArmor type_ =
             Nothing
 
         Radscorpion ->
+            Nothing
+
+        LesserBlackRadscorpion ->
+            Nothing
+
+        BlackRadscorpion ->
             Nothing
 
 
@@ -1878,6 +1970,12 @@ criticalSpec enemyType =
         Radscorpion ->
             radscorpion
 
+        LesserBlackRadscorpion ->
+            radscorpion
+
+        BlackRadscorpion ->
+            radscorpion
+
 
 humanAimedShotName : AimedShot -> String
 humanAimedShotName shot =
@@ -2011,6 +2109,12 @@ aimedShotName enemyType =
             radscorpion
 
         Radscorpion ->
+            radscorpion
+
+        LesserBlackRadscorpion ->
+            radscorpion
+
+        BlackRadscorpion ->
             radscorpion
 
 
@@ -2547,6 +2651,24 @@ dropSpec type_ =
             , items =
                 [ item 0.1 Item.HealingPowder { average = 2, maxDeviation = 1 }
                 , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                ]
+            }
+
+        LesserBlackRadscorpion ->
+            { caps = commonCaps { average = 50, maxDeviation = 20 }
+            , items =
+                [ item 0.2 Item.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.1 Item.HealingPowder { average = 2, maxDeviation = 1 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                ]
+            }
+
+        BlackRadscorpion ->
+            { caps = commonCaps { average = 110, maxDeviation = 40 }
+            , items =
+                [ item 0.1 Item.Fruit { average = 2, maxDeviation = 3 }
+                , item 0.2 Item.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 2 }
                 ]
             }
 
