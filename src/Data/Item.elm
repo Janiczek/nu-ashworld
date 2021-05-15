@@ -45,7 +45,8 @@ type alias Id =
 
 
 type Kind
-    = HealingPowder
+    = Fruit
+    | HealingPowder
     | Stimpak
     | BigBookOfScience
     | DeansElectronics
@@ -60,7 +61,8 @@ type Kind
 
 allKinds : List Kind
 allKinds =
-    [ HealingPowder
+    [ Fruit
+    , HealingPowder
     , Stimpak
     , BigBookOfScience
     , DeansElectronics
@@ -84,6 +86,9 @@ type Effect
 basePrice : Kind -> Int
 basePrice kind =
     case kind of
+        Fruit ->
+            10
+
         HealingPowder ->
             20
 
@@ -195,6 +200,9 @@ decoder =
 encodeKind : Kind -> JE.Value
 encodeKind kind =
     case kind of
+        Fruit ->
+            JE.string "fruit"
+
         HealingPowder ->
             JE.string "healing-powder"
 
@@ -235,6 +243,9 @@ kindDecoder =
         |> JD.andThen
             (\kind ->
                 case kind of
+                    "fruit" ->
+                        JD.succeed Fruit
+
                     "healing-powder" ->
                         JD.succeed HealingPowder
 
@@ -276,6 +287,9 @@ kindDecoder =
 name : Kind -> String
 name kind =
     case kind of
+        Fruit ->
+            "Fruit"
+
         HealingPowder ->
             "Healing Powder"
 
@@ -366,6 +380,12 @@ findMergeableId item items =
 usageEffects : Kind -> List Effect
 usageEffects kind =
     case kind of
+        Fruit ->
+            -- TODO radiation +1 after some time (2x)
+            [ Heal 15
+            , RemoveAfterUse
+            ]
+
         HealingPowder ->
             -- TODO temporary perception -1?
             [ Heal 30
@@ -429,6 +449,9 @@ type EquippableType
 equippableType : Kind -> Maybe EquippableType
 equippableType kind =
     case kind of
+        Fruit ->
+            Nothing
+
         HealingPowder ->
             Nothing
 

@@ -148,7 +148,7 @@ type AdminToBackend
 type BackendMsg
     = Connected SessionId ClientId
     | Disconnected SessionId ClientId
-    | GeneratedFight ClientId SPlayer Fight
+    | GeneratedFight ClientId SPlayer ( Fight, Int )
     | GeneratedNewVendorsStock ( Dict_.Dict Vendor.Name Vendor, Int )
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix

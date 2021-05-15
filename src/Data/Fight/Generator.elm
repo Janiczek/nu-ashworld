@@ -709,6 +709,7 @@ generator r =
                                                 { damageDealt = r.attacker.hp }
                                         , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.target.perks
                                         }
+                                , itemsGained = ongoing.attacker.drops
                                 }
 
                         else
@@ -716,6 +717,7 @@ generator r =
                             Fight.TargetWon
                                 { capsGained = 0
                                 , xpGained = 0
+                                , itemsGained = []
                                 }
 
                     else if ongoing.target.hp <= 0 then
@@ -730,6 +732,7 @@ generator r =
                                                     { damageDealt = r.target.hp }
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
+                                    , itemsGained = ongoing.target.drops
                                     }
 
                             Fight.Npc enemyType ->
@@ -740,6 +743,7 @@ generator r =
                                             { baseXpGained = Enemy.xp enemyType
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
+                                    , itemsGained = ongoing.target.drops
                                     }
 
                     else
@@ -812,11 +816,11 @@ subtractHp hp opponent =
     { opponent | hp = max 0 <| opponent.hp - hp }
 
 
-enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Enemy.Type -> Generator Opponent
-enemyOpponentGenerator r enemyType =
-    Enemy.caps enemyType
+enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Int -> Enemy.Type -> Generator ( Opponent, Int )
+enemyOpponentGenerator r lastItemId enemyType =
+    Enemy.dropGenerator lastItemId (Enemy.dropSpec enemyType)
         |> Random.map
-            (\caps ->
+            (\( { caps, items }, newItemId ) ->
                 let
                     caps_ : Int
                     caps_ =
@@ -846,33 +850,36 @@ enemyOpponentGenerator r enemyType =
                     unarmedSkill =
                         Skill.get special addedSkillPercentages Skill.Unarmed
                 in
-                { type_ = Fight.Npc enemyType
-                , hp = hp
-                , maxHp = hp
-                , maxAp = Enemy.actionPoints enemyType
-                , sequence = Enemy.sequence enemyType
-                , traits = traits
-                , perks = Dict_.empty
-                , caps = caps_
-                , equippedArmor = Enemy.equippedArmor enemyType
-                , naturalArmorClass = Enemy.naturalArmorClass enemyType
-                , attackStats =
-                    -- TODO for now it's all unarmed
-                    Logic.unarmedAttackStats
-                        { special = special
-                        , unarmedSkill = unarmedSkill
-                        , traits = traits
-                        , perks = Dict_.empty
-                        , level =
-                            -- TODO what to do? What damage ranges do enemies really have in FO2?
-                            1
-                        , npcExtraBonus = Enemy.meleeDamageBonus enemyType
-                        }
-                , addedSkillPercentages = addedSkillPercentages
-                , special =
-                    -- Enemies never have anything else than base special (no traits, perks, ...)
-                    special
-                }
+                ( { type_ = Fight.Npc enemyType
+                  , hp = hp
+                  , maxHp = hp
+                  , maxAp = Enemy.actionPoints enemyType
+                  , sequence = Enemy.sequence enemyType
+                  , traits = traits
+                  , perks = Dict_.empty
+                  , caps = caps_
+                  , drops = items
+                  , equippedArmor = Enemy.equippedArmor enemyType
+                  , naturalArmorClass = Enemy.naturalArmorClass enemyType
+                  , attackStats =
+                        -- TODO for now it's all unarmed
+                        Logic.unarmedAttackStats
+                            { special = special
+                            , unarmedSkill = unarmedSkill
+                            , traits = traits
+                            , perks = Dict_.empty
+                            , level =
+                                -- TODO what to do? What damage ranges do enemies really have in FO2?
+                                1
+                            , npcExtraBonus = Enemy.meleeDamageBonus enemyType
+                            }
+                  , addedSkillPercentages = addedSkillPercentages
+                  , special =
+                        -- Enemies never have anything else than base special (no traits, perks, ...)
+                        special
+                  }
+                , newItemId
+                )
             )
 
 
@@ -922,6 +929,7 @@ playerOpponent player =
     , traits = player.traits
     , perks = player.perks
     , caps = player.caps
+    , drops = []
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , naturalArmorClass = naturalArmorClass
     , attackStats = attackStats

@@ -231,7 +231,7 @@ update msg model =
                         , Cmd.none
                         )
 
-        GeneratedFight clientId sPlayer fight_ ->
+        GeneratedFight clientId sPlayer ( fight_, newItemId ) ->
             let
                 targetIsPlayer : Bool
                 targetIsPlayer =
@@ -247,7 +247,7 @@ update msg model =
                             updatePlayer fn name
 
                 newModel =
-                    model
+                    { model | lastItemId = newItemId }
                         |> updateIfPlayer
                             (\player ->
                                 player
@@ -272,13 +272,14 @@ update msg model =
                                 Fight.TargetAlreadyDead ->
                                     identity
 
-                                Fight.AttackerWon { xpGained, capsGained } ->
+                                Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
                                     identity
                                         >> updateIfPlayer
                                             (\player ->
                                                 player
                                                     |> SPlayer.addXp xpGained model.time
                                                     |> SPlayer.addCaps capsGained
+                                                    |> SPlayer.addItems itemsGained
                                                     |> (if targetIsPlayer then
                                                             SPlayer.incWins
 
@@ -291,16 +292,18 @@ update msg model =
                                             (\player ->
                                                 player
                                                     |> SPlayer.subtractCaps capsGained
+                                                    |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
                                                     |> SPlayer.incLosses
                                             )
                                             fight_.finalTarget
 
-                                Fight.TargetWon { xpGained, capsGained } ->
+                                Fight.TargetWon { xpGained, capsGained, itemsGained } ->
                                     identity
                                         >> updateIfPlayer
                                             (\player ->
                                                 player
                                                     |> SPlayer.subtractCaps capsGained
+                                                    |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
                                                     |> (if targetIsPlayer then
                                                             SPlayer.incLosses
 
@@ -314,6 +317,7 @@ update msg model =
                                                 player
                                                     |> SPlayer.addXp xpGained model.time
                                                     |> SPlayer.addCaps capsGained
+                                                    |> SPlayer.addItems itemsGained
                                                     |> SPlayer.incWins
                                             )
                                             fight_.finalTarget
@@ -1355,14 +1359,16 @@ wander clientId player model =
                 |> Random.andThen
                     (FightGen.enemyOpponentGenerator
                         { hasFortuneFinderPerk = Perk.rank Perk.FortuneFinder player.perks > 0 }
+                        model.lastItemId
                     )
                 |> Random.andThen
-                    (\enemyOpponent ->
+                    (\( enemyOpponent, newItemId ) ->
                         FightGen.generator
                             { attacker = FightGen.playerOpponent player
                             , target = enemyOpponent
                             , currentTime = model.time
                             }
+                            |> Random.map (\fight_ -> ( fight_, newItemId ))
                     )
             )
         )
@@ -1595,11 +1601,12 @@ fight otherPlayerName clientId sPlayer model =
                             (GeneratedFight
                                 clientId
                                 sPlayer
-                                (FightGen.targetAlreadyDead
+                                ( FightGen.targetAlreadyDead
                                     { attacker = FightGen.playerOpponent sPlayer
                                     , target = FightGen.playerOpponent target
                                     , currentTime = model.time
                                     }
+                                , model.lastItemId
                                 )
                             )
                             model
@@ -1613,6 +1620,7 @@ fight otherPlayerName clientId sPlayer model =
                                 , target = FightGen.playerOpponent target
                                 , currentTime = model.time
                                 }
+                                |> Random.map (\fight_ -> ( fight_, model.lastItemId ))
                             )
                         )
                 )

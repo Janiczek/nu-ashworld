@@ -3,6 +3,7 @@ module Data.Fight.View exposing (view)
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (OpponentType, Who(..))
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
+import Data.Item as Item
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
@@ -246,13 +247,29 @@ view perceptionLevel fight yourName =
             [ H.text <|
                 "Result: "
                     ++ (case fight.result of
-                            Fight.AttackerWon { xpGained, capsGained } ->
+                            Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
                                 if youAreAttacker then
                                     "You won! You gained "
                                         ++ String.fromInt xpGained
                                         ++ " XP and looted "
                                         ++ String.fromInt capsGained
                                         ++ " caps."
+                                        ++ (if List.isEmpty itemsGained then
+                                                ""
+
+                                            else
+                                                " You also looted "
+                                                    ++ String.join ", "
+                                                        (List.map
+                                                            (\item ->
+                                                                String.fromInt item.count
+                                                                    ++ "x "
+                                                                    ++ Item.name item.kind
+                                                            )
+                                                            itemsGained
+                                                        )
+                                                    ++ "."
+                                           )
 
                                 else
                                     "You lost! Your attacker gained "
@@ -260,8 +277,24 @@ view perceptionLevel fight yourName =
                                         ++ " XP and looted "
                                         ++ String.fromInt capsGained
                                         ++ " caps."
+                                        ++ (if List.isEmpty itemsGained then
+                                                ""
 
-                            Fight.TargetWon { xpGained, capsGained } ->
+                                            else
+                                                " They also looted "
+                                                    ++ String.join ", "
+                                                        (List.map
+                                                            (\item ->
+                                                                String.fromInt item.count
+                                                                    ++ "x "
+                                                                    ++ Item.name item.kind
+                                                            )
+                                                            itemsGained
+                                                        )
+                                                    ++ "."
+                                           )
+
+                            Fight.TargetWon { xpGained, capsGained, itemsGained } ->
                                 if youAreAttacker then
                                     if Fight.isPlayer fight.target then
                                         "You lost! Your target gained "
@@ -269,6 +302,22 @@ view perceptionLevel fight yourName =
                                             ++ " XP and looted "
                                             ++ String.fromInt capsGained
                                             ++ " caps."
+                                            ++ (if List.isEmpty itemsGained then
+                                                    ""
+
+                                                else
+                                                    " They also looted "
+                                                        ++ String.join ", "
+                                                            (List.map
+                                                                (\item ->
+                                                                    String.fromInt item.count
+                                                                        ++ "x "
+                                                                        ++ Item.name item.kind
+                                                                )
+                                                                itemsGained
+                                                            )
+                                                        ++ "."
+                                               )
 
                                     else
                                         "You lost!"
@@ -279,6 +328,22 @@ view perceptionLevel fight yourName =
                                         ++ " XP and looted "
                                         ++ String.fromInt capsGained
                                         ++ " caps."
+                                        ++ (if List.isEmpty itemsGained then
+                                                ""
+
+                                            else
+                                                " You also looted "
+                                                    ++ String.join ", "
+                                                        (List.map
+                                                            (\item ->
+                                                                String.fromInt item.count
+                                                                    ++ "x "
+                                                                    ++ Item.name item.kind
+                                                            )
+                                                            itemsGained
+                                                        )
+                                                    ++ "."
+                                           )
 
                             Fight.TargetAlreadyDead ->
                                 if youAreAttacker then

@@ -4,11 +4,12 @@ module Data.Enemy exposing
     , addedSkillPercentages
     , aimedShotName
     , allTypes
-    , caps
     , criticalSpec
     , damageResistanceNormal
     , damageThresholdNormal
     , default
+    , dropGenerator
+    , dropSpec
     , encodeType
     , equippedArmor
     , forChunk
@@ -27,15 +28,18 @@ module Data.Enemy exposing
 import AssocList as Dict_
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.ShotType exposing (AimedShot(..))
-import Data.Item as Item
+import Data.Item as Item exposing (Item)
 import Data.Map.Chunk exposing (Chunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special, Type(..))
 import Data.Xp exposing (BaseXp(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import Maybe.Extra as Maybe
+import NonemptyList exposing (NonemptyList)
 import Random exposing (Generator)
-import Random.Extra
+import Random.Bool as Random
+import Random.Extra as Random
 import Random.FloatExtra as Random exposing (NormalIntSpec)
 
 
@@ -359,29 +363,6 @@ addedSkillPercentages type_ =
             Dict_.fromList
                 [ ( Unarmed, 21 )
                 ]
-
-
-caps : Type -> Generator Int
-caps type_ =
-    let
-        common : NormalIntSpec -> Generator Int
-        common r =
-            Random.Extra.frequency
-                ( 0.2, Random.constant 0 )
-                [ ( 0.8, Random.normallyDistributedInt r ) ]
-    in
-    case type_ of
-        GiantAnt ->
-            common { average = 10, maxDeviation = 5 }
-
-        ToughGiantAnt ->
-            common { average = 20, maxDeviation = 12 }
-
-        LesserRadscorpion ->
-            common { average = 25, maxDeviation = 13 }
-
-        Radscorpion ->
-            common { average = 60, maxDeviation = 30 }
 
 
 equippedArmor : Type -> Maybe Item.Kind
@@ -1836,3 +1817,138 @@ manCriticalSpec aimedShot effectCategory =
             , message = "he mumbles 'Mother', as his eyes roll into the back of his head."
             , statCheck = Nothing
             }
+
+
+type alias DropSpec =
+    { caps : NonemptyList ( Float, Generator Int )
+    , items : List ( Float, ItemDropSpec )
+    }
+
+
+type alias ItemDropSpec =
+    { uniqueKey : Item.UniqueKey
+    , count : NormalIntSpec
+    }
+
+
+dropSpec : Type -> DropSpec
+dropSpec type_ =
+    let
+        commonCaps : NormalIntSpec -> NonemptyList ( Float, Generator Int )
+        commonCaps r =
+            ( ( 0.2, Random.constant 0 )
+            , [ ( 0.8, Random.normallyDistributedInt r ) ]
+            )
+
+        item : Float -> Item.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
+        item probability kind count =
+            ( probability
+            , { uniqueKey = { kind = kind }
+              , count = count
+              }
+            )
+    in
+    case type_ of
+        GiantAnt ->
+            { caps = commonCaps { average = 10, maxDeviation = 5 }
+            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 } ]
+            }
+
+        ToughGiantAnt ->
+            { caps = commonCaps { average = 20, maxDeviation = 12 }
+            , items =
+                [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 }
+                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 0 }
+                ]
+            }
+
+        LesserRadscorpion ->
+            { caps = commonCaps { average = 25, maxDeviation = 13 }
+            , items =
+                [ item 0.15 Item.Fruit { average = 2, maxDeviation = 1 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 0 }
+                ]
+            }
+
+        Radscorpion ->
+            { caps = commonCaps { average = 60, maxDeviation = 30 }
+            , items =
+                [ item 0.1 Item.HealingPowder { average = 2, maxDeviation = 1 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                ]
+            }
+
+
+dropGenerator :
+    Int
+    -> DropSpec
+    -> Generator ( { caps : Int, items : List Item }, Int )
+dropGenerator lastItemId dropSpec_ =
+    Random.map2
+        (\caps generatedItems ->
+            let
+                ( items, newLastId ) =
+                    generatedItems
+                        |> List.foldl
+                            (\{ uniqueKey, count } ( accItems, accItemId ) ->
+                                let
+                                    ( item, incrementedId ) =
+                                        Item.create
+                                            { lastId = accItemId
+                                            , uniqueKey = uniqueKey
+                                            , count = count
+                                            }
+                                in
+                                ( item :: accItems, incrementedId )
+                            )
+                            ( [], lastItemId )
+            in
+            ( { caps = caps
+              , items = items
+              }
+            , newLastId
+            )
+        )
+        (capsGenerator dropSpec_)
+        (dropItemsGenerator dropSpec_)
+
+
+capsGenerator : DropSpec -> Generator Int
+capsGenerator { caps } =
+    let
+        ( c, cs ) =
+            caps
+    in
+    Random.weighted c cs
+        |> Random.andThen identity
+
+
+dropItemsGenerator : DropSpec -> Generator (List { uniqueKey : Item.UniqueKey, count : Int })
+dropItemsGenerator { items } =
+    items
+        |> List.map
+            (\( float, itemSpec ) ->
+                Random.weightedBool float
+                    |> Random.andThen
+                        (\bool ->
+                            if bool then
+                                itemSpec.count
+                                    |> Random.normallyDistributedInt
+                                    |> Random.map
+                                        (\count ->
+                                            if count <= 0 then
+                                                Nothing
+
+                                            else
+                                                Just
+                                                    { uniqueKey = itemSpec.uniqueKey
+                                                    , count = count
+                                                    }
+                                        )
+
+                            else
+                                Random.constant Nothing
+                        )
+            )
+        |> Random.sequence
+        |> Random.map Maybe.values

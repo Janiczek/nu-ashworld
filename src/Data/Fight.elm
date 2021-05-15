@@ -17,7 +17,7 @@ import AssocList as Dict_
 import AssocSet as Set_
 import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
-import Data.Item as Item
+import Data.Item as Item exposing (Item)
 import Data.Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
@@ -51,6 +51,7 @@ type alias Opponent =
     , traits : Set_.Set Trait
     , perks : Dict_.Dict Perk Int
     , caps : Int
+    , drops : List Item
     , equippedArmor : Maybe Item.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
@@ -60,8 +61,8 @@ type alias Opponent =
 
 
 type Result
-    = AttackerWon { xpGained : Int, capsGained : Int }
-    | TargetWon { xpGained : Int, capsGained : Int }
+    = AttackerWon { xpGained : Int, capsGained : Int, itemsGained : List Item }
+    | TargetWon { xpGained : Int, capsGained : Int, itemsGained : List Item }
     | TargetAlreadyDead
     | BothDead
     | NobodyDead
@@ -173,6 +174,7 @@ encodeResult result =
                 [ ( "type", JE.string "AttackerWon" )
                 , ( "xpGained", JE.int r.xpGained )
                 , ( "capsGained", JE.int r.capsGained )
+                , ( "itemsGained", JE.list Item.encode r.itemsGained )
                 ]
 
         TargetWon r ->
@@ -180,6 +182,7 @@ encodeResult result =
                 [ ( "type", JE.string "TargetWon" )
                 , ( "xpGained", JE.int r.xpGained )
                 , ( "capsGained", JE.int r.capsGained )
+                , ( "itemsGained", JE.list Item.encode r.itemsGained )
                 ]
 
         TargetAlreadyDead ->
@@ -194,6 +197,16 @@ encodeResult result =
 
 resultDecoder : Decoder Result
 resultDecoder =
+    JD.oneOf
+        [ resultDecoderV2
+        , resultDecoderV1
+        ]
+
+
+{-| Original
+-}
+resultDecoderV1 : Decoder Result
+resultDecoderV1 =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -204,6 +217,7 @@ resultDecoder =
                                 AttackerWon
                                     { xpGained = xp
                                     , capsGained = caps
+                                    , itemsGained = []
                                     }
                             )
                             (JD.field "xpGained" JD.int)
@@ -215,10 +229,59 @@ resultDecoder =
                                 TargetWon
                                     { xpGained = xp
                                     , capsGained = caps
+                                    , itemsGained = []
                                     }
                             )
                             (JD.field "xpGained" JD.int)
                             (JD.field "capsGained" JD.int)
+
+                    "TargetAlreadyDead" ->
+                        JD.succeed TargetAlreadyDead
+
+                    "BothDead" ->
+                        JD.succeed BothDead
+
+                    "NobodyDead" ->
+                        JD.succeed NobodyDead
+
+                    _ ->
+                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
+            )
+
+
+{-| Adding the `itemsGained` field
+-}
+resultDecoderV2 : Decoder Result
+resultDecoderV2 =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "AttackerWon" ->
+                        JD.map3
+                            (\xp caps items ->
+                                AttackerWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    , itemsGained = items
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+                            (JD.field "itemsGained" (JD.list Item.decoder))
+
+                    "TargetWon" ->
+                        JD.map3
+                            (\xp caps items ->
+                                TargetWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    , itemsGained = items
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+                            (JD.field "itemsGained" (JD.list Item.decoder))
 
                     "TargetAlreadyDead" ->
                         JD.succeed TargetAlreadyDead

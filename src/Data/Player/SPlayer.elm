@@ -2,6 +2,7 @@ module Data.Player.SPlayer exposing
     ( addCaps
     , addHp
     , addItem
+    , addItems
     , addMessage
     , addSkillPercentage
     , addXp
@@ -16,6 +17,7 @@ module Data.Player.SPlayer exposing
     , readMessage
     , recalculateHp
     , removeItem
+    , removeItems
     , removeMessage
     , setHp
     , setLocation
@@ -332,6 +334,14 @@ removeMessage messageToRemove player =
     { player | messages = List.filter ((/=) messageToRemove) player.messages }
 
 
+addItems : List Item -> SPlayer -> SPlayer
+addItems items player =
+    List.foldl
+        addItem
+        player
+        items
+
+
 addItem : Item -> SPlayer -> SPlayer
 addItem item player =
     let
@@ -352,6 +362,14 @@ addItem item player =
                                 Just { oldItem | count = oldItem.count + item.count }
                     )
     }
+
+
+removeItems : List ( Item.Id, Int ) -> SPlayer -> SPlayer
+removeItems items player =
+    List.foldl
+        (\( id, removedCount ) accPlayer -> removeItem id removedCount accPlayer)
+        player
+        items
 
 
 removeItem : Item.Id -> Int -> SPlayer -> SPlayer
