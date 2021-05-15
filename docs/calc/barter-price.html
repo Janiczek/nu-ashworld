@@ -5430,7 +5430,7 @@ var $author$project$Logic$price = function (r) {
 	return $elm$core$Basics$round((r.basePrice * barterRatio) * (barterPercent * 0.01));
 };
 var $elm$html$Html$strong = _VirtualDom_node('strong');
-var $author$project$Calculator$BarterPrice$style = '\nbody {\n    margin: 20px;\n}\n#columns {\n    gap: 10px;\n    display: flex;\n    flex-direction: row;\n    align-items: stretch;\n    justify-content: stretch;\n}\n\n.column {\n    flex: 1;\n    background-color: #ddd;\n    padding: 20px;\n}\n';
+var $author$project$Calculator$BarterPrice$style = '\nbody {\n    margin: 20px;\n}\n#columns {\n    gap: 10px;\n    display: flex;\n    flex-direction: row;\n    align-items: stretch;\n    justify-content: stretch;\n}\n\n.column {\n    flex: 1;\n    background-color: #ddd;\n    padding: 20px;\n}\n\n#final-price {\n    margin-top: 20px;\n}\n';
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
@@ -5464,19 +5464,19 @@ var $author$project$Calculator$BarterPrice$view = function (model) {
 		$elm$core$String$toInt(model.vendorBarterInput),
 		$elm$core$String$toInt(model.basePriceInput));
 	var itemView = function (kind) {
+		var basePrice = $elm$core$String$fromInt(
+			$author$project$Data$Item$basePrice(kind));
 		return A2(
 			$elm$html$Html$li,
 			_List_fromArray(
 				[
 					$elm$html$Html$Events$onClick(
-					$author$project$Calculator$BarterPrice$SetBasePriceInput(
-						$elm$core$String$fromInt(
-							$author$project$Data$Item$basePrice(kind))))
+					$author$project$Calculator$BarterPrice$SetBasePriceInput(basePrice))
 				]),
 			_List_fromArray(
 				[
 					$elm$html$Html$text(
-					$author$project$Data$Item$name(kind))
+					$author$project$Data$Item$name(kind) + (' ($' + (basePrice + ')')))
 				]));
 	};
 	return {
@@ -5607,7 +5607,10 @@ var $author$project$Calculator$BarterPrice$view = function (model) {
 									])),
 								A2(
 								$elm$html$Html$div,
-								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$id('final-price')
+									]),
 								_List_fromArray(
 									[
 										A2(

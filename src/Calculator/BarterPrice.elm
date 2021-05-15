@@ -81,9 +81,13 @@ view model =
 
         itemView : Item.Kind -> Html Msg
         itemView kind =
+            let
+                basePrice =
+                    String.fromInt <| Item.basePrice kind
+            in
             H.li
-                [ HE.onClick <| SetBasePriceInput <| String.fromInt <| Item.basePrice kind ]
-                [ H.text <| Item.name kind ]
+                [ HE.onClick <| SetBasePriceInput basePrice ]
+                [ H.text <| Item.name kind ++ " ($" ++ basePrice ++ ")" ]
 
         vendorView : Vendor.Name -> Html Msg
         vendorView vendor =
@@ -134,7 +138,7 @@ view model =
                         []
                     , H.text "Do you have the Master Trader perk?"
                     ]
-                , H.div []
+                , H.div [ HA.id "final-price" ]
                     [ H.strong [] [ H.text "Final price: " ]
                     , H.text <|
                         case maybePrice of
@@ -183,5 +187,9 @@ body {
     flex: 1;
     background-color: #ddd;
     padding: 20px;
+}
+
+#final-price {
+    margin-top: 20px;
 }
 """
