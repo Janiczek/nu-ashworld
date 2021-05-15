@@ -52,11 +52,6 @@ import Random.FloatExtra as Random exposing (NormalIntSpec)
 type Type
     = --  -- Mantises: https://fallout.fandom.com/wiki/Mantis_(Fallout)
       --| Mantis
-      --  -- Brahmins: https://fallout.fandom.com/wiki/Brahmin_(Fallout)
-      --| Brahmin
-      --| AngryBrahmin
-      --| WeakBrahmin
-      --| WildBrahmin
       --  -- Dogs: https://fallout.fandom.com/wiki/Dog_(Fallout)
       --| Dog
       --| WildDog
@@ -102,7 +97,12 @@ type Type
       --| Wanamingo
       --| ToughWanamingo
       -- Giant Ants: https://fallout.fandom.com/wiki/Giant_ant_(Fallout_2)
-      GiantAnt
+      -- Brahmins: https://fallout.fandom.com/wiki/Brahmin_(Fallout)
+      Brahmin
+    | AngryBrahmin
+    | WeakBrahmin
+    | WildBrahmin
+    | GiantAnt
     | ToughGiantAnt
       -- Radscorpions: https://fallout.fandom.com/wiki/Radscorpion_(Fallout)
       --| TODO BlackRadscorpion
@@ -113,7 +113,11 @@ type Type
 
 allTypes : List Type
 allTypes =
-    [ GiantAnt
+    [ Brahmin
+    , AngryBrahmin
+    , WeakBrahmin
+    , WildBrahmin
+    , GiantAnt
     , ToughGiantAnt
     , LesserRadscorpion
     , Radscorpion
@@ -126,7 +130,11 @@ forChunk _ =
        (non-public/map-encounters.json), but for now let's
        have Ants eeeEEEEeeeverywhere.
     -}
-    [ GiantAnt
+    [ Brahmin
+    , AngryBrahmin
+    , WeakBrahmin
+    , WildBrahmin
+    , GiantAnt
     , ToughGiantAnt
     , LesserRadscorpion
     , Radscorpion
@@ -137,6 +145,18 @@ xp : Type -> BaseXp
 xp type_ =
     BaseXp <|
         case type_ of
+            Brahmin ->
+                80
+
+            AngryBrahmin ->
+                150
+
+            WeakBrahmin ->
+                40
+
+            WildBrahmin ->
+                120
+
             GiantAnt ->
                 25
 
@@ -153,6 +173,18 @@ xp type_ =
 hp : Type -> Int
 hp type_ =
     case type_ of
+        Brahmin ->
+            35
+
+        AngryBrahmin ->
+            70
+
+        WeakBrahmin ->
+            30
+
+        WildBrahmin ->
+            65
+
         GiantAnt ->
             6
 
@@ -169,6 +201,18 @@ hp type_ =
 naturalArmorClass : Type -> Int
 naturalArmorClass type_ =
     case type_ of
+        Brahmin ->
+            4
+
+        AngryBrahmin ->
+            22
+
+        WeakBrahmin ->
+            1
+
+        WildBrahmin ->
+            21
+
         GiantAnt ->
             4
 
@@ -185,6 +229,18 @@ naturalArmorClass type_ =
 sequence : Type -> Int
 sequence type_ =
     case type_ of
+        Brahmin ->
+            6
+
+        AngryBrahmin ->
+            10
+
+        WeakBrahmin ->
+            6
+
+        WildBrahmin ->
+            10
+
         GiantAnt ->
             9
 
@@ -201,6 +257,18 @@ sequence type_ =
 actionPoints : Type -> Int
 actionPoints type_ =
     case type_ of
+        Brahmin ->
+            7
+
+        AngryBrahmin ->
+            10
+
+        WeakBrahmin ->
+            6
+
+        WildBrahmin ->
+            10
+
         GiantAnt ->
             5
 
@@ -217,6 +285,18 @@ actionPoints type_ =
 meleeDamageBonus : Type -> Int
 meleeDamageBonus type_ =
     case type_ of
+        Brahmin ->
+            7
+
+        AngryBrahmin ->
+            4
+
+        WeakBrahmin ->
+            1
+
+        WildBrahmin ->
+            7
+
         GiantAnt ->
             2
 
@@ -233,6 +313,18 @@ meleeDamageBonus type_ =
 damageThresholdNormal : Type -> Int
 damageThresholdNormal type_ =
     case type_ of
+        Brahmin ->
+            0
+
+        AngryBrahmin ->
+            2
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            2
+
         GiantAnt ->
             0
 
@@ -249,6 +341,18 @@ damageThresholdNormal type_ =
 damageResistanceNormal : Type -> Int
 damageResistanceNormal type_ =
     case type_ of
+        Brahmin ->
+            20
+
+        AngryBrahmin ->
+            25
+
+        WeakBrahmin ->
+            20
+
+        WildBrahmin ->
+            25
+
         GiantAnt ->
             0
 
@@ -271,6 +375,18 @@ encodeType : Type -> JE.Value
 encodeType type_ =
     JE.string <|
         case type_ of
+            Brahmin ->
+                "brahmin"
+
+            AngryBrahmin ->
+                "angry-brahmin"
+
+            WeakBrahmin ->
+                "weak-brahmin"
+
+            WildBrahmin ->
+                "wild-brahmin"
+
             GiantAnt ->
                 "giant-ant"
 
@@ -290,6 +406,18 @@ typeDecoder =
         |> JD.andThen
             (\type_ ->
                 case type_ of
+                    "brahmin" ->
+                        JD.succeed Brahmin
+
+                    "angry-brahmin" ->
+                        JD.succeed AngryBrahmin
+
+                    "weak-brahmin" ->
+                        JD.succeed WeakBrahmin
+
+                    "wild-brahmin" ->
+                        JD.succeed WildBrahmin
+
                     "giant-ant" ->
                         JD.succeed GiantAnt
 
@@ -310,6 +438,18 @@ typeDecoder =
 name : Type -> String
 name type_ =
     case type_ of
+        Brahmin ->
+            "Brahmin"
+
+        AngryBrahmin ->
+            "Angry Brahmin"
+
+        WeakBrahmin ->
+            "Weak Brahmin"
+
+        WildBrahmin ->
+            "Wild Brahmin"
+
         GiantAnt ->
             "Giant Ant"
 
@@ -326,6 +466,18 @@ name type_ =
 special : Type -> Special
 special type_ =
     case type_ of
+        Brahmin ->
+            Special 8 3 8 3 2 4 1
+
+        AngryBrahmin ->
+            Special 9 5 5 1 3 7 5
+
+        WeakBrahmin ->
+            Special 4 3 4 1 1 3 1
+
+        WildBrahmin ->
+            Special 8 5 5 1 3 6 5
+
         GiantAnt ->
             Special 1 2 1 1 1 4 1
 
@@ -342,6 +494,26 @@ special type_ =
 addedSkillPercentages : Type -> Dict_.Dict Skill Int
 addedSkillPercentages type_ =
     case type_ of
+        Brahmin ->
+            Dict_.fromList
+                [ ( Unarmed, 19 )
+                ]
+
+        AngryBrahmin ->
+            Dict_.fromList
+                [ ( Unarmed, 63 )
+                , ( MeleeWeapons, 73 )
+                ]
+
+        WeakBrahmin ->
+            Dict_.empty
+
+        WildBrahmin ->
+            Dict_.fromList
+                [ ( Unarmed, 52 )
+                , ( MeleeWeapons, 2 )
+                ]
+
         GiantAnt ->
             Dict_.fromList
                 [ ( Unarmed, 25 )
@@ -368,6 +540,18 @@ addedSkillPercentages type_ =
 equippedArmor : Type -> Maybe Item.Kind
 equippedArmor type_ =
     case type_ of
+        Brahmin ->
+            Nothing
+
+        AngryBrahmin ->
+            Nothing
+
+        WeakBrahmin ->
+            Nothing
+
+        WildBrahmin ->
+            Nothing
+
         GiantAnt ->
             Nothing
 
@@ -385,6 +569,416 @@ criticalSpec : Type -> AimedShot -> Critical.EffectCategory -> Critical.Spec
 criticalSpec enemyType =
     -- https://falloutmods.fandom.com/wiki/Critical_hit_tables
     let
+        brahmin aimedShot effectCategory =
+            case ( aimedShot, effectCategory ) of
+                ( Head, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect3 ) ->
+                    { damageMultiplier = 5
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 2
+                            , failureEffect = Knockdown
+                            , failureMessage = "knocking the big beast to the ground."
+                            }
+                    }
+
+                ( Head, Effect4 ) ->
+                    { damageMultiplier = 5
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -1
+                            , failureEffect = Knockdown
+                            , failureMessage = "knocking the big beast to the ground."
+                            }
+                    }
+
+                ( Head, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockout ]
+                    , message = "stunning both brains and felling the giant animal."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "and the mutant cow gives a loud, startled cry."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and a serious wound is inflicted."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and a serious wound is inflicted."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftArm
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( LeftArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftArm
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( LeftArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and a serious wound is inflicted."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "and a serious wound is inflicted."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( RightArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( RightArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "seriously hurting the mutant cow."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "seriously hurting the mutant cow."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "seriously hurting the mutant cow."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "easily penetrating the thick hide of the giant beast."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "easily penetrating the thick hide of the giant beast."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "penetrating straight through both hearts of the mutant cow."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( RightLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( RightLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightLeg ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightLeg ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( LeftLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "in a forceful blow."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "breaking one of the Brahmin's legs."
+                            }
+                    }
+
+                ( LeftLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftLeg ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftLeg ]
+                    , message = "breaking one of the Brahmin's legs."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "with no protection there, causing serious pain."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 0
+                            , failureEffect = Blinded
+                            , failureMessage = "blinding both sets of eyes with a single blow."
+                            }
+                    }
+
+                ( Eyes, Effect3 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ BypassArmor ]
+                    , message = "with no protection there, causing serious pain."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = -3
+                            , failureEffect = Blinded
+                            , failureMessage = "blinding both sets of eyes with a single blow."
+                            }
+                    }
+
+                ( Eyes, Effect4 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Blinded, BypassArmor, LoseNextTurn ]
+                    , message = "blinding both heads and stunning the mutant cow."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect5 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Knockout, Blinded, BypassArmor ]
+                    , message = "completely blinding the Brahmin and knocking it out."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect6 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Death ]
+                    , message = "and the large mutant bovine stumbles for a moment."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "inflicting a serious wound."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "and the Brahmin shakes with rage."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect3 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "and the Brahmin shakes with rage."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "and the Brahmin snorts with pain."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "and the Brahmin snorts with pain."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ BypassArmor ]
+                    , message = "and the Brahmin is most upset with this udderly devastating attack."
+                    , statCheck = Nothing
+                    }
+
         giantAnt aimedShot effectCategory =
             case ( aimedShot, effectCategory ) of
                 ( Head, Effect1 ) ->
@@ -1260,6 +1854,18 @@ criticalSpec enemyType =
                     }
     in
     case enemyType of
+        Brahmin ->
+            brahmin
+
+        AngryBrahmin ->
+            brahmin
+
+        WeakBrahmin ->
+            brahmin
+
+        WildBrahmin ->
+            brahmin
+
         GiantAnt ->
             giantAnt
 
@@ -1304,6 +1910,32 @@ humanAimedShotName shot =
 aimedShotName : Type -> AimedShot -> String
 aimedShotName enemyType =
     let
+        brahmin aimedShot =
+            case aimedShot of
+                Head ->
+                    "head"
+
+                Torso ->
+                    "torso"
+
+                Eyes ->
+                    "eyes"
+
+                Groin ->
+                    "groin"
+
+                LeftArm ->
+                    "left foreleg"
+
+                RightArm ->
+                    "right foreleg"
+
+                LeftLeg ->
+                    "left hindleg"
+
+                RightLeg ->
+                    "right hindleg"
+
         giantAnt aimedShot =
             case aimedShot of
                 Head ->
@@ -1357,6 +1989,18 @@ aimedShotName enemyType =
                     "forelegs"
     in
     case enemyType of
+        Brahmin ->
+            brahmin
+
+        AngryBrahmin ->
+            brahmin
+
+        WeakBrahmin ->
+            brahmin
+
+        WildBrahmin ->
+            brahmin
+
         GiantAnt ->
             giantAnt
 
@@ -1849,6 +2493,34 @@ dropSpec type_ =
             )
     in
     case type_ of
+        Brahmin ->
+            { caps = commonCaps { average = 20, maxDeviation = 10 }
+            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 1 } ]
+            }
+
+        AngryBrahmin ->
+            { caps = commonCaps { average = 80, maxDeviation = 30 }
+            , items =
+                [ item 0.2 Item.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 2 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                ]
+            }
+
+        WeakBrahmin ->
+            { caps = commonCaps { average = 15, maxDeviation = 8 }
+            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 } ]
+            }
+
+        WildBrahmin ->
+            { caps = commonCaps { average = 50, maxDeviation = 10 }
+            , items =
+                [ item 0.15 Item.Fruit { average = 2, maxDeviation = 1 }
+                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 1 }
+                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                ]
+            }
+
         GiantAnt ->
             { caps = commonCaps { average = 10, maxDeviation = 5 }
             , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 } ]
