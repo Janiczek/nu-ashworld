@@ -16,7 +16,29 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1620669882
+    [ { date = 1621102934
+      , title = "PvM drops and Brahmins"
+      , text = """
+Today's update will be short and sweet: **enemies can drop items** and
+**Brahmins** were added as new enemies, along with two harder variants of Radscorpions.
+
+Since right now all enemies spawn everywhere, those radscorpions will probably
+give you a bit of trouble. **The next patch** should be about restricting them to
+certain areas, so that players can naturally progress from low-level areas to
+higher-level areas as they see fit.
+
+Changelog:
+
+* Discord invite link was updated to point to the #welcome channel
+* Item added: **Fruit** (heals 15 HP, base value $10)
+* New enemies: **Brahmins**. Variants are: Brahmin, Angry Brahmin, Weak Brahmin, Wild Brahmin.
+* New enemies: two **black** variants of **Radscorpions**.
+* Enemies can now drop items: expect fruit, healing powder and an ocassional stimpak for now.
+
+~janiczek
+"""
+      }
+    , { date = 1620669882
       , title = "More perks and UI improvements"
       , text = """
 I have went through most of the perks in the original game and "ported" the
