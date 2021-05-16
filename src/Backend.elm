@@ -374,7 +374,16 @@ withLoggedInPlayer_ model clientId fn =
 
 
 logAndUpdateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
-logAndUpdateFromFrontend sessionId clientId msg model =
+logAndUpdateFromFrontend =
+    if String.isEmpty Env.loggingApiKey then
+        updateFromFrontend
+
+    else
+        logAndUpdateFromFrontend_
+
+
+logAndUpdateFromFrontend_ : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+logAndUpdateFromFrontend_ sessionId clientId msg model =
     let
         playerName : String
         playerName =

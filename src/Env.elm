@@ -12,4 +12,4 @@ adminPasswordHash =
 
 loggingApiKey : String
 loggingApiKey =
-    "ignore-this-api-key"
+    ""
