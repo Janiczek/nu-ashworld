@@ -385,8 +385,8 @@ logAndUpdateFromFrontend sessionId clientId msg model =
         logMsgCmd =
             Http.request
                 { method = "POST"
-                , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
-                , headers = [ Http.header "X-Api-Key" Env.loggingApiKey ]
+                , url = "https://oqm0ou8004.execute-api.us-east-1.amazonaws.com/nu-ashworld-to-backend-msgs-handler"
+                , headers = [ Http.header "x-api-key" Env.loggingApiKey ]
                 , body =
                     Http.jsonBody <|
                         JE.object
