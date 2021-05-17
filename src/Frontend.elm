@@ -2430,7 +2430,7 @@ inventoryView _ player =
 
         totalValue : Int
         totalValue =
-            inventoryTotalValue + equippedArmorValue
+            inventoryTotalValue + equippedArmorValue + player.caps
 
         itemView : Item -> Html FrontendMsg
         itemView item =
