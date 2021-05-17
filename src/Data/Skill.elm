@@ -422,7 +422,7 @@ description skill =
             "The ability to communicate in a practical and efficient manner. The skill of convincing others that your position is correct. The ability to lie and not get caught."
 
         Barter ->
-            "Trading and trade-related tasks. The ability to get better prices for items you sell, and lower prices for items you buy."
+            "Trading and trade-related tasks. The ability to get lower prices for items you buy."
 
         Gambling ->
             "The knowledge and practical skills related to wagering. The skill at cards, dice and other games."
