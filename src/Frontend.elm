@@ -1167,7 +1167,7 @@ townStoreView barter location world player =
                         |> List.filterMap
                             (\( id, count ) ->
                                 Dict.get id player.items
-                                    |> Maybe.map (\{ kind } -> Item.basePrice kind * count)
+                                    |> Maybe.map (\{ kind } -> Item.baseValue kind * count)
                             )
                         |> List.sum
 
@@ -1184,7 +1184,7 @@ townStoreView barter location world player =
                                     |> Maybe.map
                                         (\{ kind } ->
                                             Logic.price
-                                                { basePrice = count * Item.basePrice kind
+                                                { baseValue = count * Item.baseValue kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
@@ -2412,6 +2412,26 @@ charPerksView perks =
 inventoryView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 inventoryView _ player =
     let
+        inventoryTotalValue : Int
+        inventoryTotalValue =
+            player.items
+                |> Dict.values
+                |> List.map (\{ kind, count } -> Item.baseValue kind * count)
+                |> List.sum
+
+        equippedArmorValue : Int
+        equippedArmorValue =
+            case player.equippedArmor of
+                Nothing ->
+                    0
+
+                Just { kind, count } ->
+                    Item.baseValue kind * count
+
+        totalValue : Int
+        totalValue =
+            inventoryTotalValue + equippedArmorValue
+
         itemView : Item -> Html FrontendMsg
         itemView item =
             let
@@ -2504,6 +2524,7 @@ inventoryView _ player =
                 }
     in
     [ pageTitleView "Inventory"
+    , H.p [] [ H.text <| "Total value: $" ++ String.fromInt totalValue ]
     , if Dict.isEmpty player.items then
         H.p [] [ H.text "You have no items!" ]
 

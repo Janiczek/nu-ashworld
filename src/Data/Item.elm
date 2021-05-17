@@ -7,7 +7,7 @@ module Data.Item exposing
     , UniqueKey
     , all
     , armorClass
-    , basePrice
+    , baseValue
     , create
     , damageResistanceNormal
     , damageThresholdNormal
@@ -83,8 +83,8 @@ type Effect
     | BookAddSkillPercent Skill
 
 
-basePrice : Kind -> Int
-basePrice kind =
+baseValue : Kind -> Int
+baseValue kind =
     case kind of
         Fruit ->
             10

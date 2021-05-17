@@ -16,7 +16,15 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1621111128
+    [ { date = 1621248342
+      , title = "Inventory total value"
+      , text = """
+A quick little change today - the inventory screen now shows the total value of your items.
+
+~janiczek
+"""
+      }
+    , { date = 1621111128
       , title = "One more thing..."
       , text = """
 Out of sheer procrastination I've implemented the help descriptions for SPECIAL

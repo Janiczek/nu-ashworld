@@ -831,7 +831,7 @@ barter barterState clientId location player model =
                         |> List.filterMap
                             (\( itemId, count ) ->
                                 Dict.get itemId player.items
-                                    |> Maybe.map (\item -> Item.basePrice item.kind * count)
+                                    |> Maybe.map (\item -> Item.baseValue item.kind * count)
                             )
                         |> List.sum
 
@@ -845,7 +845,7 @@ barter barterState clientId location player model =
                                     |> Maybe.map
                                         (\item ->
                                             Logic.price
-                                                { basePrice = count * Item.basePrice item.kind
+                                                { baseValue = count * Item.baseValue item.kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
