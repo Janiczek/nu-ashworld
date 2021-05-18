@@ -16,7 +16,34 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1621248342
+    [ { date = 1621370196
+      , title = "Map chunks and enemies randomization"
+      , text = """
+I've separated the map into [five
+regions](https://twitter.com/NuAshworld/status/1394754684129267718) of
+increasing difficulty:
+
+1. Arroyo, Klamath, Den
+2. Modoc, Vault City, Gecko
+3. New Reno, Broken Hills, Redding, Raiders
+4. NCR, Vault 13, Vault 15, Military Base
+5. San Francisco, Navarro, Enclave
+
+Rest of the changelog:
+
+* **The enemies are now generated based on which chunk you're in!** So hopefully no
+angry brahmins killing newbies next to the first town :)
+
+* **Added towns**: Raiders, Navarro, Vault 13, Vault 15 (no vendor in any of
+them yet - you can see from them being transparent on the map)
+
+We'll need to add more enemies so that there is more variety, but maybe I'll
+prioritize melee weapons first. Who knows?
+
+~ janiczek
+"""
+      }
+    , { date = 1621248342
       , title = "Inventory total value"
       , text = """
 A quick little change today - the inventory screen now shows the total value of your items.
