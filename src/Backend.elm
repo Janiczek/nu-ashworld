@@ -1352,8 +1352,8 @@ wander clientId player model =
             possibleEnemies =
                 player.location
                     |> Map.toTileCoords
-                    |> Chunk.chunk
-                    |> Enemy.forChunk
+                    |> Chunk.smallChunk
+                    |> Enemy.forSmallChunk
 
             enemyTypeGenerator : Generator Enemy.Type
             enemyTypeGenerator =

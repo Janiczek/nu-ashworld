@@ -12,7 +12,7 @@ module Data.Enemy exposing
     , dropSpec
     , encodeType
     , equippedArmor
-    , forChunk
+    , forSmallChunk
     , hp
     , humanAimedShotName
     , manCriticalSpec
@@ -29,7 +29,7 @@ import AssocList as Dict_
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item exposing (Item)
-import Data.Map.Chunk exposing (Chunk)
+import Data.Map.Chunk as Chunk exposing (BigChunk(..), SmallChunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special, Type(..))
 import Data.Xp exposing (BaseXp(..))
@@ -126,23 +126,62 @@ allTypes =
     ]
 
 
-forChunk : Chunk -> List Type
-forChunk _ =
-    {- TODO later let's do this based on worldmap.txt
-       (non-public/map-encounters.json), but for now let's
-       have Ants eeeEEEEeeeverywhere.
-    -}
-    [ Brahmin
-    , AngryBrahmin
-    , WeakBrahmin
-    , WildBrahmin
-    , GiantAnt
-    , ToughGiantAnt
-    , LesserRadscorpion
-    , Radscorpion
-    , LesserBlackRadscorpion
-    , BlackRadscorpion
-    ]
+{-| For now we're not doing things as granularly as the original game does.
+
+We are splitting the map into five big chunks and only figuring out the
+possible enemies based on those five chunks.
+
+-}
+forBigChunk : BigChunk -> List Type
+forBigChunk bigChunk =
+    -- TODO rebalance C4 and C5, add new tougher enemies?
+    case bigChunk of
+        C1 ->
+            [ GiantAnt
+            , ToughGiantAnt
+            , LesserRadscorpion
+            , Radscorpion -- dangerous
+            ]
+
+        C2 ->
+            [ LesserRadscorpion
+            , Radscorpion
+            , Brahmin
+            , AngryBrahmin -- dangerous
+            , WeakBrahmin
+            , WildBrahmin -- semi-dangerous
+            ]
+
+        C3 ->
+            [ Brahmin
+            , AngryBrahmin -- dangerous
+            , WeakBrahmin
+            , WildBrahmin
+            , LesserBlackRadscorpion
+            , BlackRadscorpion -- dangerous
+            ]
+
+        C4 ->
+            [ AngryBrahmin -- dangerous
+            , WildBrahmin
+            , LesserBlackRadscorpion
+            , BlackRadscorpion -- dangerous
+            ]
+
+        C5 ->
+            [ AngryBrahmin -- dangerous
+            , BlackRadscorpion -- dangerous
+            ]
+
+
+forSmallChunk : SmallChunk -> List Type
+forSmallChunk smallChunk =
+    let
+        bigChunk : BigChunk
+        bigChunk =
+            Chunk.smallToBig smallChunk
+    in
+    forBigChunk bigChunk
 
 
 xp : Type -> BaseXp
