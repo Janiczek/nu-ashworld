@@ -13,8 +13,10 @@ import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
+import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
+import Data.Map.SmallChunk as SmallChunk exposing (SmallChunk)
 import Data.Map.Terrain as Terrain
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
@@ -61,6 +63,8 @@ import Lamdera
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Set exposing (Set)
+import Svg as S exposing (Svg)
+import Svg.Attributes as SA
 import Task
 import Time exposing (Posix)
 import Types exposing (..)
@@ -911,6 +915,14 @@ mapView mouseCoords _ player =
 
                     else
                         "ticks"
+
+                bigChunk : BigChunk
+                bigChunk =
+                    BigChunk.forCoords mouseCoords_
+
+                smallChunk : SmallChunk
+                smallChunk =
+                    SmallChunk.forCoords mouseCoords_
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -949,6 +961,8 @@ mapView mouseCoords _ player =
                                 [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
+                                , H.viewIf shouldShowBigChunks <|
+                                    H.div [] [ H.text <| "Map tile difficulty: " ++ BigChunk.difficulty bigChunk ]
                                 ]
                         ]
                 ]
@@ -987,6 +1001,46 @@ mapView mouseCoords _ player =
                 , HE.onClick MapMouseClick
                 ]
                 []
+
+        bigChunkColor : BigChunk -> String
+        bigChunkColor bigChunk =
+            case bigChunk of
+                C1 ->
+                    "lime"
+
+                C2 ->
+                    "yellow"
+
+                C3 ->
+                    "orange"
+
+                C4 ->
+                    "red"
+
+                C5 ->
+                    "purple"
+
+        bigChunkLayerView : () -> Html FrontendMsg
+        bigChunkLayerView () =
+            S.svg
+                [ HA.id "map-fog"
+                , SA.viewBox <| "0 0 " ++ String.fromInt Map.columns ++ " " ++ String.fromInt Map.rows
+                ]
+                (BigChunk.all
+                    |> List.map
+                        (\chunk ->
+                            let
+                                tiles : List TileCoords
+                                tiles =
+                                    BigChunk.tileCoords chunk
+                            in
+                            svgPolygonForTiles (bigChunkColor chunk) tiles
+                        )
+                )
+
+        shouldShowBigChunks : Bool
+        shouldShowBigChunks =
+            Perception.atLeast Perception.Perfect perceptionLevel
     in
     [ pageTitleView "Map"
     , H.div
@@ -999,10 +1053,45 @@ mapView mouseCoords _ player =
         ]
         [ locationsView (Just playerCoords)
         , mapMarkerView playerCoords
+        , H.viewIfLazy shouldShowBigChunks bigChunkLayerView
         , mouseEventCatcherView
         , H.viewMaybe mouseRelatedView mouseCoords
         ]
     ]
+
+
+svgPolygonForTiles : String -> List TileCoords -> Svg FrontendMsg
+svgPolygonForTiles color coords =
+    let
+        rectangle : TileCoords -> String
+        rectangle ( x, y ) =
+            let
+                left =
+                    String.fromInt x
+
+                top =
+                    String.fromInt y
+            in
+            [ "M " ++ left ++ "," ++ top
+            , "h 1"
+            , "v 1"
+            , "h -1"
+            , "v -1"
+            ]
+                |> String.join " "
+
+        path : String
+        path =
+            coords
+                |> List.map rectangle
+                |> String.join " "
+    in
+    S.path
+        [ SA.d path
+        , SA.fill color
+        , SA.fillOpacity "0.25"
+        ]
+        []
 
 
 locationView : Maybe TileCoords -> Location -> Html FrontendMsg

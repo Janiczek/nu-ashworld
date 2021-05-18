@@ -2,6 +2,7 @@ module Data.Map exposing
     ( PxCoords
     , TileCoords
     , TileNum
+    , allTileCoords
     , columns
     , encodeCoords
     , neighbours
@@ -140,3 +141,15 @@ neighbours ( x, y ) =
 encodeCoords : TileCoords -> JE.Value
 encodeCoords ( x, y ) =
     JE.list JE.int [ x, y ]
+
+
+allTileCoords : List TileCoords
+allTileCoords =
+    let
+        columns_ =
+            List.range 0 (columns - 1)
+
+        rows_ =
+            List.range 0 (rows - 1)
+    in
+    columns_ |> List.concatMap (\x -> rows_ |> List.map (\y -> ( x, y )))

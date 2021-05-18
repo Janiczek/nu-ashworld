@@ -15,9 +15,10 @@ import Data.Fight.Generator as FightGen
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
-import Data.Map.Chunk as Chunk
+import Data.Map.BigChunk as BigChunk
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
+import Data.Map.SmallChunk as SmallChunk
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
@@ -1352,7 +1353,7 @@ wander clientId player model =
             possibleEnemies =
                 player.location
                     |> Map.toTileCoords
-                    |> Chunk.smallChunk
+                    |> SmallChunk.forCoords
                     |> Enemy.forSmallChunk
 
             enemyTypeGenerator : Generator Enemy.Type

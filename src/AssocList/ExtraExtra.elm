@@ -1,6 +1,7 @@
 module AssocList.ExtraExtra exposing
     ( decoder
     , encode
+    , groupBy
     )
 
 import AssocList
@@ -34,3 +35,16 @@ decoder keyDecoder valueDecoder =
     in
     JD.list tupleDecoder
         |> JD.map AssocList.fromList
+
+
+groupBy : (a -> b) -> List a -> AssocList.Dict b (List a)
+groupBy keyfn list =
+    List.foldr
+        (\x acc ->
+            AssocList.update
+                (keyfn x)
+                (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just)
+                acc
+        )
+        AssocList.empty
+        list

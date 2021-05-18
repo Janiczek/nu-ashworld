@@ -29,7 +29,8 @@ import AssocList as Dict_
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item exposing (Item)
-import Data.Map.Chunk as Chunk exposing (BigChunk(..), SmallChunk)
+import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
+import Data.Map.SmallChunk as SmallChunk exposing (SmallChunk)
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special, Type(..))
 import Data.Xp exposing (BaseXp(..))
@@ -179,7 +180,7 @@ forSmallChunk smallChunk =
     let
         bigChunk : BigChunk
         bigChunk =
-            Chunk.smallToBig smallChunk
+            BigChunk.fromSmallChunk smallChunk
     in
     forBigChunk bigChunk
 

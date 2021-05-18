@@ -35,9 +35,7 @@ type Location
       --| Golgotha
       --| HubologistStash
       --| KlamathSafeHouse
-      --| Navarro
       --| NewRenoSafeHouse
-      --| Raiders
       --| ReddingSafeHouse
       --| ShiSubmarine
       --| SierraArmyDepot
@@ -45,8 +43,6 @@ type Location
       --| Stables
       --| ToxicCaves
       --| UmbraTribe
-      --| Vault13
-      --| Vault15
       --| VillageNearVaultCity
     | BrokenHills
     | Den
@@ -55,10 +51,14 @@ type Location
     | Klamath
     | MilitaryBase
     | Modoc
+    | Navarro
     | NewCaliforniaRepublic
     | NewReno
+    | Raiders
     | Redding
     | SanFrancisco
+    | Vault13
+    | Vault15
     | VaultCity
 
 
@@ -75,9 +75,7 @@ allLocations =
     --, Golgotha
     --, HubologistStash
     --, KlamathSafeHouse
-    --, Navarro
     --, NewRenoSafeHouse
-    --, Raiders
     --, ReddingSafeHouse
     --, ShiSubmarine
     --, SierraArmyDepot
@@ -85,8 +83,6 @@ allLocations =
     --, Stables
     --, ToxicCaves
     --, UmbraTribe
-    --, Vault13
-    --, Vault15
     --, VillageNearVaultCity
     , BrokenHills
     , Den
@@ -95,11 +91,15 @@ allLocations =
     , Klamath
     , MilitaryBase
     , Modoc
+    , Navarro
     , NewCaliforniaRepublic
     , NewReno
+    , Raiders
     , Redding
     , SanFrancisco
     , VaultCity
+    , Vault13
+    , Vault15
     ]
 
 
@@ -115,9 +115,7 @@ size loc =
         --Golgotha -> Small
         --HubologistStash -> Small
         --KlamathSafeHouse -> Small
-        --Navarro -> Middle
         --NewRenoSafeHouse -> Small
-        --Raiders -> Middle
         --ReddingSafeHouse -> Small
         --ShiSubmarine -> Small
         --SierraArmyDepot -> Middle
@@ -125,8 +123,6 @@ size loc =
         --Stables -> Small
         --ToxicCaves -> Small
         --UmbraTribe -> Middle
-        --Vault13 -> Middle
-        --Vault15 -> Middle
         --VillageNearVaultCity -> Small
         Arroyo ->
             Middle
@@ -152,11 +148,23 @@ size loc =
         Modoc ->
             Large
 
+        Navarro ->
+            Middle
+
+        Vault13 ->
+            Middle
+
+        Vault15 ->
+            Middle
+
         NewCaliforniaRepublic ->
             Large
 
         NewReno ->
             Large
+
+        Raiders ->
+            Middle
 
         Redding ->
             Large
@@ -180,9 +188,7 @@ coords loc =
         --Golgotha -> ( 18, 19 )
         --HubologistStash -> ( 9, 27 )
         --KlamathSafeHouse -> ( 6, 3 )
-        --Navarro -> ( 3, 17 )
         --NewRenoSafeHouse -> ( 20, 19 )
-        --Raiders -> ( 23, 13 )
         --ReddingSafeHouse -> ( 11, 13 )
         --ShiSubmarine -> ( 8, 26 )
         --SierraArmyDepot -> ( 18, 16 )
@@ -190,8 +196,6 @@ coords loc =
         --Stables -> ( 18, 17 )
         --ToxicCaves -> ( 6, 1 )
         --UmbraTribe -> ( 1, 10 )
-        --Vault13 -> ( 19, 28 )
-        --Vault15 -> ( 25, 28 )
         --VillageNearVaultCity -> ( 24, 5 )
         Arroyo ->
             ( 3, 2 )
@@ -201,6 +205,15 @@ coords loc =
 
         Den ->
             ( 9, 5 )
+
+        Navarro ->
+            ( 3, 17 )
+
+        Vault13 ->
+            ( 19, 28 )
+
+        Vault15 ->
+            ( 25, 28 )
 
         EnclavePlatform ->
             ( 0, 26 )
@@ -222,6 +235,9 @@ coords loc =
 
         NewReno ->
             ( 18, 18 )
+
+        Raiders ->
+            ( 23, 13 )
 
         Redding ->
             ( 13, 10 )
@@ -245,9 +261,7 @@ name loc =
         --Golgotha -> "Golgotha"
         --HubologistStash -> "Hubologist Stash"
         --KlamathSafeHouse -> "Safe House"
-        --Navarro -> "Navarro"
         --NewRenoSafeHouse -> "Safe House"
-        --Raiders -> "Raiders"
         --ReddingSafeHouse -> "Safe House"
         --ShiSubmarine -> "Shi Submarine"
         --SierraArmyDepot -> "Sierra Army Depot"
@@ -255,8 +269,6 @@ name loc =
         --Stables -> "Stables"
         --ToxicCaves -> "Toxic Caves"
         --UmbraTribe -> "Umbra Tribe"
-        --Vault13 -> "Vault 13"
-        --Vault15 -> "Vault 15"
         --VillageNearVaultCity -> "Village"
         Arroyo ->
             "Arroyo"
@@ -282,11 +294,23 @@ name loc =
         Modoc ->
             "Modoc"
 
+        Navarro ->
+            "Navarro"
+
+        Vault13 ->
+            "Vault 13"
+
+        Vault15 ->
+            "Vault 15"
+
         NewCaliforniaRepublic ->
             "New California Republic"
 
         NewReno ->
             "New Reno"
+
+        Raiders ->
+            "Raiders"
 
         Redding ->
             "Redding"
