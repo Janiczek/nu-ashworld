@@ -8,7 +8,7 @@ import Data.Fight as Fight
         ( Opponent
         , OpponentType
         )
-import Data.Item as Item
+import Data.Item as Item exposing (Item)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill as Skill exposing (Skill)
@@ -76,6 +76,7 @@ opponentFuzzer =
         |> Fuzz.andMap traitsFuzzer
         |> Fuzz.andMap perksFuzzer
         |> Fuzz.andMap capsFuzzer
+        |> Fuzz.andMap dropsFuzzer
         |> Fuzz.andMap equippedArmorKindFuzzer
         |> Fuzz.andMap naturalArmorClassFuzzer
         |> Fuzz.andMap attackStatsFuzzer
@@ -157,6 +158,11 @@ capsFuzzer =
     Fuzz.intRange 0 99999
 
 
+dropsFuzzer : Fuzzer (List Item)
+dropsFuzzer =
+    Fuzz.list itemFuzzer
+
+
 equippedArmorKindFuzzer : Fuzzer (Maybe Item.Kind)
 equippedArmorKindFuzzer =
     Fuzz.maybe armorKindFuzzer
@@ -167,6 +173,14 @@ armorKindFuzzer =
     Item.all
         |> List.filter (\kind -> Item.equippableType kind == Just Item.Armor)
         |> oneOfValues
+
+
+itemFuzzer : Fuzzer Item
+itemFuzzer =
+    Fuzz.map3 Item
+        (Fuzz.intRange 0 99999)
+        (oneOfValues Item.all)
+        (Fuzz.intRange 0 99999)
 
 
 naturalArmorClassFuzzer : Fuzzer Int
