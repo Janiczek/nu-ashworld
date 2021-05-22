@@ -16,7 +16,26 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1621370196
+    [ { date = 1621718718
+      , title = "About page + Patreons + endgame!"
+      , text = """
+I've finally filled in the **About page**, because I needed somewhere to thank
+my Patreons :)
+
+Thanks again, **djetelina**!
+
+To be a bit enigmatic: in my almost-a-week of not working on the game some
+thoughts have crystallized on **how I want the endgame to look.** It also
+nicely circumvents my fear of writing quests being too time consuming. The
+solution is also a mechanic I haven't yet seen in any game I've played, so I'm
+very interested in how well will it work.
+
+Stay tuned!
+
+~janiczek
+"""
+      }
+    , { date = 1621370196
       , title = "Map chunks and enemies randomization"
       , text = """
 I've separated the map into [five
