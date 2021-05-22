@@ -977,3 +977,7 @@ table tbody tr:hover td {
   margin-top: 0;
   color: var(--fg-highlight);
 }
+
+#about-content strong {
+  color: var(--fg-highlight);
+}
