@@ -15,6 +15,7 @@ module Logic exposing
     , naturalArmorClass
     , newCharSpecial
     , perkRate
+    , playerCombatCapsGained
     , playerCombatXpGained
     , price
     , sequence
@@ -271,6 +272,20 @@ playerCombatXpGained { damageDealt, winnerLevel, loserLevel } =
             toFloat loserLevel / toFloat winnerLevel
     in
     BaseXp <| round <| toFloat raw * multiplier
+
+
+playerCombatCapsGained :
+    { damageDealt : Int
+    , loserCaps : Int
+    , loserMaxHp : Int
+    }
+    -> Int
+playerCombatCapsGained { damageDealt, loserCaps, loserMaxHp } =
+    let
+        multiplier =
+            0.5 + 0.5 * toFloat damageDealt / toFloat loserMaxHp
+    in
+    round <| toFloat loserCaps * multiplier
 
 
 xpGained :

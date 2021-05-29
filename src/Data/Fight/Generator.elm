@@ -701,7 +701,12 @@ generator r =
                     else if ongoing.attacker.hp <= 0 then
                         if targetIsPlayer then
                             Fight.TargetWon
-                                { capsGained = ongoing.attacker.caps
+                                { capsGained =
+                                    Logic.playerCombatCapsGained
+                                        { loserCaps = ongoing.attacker.caps
+                                        , damageDealt = r.attacker.hp
+                                        , loserMaxHp = ongoing.attacker.maxHp
+                                        }
                                 , xpGained =
                                     Logic.xpGained
                                         { baseXpGained =
@@ -727,7 +732,12 @@ generator r =
                         case ongoing.target.type_ of
                             Fight.Player _ ->
                                 Fight.AttackerWon
-                                    { capsGained = ongoing.target.caps
+                                    { capsGained =
+                                        Logic.playerCombatCapsGained
+                                            { loserCaps = ongoing.target.caps
+                                            , damageDealt = r.target.hp
+                                            , loserMaxHp = ongoing.target.maxHp
+                                            }
                                     , xpGained =
                                         Logic.xpGained
                                             { baseXpGained =
