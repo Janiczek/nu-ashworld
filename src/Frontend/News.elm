@@ -16,7 +16,38 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1621718718
+    [ { date = 1622292832
+      , title = "XP and caps nerf in PvP fights"
+      , text = """
+We're experimenting with balancing the fights. The way things worked until now
+is that
+
+* XP gained from a won fight was **10xp x damage dealt** (HP taken)
+
+* winner took **all the caps** the loser had on them
+
+In this update, we're changing that to:
+
+* XP gained is the above formula **scaled by (loser level / winner level)**.
+Thus if a player with a level 20 kills a player with a level 6, they will only
+get **6/20** as much of the XP. This works in the other way too! The weaker
+player will get **20/6** as much XP if they manage to kill the stronger player.
+
+* caps gained are **scaled between 50% and 100%** of the full amount based on
+the percentage of max HP taken during that fight. Formula:
+**loser caps x (50% + 0.5 x damage dealt / max HP)**.
+Example: Loser (with 34/80 HP) has 1234 caps on them. Winner kills them and
+gets 879 caps. But if the loser was at full HP (80/80), the winner would get
+all of the 1234 caps.
+
+Other changes:
+
+* the Messages link in menu is now dimmed if you have no unread messages
+* the Messages link in menu is now highlighted even if you're in a specific message
+
+"""
+      }
+    , { date = 1621718718
       , title = "About page + Patreons + endgame!"
       , text = """
 I've finally filled in the **About page**, because I needed somewhere to thank
