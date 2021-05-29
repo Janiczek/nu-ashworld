@@ -706,7 +706,10 @@ generator r =
                                     Logic.xpGained
                                         { baseXpGained =
                                             Logic.playerCombatXpGained
-                                                { damageDealt = r.attacker.hp }
+                                                { damageDealt = r.attacker.hp
+                                                , loserLevel = Xp.currentLevel <| Fight.opponentXp r.attacker.type_
+                                                , winnerLevel = Xp.currentLevel <| Fight.opponentXp r.target.type_
+                                                }
                                         , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.target.perks
                                         }
                                 , itemsGained = ongoing.attacker.drops
@@ -729,7 +732,10 @@ generator r =
                                         Logic.xpGained
                                             { baseXpGained =
                                                 Logic.playerCombatXpGained
-                                                    { damageDealt = r.target.hp }
+                                                    { damageDealt = r.target.hp
+                                                    , loserLevel = Xp.currentLevel <| Fight.opponentXp r.target.type_
+                                                    , winnerLevel = Xp.currentLevel <| Fight.opponentXp r.attacker.type_
+                                                    }
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
                                     , itemsGained = ongoing.target.drops
@@ -792,8 +798,8 @@ targetAlreadyDead { attacker, target, currentTime } =
             Fight.opponentName attacker.type_
 
         fightInfo =
-            { attacker = Fight.Player <| Fight.opponentName attacker.type_
-            , target = Fight.Player <| Fight.opponentName target.type_
+            { attacker = attacker.type_
+            , target = target.type_
             , log = []
             , result = Fight.TargetAlreadyDead
             }
@@ -921,7 +927,11 @@ playerOpponent player =
                 , npcExtraBonus = 0
                 }
     in
-    { type_ = Fight.Player player.name
+    { type_ =
+        Fight.Player
+            { name = player.name
+            , xp = player.xp
+            }
     , hp = player.hp
     , maxHp = player.maxHp
     , maxAp = actionPoints

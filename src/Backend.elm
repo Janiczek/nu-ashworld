@@ -244,7 +244,7 @@ update msg model =
                         Fight.Npc _ ->
                             identity
 
-                        Fight.Player name ->
+                        Fight.Player { name } ->
                             updatePlayer fn name
 
                 newModel =

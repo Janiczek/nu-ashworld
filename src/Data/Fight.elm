@@ -10,6 +10,7 @@ module Data.Fight exposing
     , infoDecoder
     , isPlayer
     , opponentName
+    , opponentXp
     , theOther
     )
 
@@ -39,7 +40,13 @@ type alias Info =
 
 type OpponentType
     = Npc Enemy.Type
-    | Player PlayerName
+    | Player PlayerOpponent
+
+
+type alias PlayerOpponent =
+    { name : PlayerName
+    , xp : Int
+    }
 
 
 type alias Opponent =
@@ -142,10 +149,11 @@ encodeOpponentType opponentType =
                 , ( "enemyType", Enemy.encodeType enemyType )
                 ]
 
-        Player name ->
+        Player { name, xp } ->
             JE.object
                 [ ( "type", JE.string "player" )
                 , ( "name", JE.string name )
+                , ( "xp", JE.int xp )
                 ]
 
 
@@ -159,7 +167,14 @@ opponentTypeDecoder =
                         JD.map Npc Enemy.typeDecoder
 
                     "player" ->
-                        JD.map Player (JD.field "name" JD.string)
+                        JD.map Player
+                            (JD.succeed PlayerOpponent
+                                |> JD.andMap (JD.field "name" JD.string)
+                                |> JD.andMap
+                                    (JD.maybe (JD.field "xp" JD.int)
+                                        |> JD.map (Maybe.withDefault 1)
+                                    )
+                            )
 
                     _ ->
                         JD.fail <| "Unknown Opponent type: '" ++ type_ ++ "'"
@@ -436,8 +451,19 @@ opponentName opponentType =
         Npc enemyType ->
             Enemy.name enemyType
 
-        Player name ->
+        Player { name } ->
             name
+
+
+opponentXp : OpponentType -> Int
+opponentXp opponentType =
+    case opponentType of
+        Npc _ ->
+            -- We don't care.
+            1
+
+        Player { xp } ->
+            xp
 
 
 isPlayer : OpponentType -> Bool

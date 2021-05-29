@@ -256,9 +256,21 @@ xpPerHpMultiplier =
     10
 
 
-playerCombatXpGained : { damageDealt : Int } -> BaseXp
-playerCombatXpGained { damageDealt } =
-    BaseXp <| damageDealt * xpPerHpMultiplier
+playerCombatXpGained :
+    { damageDealt : Int
+    , winnerLevel : Int
+    , loserLevel : Int
+    }
+    -> BaseXp
+playerCombatXpGained { damageDealt, winnerLevel, loserLevel } =
+    let
+        raw =
+            damageDealt * xpPerHpMultiplier
+
+        multiplier =
+            toFloat loserLevel / toFloat winnerLevel
+    in
+    BaseXp <| round <| toFloat raw * multiplier
 
 
 xpGained :

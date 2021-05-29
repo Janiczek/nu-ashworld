@@ -2811,7 +2811,12 @@ fightView : Fight.Info -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg
 fightView fight _ player =
     let
         youAreAttacker =
-            fight.attacker == Fight.Player player.name
+            case fight.attacker of
+                Fight.Player { name } ->
+                    name == player.name
+
+                Fight.Npc _ ->
+                    False
 
         perceptionLevel =
             Perception.level
