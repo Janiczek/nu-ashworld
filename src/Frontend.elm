@@ -3146,12 +3146,15 @@ loginFormView world =
 
 type LinkType
     = LinkOut String
-    | LinkIn Route
+    | LinkIn
+        { route : Route
+        , isActive : Route -> Bool
+        }
     | LinkMsg FrontendMsg
 
 
 linkView : Route -> Link -> Html FrontendMsg
-linkView currentRoute { label, type_, tooltip, disabled } =
+linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
     let
         ( tag, linkAttrs, maybeRoute ) =
             case type_ of
@@ -3164,10 +3167,11 @@ linkView currentRoute { label, type_, tooltip, disabled } =
                     , Nothing
                     )
 
-                LinkIn route ->
+                LinkIn { route, isActive } ->
                     ( H.button
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
+                      , HA.attributeIf (isActive currentRoute) <| HA.class "active"
                       , HA.disabled disabled
                       ]
                     , Just route
@@ -3181,13 +3185,12 @@ linkView currentRoute { label, type_, tooltip, disabled } =
                       ]
                     , Nothing
                     )
-
-        isActive =
-            maybeRoute == Just currentRoute
     in
     tag
         (HA.class "link"
-            :: HA.classList [ ( "active", isActive ) ]
+            :: HA.classList
+                [ ( "dimmed", dimmed )
+                ]
             :: linkAttrs
         )
         [ H.span
@@ -3207,22 +3210,44 @@ type alias Link =
     , type_ : LinkType
     , tooltip : Maybe String
     , disabled : Bool
+    , dimmed : Bool
     }
 
 
 linkOut : String -> String -> Maybe String -> Bool -> Link
 linkOut label url tooltip disabled =
-    Link label (LinkOut url) tooltip disabled
+    Link label (LinkOut url) tooltip disabled False
 
 
 linkIn : String -> Route -> Maybe String -> Bool -> Link
 linkIn label route tooltip disabled =
-    Link label (LinkIn route) tooltip disabled
+    Link label
+        (LinkIn
+            { route = route
+            , isActive = (==) route
+            }
+        )
+        tooltip
+        disabled
+        False
+
+
+linkInFull : String -> Route -> (Route -> Bool) -> Maybe String -> Bool -> Bool -> Link
+linkInFull label route isActive tooltip disabled dimmed =
+    Link label
+        (LinkIn
+            { route = route
+            , isActive = isActive
+            }
+        )
+        tooltip
+        disabled
+        dimmed
 
 
 linkMsg : String -> FrontendMsg -> Maybe String -> Bool -> Link
 linkMsg label msg tooltip disabled =
-    Link label (LinkMsg msg) tooltip disabled
+    Link label (LinkMsg msg) tooltip disabled False
 
 
 loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
@@ -3293,7 +3318,12 @@ loggedInLinksView player currentRoute =
 
                       else
                         linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
-                    , linkIn "Messages" Route.Messages Nothing False
+                    , linkInFull "Messages"
+                        Route.Messages
+                        Route.isMessagesRelatedRoute
+                        Nothing
+                        False
+                        (List.all .hasBeenRead p.messages)
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in

@@ -3,6 +3,7 @@ module Frontend.Route exposing
     , Route(..)
     , TownRoute(..)
     , barterState
+    , isMessagesRelatedRoute
     , loggedOut
     , mapBarterState
     , needsAdmin
@@ -115,3 +116,43 @@ mapBarterState fn route =
 
         _ ->
             route
+
+
+isMessagesRelatedRoute : Route -> Bool
+isMessagesRelatedRoute route =
+    case route of
+        Character ->
+            False
+
+        Inventory ->
+            False
+
+        Map ->
+            False
+
+        Ladder ->
+            False
+
+        Town _ ->
+            False
+
+        About ->
+            False
+
+        News ->
+            False
+
+        Fight _ ->
+            False
+
+        Messages ->
+            True
+
+        Message _ ->
+            True
+
+        CharCreation ->
+            False
+
+        Admin _ ->
+            False
