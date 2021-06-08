@@ -5,9 +5,12 @@ module Data.Fight exposing
     , OpponentType(..)
     , Result(..)
     , Who(..)
-    , actionDamage
+    , attackDamage
     , encodeInfo
     , infoDecoder
+    , isAttack
+    , isCriticalAttack
+    , isMiss
     , isPlayer
     , opponentName
     , opponentXp
@@ -476,11 +479,41 @@ isPlayer opponentType =
             True
 
 
-actionDamage : Action -> Maybe Int
-actionDamage action =
+attackDamage : Action -> Int
+attackDamage action =
     case action of
         Attack { damage } ->
-            Just damage
+            damage
 
         _ ->
-            Nothing
+            0
+
+
+isAttack : Action -> Bool
+isAttack action =
+    case action of
+        Attack _ ->
+            True
+
+        _ ->
+            False
+
+
+isCriticalAttack : Action -> Bool
+isCriticalAttack action =
+    case action of
+        Attack { isCritical } ->
+            isCritical
+
+        _ ->
+            False
+
+
+isMiss : Action -> Bool
+isMiss action =
+    case action of
+        Miss _ ->
+            True
+
+        _ ->
+            False

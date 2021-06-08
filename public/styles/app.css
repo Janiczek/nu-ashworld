@@ -989,3 +989,8 @@ table tbody tr:hover td {
 #about-content p {
   margin-top: 0;
 }
+
+#fight-stats-table th,
+#fight-stats-table td {
+  text-align: right;
+}

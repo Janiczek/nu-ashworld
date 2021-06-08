@@ -33,7 +33,7 @@ damageNeverNegative =
                         seed
             in
             fight.fightInfo.log
-                |> List.filterMap (Tuple.second >> Fight.actionDamage)
+                |> List.map (Tuple.second >> Fight.attackDamage)
                 |> List.filter (\damage -> damage < 0)
                 |> List.isEmpty
                 |> Expect.true "Expected the list of negative damage actions in a fight to be empty"

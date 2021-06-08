@@ -1,7 +1,7 @@
 module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
-import Data.Fight as Fight exposing (OpponentType, Who(..))
+import Data.Fight as Fight exposing (Action, OpponentType, Who(..))
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item
 import Data.Player.PlayerName exposing (PlayerName)
@@ -63,6 +63,22 @@ view perceptionLevel fight yourName =
         youAreAttacker : Bool
         youAreAttacker =
             attackerName == yourName
+
+        you : Who
+        you =
+            if youAreAttacker then
+                Attacker
+
+            else
+                Target
+
+        yourOpponentName : String
+        yourOpponentName =
+            if youAreAttacker then
+                targetName
+
+            else
+                attackerName
 
         names : Name -> Names
         names name =
@@ -358,5 +374,114 @@ view perceptionLevel fight yourName =
                             Fight.NobodyDead ->
                                 "You both get out of the fight alive."
                        )
+            ]
+        , H.p [] [ H.text "Stats:" ]
+        , let
+            ( yourActions, theirActions ) =
+                List.partition (\( who, _ ) -> who == you) fight.log
+
+            processBoth : (val -> val -> val) -> val -> (Action -> val) -> ( val, val )
+            processBoth combine init fromAction =
+                ( yourActions |> List.foldl (\( _, action ) acc -> combine (fromAction action) acc) init
+                , theirActions |> List.foldl (\( _, action ) acc -> combine (fromAction action) acc) init
+                )
+
+            ( yourTotalDamage, theirTotalDamage ) =
+                processBoth (+) 0 Fight.attackDamage
+
+            ( yourAttackCount, theirAttackCount ) =
+                processBoth (+)
+                    0
+                    (\action ->
+                        if Fight.isAttack action || Fight.isMiss action then
+                            1
+
+                        else
+                            0
+                    )
+
+            ( yourLandingAttackCount, theirLandingAttackCount ) =
+                processBoth (+)
+                    0
+                    (\action ->
+                        if Fight.isAttack action then
+                            1
+
+                        else
+                            0
+                    )
+
+            ( yourCritAttackCount, theirCritAttackCount ) =
+                processBoth (+)
+                    0
+                    (\action ->
+                        if Fight.isCriticalAttack action then
+                            1
+
+                        else
+                            0
+                    )
+
+            ( yourMaxHit, theirMaxHit ) =
+                processBoth max 0 Fight.attackDamage
+
+            ( yourHitRate, theirHitRate ) =
+                ( toFloat yourLandingAttackCount / toFloat yourAttackCount
+                , toFloat theirLandingAttackCount / toFloat theirAttackCount
+                )
+
+            ( yourCritRate, theirCritRate ) =
+                ( toFloat yourCritAttackCount / toFloat yourLandingAttackCount
+                , toFloat theirCritAttackCount / toFloat theirLandingAttackCount
+                )
+
+            ( yourAvgDamage, theirAvgDamage ) =
+                ( toFloat yourTotalDamage / toFloat yourLandingAttackCount
+                , toFloat theirTotalDamage / toFloat theirLandingAttackCount
+                )
+
+            formatFloat : Float -> String
+            formatFloat pct =
+                String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 100
+
+            formatPercentage : Float -> String
+            formatPercentage pct =
+                (String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 10000) ++ "%"
+          in
+          H.table [ HA.id "fight-stats-table" ]
+            [ H.thead []
+                [ H.tr []
+                    [ H.td [] []
+                    , H.th [] [ H.text "You" ]
+                    , H.th [] [ H.text yourOpponentName ]
+                    ]
+                ]
+            , H.tbody []
+                [ H.tr []
+                    [ H.td [] [ H.text "Total damage" ]
+                    , H.td [] [ H.text <| String.fromInt yourTotalDamage ]
+                    , H.td [] [ H.text <| String.fromInt theirTotalDamage ]
+                    ]
+                , H.tr []
+                    [ H.td [] [ H.text "Hit rate" ]
+                    , H.td [] [ H.text <| formatPercentage yourHitRate ]
+                    , H.td [] [ H.text <| formatPercentage theirHitRate ]
+                    ]
+                , H.tr []
+                    [ H.td [] [ H.text "Critical hit rate" ]
+                    , H.td [] [ H.text <| formatPercentage yourCritRate ]
+                    , H.td [] [ H.text <| formatPercentage theirCritRate ]
+                    ]
+                , H.tr []
+                    [ H.td [] [ H.text "Average damage" ]
+                    , H.td [] [ H.text <| formatFloat yourAvgDamage ]
+                    , H.td [] [ H.text <| formatFloat theirAvgDamage ]
+                    ]
+                , H.tr []
+                    [ H.td [] [ H.text "Max hit" ]
+                    , H.td [] [ H.text <| String.fromInt yourMaxHit ]
+                    , H.td [] [ H.text <| String.fromInt theirMaxHit ]
+                    ]
+                ]
             ]
         ]

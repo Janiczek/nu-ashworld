@@ -16,7 +16,30 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1622292832
+    [ { date = 1623181215
+      , title = "Your attacks are logged now, fights have a stats section"
+      , text = """
+A little procrastination patch while I chip away at quests:
+
+* **each fight has a stats section** with hit rate, damage dealt, critical hit
+chance, average damage, max hit for both you and your opponent.
+
+* **your PvP attacks are now logged** into your messages. You can look at your
+fights later if you want.
+
+This will probably later evolve into some filtering/tab system for the
+messages, and/or a checkbox in settings to disable this recording behaviour,
+but... we'll get there when we get there.
+
+Re quests: I have them all listed, the XP rewards roughly distributed, now just
+to fill the rest of the data (description, requirements, item rewards, global
+and private permanent buff rewards, etc.) and plug it into the code. Please be
+patient with me :)
+
+~janiczek
+"""
+      }
+    , { date = 1622292832
       , title = "XP and caps nerf in PvP fights"
       , text = """
 We're experimenting with balancing the fights. The way things worked until now
@@ -45,6 +68,7 @@ Other changes:
 * the Messages link in menu is now dimmed if you have no unread messages
 * the Messages link in menu is now highlighted even if you're in a specific message
 
+~janiczek
 """
       }
     , { date = 1621718718
