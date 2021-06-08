@@ -441,12 +441,20 @@ view perceptionLevel fight yourName =
                 )
 
             formatFloat : Float -> String
-            formatFloat pct =
-                String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 100
+            formatFloat n =
+                if isNaN n then
+                    formatFloat 0
+
+                else
+                    String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| n * 100
 
             formatPercentage : Float -> String
             formatPercentage pct =
-                (String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 10000) ++ "%"
+                if isNaN pct then
+                    formatPercentage 0
+
+                else
+                    (String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 10000) ++ "%"
           in
           H.table [ HA.id "fight-stats-table" ]
             [ H.thead []
