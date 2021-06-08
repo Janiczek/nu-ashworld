@@ -41,6 +41,10 @@ type Type
         { attacker : PlayerName
         , fightInfo : Fight.Info
         }
+    | YouAttacked
+        { target : PlayerName
+        , fightInfo : Fight.Info
+        }
 
 
 encode : Message -> JE.Value
@@ -79,6 +83,13 @@ encodeType type_ =
                 , ( "fightInfo", Fight.encodeInfo r.fightInfo )
                 ]
 
+        YouAttacked r ->
+            JE.object
+                [ ( "type", JE.string "YouAttacked" )
+                , ( "target", JE.string r.target )
+                , ( "fightInfo", Fight.encodeInfo r.fightInfo )
+                ]
+
 
 typeDecoder : Decoder Type
 typeDecoder =
@@ -102,6 +113,17 @@ typeDecoder =
                                     }
                             )
                             (JD.field "attacker" JD.string)
+                            (JD.field "fightInfo" Fight.infoDecoder)
+
+                    "YouAttacked" ->
+                        JD.map2
+                            (\target fightInfo ->
+                                YouAttacked
+                                    { target = target
+                                    , fightInfo = fightInfo
+                                    }
+                            )
+                            (JD.field "target" JD.string)
                             (JD.field "fightInfo" Fight.infoDecoder)
 
                     _ ->
@@ -143,6 +165,23 @@ summary message =
                 Fight.NobodyDead ->
                     "You were attacked by " ++ r.attacker ++ " and both stayed alive"
 
+        YouAttacked r ->
+            case r.fightInfo.result of
+                Fight.AttackerWon _ ->
+                    "You attacked " ++ r.target ++ " and won"
+
+                Fight.TargetWon _ ->
+                    "You attacked " ++ r.target ++ " and lost"
+
+                Fight.TargetAlreadyDead ->
+                    "You attacked " ++ r.target ++ " but they were already dead"
+
+                Fight.BothDead ->
+                    "You attacked " ++ r.target ++ " and both died"
+
+                Fight.NobodyDead ->
+                    "You attacked " ++ r.target ++ " and both stayed alive"
+
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
@@ -165,6 +204,14 @@ Your current level is """
                     perceptionLevel
                     r.fightInfo
                     (Fight.opponentName r.fightInfo.target)
+                ]
+
+        YouAttacked r ->
+            Html.div attributes
+                [ Data.Fight.View.view
+                    perceptionLevel
+                    r.fightInfo
+                    (Fight.opponentName r.fightInfo.attacker)
                 ]
 
 

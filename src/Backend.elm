@@ -254,6 +254,12 @@ update msg model =
                                 player
                                     |> SPlayer.setHp fight_.finalAttacker.hp
                                     |> SPlayer.subtractTicks 1
+                                    |> (if targetIsPlayer then
+                                            SPlayer.addMessage fight_.messageForAttacker
+
+                                        else
+                                            identity
+                                       )
                             )
                             fight_.finalAttacker
                         |> updateIfPlayer

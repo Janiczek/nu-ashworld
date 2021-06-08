@@ -32,6 +32,7 @@ type alias Fight =
     , finalTarget : Opponent
     , fightInfo : Fight.Info
     , messageForTarget : Message
+    , messageForAttacker : Message
     }
 
 
@@ -56,6 +57,10 @@ generator r =
         attackerName : String
         attackerName =
             Fight.opponentName r.attacker.type_
+
+        targetName : String
+        targetName =
+            Fight.opponentName r.target.type_
 
         attackerHasCautiousNaturePerk : Bool
         attackerHasCautiousNaturePerk =
@@ -782,9 +787,20 @@ generator r =
                             , fightInfo = fightInfo
                             }
                         )
+
+                messageForAttacker : Message
+                messageForAttacker =
+                    Message.new
+                        r.currentTime
+                        (YouAttacked
+                            { target = targetName
+                            , fightInfo = fightInfo
+                            }
+                        )
             in
             { fightInfo = fightInfo
             , messageForTarget = messageForTarget
+            , messageForAttacker = messageForAttacker
             , finalAttacker = ongoing.attacker
             , finalTarget = ongoing.target
             }
@@ -807,6 +823,9 @@ targetAlreadyDead { attacker, target, currentTime } =
         attackerName =
             Fight.opponentName attacker.type_
 
+        targetName =
+            Fight.opponentName target.type_
+
         fightInfo =
             { attacker = attacker.type_
             , target = target.type_
@@ -821,6 +840,13 @@ targetAlreadyDead { attacker, target, currentTime } =
         Message.new currentTime
             (YouWereAttacked
                 { attacker = attackerName
+                , fightInfo = fightInfo
+                }
+            )
+    , messageForAttacker =
+        Message.new currentTime
+            (YouAttacked
+                { target = targetName
                 , fightInfo = fightInfo
                 }
             )
