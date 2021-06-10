@@ -790,7 +790,7 @@ generator r =
 
                 messageForAttacker : Message
                 messageForAttacker =
-                    Message.new
+                    Message.newRead
                         r.currentTime
                         (YouAttacked
                             { target = targetName
