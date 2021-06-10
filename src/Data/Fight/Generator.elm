@@ -844,7 +844,7 @@ targetAlreadyDead { attacker, target, currentTime } =
                 }
             )
     , messageForAttacker =
-        Message.new currentTime
+        Message.newRead currentTime
             (YouAttacked
                 { target = targetName
                 , fightInfo = fightInfo

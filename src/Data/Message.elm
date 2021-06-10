@@ -6,6 +6,7 @@ module Data.Message exposing
     , encode
     , fullDate
     , new
+    , newRead
     , summary
     )
 
@@ -135,6 +136,14 @@ new : Posix -> Type -> Message
 new date type_ =
     { type_ = type_
     , hasBeenRead = False
+    , date = date
+    }
+
+
+newRead : Posix -> Type -> Message
+newRead date type_ =
+    { type_ = type_
+    , hasBeenRead = True
     , date = date
     }
 
