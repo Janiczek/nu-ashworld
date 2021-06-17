@@ -1222,7 +1222,7 @@ mapLoggedOutView =
 
 
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-townMainSquareView location _ _ =
+townMainSquareView location { questsProgress } _ =
     let
         quests : List Quest.Name
         quests =
@@ -1231,10 +1231,6 @@ townMainSquareView location _ _ =
         hasQuests : Bool
         hasQuests =
             not <| List.isEmpty quests
-
-        todoHardcodedProgress : List Int
-        todoHardcodedProgress =
-            [ 10, 40, 80 ]
 
         todoHardcodedIsStarted : List Bool
         todoHardcodedIsStarted =
@@ -1304,12 +1300,13 @@ townMainSquareView location _ _ =
         playerRewardView req =
             H.li [] [ H.text <| Quest.playerRewardTitle req ]
 
-        questView : Int -> Bool -> Int -> Int -> Quest.Name -> Html FrontendMsg
-        questView todoPercentProgress todoIsStarted todoPlayersActive todoTicksPerHour quest =
+        questView : Bool -> Int -> Int -> Quest.Name -> Html FrontendMsg
+        questView todoIsStarted todoPlayersActive todoTicksPerHour quest =
             let
-                todoTicksGiven : Int
-                todoTicksGiven =
-                    round <| toFloat ticksNeeded * toFloat todoPercentProgress / 100
+                ticksGiven : Int
+                ticksGiven =
+                    Dict_.get quest questsProgress
+                        |> Maybe.withDefault 0
 
                 isStarted : Bool
                 isStarted =
@@ -1366,7 +1363,7 @@ townMainSquareView location _ _ =
                             [ H.text "[START]" ]
                     ]
                 , progressbarView
-                    { ticksGiven = todoTicksGiven
+                    { ticksGiven = ticksGiven
                     , ticksNeeded = ticksNeeded
                     }
                 , H.div [ HA.class "quest-players" ]
@@ -1475,8 +1472,7 @@ townMainSquareView location _ _ =
         H.text "No quests in this town..."
     , H.viewIf hasQuests <|
         H.ul []
-            (List.map5 questView
-                (List.cycle (List.length quests) todoHardcodedProgress)
+            (List.map4 questView
                 (List.cycle (List.length quests) todoHardcodedIsStarted)
                 (List.cycle (List.length quests) todoHardcodedPlayersActive)
                 (List.cycle (List.length quests) todoHardcodedTicksPerHour)

@@ -18,6 +18,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
@@ -60,6 +61,7 @@ type alias BackendModel =
     , time : Posix
     , vendors : Dict_.Dict Vendor.Name Vendor
     , lastItemId : Int
+    , questsProgress : Dict_.Dict Quest.Name Int
     }
 
 

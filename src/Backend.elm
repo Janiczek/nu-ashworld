@@ -29,6 +29,7 @@ import Data.Player as Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -83,6 +84,10 @@ init =
             , time = Time.millisToPosix 0
             , vendors = Vendor.emptyVendors
             , lastItemId = 0
+            , questsProgress =
+                Quest.all
+                    |> List.map (\q -> ( q, 0 ))
+                    |> Dict_.fromList
             }
     in
     ( model
@@ -177,6 +182,7 @@ getWorldLoggedIn_ player model =
                                 otherPlayer
                 )
     , vendors = model.vendors
+    , questsProgress = model.questsProgress
     }
 
 

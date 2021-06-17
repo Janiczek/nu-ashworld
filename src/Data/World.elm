@@ -21,6 +21,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Vendor as Vendor exposing (Vendor)
 import Time exposing (Posix)
 
@@ -42,6 +43,7 @@ type alias AdminData =
     , nextWantedTick : Maybe Posix
 
     -- TODO perhaps have the shops here too, for some manual admin addition of items?
+    -- TODO perhaps have the global rewards here too, for manual addition?
     }
 
 
@@ -56,6 +58,7 @@ type alias WorldLoggedInData =
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
     , vendors : Dict_.Dict Vendor.Name Vendor
+    , questsProgress : Dict_.Dict Quest.Name Int
     }
 
 
