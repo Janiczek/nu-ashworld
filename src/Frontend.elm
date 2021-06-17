@@ -2633,7 +2633,17 @@ inventoryView _ player =
       else
         H.ul
             [ HA.id "inventory-list" ]
-            (List.map itemView <| Dict.values player.items)
+            (player.items
+                |> Dict.values
+                |> List.sortBy
+                    (\{ kind } ->
+                        ( Item.typeName (Item.type_ kind)
+                        , Item.baseValue kind
+                        , Item.name kind
+                        )
+                    )
+                |> List.map itemView
+            )
     , H.h3
         [ HA.id "inventory-equipment" ]
         [ H.text "Equipment" ]
