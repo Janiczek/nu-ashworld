@@ -1,20 +1,32 @@
 module Data.Quest exposing
-    ( Name(..)
+    ( GlobalReward(..)
+    , Name(..)
+    , PlayerRequirement(..)
+    , PlayerReward(..)
     , Quest
     , allForLocation
     , exclusiveWith
+    , globalRewardTitle
+    , globalRewards
     , location
     , locationQuestRequirements
+    , playerRequirementTitle
+    , playerRequirements
+    , playerRewardTitle
+    , playerRewards
     , questRequirements
     , ticksNeeded
+    , ticksNeededForPlayerReward
     , title
-    ,  xpPerTickGiven
-       -- TODO skillRequirements
-
+    , xpPerTickGiven
     )
 
 import AssocList as Dict_
+import Data.Item as Item exposing (Kind(..))
 import Data.Map.Location exposing (Location(..))
+import Data.Skill as Skill exposing (Skill(..))
+import Data.Special as Special
+import Data.Vendor as Vendor exposing (Name(..))
 
 
 type alias Quest =
@@ -407,22 +419,34 @@ title name =
 
 ticksNeeded : Name -> Int
 ticksNeeded name =
-    {-
-       case name of
-           ArroyoKillEvilPlants ->
-               40
-    -}
-    Debug.todo "Data.Quest.ticksNeeded"
+    case name of
+        ArroyoKillEvilPlants ->
+            40
+
+        ArroyoFixWellForFeargus ->
+            20
+
+        ArroyoRescueNagorsDog ->
+            30
+
+        _ ->
+            Debug.todo <| "Data.Quest.ticksNeeded " ++ Debug.toString name
 
 
 xpPerTickGiven : Name -> Int
 xpPerTickGiven name =
-    {-
-       case name of
-           ArroyoKillEvilPlants ->
-               100
-    -}
-    Debug.todo "Data.Quest.xpPerTickGiven"
+    case name of
+        ArroyoKillEvilPlants ->
+            50
+
+        ArroyoFixWellForFeargus ->
+            100
+
+        ArroyoRescueNagorsDog ->
+            75
+
+        _ ->
+            Debug.todo <| "Data.Quest.xpPerTickGiven " ++ Debug.toString name
 
 
 location : Name -> Location
@@ -1221,3 +1245,127 @@ allForLocation : Location -> List Name
 allForLocation loc =
     Dict_.get loc forLocation
         |> Maybe.withDefault []
+
+
+type GlobalReward
+    = SellsGuaranteed
+        { who : Vendor.Name
+        , what : Item.Kind
+        , amount : Int
+        }
+
+
+globalRewardTitle : GlobalReward -> String
+globalRewardTitle reward =
+    case reward of
+        SellsGuaranteed { who, what, amount } ->
+            Vendor.name who
+                ++ " sells guaranteed "
+                ++ String.fromInt amount
+                ++ "x "
+                ++ Item.name what
+                ++ " each tick"
+
+
+globalRewards : Name -> List GlobalReward
+globalRewards name =
+    case name of
+        ArroyoKillEvilPlants ->
+            [ SellsGuaranteed { who = ArroyoHakunin, what = HealingPowder, amount = 4 }
+            ]
+
+        ArroyoFixWellForFeargus ->
+            []
+
+        ArroyoRescueNagorsDog ->
+            []
+
+        _ ->
+            Debug.todo <| "Data.Quest.globalRewards " ++ Debug.toString name
+
+
+type PlayerReward
+    = ItemReward { what : Item.Kind, amount : Int }
+    | SkillUpgrade { skill : Skill, percentage : Int }
+
+
+playerRewardTitle : PlayerReward -> String
+playerRewardTitle reward =
+    case reward of
+        ItemReward { what, amount } ->
+            String.fromInt amount
+                ++ "x "
+                ++ Item.name what
+
+        SkillUpgrade { skill, percentage } ->
+            Skill.name skill
+                ++ " +"
+                ++ String.fromInt percentage
+                ++ "%"
+
+
+playerRewards : Name -> List PlayerReward
+playerRewards name =
+    case name of
+        ArroyoKillEvilPlants ->
+            [ ItemReward { what = ScoutHandbook, amount = 1 }
+            ]
+
+        ArroyoFixWellForFeargus ->
+            [ ItemReward { what = Stimpak, amount = 5 }
+            ]
+
+        ArroyoRescueNagorsDog ->
+            [ SkillUpgrade { skill = Unarmed, percentage = 10 }
+            ]
+
+        _ ->
+            Debug.todo <| "Data.Quest.playerRewards " ++ Debug.toString name
+
+
+type PlayerRequirement
+    = SkillRequirement { skill : Skill, percentage : Int }
+    | SpecialRequirement { attribute : Special.Type, value : Int }
+
+
+playerRequirementTitle : PlayerRequirement -> String
+playerRequirementTitle req =
+    case req of
+        SkillRequirement { skill, percentage } ->
+            Skill.name skill ++ " " ++ String.fromInt percentage ++ "%"
+
+        SpecialRequirement { attribute, value } ->
+            Special.label attribute ++ " " ++ String.fromInt value
+
+
+playerRequirements : Name -> List PlayerRequirement
+playerRequirements name =
+    case name of
+        ArroyoKillEvilPlants ->
+            []
+
+        ArroyoFixWellForFeargus ->
+            [ SkillRequirement { skill = Repair, percentage = 25 }
+            ]
+
+        ArroyoRescueNagorsDog ->
+            []
+
+        _ ->
+            Debug.todo <| "Data.Quest.playerRequirements " ++ Debug.toString name
+
+
+ticksNeededForPlayerReward : Name -> Int
+ticksNeededForPlayerReward name =
+    case name of
+        ArroyoKillEvilPlants ->
+            5
+
+        ArroyoFixWellForFeargus ->
+            4
+
+        ArroyoRescueNagorsDog ->
+            4
+
+        _ ->
+            Debug.todo <| "Data.Quest.ticksNeededForPlayerReward " ++ Debug.toString name
