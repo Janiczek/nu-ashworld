@@ -5,6 +5,7 @@ module Admin exposing
     )
 
 import AssocList as Dict_
+import AssocList.ExtraExtra as Dict_
 import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.FightStrategy as FightStrategy
@@ -12,6 +13,7 @@ import Data.Map as Map
 import Data.NewChar as NewChar
 import Data.Perk as Perk
 import Data.Player as Player
+import Data.Quest as Quest
 import Data.Skill as Skill
 import Data.Vendor as Vendor
 import Data.World as World

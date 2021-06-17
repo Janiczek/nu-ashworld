@@ -18,6 +18,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Tick exposing (TickPerIntervalCurve)
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.World as World exposing (World)
@@ -62,6 +63,7 @@ type alias PlayerData =
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
     , vendors : Dict_.Dict Vendor.Name Vendor
+    , questsProgress : Dict_.Dict Quest.Name Int
     }
 
 

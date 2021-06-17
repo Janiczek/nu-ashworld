@@ -4,7 +4,9 @@ module Data.Quest exposing
     , PlayerRequirement(..)
     , PlayerReward(..)
     , Quest
+    , all
     , allForLocation
+    , decoder
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
@@ -27,6 +29,7 @@ import Data.Map.Location exposing (Location(..))
 import Data.Skill as Skill exposing (Skill(..))
 import Data.Special as Special
 import Data.Vendor as Vendor exposing (Name(..))
+import Json.Decode as JD exposing (Decoder)
 
 
 type alias Quest =
@@ -1369,3 +1372,236 @@ ticksNeededForPlayerReward name =
 
         _ ->
             Debug.todo <| "Data.Quest.ticksNeededForPlayerReward " ++ Debug.toString name
+
+
+decoder : Decoder Name
+decoder =
+    JD.string
+        |> JD.andThen
+            (\string ->
+                case string of
+                    "ArroyoKillEvilPlants" ->
+                        JD.succeed ArroyoKillEvilPlants
+
+                    "ArroyoFixWellForFeargus" ->
+                        JD.succeed ArroyoFixWellForFeargus
+
+                    "ArroyoRescueNagorsDog" ->
+                        JD.succeed ArroyoRescueNagorsDog
+
+                    "KlamathRefuelStill" ->
+                        JD.succeed KlamathRefuelStill
+
+                    "KlamathGuardTheBrahmin" ->
+                        JD.succeed KlamathGuardTheBrahmin
+
+                    "KlamathRustleTheBrahmin" ->
+                        JD.succeed KlamathRustleTheBrahmin
+
+                    "KlamathKillRatGod" ->
+                        JD.succeed KlamathKillRatGod
+
+                    "KlamathRescueTorr" ->
+                        JD.succeed KlamathRescueTorr
+
+                    "KlamathSearchForSmileyTrapper" ->
+                        JD.succeed KlamathSearchForSmileyTrapper
+
+                    "ToxicCavesRescueSmileyTrapper" ->
+                        JD.succeed ToxicCavesRescueSmileyTrapper
+
+                    "ToxicCavesRepairTheGenerator" ->
+                        JD.succeed ToxicCavesRepairTheGenerator
+
+                    "ToxicCavesLootTheBunker" ->
+                        JD.succeed ToxicCavesLootTheBunker
+
+                    "DenFreeVicByPayingMetzger" ->
+                        JD.succeed DenFreeVicByPayingMetzger
+
+                    "DenFreeVicByKillingOffSlaversGuild" ->
+                        JD.succeed DenFreeVicByKillingOffSlaversGuild
+
+                    "DenDeliverMealToSmitty" ->
+                        JD.succeed DenDeliverMealToSmitty
+
+                    "DenFindCarParts" ->
+                        JD.succeed DenFindCarParts
+
+                    "DenFixTheCar" ->
+                        JD.succeed DenFixTheCar
+
+                    "ModocInvestigateGhostFarm" ->
+                        JD.succeed ModocInvestigateGhostFarm
+
+                    "ModocRemoveInfestationInFarrelsGarden" ->
+                        JD.succeed ModocRemoveInfestationInFarrelsGarden
+
+                    "ModocMediateBetweenSlagsAndJo" ->
+                        JD.succeed ModocMediateBetweenSlagsAndJo
+
+                    "ModocFindGoldWatchForCornelius" ->
+                        JD.succeed ModocFindGoldWatchForCornelius
+
+                    "ModocFindGoldWatchForFarrel" ->
+                        JD.succeed ModocFindGoldWatchForFarrel
+
+                    "VaultCityGetPlowForMrSmith" ->
+                        JD.succeed VaultCityGetPlowForMrSmith
+
+                    "VaultCityRescueAmandasHusband" ->
+                        JD.succeed VaultCityRescueAmandasHusband
+
+                    "GeckoOptimizePowerPlant" ->
+                        JD.succeed GeckoOptimizePowerPlant
+
+                    "ReddingClearWanamingoMine" ->
+                        JD.succeed ReddingClearWanamingoMine
+
+                    "ReddingFindExcavatorChip" ->
+                        JD.succeed ReddingFindExcavatorChip
+
+                    "NewRenoTrackDownPrettyBoyLloyd" ->
+                        JD.succeed NewRenoTrackDownPrettyBoyLloyd
+
+                    "NewRenoHelpGuardSecretTransaction" ->
+                        JD.succeed NewRenoHelpGuardSecretTransaction
+
+                    "NewRenoCollectTributeFromCorsicanBrothers" ->
+                        JD.succeed NewRenoCollectTributeFromCorsicanBrothers
+
+                    "NewRenoWinBoxingTournament" ->
+                        JD.succeed NewRenoWinBoxingTournament
+
+                    "NewRenoAcquireElectronicLockpick" ->
+                        JD.succeed NewRenoAcquireElectronicLockpick
+
+                    "NCRGuardBrahminCaravan" ->
+                        JD.succeed NCRGuardBrahminCaravan
+
+                    "NCRTestMutagenicSerum" ->
+                        JD.succeed NCRTestMutagenicSerum
+
+                    "NCRRetrieveComputerParts" ->
+                        JD.succeed NCRRetrieveComputerParts
+
+                    "NCRFreeSlaves" ->
+                        JD.succeed NCRFreeSlaves
+
+                    "NCRInvestigateBrahminRaids" ->
+                        JD.succeed NCRInvestigateBrahminRaids
+
+                    "V15RescueChrissy" ->
+                        JD.succeed V15RescueChrissy
+
+                    "V15CompleteDealWithNCR" ->
+                        JD.succeed V15CompleteDealWithNCR
+
+                    "V13FixVaultComputer" ->
+                        JD.succeed V13FixVaultComputer
+
+                    "V13FindTheGeck" ->
+                        JD.succeed V13FindTheGeck
+
+                    "BrokenHillsFixMineAirPurifier" ->
+                        JD.succeed BrokenHillsFixMineAirPurifier
+
+                    "BrokenHillsBlowUpMineAirPurifier" ->
+                        JD.succeed BrokenHillsBlowUpMineAirPurifier
+
+                    "BrokenHillsFindMissingPeople" ->
+                        JD.succeed BrokenHillsFindMissingPeople
+
+                    "BrokenHillsBeatFrancisAtArmwrestling" ->
+                        JD.succeed BrokenHillsBeatFrancisAtArmwrestling
+
+                    "RaidersFindEvidenceOfBishopTampering" ->
+                        JD.succeed RaidersFindEvidenceOfBishopTampering
+
+                    "RaidersKillEverybody" ->
+                        JD.succeed RaidersKillEverybody
+
+                    "SierraArmyDepotFindAbnormalBrainForSkynet" ->
+                        JD.succeed SierraArmyDepotFindAbnormalBrainForSkynet
+
+                    "SierraArmyDepotFindChimpanzeeBrainForSkynet" ->
+                        JD.succeed SierraArmyDepotFindChimpanzeeBrainForSkynet
+
+                    "SierraArmyDepotFindHumanBrainForSkynet" ->
+                        JD.succeed SierraArmyDepotFindHumanBrainForSkynet
+
+                    "SierraArmyDepotFindCyberneticBrainForSkynet" ->
+                        JD.succeed SierraArmyDepotFindCyberneticBrainForSkynet
+
+                    "SierraArmyDepotAssembleBodyForSkynet" ->
+                        JD.succeed SierraArmyDepotAssembleBodyForSkynet
+
+                    "MilitaryBaseExcavateTheEntrance" ->
+                        JD.succeed MilitaryBaseExcavateTheEntrance
+
+                    "MilitaryBaseKillMelchior" ->
+                        JD.succeed MilitaryBaseKillMelchior
+
+                    "SanFranciscoFindFuelForTanker" ->
+                        JD.succeed SanFranciscoFindFuelForTanker
+
+                    "SanFranciscoFindLocationOfFobForTanker" ->
+                        JD.succeed SanFranciscoFindLocationOfFobForTanker
+
+                    "SanFranciscoFindNavCompPartForTanker" ->
+                        JD.succeed SanFranciscoFindNavCompPartForTanker
+
+                    "SanFranciscoFindVertibirdPlansForHubologists" ->
+                        JD.succeed SanFranciscoFindVertibirdPlansForHubologists
+
+                    "SanFranciscoFindVertibirdPlansForShi" ->
+                        JD.succeed SanFranciscoFindVertibirdPlansForShi
+
+                    "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel" ->
+                        JD.succeed SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
+
+                    "SanFranciscoFindBadgersGirlfriendInsideShip" ->
+                        JD.succeed SanFranciscoFindBadgersGirlfriendInsideShip
+
+                    "SanFranciscoDefeatLoPanInRingForDragon" ->
+                        JD.succeed SanFranciscoDefeatLoPanInRingForDragon
+
+                    "SanFranciscoDefeatDragonInRingForLoPan" ->
+                        JD.succeed SanFranciscoDefeatDragonInRingForLoPan
+
+                    "SanFranciscoEmbarkForEnclave" ->
+                        JD.succeed SanFranciscoEmbarkForEnclave
+
+                    "NavarroFixK9" ->
+                        JD.succeed NavarroFixK9
+
+                    "NavarroRetrieveFobForTanker" ->
+                        JD.succeed NavarroRetrieveFobForTanker
+
+                    "EnclavePersuadeControlCompanySquadToDesert" ->
+                        JD.succeed EnclavePersuadeControlCompanySquadToDesert
+
+                    "EnclaveKillThePresidentStealthily" ->
+                        JD.succeed EnclaveKillThePresidentStealthily
+
+                    "EnclaveKillThePresidentTheUsualWay" ->
+                        JD.succeed EnclaveKillThePresidentTheUsualWay
+
+                    "EnclaveFindTheGeck" ->
+                        JD.succeed EnclaveFindTheGeck
+
+                    "EnclaveRigTurretsToTargetFrankHorrigan" ->
+                        JD.succeed EnclaveRigTurretsToTargetFrankHorrigan
+
+                    "EnclaveForceScientistToInitiateSelfDestruct" ->
+                        JD.succeed EnclaveForceScientistToInitiateSelfDestruct
+
+                    "EnclaveKillFrankHorrigan" ->
+                        JD.succeed EnclaveKillFrankHorrigan
+
+                    "EnclaveReturnToMainland" ->
+                        JD.succeed EnclaveReturnToMainland
+
+                    _ ->
+                        JD.fail <| "Unknown quest name: '" ++ string ++ "'"
+            )

@@ -31,6 +31,7 @@ import Data.Player as Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -230,6 +231,7 @@ getPlayerData_ worldName world player model =
                                 otherPlayer
                 )
     , vendors = world.vendors
+    , questsProgress = world.questsProgress
     }
 
 

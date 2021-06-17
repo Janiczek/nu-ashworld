@@ -20,6 +20,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
