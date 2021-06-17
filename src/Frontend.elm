@@ -1222,6 +1222,27 @@ mapLoggedOutView =
 
 townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView location _ _ =
+    let
+        quests : List Quest.Name
+        quests =
+            Quest.allForLocation location
+
+        hasQuests : Bool
+        hasQuests =
+            not <| List.isEmpty quests
+
+        questView : Quest.Name -> Html FrontendMsg
+        questView quest =
+            H.li
+                []
+                [ H.text <| Quest.title quest
+                , H.ul []
+                    [ H.li [] [ H.text <| Debug.toString <| Quest.questRequirements quest ]
+                    , H.li [] [ H.text <| Debug.toString <| Quest.ticksNeeded quest ]
+                    , H.li [] [ H.text <| Debug.toString <| Quest.xpPerTickGiven quest ]
+                    ]
+                ]
+    in
     [ pageTitleView <| "Town: " ++ Location.name location
     , if Vendor.isInLocation location then
         H.div []
@@ -1232,7 +1253,14 @@ townMainSquareView location _ _ =
 
       else
         H.div [] [ H.text "No vendor in this town..." ]
-    , H.text <| Debug.toString (Quest.allForLocation location)
+    , if hasQuests then
+        H.h3 [] [ H.text "Quests" ]
+
+      else
+        H.text "No quests in this town..."
+    , H.viewIf hasQuests <|
+        H.ul []
+            (List.map questView quests)
     ]
 
 
