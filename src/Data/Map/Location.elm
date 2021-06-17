@@ -38,10 +38,8 @@ type Location
       --| NewRenoSafeHouse
       --| ReddingSafeHouse
       --| ShiSubmarine
-      --| SierraArmyDepot
       --| SlaverCamp
       --| Stables
-      --| ToxicCaves
       --| UmbraTribe
       --| VillageNearVaultCity
     | BrokenHills
@@ -57,6 +55,8 @@ type Location
     | Raiders
     | Redding
     | SanFrancisco
+    | SierraArmyDepot
+    | ToxicCaves
     | Vault13
     | Vault15
     | VaultCity
@@ -78,10 +78,8 @@ allLocations =
     --, NewRenoSafeHouse
     --, ReddingSafeHouse
     --, ShiSubmarine
-    --, SierraArmyDepot
     --, SlaverCamp
     --, Stables
-    --, ToxicCaves
     --, UmbraTribe
     --, VillageNearVaultCity
     , BrokenHills
@@ -97,6 +95,8 @@ allLocations =
     , Raiders
     , Redding
     , SanFrancisco
+    , SierraArmyDepot
+    , ToxicCaves
     , VaultCity
     , Vault13
     , Vault15
@@ -118,10 +118,8 @@ size loc =
         --NewRenoSafeHouse -> Small
         --ReddingSafeHouse -> Small
         --ShiSubmarine -> Small
-        --SierraArmyDepot -> Middle
         --SlaverCamp -> Small
         --Stables -> Small
-        --ToxicCaves -> Small
         --UmbraTribe -> Middle
         --VillageNearVaultCity -> Small
         Arroyo ->
@@ -172,6 +170,12 @@ size loc =
         SanFrancisco ->
             Large
 
+        SierraArmyDepot ->
+            Middle
+
+        ToxicCaves ->
+            Small
+
         VaultCity ->
             Large
 
@@ -191,10 +195,8 @@ coords loc =
         --NewRenoSafeHouse -> ( 20, 19 )
         --ReddingSafeHouse -> ( 11, 13 )
         --ShiSubmarine -> ( 8, 26 )
-        --SierraArmyDepot -> ( 18, 16 )
         --SlaverCamp -> ( 4, 7 )
         --Stables -> ( 18, 17 )
-        --ToxicCaves -> ( 6, 1 )
         --UmbraTribe -> ( 1, 10 )
         --VillageNearVaultCity -> ( 24, 5 )
         Arroyo ->
@@ -245,6 +247,12 @@ coords loc =
         SanFrancisco ->
             ( 9, 26 )
 
+        SierraArmyDepot ->
+            ( 18, 16 )
+
+        ToxicCaves ->
+            ( 6, 1 )
+
         VaultCity ->
             ( 24, 6 )
 
@@ -264,10 +272,8 @@ name loc =
         --NewRenoSafeHouse -> "Safe House"
         --ReddingSafeHouse -> "Safe House"
         --ShiSubmarine -> "Shi Submarine"
-        --SierraArmyDepot -> "Sierra Army Depot"
         --SlaverCamp -> "Slaver Camp"
         --Stables -> "Stables"
-        --ToxicCaves -> "Toxic Caves"
         --UmbraTribe -> "Umbra Tribe"
         --VillageNearVaultCity -> "Village"
         Arroyo ->
@@ -317,6 +323,12 @@ name loc =
 
         SanFrancisco ->
             "San Francisco"
+
+        SierraArmyDepot ->
+            "Sierra Army Depot"
+
+        ToxicCaves ->
+            "Toxic Caves"
 
         VaultCity ->
             "Vault City"
