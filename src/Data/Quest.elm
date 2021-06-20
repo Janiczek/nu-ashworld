@@ -1,12 +1,16 @@
 module Data.Quest exposing
-    ( GlobalReward(..)
+    ( Engagement(..)
+    , GlobalReward(..)
     , Name(..)
     , PlayerRequirement(..)
     , PlayerReward(..)
+    , Progress
     , Quest
     , all
     , allForLocation
     , decoder
+    , emptyProgress
+    , encode
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
@@ -30,6 +34,7 @@ import Data.Skill as Skill exposing (Skill(..))
 import Data.Special as Special
 import Data.Vendor as Vendor exposing (Name(..))
 import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 
 
 type alias Quest =
@@ -192,6 +197,27 @@ all =
     , EnclaveKillFrankHorrigan
     , EnclaveReturnToMainland
     ]
+
+
+type alias Progress =
+    { playersActive : Int
+    , ticksPerHour : Int
+    , ticksGiven : Int
+    }
+
+
+emptyProgress : Progress
+emptyProgress =
+    { playersActive = 0
+    , ticksPerHour = 0
+    , ticksGiven = 0
+    }
+
+
+type Engagement
+    = NotProgressing
+    | ProgressingSlowly
+    | Progressing
 
 
 title : Name -> String
@@ -1372,6 +1398,233 @@ ticksNeededForPlayerReward name =
 
         _ ->
             Debug.todo <| "Data.Quest.ticksNeededForPlayerReward " ++ Debug.toString name
+
+
+encode : Name -> JE.Value
+encode name =
+    JE.string <|
+        case name of
+            ArroyoKillEvilPlants ->
+                "ArroyoKillEvilPlants"
+
+            ArroyoFixWellForFeargus ->
+                "ArroyoFixWellForFeargus"
+
+            ArroyoRescueNagorsDog ->
+                "ArroyoRescueNagorsDog"
+
+            KlamathRefuelStill ->
+                "KlamathRefuelStill"
+
+            KlamathGuardTheBrahmin ->
+                "KlamathGuardTheBrahmin"
+
+            KlamathRustleTheBrahmin ->
+                "KlamathRustleTheBrahmin"
+
+            KlamathKillRatGod ->
+                "KlamathKillRatGod"
+
+            KlamathRescueTorr ->
+                "KlamathRescueTorr"
+
+            KlamathSearchForSmileyTrapper ->
+                "KlamathSearchForSmileyTrapper"
+
+            ToxicCavesRescueSmileyTrapper ->
+                "ToxicCavesRescueSmileyTrapper"
+
+            ToxicCavesRepairTheGenerator ->
+                "ToxicCavesRepairTheGenerator"
+
+            ToxicCavesLootTheBunker ->
+                "ToxicCavesLootTheBunker"
+
+            DenFreeVicByPayingMetzger ->
+                "DenFreeVicByPayingMetzger"
+
+            DenFreeVicByKillingOffSlaversGuild ->
+                "DenFreeVicByKillingOffSlaversGuild"
+
+            DenDeliverMealToSmitty ->
+                "DenDeliverMealToSmitty"
+
+            DenFindCarParts ->
+                "DenFindCarParts"
+
+            DenFixTheCar ->
+                "DenFixTheCar"
+
+            ModocInvestigateGhostFarm ->
+                "ModocInvestigateGhostFarm"
+
+            ModocRemoveInfestationInFarrelsGarden ->
+                "ModocRemoveInfestationInFarrelsGarden"
+
+            ModocMediateBetweenSlagsAndJo ->
+                "ModocMediateBetweenSlagsAndJo"
+
+            ModocFindGoldWatchForCornelius ->
+                "ModocFindGoldWatchForCornelius"
+
+            ModocFindGoldWatchForFarrel ->
+                "ModocFindGoldWatchForFarrel"
+
+            VaultCityGetPlowForMrSmith ->
+                "VaultCityGetPlowForMrSmith"
+
+            VaultCityRescueAmandasHusband ->
+                "VaultCityRescueAmandasHusband"
+
+            GeckoOptimizePowerPlant ->
+                "GeckoOptimizePowerPlant"
+
+            ReddingClearWanamingoMine ->
+                "ReddingClearWanamingoMine"
+
+            ReddingFindExcavatorChip ->
+                "ReddingFindExcavatorChip"
+
+            NewRenoTrackDownPrettyBoyLloyd ->
+                "NewRenoTrackDownPrettyBoyLloyd"
+
+            NewRenoHelpGuardSecretTransaction ->
+                "NewRenoHelpGuardSecretTransaction"
+
+            NewRenoCollectTributeFromCorsicanBrothers ->
+                "NewRenoCollectTributeFromCorsicanBrothers"
+
+            NewRenoWinBoxingTournament ->
+                "NewRenoWinBoxingTournament"
+
+            NewRenoAcquireElectronicLockpick ->
+                "NewRenoAcquireElectronicLockpick"
+
+            NCRGuardBrahminCaravan ->
+                "NCRGuardBrahminCaravan"
+
+            NCRTestMutagenicSerum ->
+                "NCRTestMutagenicSerum"
+
+            NCRRetrieveComputerParts ->
+                "NCRRetrieveComputerParts"
+
+            NCRFreeSlaves ->
+                "NCRFreeSlaves"
+
+            NCRInvestigateBrahminRaids ->
+                "NCRInvestigateBrahminRaids"
+
+            V15RescueChrissy ->
+                "V15RescueChrissy"
+
+            V15CompleteDealWithNCR ->
+                "V15CompleteDealWithNCR"
+
+            V13FixVaultComputer ->
+                "V13FixVaultComputer"
+
+            V13FindTheGeck ->
+                "V13FindTheGeck"
+
+            BrokenHillsFixMineAirPurifier ->
+                "BrokenHillsFixMineAirPurifier"
+
+            BrokenHillsBlowUpMineAirPurifier ->
+                "BrokenHillsBlowUpMineAirPurifier"
+
+            BrokenHillsFindMissingPeople ->
+                "BrokenHillsFindMissingPeople"
+
+            BrokenHillsBeatFrancisAtArmwrestling ->
+                "BrokenHillsBeatFrancisAtArmwrestling"
+
+            RaidersFindEvidenceOfBishopTampering ->
+                "RaidersFindEvidenceOfBishopTampering"
+
+            RaidersKillEverybody ->
+                "RaidersKillEverybody"
+
+            SierraArmyDepotFindAbnormalBrainForSkynet ->
+                "SierraArmyDepotFindAbnormalBrainForSkynet"
+
+            SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+                "SierraArmyDepotFindChimpanzeeBrainForSkynet"
+
+            SierraArmyDepotFindHumanBrainForSkynet ->
+                "SierraArmyDepotFindHumanBrainForSkynet"
+
+            SierraArmyDepotFindCyberneticBrainForSkynet ->
+                "SierraArmyDepotFindCyberneticBrainForSkynet"
+
+            SierraArmyDepotAssembleBodyForSkynet ->
+                "SierraArmyDepotAssembleBodyForSkynet"
+
+            MilitaryBaseExcavateTheEntrance ->
+                "MilitaryBaseExcavateTheEntrance"
+
+            MilitaryBaseKillMelchior ->
+                "MilitaryBaseKillMelchior"
+
+            SanFranciscoFindFuelForTanker ->
+                "SanFranciscoFindFuelForTanker"
+
+            SanFranciscoFindLocationOfFobForTanker ->
+                "SanFranciscoFindLocationOfFobForTanker"
+
+            SanFranciscoFindNavCompPartForTanker ->
+                "SanFranciscoFindNavCompPartForTanker"
+
+            SanFranciscoFindVertibirdPlansForHubologists ->
+                "SanFranciscoFindVertibirdPlansForHubologists"
+
+            SanFranciscoFindVertibirdPlansForShi ->
+                "SanFranciscoFindVertibirdPlansForShi"
+
+            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+                "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
+
+            SanFranciscoFindBadgersGirlfriendInsideShip ->
+                "SanFranciscoFindBadgersGirlfriendInsideShip"
+
+            SanFranciscoDefeatLoPanInRingForDragon ->
+                "SanFranciscoDefeatLoPanInRingForDragon"
+
+            SanFranciscoDefeatDragonInRingForLoPan ->
+                "SanFranciscoDefeatDragonInRingForLoPan"
+
+            SanFranciscoEmbarkForEnclave ->
+                "SanFranciscoEmbarkForEnclave"
+
+            NavarroFixK9 ->
+                "NavarroFixK9"
+
+            NavarroRetrieveFobForTanker ->
+                "NavarroRetrieveFobForTanker"
+
+            EnclavePersuadeControlCompanySquadToDesert ->
+                "EnclavePersuadeControlCompanySquadToDesert"
+
+            EnclaveKillThePresidentStealthily ->
+                "EnclaveKillThePresidentStealthily"
+
+            EnclaveKillThePresidentTheUsualWay ->
+                "EnclaveKillThePresidentTheUsualWay"
+
+            EnclaveFindTheGeck ->
+                "EnclaveFindTheGeck"
+
+            EnclaveRigTurretsToTargetFrankHorrigan ->
+                "EnclaveRigTurretsToTargetFrankHorrigan"
+
+            EnclaveForceScientistToInitiateSelfDestruct ->
+                "EnclaveForceScientistToInitiateSelfDestruct"
+
+            EnclaveKillFrankHorrigan ->
+                "EnclaveKillFrankHorrigan"
+
+            EnclaveReturnToMainland ->
+                "EnclaveReturnToMainland"
 
 
 decoder : Decoder Name

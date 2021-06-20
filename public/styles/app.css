@@ -996,6 +996,20 @@ table tbody tr:hover td {
   text-align: right;
 }
 
+.quests {
+  list-style: none;
+}
+.quest {
+  padding-left: 16px;
+}
+.quest:before {
+  content: '[+]';
+  padding-right: 8px;
+  color: var(--fg02);
+}
+.quest.expanded:before {
+  content: '[-]';
+}
 .quest:not(:first-child) {
   margin-top: 20px;
 }

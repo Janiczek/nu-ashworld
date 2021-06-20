@@ -14,6 +14,7 @@ module Data.Player.SPlayer exposing
     , incSpecial
     , incWins
     , levelUpHereAndNow
+    , questEngagement
     , readMessage
     , recalculateHp
     , removeItem
@@ -37,6 +38,7 @@ import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
+import Data.Quest as Quest exposing (Engagement(..), PlayerRequirement(..))
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Tick as Tick
@@ -582,3 +584,33 @@ equipItem { id } player =
                 Item.SmallGun ->
                     -- TODO equip weapons
                     player
+
+
+questEngagement : SPlayer -> Quest.Name -> Quest.Engagement
+questEngagement player quest =
+    let
+        reqs : List PlayerRequirement
+        reqs =
+            Quest.playerRequirements quest
+
+        meetsRequirement : PlayerRequirement -> Bool
+        meetsRequirement req =
+            case req of
+                SkillRequirement { skill, percentage } ->
+                    Skill.get player.special player.addedSkillPercentages skill >= percentage
+
+                SpecialRequirement { attribute, value } ->
+                    Special.get attribute player.special >= value
+    in
+    if Set_.member quest player.questsActive then
+        if List.isEmpty reqs then
+            Progressing
+
+        else if List.all meetsRequirement reqs then
+            Progressing
+
+        else
+            ProgressingSlowly
+
+    else
+        NotProgressing

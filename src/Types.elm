@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import AssocList as Dict_
+import AssocSet as Set_
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed)
@@ -50,6 +51,7 @@ type alias FrontendModel =
     , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     , hoveredItem : Maybe HoveredItem
+    , expandedQuests : Set_.Set Quest.Name
     }
 
 
@@ -103,6 +105,8 @@ type FrontendMsg
     | BarterMsg BarterMsg
     | HoverItem HoveredItem
     | StopHoveringItem
+    | ExpandQuestItem Quest.Name
+    | CollapseQuestItem Quest.Name
 
 
 type BarterMsg

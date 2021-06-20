@@ -35,6 +35,7 @@ import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception exposing (PerceptionLevel)
@@ -77,6 +78,7 @@ type alias SPlayer =
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
+    , questsActive : Set_.Set Quest.Name
     }
 
 
@@ -101,6 +103,7 @@ type alias CPlayer =
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
+    , questsActive : Set_.Set Quest.Name
     }
 
 
@@ -152,6 +155,7 @@ encodeSPlayer player =
         , ( "availableSkillPoints", JE.int player.availableSkillPoints )
         , ( "availablePerks", JE.int player.availablePerks )
         , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
+        , ( "questsActive", Set_.encode Quest.encode player.questsActive )
         ]
 
 
@@ -177,7 +181,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV4
+        [ sPlayerDecoderV5
+        , sPlayerDecoderV4
         , sPlayerDecoderV3
         , sPlayerDecoderV2
         , sPlayerDecoderV1
@@ -209,6 +214,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.succeed 0)
         |> JD.andMap (JD.succeed Nothing)
+        |> JD.andMap (JD.succeed Set_.empty)
         |> JD.map
             (\player ->
                 let
@@ -249,6 +255,7 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.succeed Nothing)
+        |> JD.andMap (JD.succeed Set_.empty)
         |> JD.map
             (\player ->
                 let
@@ -290,6 +297,7 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.succeed Nothing)
+        |> JD.andMap (JD.succeed Set_.empty)
 
 
 {-| Adding equippedArmor
@@ -317,6 +325,35 @@ sPlayerDecoderV4 =
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.succeed Set_.empty)
+
+
+{-| Adding questsActive
+-}
+sPlayerDecoderV5 : Decoder SPlayer
+sPlayerDecoderV5 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "questsActive" (Set_.decoder Quest.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -340,6 +377,7 @@ serverToClient p =
     , availableSkillPoints = p.availableSkillPoints
     , availablePerks = p.availablePerks
     , equippedArmor = p.equippedArmor
+    , questsActive = p.questsActive
     }
 
 
@@ -467,4 +505,5 @@ fromNewChar currentTime auth newChar =
             , availableSkillPoints = 0
             , availablePerks = 0
             , equippedArmor = Nothing
+            , questsActive = Set_.empty
             }
