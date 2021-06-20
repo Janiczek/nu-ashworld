@@ -2902,8 +2902,6 @@ skillsView_ r =
                 (List.map skillView Skill.all)
             , H.viewIf (availableTags > 0) <|
                 H.p [] [ H.text <| "Tags available: " ++ String.fromInt availableTags ]
-            , H.viewIf (r.availableSkillPoints > 0) <|
-                H.p [] [ H.text <| "Skill points available: " ++ String.fromInt r.availableSkillPoints ]
             ]
 
 
