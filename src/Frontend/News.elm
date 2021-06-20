@@ -16,7 +16,28 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1623181215
+    [ { date = 0
+      , title = "TODO"
+      , text = """
+Changelog: 
+
+* items are now **sorted by type** (food, books, armor, ...) on the inventory page
+
+* new perk: **Gecko Skinning**: each gecko kill has a guaranteed drop of gecko skin. Given as a reward for a quest.
+
+* new item: **Meat Jerky** (value $30, heals 40 HP)
+* new item: **Beer** (value $200, can't currently be used)
+* new item: **BB Gun** (value $3500, small gun, uses BB ammo, can't currently be used)
+* new item: **BB Ammo** (value $20, ammo, can't currently be used)
+
+TODO:
+
+* TODO make some vendors sell meat jerky
+* TODO new enemy: silver gecko (and make them drop the skin)
+* TODO new enemy: golden gecko (and make them drop the skin)
+"""
+      }
+    , { date = 1623181215
       , title = "Your attacks are logged now, fights have a stats section"
       , text = """
 A little procrastination patch while I chip away at quests:

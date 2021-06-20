@@ -458,6 +458,24 @@ ticksNeeded name =
         ArroyoRescueNagorsDog ->
             30
 
+        KlamathRefuelStill ->
+            50
+
+        KlamathGuardTheBrahmin ->
+            40
+
+        KlamathRustleTheBrahmin ->
+            40
+
+        KlamathKillRatGod ->
+            75
+
+        KlamathRescueTorr ->
+            30
+
+        KlamathSearchForSmileyTrapper ->
+            40
+
         _ ->
             Debug.todo <| "Data.Quest.ticksNeeded " ++ Debug.toString name
 
@@ -472,6 +490,24 @@ xpPerTickGiven name =
             100
 
         ArroyoRescueNagorsDog ->
+            75
+
+        KlamathRefuelStill ->
+            50
+
+        KlamathGuardTheBrahmin ->
+            100
+
+        KlamathRustleTheBrahmin ->
+            100
+
+        KlamathKillRatGod ->
+            150
+
+        KlamathRescueTorr ->
+            100
+
+        KlamathSearchForSmileyTrapper ->
             75
 
         _ ->
@@ -1282,6 +1318,10 @@ type GlobalReward
         , what : Item.Kind
         , amount : Int
         }
+    | Discount
+        { who : Vendor.Name
+        , percentage : Int
+        }
 
 
 globalRewardTitle : GlobalReward -> String
@@ -1295,18 +1335,41 @@ globalRewardTitle reward =
                 ++ Item.name what
                 ++ " each tick"
 
+        Discount { who, percentage } ->
+            Vendor.name who
+                ++ " gives a discount of "
+                ++ String.fromInt percentage
+                ++ "% on all items"
+
 
 globalRewards : Name -> List GlobalReward
 globalRewards name =
     case name of
         ArroyoKillEvilPlants ->
-            [ SellsGuaranteed { who = ArroyoHakunin, what = HealingPowder, amount = 4 }
-            ]
+            [ SellsGuaranteed { who = ArroyoHakunin, what = HealingPowder, amount = 4 } ]
 
         ArroyoFixWellForFeargus ->
             []
 
         ArroyoRescueNagorsDog ->
+            []
+
+        KlamathRefuelStill ->
+            []
+
+        KlamathGuardTheBrahmin ->
+            [ SellsGuaranteed { who = MaidaKlamath, what = MeatJerky, amount = 4 } ]
+
+        KlamathRustleTheBrahmin ->
+            []
+
+        KlamathKillRatGod ->
+            [ Discount { who = MaidaKlamath, percentage = 15 } ]
+
+        KlamathRescueTorr ->
+            [ SellsGuaranteed { who = MaidaKlamath, what = MeatJerky, amount = 4 } ]
+
+        KlamathSearchForSmileyTrapper ->
             []
 
         _ ->
@@ -1337,31 +1400,60 @@ playerRewards : Name -> List PlayerReward
 playerRewards name =
     case name of
         ArroyoKillEvilPlants ->
-            [ ItemReward { what = ScoutHandbook, amount = 1 }
-            ]
+            [ ItemReward { what = ScoutHandbook, amount = 1 } ]
 
         ArroyoFixWellForFeargus ->
-            [ ItemReward { what = Stimpak, amount = 5 }
-            ]
+            [ ItemReward { what = Stimpak, amount = 5 } ]
 
         ArroyoRescueNagorsDog ->
-            [ SkillUpgrade { skill = Unarmed, percentage = 10 }
-            ]
+            [ SkillUpgrade { skill = Unarmed, percentage = 10 } ]
+
+        KlamathRefuelStill ->
+            [ ItemReward { what = Beer, amount = 10 } ]
+
+        KlamathGuardTheBrahmin ->
+            []
+
+        KlamathRustleTheBrahmin ->
+            [ SkillUpgrade { skill = Sneak, percentage = 10 } ]
+
+        KlamathKillRatGod ->
+            [ ItemReward { what = BBGun, amount = 1 } ]
+
+        KlamathRescueTorr ->
+            []
+
+        KlamathSearchForSmileyTrapper ->
+            [ PerkReward GeckoSkinning ]
 
         _ ->
             Debug.todo <| "Data.Quest.playerRewards " ++ Debug.toString name
 
 
 type PlayerRequirement
-    = SkillRequirement { skill : Skill, percentage : Int }
+    = SkillRequirement { skill : SkillRequirementType, percentage : Int }
     | SpecialRequirement { attribute : Special.Type, value : Int }
+
+
+type SkillRequirementType
+    = Combat
+    | Specific Skill
 
 
 playerRequirementTitle : PlayerRequirement -> String
 playerRequirementTitle req =
     case req of
         SkillRequirement { skill, percentage } ->
-            Skill.name skill ++ " " ++ String.fromInt percentage ++ "%"
+            (case skill of
+                Combat ->
+                    "Combat skill"
+
+                Specific skill_ ->
+                    Skill.name skill_
+            )
+                ++ " "
+                ++ String.fromInt percentage
+                ++ "%"
 
         SpecialRequirement { attribute, value } ->
             Special.label attribute ++ " " ++ String.fromInt value
@@ -1374,11 +1466,28 @@ playerRequirements name =
             []
 
         ArroyoFixWellForFeargus ->
-            [ SkillRequirement { skill = Repair, percentage = 25 }
-            ]
+            [ SkillRequirement { skill = Specific Repair, percentage = 25 } ]
 
         ArroyoRescueNagorsDog ->
             []
+
+        KlamathRefuelStill ->
+            []
+
+        KlamathGuardTheBrahmin ->
+            []
+
+        KlamathRustleTheBrahmin ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 30 } ]
+
+        KlamathKillRatGod ->
+            [ SkillRequirement { skill = Combat, percentage = 60 } ]
+
+        KlamathRescueTorr ->
+            []
+
+        KlamathSearchForSmileyTrapper ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 20 } ]
 
         _ ->
             Debug.todo <| "Data.Quest.playerRequirements " ++ Debug.toString name
@@ -1394,6 +1503,24 @@ ticksNeededForPlayerReward name =
             4
 
         ArroyoRescueNagorsDog ->
+            4
+
+        KlamathRefuelStill ->
+            5
+
+        KlamathGuardTheBrahmin ->
+            0
+
+        KlamathRustleTheBrahmin ->
+            4
+
+        KlamathKillRatGod ->
+            15
+
+        KlamathRescueTorr ->
+            0
+
+        KlamathSearchForSmileyTrapper ->
             4
 
         _ ->
