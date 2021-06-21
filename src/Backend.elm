@@ -1717,6 +1717,9 @@ oneTimePerkEffects currentTime =
 
                 Perk.HthEvade ->
                     Nothing
+
+                Perk.GeckoSkinning ->
+                    Nothing
     in
     Perk.all
         |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))
@@ -1730,7 +1733,7 @@ choosePerk perk clientId world worldName player model =
             Xp.currentLevel player.xp
     in
     if
-        Perk.isApplicable
+        Perk.isApplicableForLevelup
             { addedSkillPercentages = player.addedSkillPercentages
             , special = player.special
             , level = level

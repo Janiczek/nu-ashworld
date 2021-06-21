@@ -41,7 +41,12 @@ import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
-import Data.Quest as Quest exposing (Engagement(..), PlayerRequirement(..))
+import Data.Quest as Quest
+    exposing
+        ( Engagement(..)
+        , PlayerRequirement(..)
+        , SkillRequirement(..)
+        )
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Tick as Tick exposing (TickPerIntervalCurve)
@@ -613,9 +618,19 @@ questEngagement player quest =
 
         meetsRequirement : PlayerRequirement -> Bool
         meetsRequirement req =
+            let
+                oneSkill : Int -> Skill -> Bool
+                oneSkill percentage skill =
+                    Skill.get player.special player.addedSkillPercentages skill >= percentage
+            in
             case req of
                 SkillRequirement { skill, percentage } ->
-                    Skill.get player.special player.addedSkillPercentages skill >= percentage
+                    case skill of
+                        Combat ->
+                            List.any (oneSkill percentage) Skill.combatSkills
+
+                        Specific skill_ ->
+                            oneSkill percentage skill_
 
                 SpecialRequirement { attribute, value } ->
                     Special.get attribute player.special >= value
