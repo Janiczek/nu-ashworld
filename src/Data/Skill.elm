@@ -1,6 +1,7 @@
 module Data.Skill exposing
     ( Skill(..)
     , all
+    , combatSkills
     , decoder
     , description
     , encode
@@ -429,3 +430,14 @@ description skill =
 
         Outdoorsman ->
             "Practical knowledge of the outdoors, and the ability to live off the land. The knowledge of plants and animals."
+
+
+combatSkills : List Skill
+combatSkills =
+    [ SmallGuns
+    , BigGuns
+    , EnergyWeapons
+    , Throwing
+    , Unarmed
+    , MeleeWeapons
+    ]

@@ -6,6 +6,7 @@ module Data.Quest exposing
     , PlayerReward(..)
     , Progress
     , Quest
+    , SkillRequirement(..)
     , all
     , allForLocation
     , decoder
@@ -30,6 +31,7 @@ module Data.Quest exposing
 import AssocList as Dict_
 import Data.Item as Item exposing (Kind(..))
 import Data.Map.Location exposing (Location(..))
+import Data.Perk as Perk exposing (Perk(..))
 import Data.Skill as Skill exposing (Skill(..))
 import Data.Special as Special
 import Data.Vendor as Vendor exposing (Name(..))
@@ -477,7 +479,8 @@ ticksNeeded name =
             40
 
         _ ->
-            Debug.todo <| "Data.Quest.ticksNeeded " ++ Debug.toString name
+            -- TODO
+            0
 
 
 xpPerTickGiven : Name -> Int
@@ -511,7 +514,8 @@ xpPerTickGiven name =
             75
 
         _ ->
-            Debug.todo <| "Data.Quest.xpPerTickGiven " ++ Debug.toString name
+            -- TODO
+            0
 
 
 location : Name -> Location
@@ -1358,27 +1362,29 @@ globalRewards name =
             []
 
         KlamathGuardTheBrahmin ->
-            [ SellsGuaranteed { who = MaidaKlamath, what = MeatJerky, amount = 4 } ]
+            [ SellsGuaranteed { who = KlamathMaidaBuckner, what = MeatJerky, amount = 4 } ]
 
         KlamathRustleTheBrahmin ->
             []
 
         KlamathKillRatGod ->
-            [ Discount { who = MaidaKlamath, percentage = 15 } ]
+            [ Discount { who = KlamathMaidaBuckner, percentage = 15 } ]
 
         KlamathRescueTorr ->
-            [ SellsGuaranteed { who = MaidaKlamath, what = MeatJerky, amount = 4 } ]
+            [ SellsGuaranteed { who = KlamathMaidaBuckner, what = MeatJerky, amount = 4 } ]
 
         KlamathSearchForSmileyTrapper ->
             []
 
         _ ->
-            Debug.todo <| "Data.Quest.globalRewards " ++ Debug.toString name
+            -- TODO
+            []
 
 
 type PlayerReward
     = ItemReward { what : Item.Kind, amount : Int }
     | SkillUpgrade { skill : Skill, percentage : Int }
+    | PerkReward Perk
 
 
 playerRewardTitle : PlayerReward -> String
@@ -1394,6 +1400,9 @@ playerRewardTitle reward =
                 ++ " +"
                 ++ String.fromInt percentage
                 ++ "%"
+
+        PerkReward perk ->
+            "Perk: " ++ Perk.name perk
 
 
 playerRewards : Name -> List PlayerReward
@@ -1427,15 +1436,16 @@ playerRewards name =
             [ PerkReward GeckoSkinning ]
 
         _ ->
-            Debug.todo <| "Data.Quest.playerRewards " ++ Debug.toString name
+            -- TODO
+            []
 
 
 type PlayerRequirement
-    = SkillRequirement { skill : SkillRequirementType, percentage : Int }
+    = SkillRequirement { skill : SkillRequirement, percentage : Int }
     | SpecialRequirement { attribute : Special.Type, value : Int }
 
 
-type SkillRequirementType
+type SkillRequirement
     = Combat
     | Specific Skill
 
@@ -1490,7 +1500,8 @@ playerRequirements name =
             [ SkillRequirement { skill = Specific Outdoorsman, percentage = 20 } ]
 
         _ ->
-            Debug.todo <| "Data.Quest.playerRequirements " ++ Debug.toString name
+            -- TODO
+            []
 
 
 ticksNeededForPlayerReward : Name -> Int
@@ -1524,7 +1535,8 @@ ticksNeededForPlayerReward name =
             4
 
         _ ->
-            Debug.todo <| "Data.Quest.ticksNeededForPlayerReward " ++ Debug.toString name
+            -- TODO
+            0
 
 
 encode : Name -> JE.Value

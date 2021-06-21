@@ -2323,7 +2323,7 @@ characterView maybeHoveredItem _ player =
 
         applicablePerks : List Perk
         applicablePerks =
-            Perk.allApplicable
+            Perk.allApplicableForLevelup
                 { level = level
                 , special = player.special
                 , addedSkillPercentages = player.addedSkillPercentages
