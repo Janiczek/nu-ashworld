@@ -72,13 +72,13 @@ type Type
       --| Deathclaw2
       --| SmallToughDeathclaw
       --| ToughDeathclaw
-      --  -- Geckos: https://fallout.fandom.com/wiki/Gecko_(Fallout_2)
-      --| SilverGecko
-      --| ToughSilverGecko
-      --| GoldenGecko
-      --| ToughGoldenGecko
-      --  -- TODO | FireGecko -- has a fire breath, let's skip this for now
-      --  -- TODO | ToughFireGecko -- has a fire breath, let's skip this for now
+      -- Geckos: https://fallout.fandom.com/wiki/Gecko_(Fallout_2)
+      SilverGecko
+    | ToughSilverGecko
+    | GoldenGecko
+    | ToughGoldenGecko
+    | FireGecko -- TODO fire breath
+    | ToughFireGecko -- TODO fire breath
       --  -- Centaurs: https://fallout.fandom.com/wiki/Centaur_(Fallout)
       --| Centaur
       --| MeanCentaur
@@ -99,7 +99,7 @@ type Type
       --| ToughWanamingo
       -- Giant Ants: https://fallout.fandom.com/wiki/Giant_ant_(Fallout_2)
       -- Brahmins: https://fallout.fandom.com/wiki/Brahmin_(Fallout)
-      Brahmin
+    | Brahmin
     | AngryBrahmin
     | WeakBrahmin
     | WildBrahmin
@@ -124,6 +124,10 @@ allTypes =
     , Radscorpion
     , LesserBlackRadscorpion
     , BlackRadscorpion
+    , SilverGecko
+    , ToughSilverGecko
+    , GoldenGecko
+    , ToughGoldenGecko
     ]
 
 
@@ -142,6 +146,8 @@ forBigChunk bigChunk =
             , ToughGiantAnt
             , LesserRadscorpion
             , Radscorpion -- dangerous
+            , SilverGecko
+            , ToughSilverGecko
             ]
 
         C2 ->
@@ -151,6 +157,10 @@ forBigChunk bigChunk =
             , AngryBrahmin -- dangerous
             , WeakBrahmin
             , WildBrahmin -- semi-dangerous
+            , SilverGecko
+            , ToughSilverGecko
+            , GoldenGecko -- semi-dangerous
+            , ToughGoldenGecko -- semi-dangerous
             ]
 
         C3 ->
@@ -160,6 +170,8 @@ forBigChunk bigChunk =
             , WildBrahmin
             , LesserBlackRadscorpion
             , BlackRadscorpion -- dangerous
+            , GoldenGecko -- semi-dangerous
+            , ToughGoldenGecko -- semi-dangerous
             ]
 
         C4 ->
@@ -167,11 +179,17 @@ forBigChunk bigChunk =
             , WildBrahmin
             , LesserBlackRadscorpion
             , BlackRadscorpion -- dangerous
+            , GoldenGecko -- semi-dangerous
+            , ToughGoldenGecko -- semi-dangerous
+            , FireGecko -- dangerous
+            , ToughFireGecko -- dangerous
             ]
 
         C5 ->
             [ AngryBrahmin -- dangerous
             , BlackRadscorpion -- dangerous
+            , FireGecko -- dangerous
+            , ToughFireGecko -- dangerous
             ]
 
 
@@ -219,6 +237,24 @@ xp type_ =
             LesserBlackRadscorpion ->
                 110
 
+            SilverGecko ->
+                55
+
+            ToughSilverGecko ->
+                60
+
+            GoldenGecko ->
+                135
+
+            ToughGoldenGecko ->
+                210
+
+            FireGecko ->
+                250
+
+            ToughFireGecko ->
+                260
+
 
 hp : Type -> Int
 hp type_ =
@@ -252,6 +288,24 @@ hp type_ =
 
         LesserBlackRadscorpion ->
             26
+
+        SilverGecko ->
+            25
+
+        ToughSilverGecko ->
+            45
+
+        GoldenGecko ->
+            45
+
+        ToughGoldenGecko ->
+            65
+
+        FireGecko ->
+            70
+
+        ToughFireGecko ->
+            80
 
 
 naturalArmorClass : Type -> Int
@@ -287,6 +341,24 @@ naturalArmorClass type_ =
         LesserBlackRadscorpion ->
             5
 
+        SilverGecko ->
+            13
+
+        ToughSilverGecko ->
+            14
+
+        GoldenGecko ->
+            22
+
+        ToughGoldenGecko ->
+            23
+
+        FireGecko ->
+            28
+
+        ToughFireGecko ->
+            30
+
 
 sequence : Type -> Int
 sequence type_ =
@@ -320,6 +392,24 @@ sequence type_ =
 
         LesserBlackRadscorpion ->
             4
+
+        SilverGecko ->
+            6
+
+        ToughSilverGecko ->
+            6
+
+        GoldenGecko ->
+            6
+
+        ToughGoldenGecko ->
+            6
+
+        FireGecko ->
+            14
+
+        ToughFireGecko ->
+            16
 
 
 actionPoints : Type -> Int
@@ -355,6 +445,24 @@ actionPoints type_ =
         LesserBlackRadscorpion ->
             7
 
+        SilverGecko ->
+            7
+
+        ToughSilverGecko ->
+            7
+
+        GoldenGecko ->
+            8
+
+        ToughGoldenGecko ->
+            10
+
+        FireGecko ->
+            9
+
+        ToughFireGecko ->
+            12
+
 
 meleeDamageBonus : Type -> Int
 meleeDamageBonus type_ =
@@ -388,6 +496,24 @@ meleeDamageBonus type_ =
 
         LesserBlackRadscorpion ->
             10
+
+        SilverGecko ->
+            2
+
+        ToughSilverGecko ->
+            3
+
+        GoldenGecko ->
+            4
+
+        ToughGoldenGecko ->
+            7
+
+        FireGecko ->
+            12
+
+        ToughFireGecko ->
+            15
 
 
 damageThresholdNormal : Type -> Int
@@ -423,6 +549,24 @@ damageThresholdNormal type_ =
         LesserBlackRadscorpion ->
             2
 
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            2
+
+        ToughGoldenGecko ->
+            2
+
+        FireGecko ->
+            5
+
+        ToughFireGecko ->
+            5
+
 
 damageResistanceNormal : Type -> Int
 damageResistanceNormal type_ =
@@ -456,6 +600,24 @@ damageResistanceNormal type_ =
 
         LesserBlackRadscorpion ->
             0
+
+        SilverGecko ->
+            20
+
+        ToughSilverGecko ->
+            20
+
+        GoldenGecko ->
+            25
+
+        ToughGoldenGecko ->
+            25
+
+        FireGecko ->
+            40
+
+        ToughFireGecko ->
+            40
 
 
 default : Type
@@ -497,6 +659,24 @@ encodeType type_ =
             LesserBlackRadscorpion ->
                 "lesser-black-radscorpion"
 
+            SilverGecko ->
+                "silver-gecko"
+
+            ToughSilverGecko ->
+                "tough-silver-gecko"
+
+            GoldenGecko ->
+                "golden-gecko"
+
+            ToughGoldenGecko ->
+                "tough-golden-gecko"
+
+            FireGecko ->
+                "fire-gecko"
+
+            ToughFireGecko ->
+                "tough-fire-gecko"
+
 
 typeDecoder : Decoder Type
 typeDecoder =
@@ -533,6 +713,24 @@ typeDecoder =
 
                     "black-radscorpion" ->
                         JD.succeed BlackRadscorpion
+
+                    "silver-gecko" ->
+                        JD.succeed SilverGecko
+
+                    "tough-silver-gecko" ->
+                        JD.succeed ToughSilverGecko
+
+                    "golden-gecko" ->
+                        JD.succeed GoldenGecko
+
+                    "tough-golden-gecko" ->
+                        JD.succeed ToughGoldenGecko
+
+                    "fire-gecko" ->
+                        JD.succeed FireGecko
+
+                    "tough-fire-gecko" ->
+                        JD.succeed ToughFireGecko
 
                     _ ->
                         JD.fail <| "Unknown Enemy.Type: '" ++ type_ ++ "'"
@@ -572,6 +770,24 @@ name type_ =
         BlackRadscorpion ->
             "Black Radscorpion"
 
+        SilverGecko ->
+            "Silver Gecko"
+
+        ToughSilverGecko ->
+            "Tough Silver Gecko"
+
+        GoldenGecko ->
+            "Golden Gecko"
+
+        ToughGoldenGecko ->
+            "Tough Golden Gecko"
+
+        FireGecko ->
+            "Fire Gecko"
+
+        ToughFireGecko ->
+            "Tough Fire Gecko"
+
 
 special : Type -> Special
 special type_ =
@@ -605,6 +821,24 @@ special type_ =
 
         BlackRadscorpion ->
             Special 8 3 7 1 1 5 3
+
+        SilverGecko ->
+            Special 4 3 3 1 1 5 3
+
+        ToughSilverGecko ->
+            Special 5 3 3 1 1 6 4
+
+        GoldenGecko ->
+            Special 6 3 3 1 1 7 4
+
+        ToughGoldenGecko ->
+            Special 7 3 3 1 1 8 5
+
+        FireGecko ->
+            Special 7 7 4 1 1 8 6
+
+        ToughFireGecko ->
+            Special 8 8 5 1 1 10 8
 
 
 addedSkillPercentages : Type -> Dict_.Dict Skill Int
@@ -662,6 +896,42 @@ addedSkillPercentages type_ =
                 [ ( Unarmed, 54 )
                 ]
 
+        SilverGecko ->
+            Dict_.fromList
+                [ ( Unarmed, 17 )
+                ]
+
+        ToughSilverGecko ->
+            Dict_.fromList
+                [ ( Unarmed, 23 )
+                ]
+
+        GoldenGecko ->
+            Dict_.fromList
+                [ ( Unarmed, 34 )
+                ]
+
+        ToughGoldenGecko ->
+            Dict_.fromList
+                [ ( Unarmed, 40 )
+                ]
+
+        FireGecko ->
+            Dict_.fromList
+                [ ( SmallGuns, 43 )
+                , ( EnergyWeapons, 64 )
+                , ( Unarmed, 60 )
+                , ( MeleeWeapons, 50 )
+                ]
+
+        ToughFireGecko ->
+            Dict_.fromList
+                [ ( SmallGuns, 55 )
+                , ( EnergyWeapons, 80 )
+                , ( Unarmed, 64 )
+                , ( MeleeWeapons, 54 )
+                ]
+
 
 equippedArmor : Type -> Maybe Item.Kind
 equippedArmor type_ =
@@ -694,6 +964,24 @@ equippedArmor type_ =
             Nothing
 
         BlackRadscorpion ->
+            Nothing
+
+        SilverGecko ->
+            Nothing
+
+        ToughSilverGecko ->
+            Nothing
+
+        GoldenGecko ->
+            Nothing
+
+        ToughGoldenGecko ->
+            Nothing
+
+        FireGecko ->
+            Nothing
+
+        ToughFireGecko ->
             Nothing
 
 
@@ -1984,6 +2272,452 @@ criticalSpec enemyType =
                     , message = "spiking the brain to the floor."
                     , statCheck = Nothing
                     }
+
+        gecko aimedShot effectCategory =
+            case ( aimedShot, effectCategory ) of
+                ( Head, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "tearing some of its slimy skin off."
+                    , statCheck = Nothing
+                    }
+
+                ( Head, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect3 ) ->
+                    { damageMultiplier = 5
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect4 ) ->
+                    { damageMultiplier = 5
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "knocking him unconscious."
+                            }
+                    }
+
+                ( Head, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockout, BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Agility
+                            , modifier = 0
+                            , failureEffect = Blinded
+                            , failureMessage = "the attack crushes the temple. Good night, Gracie."
+                            }
+                    }
+
+                ( Head, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ LoseNextTurn ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "breaking some of its digits."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledLeftArm
+                            , failureMessage = "cripling the left arm."
+                            }
+                    }
+
+                ( LeftArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledLeftArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ LoseNextTurn ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "breaking some of its digits."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledRightArm
+                            , failureMessage = "which really hurts."
+                            }
+                    }
+
+                ( RightArm, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( RightArm, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ CrippledRightArm, BypassArmor ]
+                    , message = "breaking some of its digits."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "tearing some of its slimy skin off."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "tearing some of its slimy skin off."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "knocking the stuffing out of it."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "knocking the stuffing out of it."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect5 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "knocking the stuffing out of it."
+                    , statCheck = Nothing
+                    }
+
+                ( Torso, Effect6 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ Death ]
+                    , message = "knocking the stuffing out of it."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "bowling him over and crippling that leg."
+                            }
+                    }
+
+                ( LeftLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledLeftLeg
+                            , failureMessage = "bowling him over and crippling that leg."
+                            }
+                    }
+
+                ( LeftLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( LeftLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                            }
+                    }
+
+                ( LeftLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, CrippledLeftLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "bowling him over and crippling that leg."
+                            }
+                    }
+
+                ( RightLeg, Effect3 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = CrippledRightLeg
+                            , failureMessage = "bowling him over and crippling that leg."
+                            }
+                    }
+
+                ( RightLeg, Effect4 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( RightLeg, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = 0
+                            , failureEffect = Knockout
+                            , failureMessage = "and the intense pain of having a leg removed causes him to quit."
+                            }
+                    }
+
+                ( RightLeg, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, CrippledRightLeg, BypassArmor ]
+                    , message = "almost tipping it over."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect1 ) ->
+                    { damageMultiplier = 4
+                    , effects = []
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 4
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect2 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 3
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect3 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ BypassArmor ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck =
+                        Just
+                            { stat = Luck
+                            , modifier = 2
+                            , failureEffect = Blinded
+                            , failureMessage = "causing blindness, unluckily for him."
+                            }
+                    }
+
+                ( Eyes, Effect4 ) ->
+                    { damageMultiplier = 6
+                    , effects = [ BypassArmor, Blinded, LoseNextTurn ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect5 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Knockout, BypassArmor, Blinded, LoseNextTurn ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Eyes, Effect6 ) ->
+                    { damageMultiplier = 8
+                    , effects = [ Death ]
+                    , message = "breaking past the lizard's defenses."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect1 ) ->
+                    { damageMultiplier = 3
+                    , effects = []
+                    , message = "damaging its breathing ability."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect2 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ BypassArmor ]
+                    , message = "damaging its breathing ability."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockdown
+                            , failureMessage = "and without protection, he falls over, groaning in agony."
+                            }
+                    }
+
+                ( Groin, Effect3 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "damaging its breathing ability."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "the pain is too much for him and he collapses like a rag."
+                            }
+                    }
+
+                ( Groin, Effect4 ) ->
+                    { damageMultiplier = 3
+                    , effects = [ Knockout ]
+                    , message = "damaging its breathing ability."
+                    , statCheck = Nothing
+                    }
+
+                ( Groin, Effect5 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockdown, BypassArmor ]
+                    , message = "damaging its breathing ability."
+                    , statCheck =
+                        Just
+                            { stat = Endurance
+                            , modifier = -3
+                            , failureEffect = Knockout
+                            , failureMessage = "the pain is too much for him and he collapses like a rag."
+                            }
+                    }
+
+                ( Groin, Effect6 ) ->
+                    { damageMultiplier = 4
+                    , effects = [ Knockout, BypassArmor ]
+                    , message = "damaging its breathing ability."
+                    , statCheck = Nothing
+                    }
     in
     case enemyType of
         Brahmin ->
@@ -2015,6 +2749,24 @@ criticalSpec enemyType =
 
         BlackRadscorpion ->
             radscorpion
+
+        SilverGecko ->
+            gecko
+
+        ToughSilverGecko ->
+            gecko
+
+        GoldenGecko ->
+            gecko
+
+        ToughGoldenGecko ->
+            gecko
+
+        FireGecko ->
+            gecko
+
+        ToughFireGecko ->
+            gecko
 
 
 humanAimedShotName : AimedShot -> String
@@ -2125,6 +2877,32 @@ aimedShotName enemyType =
 
                 RightLeg ->
                     "forelegs"
+
+        gecko aimedShot =
+            case aimedShot of
+                Head ->
+                    "head"
+
+                Torso ->
+                    "body"
+
+                Eyes ->
+                    "eyes"
+
+                Groin ->
+                    "groin"
+
+                LeftArm ->
+                    "left claw"
+
+                RightArm ->
+                    "right claw"
+
+                LeftLeg ->
+                    "left leg"
+
+                RightLeg ->
+                    "right leg"
     in
     case enemyType of
         Brahmin ->
@@ -2156,6 +2934,24 @@ aimedShotName enemyType =
 
         BlackRadscorpion ->
             radscorpion
+
+        SilverGecko ->
+            gecko
+
+        ToughSilverGecko ->
+            gecko
+
+        GoldenGecko ->
+            gecko
+
+        ToughGoldenGecko ->
+            gecko
+
+        FireGecko ->
+            gecko
+
+        ToughFireGecko ->
+            gecko
 
 
 manCriticalSpec : AimedShot -> Critical.EffectCategory -> Critical.Spec
@@ -2709,6 +3505,56 @@ dropSpec type_ =
                 [ item 0.1 Item.Fruit { average = 2, maxDeviation = 3 }
                 , item 0.2 Item.HealingPowder { average = 2, maxDeviation = 2 }
                 , item 0.1 Item.Stimpak { average = 1, maxDeviation = 2 }
+                ]
+            }
+
+        SilverGecko ->
+            { caps = commonCaps { average = 50, maxDeviation = 20 }
+            , items =
+                [ item 0.2 Item.Fruit { average = 1, maxDeviation = 2 }
+                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 1 }
+                ]
+            }
+
+        ToughSilverGecko ->
+            { caps = commonCaps { average = 60, maxDeviation = 30 }
+            , items =
+                [ item 0.25 Item.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.15 Item.HealingPowder { average = 2, maxDeviation = 1 }
+                ]
+            }
+
+        GoldenGecko ->
+            { caps = commonCaps { average = 100, maxDeviation = 40 }
+            , items =
+                [ item 0.1 Item.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.15 Item.HealingPowder { average = 1, maxDeviation = 1 }
+                , item 0.05 Item.Stimpak { average = 1, maxDeviation = 2 }
+                ]
+            }
+
+        ToughGoldenGecko ->
+            { caps = commonCaps { average = 130, maxDeviation = 40 }
+            , items =
+                [ item 0.05 Item.Fruit { average = 3, maxDeviation = 2 }
+                , item 0.15 Item.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.1 Item.Stimpak { average = 2, maxDeviation = 2 }
+                ]
+            }
+
+        FireGecko ->
+            { caps = commonCaps { average = 150, maxDeviation = 50 }
+            , items =
+                [ item 0.2 Item.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.2 Item.Stimpak { average = 2, maxDeviation = 2 }
+                ]
+            }
+
+        ToughFireGecko ->
+            { caps = commonCaps { average = 200, maxDeviation = 60 }
+            , items =
+                [ item 0.1 Item.HealingPowder { average = 2, maxDeviation = 3 }
+                , item 0.3 Item.Stimpak { average = 2, maxDeviation = 3 }
                 ]
             }
 
