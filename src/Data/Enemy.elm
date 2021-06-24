@@ -128,6 +128,8 @@ allTypes =
     , ToughSilverGecko
     , GoldenGecko
     , ToughGoldenGecko
+    , FireGecko
+    , ToughFireGecko
     ]
 
 
