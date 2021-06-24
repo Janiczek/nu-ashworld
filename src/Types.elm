@@ -63,7 +63,7 @@ type alias BackendModel =
     , time : Posix
     , vendors : Dict_.Dict Vendor.Name Vendor
     , lastItemId : Int
-    , questsProgress : Dict_.Dict Quest.Name Int
+    , questsProgress : Dict_.Dict Quest.Name (Dict PlayerName Int)
     }
 
 
@@ -107,6 +107,8 @@ type FrontendMsg
     | StopHoveringItem
     | ExpandQuestItem Quest.Name
     | CollapseQuestItem Quest.Name
+    | AskToStopProgressing Quest.Name
+    | AskToStartProgressing Quest.Name
 
 
 type BarterMsg
@@ -145,6 +147,8 @@ type ToBackend
     | RemoveMessage Message
     | Barter Barter.State
     | AdminToBackend AdminToBackend
+    | StopProgressing Quest.Name
+    | StartProgressing Quest.Name
 
 
 type AdminToBackend

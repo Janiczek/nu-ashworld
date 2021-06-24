@@ -6,6 +6,7 @@ import Data.Player as Player
 import Data.Quest as Quest
 import Data.Vendor as Vendor
 import Dict
+import Dict.ExtraExtra as Dict
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
@@ -52,7 +53,7 @@ backendModelDecoderV1 =
             , lastItemId = 0
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
         )
@@ -104,7 +105,7 @@ backendModelDecoderV2 =
             , lastItemId = lastItemId
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
         )
@@ -168,4 +169,4 @@ backendModelDecoderV3 =
         )
         (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
         (JD.field "vendors" Vendor.vendorsDecoder)
-        (JD.field "questsProgress" (Dict_.decoder Quest.decoder JD.int))
+        (JD.field "questsProgress" (Dict_.decoder Quest.decoder (Dict.decoder JD.string JD.int)))

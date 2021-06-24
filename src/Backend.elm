@@ -86,7 +86,7 @@ init =
             , lastItemId = 0
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
     in
@@ -190,7 +190,7 @@ getWorldLoggedIn_ player model =
         -}
         model.questsProgress
             |> Dict_.map
-                (\quest ticksGiven ->
+                (\quest ticksGivenPerPlayer ->
                     let
                         engagements : List Quest.Engagement
                         engagements =
@@ -208,10 +208,24 @@ getWorldLoggedIn_ player model =
                             engagements
                                 |> List.map Logic.ticksGivenPerQuestEngagement
                                 |> List.sum
+
+                        ticksGiven : Int
+                        ticksGiven =
+                            ticksGivenPerPlayer
+                                |> Dict.values
+                                |> List.sum
+
+                        ticksGivenByPlayer : Int
+                        ticksGivenByPlayer =
+                            player
+                                |> Player.getPlayerData
+                                |> Maybe.andThen (\{ name } -> Dict.get name ticksGivenPerPlayer)
+                                |> Maybe.withDefault 0
                     in
                     { ticksGiven = ticksGiven
                     , ticksPerHour = ticksPerHour
                     , playersActive = playersActive
+                    , ticksGivenByPlayer = ticksGivenByPlayer
                     }
                 )
     }
@@ -571,6 +585,18 @@ encodeToBackendMsg msg =
                 , ( "json", JE.string "<omitted>" )
                 ]
 
+        StopProgressing quest ->
+            JE.object
+                [ ( "type", JE.string "StopProgressing" )
+                , ( "quest", Quest.encode quest )
+                ]
+
+        StartProgressing quest ->
+            JE.object
+                [ ( "type", JE.string "StartProgressing" )
+                , ( "quest", Quest.encode quest )
+                ]
+
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
@@ -789,6 +815,12 @@ updateFromFrontend sessionId clientId msg model =
 
         AdminToBackend adminMsg ->
             withAdmin (updateAdmin clientId adminMsg)
+
+        StopProgressing quest ->
+            withLoggedInCreatedPlayer (stopProgressing quest)
+
+        StartProgressing quest ->
+            withLoggedInCreatedPlayer (startProgressing quest)
 
 
 updateAdmin : ClientId -> AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -1727,3 +1759,37 @@ createItem { uniqueKey, count } model =
     ( item
     , { model | lastItemId = newLastId }
     )
+
+
+stopProgressing : Quest.Name -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+stopProgressing quest clientId player model =
+    let
+        newModel =
+            model
+                |> updatePlayer (SPlayer.stopProgressing quest) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
+startProgressing : Quest.Name -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+startProgressing quest clientId player model =
+    let
+        newModel =
+            model
+                |> updatePlayer (SPlayer.startProgressing quest) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
