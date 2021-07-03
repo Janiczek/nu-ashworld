@@ -2819,7 +2819,9 @@ settingsView world player =
                     , H.span [ HA.class "fight-strategy-fake-input" ] []
                     , H.div
                         [ HA.class "fight-strategy-text" ]
-                        [ H.span [] [ H.text name ]
+                        [ H.span
+                            [ HA.class "fight-strategy-name" ]
+                            [ H.text name ]
                         , H.pre
                             [ HA.class "fight-strategy-code" ]
                             [ H.text <| FightStrategy.toString strategy ]

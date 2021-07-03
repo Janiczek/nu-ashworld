@@ -1020,6 +1020,12 @@ table tbody tr:hover td {
 .fight-strategy-text {
   margin-left: 4ch;
 }
+.fight-strategy:hover .fight-strategy-fake-input:after {
+  color: var(--fg01);
+}
+.fight-strategy:hover .fight-strategy-name {
+  color: var(--fg01);
+}
 .fight-strategy-code {
   font-family: BQN386;
   color: var(--fg03);

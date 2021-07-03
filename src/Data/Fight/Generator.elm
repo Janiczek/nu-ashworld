@@ -12,6 +12,7 @@ import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
+import Data.FightStrategy as FightStrategy
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
@@ -128,10 +129,11 @@ generator r =
         turn who ongoing =
             ongoing
                 |> resetAp who
-                |> Random.constant
-                |> Random.andThen (comeCloser who)
-                |> Random.andThen (attackWhilePossible who)
+                |> runStrategy who
 
+        --|> Random.constant
+        --|> Random.andThen (comeCloser who)
+        --|> Random.andThen (attackWhilePossible who)
         resetAp : Who -> OngoingFight -> OngoingFight
         resetAp who ongoing =
             case who of
@@ -919,6 +921,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , special =
                         -- Enemies never have anything else than base special (no traits, perks, ...)
                         special
+                  , fightStrategy = FightStrategy.doWhatever
                   }
                 , newItemId
                 )
@@ -981,6 +984,7 @@ playerOpponent player =
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages
     , special = player.special
+    , fightStrategy = player.fightStrategy
     }
 
 

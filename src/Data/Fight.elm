@@ -21,6 +21,7 @@ import AssocList as Dict_
 import AssocSet as Set_
 import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
@@ -67,6 +68,7 @@ type alias Opponent =
     , attackStats : AttackStats
     , addedSkillPercentages : Dict_.Dict Skill Int
     , special : Special
+    , fightStrategy : FightStrategy
     }
 
 
