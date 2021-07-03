@@ -13,10 +13,12 @@ module Data.Item exposing
     , damageThresholdNormal
     , decoder
     , encode
+    , encodeKind
     , equippableType
     , findMergeableId
     , getUniqueKey
     , isEquippable
+    , kindDecoder
     , name
     , usageEffects
     )

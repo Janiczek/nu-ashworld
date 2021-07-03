@@ -19,6 +19,7 @@ module Data.Player.SPlayer exposing
     , removeItem
     , removeItems
     , removeMessage
+    , setFightStrategy
     , setHp
     , setLocation
     , subtractCaps
@@ -32,6 +33,7 @@ module Data.Player.SPlayer exposing
 
 import AssocList as Dict_
 import AssocSet as Set_
+import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Message, Type(..))
@@ -569,3 +571,8 @@ equipItem { id } player =
                            )
                         |> removeItem item.id 1
                         |> (\p -> { p | equippedArmor = Just { item | count = 1 } })
+
+
+setFightStrategy : FightStrategy -> SPlayer -> SPlayer
+setFightStrategy strategy player =
+    { player | fightStrategy = strategy }

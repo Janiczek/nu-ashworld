@@ -994,3 +994,33 @@ table tbody tr:hover td {
 #fight-stats-table td {
   text-align: right;
 }
+
+.fight-strategy {
+  position: relative;
+}
+.fight-strategy-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+.fight-strategy-fake-input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1em;
+  width: 4ch;
+}
+.fight-strategy-fake-input:after {
+  font-family: BQN386;
+  content: "[ ]";
+}
+.fight-strategy-input:checked ~ .fight-strategy-fake-input:after {
+  content: "[X]";
+}
+.fight-strategy-text {
+  margin-left: 4ch;
+}
+.fight-strategy-code {
+  font-family: BQN386;
+  color: var(--fg03);
+}

@@ -28,6 +28,7 @@ type Route
     | Message Message
     | CharCreation
     | Admin AdminRoute
+    | Settings
 
 
 type TownRoute
@@ -77,6 +78,9 @@ needsLogin route =
 
         Admin _ ->
             False
+
+        Settings ->
+            True
 
 
 needsAdmin : Route -> Bool
@@ -155,4 +159,7 @@ isMessagesRelatedRoute route =
             False
 
         Admin _ ->
+            False
+
+        Settings ->
             False

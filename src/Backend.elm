@@ -12,6 +12,7 @@ import Data.Barter as Barter
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.Generator as FightGen
+import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
@@ -477,6 +478,12 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
 
+        SetFightStrategy strategy ->
+            JE.object
+                [ ( "type", JE.string "SetFightStrategy" )
+                , ( "strategy", FightStrategy.encode strategy )
+                ]
+
         RefreshPlease ->
             JE.object
                 [ ( "type", JE.string "RefreshPlease" ) ]
@@ -698,6 +705,9 @@ updateFromFrontend sessionId clientId msg model =
 
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
+
+        SetFightStrategy strategy ->
+            withLoggedInCreatedPlayer <| setFightStrategy strategy
 
         ChoosePerk perk ->
             withLoggedInCreatedPlayer <| choosePerk perk
@@ -1254,6 +1264,23 @@ equipItem itemId clientId player model =
 
             else
                 ( model, Cmd.none )
+
+
+setFightStrategy : FightStrategy -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+setFightStrategy strategy clientId player model =
+    let
+        newModel =
+            model
+                |> updatePlayer (SPlayer.setFightStrategy strategy) player.name
+    in
+    getWorldLoggedIn player.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 useItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

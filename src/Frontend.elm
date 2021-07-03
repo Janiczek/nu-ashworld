@@ -9,6 +9,8 @@ import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Fight.ShotType as ShotType
 import Data.Fight.View
+import Data.FightStrategy as FightStrategy
+import Data.FightStrategy.Named as FightStrategy exposing (NamedStrategy)
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
@@ -209,6 +211,11 @@ update msg model =
         AskToWander ->
             ( model
             , Lamdera.sendToBackend Wander
+            )
+
+        AskToSetFightStrategy strategy ->
+            ( model
+            , Lamdera.sendToBackend <| SetFightStrategy strategy
             )
 
         ImportButtonClicked ->
@@ -840,6 +847,12 @@ contentView model =
 
             ( Route.Admin _, _ ) ->
                 contentUnavailableToNonAdminView
+
+            ( Route.Settings, WorldLoggedIn world ) ->
+                withCreatedPlayer world settingsView
+
+            ( Route.Settings, _ ) ->
+                contentUnavailableToLoggedOutView
         )
 
 
@@ -2784,6 +2797,42 @@ messageView zone message _ player =
     ]
 
 
+settingsView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+settingsView world player =
+    let
+        fightStrategyView : NamedStrategy -> Html FrontendMsg
+        fightStrategyView { name, strategy } =
+            H.div
+                [ HE.onClick <| AskToSetFightStrategy strategy
+                , HA.class "fight-strategy"
+                ]
+                [ H.label
+                    [ HA.for name ]
+                    [ H.input
+                        [ HA.type_ "radio"
+                        , HA.name "fight-strategy"
+                        , HA.value name
+                        , HA.checked (strategy == player.fightStrategy)
+                        , HA.class "fight-strategy-input"
+                        ]
+                        []
+                    , H.span [ HA.class "fight-strategy-fake-input" ] []
+                    , H.div
+                        [ HA.class "fight-strategy-text" ]
+                        [ H.span [] [ H.text name ]
+                        , H.pre
+                            [ HA.class "fight-strategy-code" ]
+                            [ H.text <| FightStrategy.toString strategy ]
+                        ]
+                    ]
+                ]
+    in
+    [ pageTitleView "Settings"
+    , H.h3 [] [ H.text "Fight strategy" ]
+    , H.div [] (List.map fightStrategyView FightStrategy.all)
+    ]
+
+
 newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
 newsItemView zone { date, title, text } =
     H.div
@@ -3318,6 +3367,7 @@ loggedInLinksView player currentRoute =
 
                       else
                         linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
+                    , linkIn "Settings" Route.Settings Nothing False
                     , linkInFull "Messages"
                         Route.Messages
                         Route.isMessagesRelatedRoute

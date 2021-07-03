@@ -7,6 +7,7 @@ import Data.Auth exposing (Auth, Hashed)
 import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Fight.Generator exposing (Fight)
+import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message exposing (Message)
@@ -79,6 +80,7 @@ type FrontendMsg
     | AskToChoosePerk Perk
     | AskToEquipItem Item.Id
     | AskToUnequipArmor
+    | AskToSetFightStrategy FightStrategy
     | AskForExport
     | ImportButtonClicked
     | ImportFileSelected File
@@ -129,6 +131,7 @@ type ToBackend
     | UseItem Item.Id
     | Wander
     | EquipItem Item.Id
+    | SetFightStrategy FightStrategy
     | UnequipArmor
     | RefreshPlease
     | TagSkill Skill
