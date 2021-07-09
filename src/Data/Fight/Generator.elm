@@ -50,9 +50,11 @@ type alias Fight =
 type alias OngoingFight =
     { distanceHexes : Int
     , attacker : Opponent
-    , target : Opponent
     , attackerAp : Int
+    , attackerItemsUsed : Dict_.Dict Item.Kind Int
+    , target : Opponent
     , targetAp : Int
+    , targetItemsUsed : Dict_.Dict Item.Kind Int
     , reverseLog : List ( Who, Fight.Action )
     }
 
@@ -75,6 +77,16 @@ opponentAp who ongoing =
 
         Target ->
             ongoing.targetAp
+
+
+opponentItemsUsed : Who -> OngoingFight -> Dict_.Dict Item.Kind Int
+opponentItemsUsed who ongoing =
+    case who of
+        Attacker ->
+            ongoing.attackerItemsUsed
+
+        Target ->
+            ongoing.targetItemsUsed
 
 
 apFromPreviousTurn : Who -> OngoingFight -> Int
@@ -384,9 +396,11 @@ generator r =
                     (\distance ->
                         { distanceHexes = distance
                         , attacker = r.attacker
-                        , target = r.target
                         , attackerAp = r.attacker.maxAp
+                        , attackerItemsUsed = Dict_.empty
+                        , target = r.target
                         , targetAp = r.target.maxAp
+                        , targetItemsUsed = Dict_.empty
                         , reverseLog = [ ( Attacker, Fight.Start { distanceHexes = distance } ) ]
                         }
                     )
@@ -626,28 +640,17 @@ runStrategy :
     -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 runStrategy strategy who ongoing =
     let
-        you : Opponent
-        you =
-            opponent_ who ongoing
-
         themWho : Who
         themWho =
             Fight.theOther who
 
-        them : Opponent
-        them =
-            opponent_ themWho ongoing
-
-        yourAp : Int
-        yourAp =
-            opponentAp who ongoing
-
         state : StrategyState
         state =
-            { you = you
-            , them = them
+            { you = opponent_ who ongoing
+            , them = opponent_ themWho ongoing
             , themWho = themWho
-            , yourAp = yourAp
+            , yourAp = opponentAp who ongoing
+            , yourItemsUsed = opponentItemsUsed who ongoing
             , distanceHexes = ongoing.distanceHexes
             , ongoingFight = ongoing
             }
@@ -737,9 +740,49 @@ heal who ongoing itemKind =
         in
         ongoing
             |> addLog who action
-            |> updateOpponent who (addHp healedHp)
+            |> updateOpponent who (addHp healedHp >> decItem itemKind)
             |> subtractAp who action
+            |> incItemsUsed who itemKind
             |> finalizeCommand
+
+
+decItem : Item.Kind -> Opponent -> Opponent
+decItem kind opponent =
+    { opponent
+        | items =
+            Dict.map
+                (\_ item ->
+                    if item.kind == kind then
+                        { item | count = item.count - 1 }
+
+                    else
+                        item
+                )
+                opponent.items
+    }
+
+
+incItemsUsed : Who -> Item.Kind -> OngoingFight -> OngoingFight
+incItemsUsed who itemKind ongoing =
+    let
+        inc dict =
+            Dict_.update itemKind
+                (\maybeCount ->
+                    case maybeCount of
+                        Nothing ->
+                            Just 1
+
+                        Just count ->
+                            Just <| count + 1
+                )
+                dict
+    in
+    case who of
+        Attacker ->
+            { ongoing | attackerItemsUsed = inc ongoing.attackerItemsUsed }
+
+        Target ->
+            { ongoing | targetItemsUsed = inc ongoing.targetItemsUsed }
 
 
 itemCount : Item.Kind -> Opponent -> Int
@@ -993,6 +1036,7 @@ type alias StrategyState =
     , them : Opponent
     , themWho : Who
     , yourAp : Int
+    , yourItemsUsed : Dict_.Dict Item.Kind Int
     , distanceHexes : Int
     , ongoingFight : OngoingFight
     }
@@ -1048,7 +1092,10 @@ evalValue state value =
                 |> Maybe.withDefault 0
 
         ItemsUsed itemKind ->
-            Debug.todo "evalValue ItemsUsed"
+            state.yourItemsUsed
+                |> Dict_.get itemKind
+                |> Maybe.withDefault 0
+                |> toFloat
 
         TheirLevel ->
             state.them.type_

@@ -37,3 +37,7 @@ damageNeverNegative =
                 |> List.filter (\damage -> damage < 0)
                 |> List.isEmpty
                 |> Expect.true "Expected the list of negative damage actions in a fight to be empty"
+
+
+
+-- TODO items in inventory decrease after finished fight where they were used

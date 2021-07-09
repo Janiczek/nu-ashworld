@@ -21,6 +21,7 @@ module Data.Player.SPlayer exposing
     , removeMessage
     , setFightStrategy
     , setHp
+    , setItems
     , setLocation
     , subtractCaps
     , subtractTicks
@@ -44,7 +45,7 @@ import Data.Special as Special
 import Data.Tick as Tick
 import Data.Trait as Trait
 import Data.Xp as Xp
-import Dict
+import Dict exposing (Dict)
 import Logic
 import Time exposing (Posix)
 
@@ -576,3 +577,8 @@ equipItem { id } player =
 setFightStrategy : FightStrategy -> SPlayer -> SPlayer
 setFightStrategy strategy player =
     { player | fightStrategy = strategy }
+
+
+setItems : Dict Item.Id Item -> SPlayer -> SPlayer
+setItems items player =
+    { player | items = items }

@@ -255,6 +255,7 @@ update msg model =
                                 player
                                     |> SPlayer.setHp fight_.finalAttacker.hp
                                     |> SPlayer.subtractTicks 1
+                                    |> SPlayer.setItems fight_.finalAttacker.items
                                     |> (if targetIsPlayer then
                                             SPlayer.addMessage fight_.messageForAttacker
 
@@ -267,6 +268,7 @@ update msg model =
                             (\player ->
                                 player
                                     |> SPlayer.setHp fight_.finalTarget.hp
+                                    |> SPlayer.setItems fight_.finalTarget.items
                                     |> SPlayer.addMessage fight_.messageForTarget
                             )
                             fight_.finalTarget
