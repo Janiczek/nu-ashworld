@@ -1,6 +1,7 @@
 module Data.Fight.ShotType exposing
     ( AimedShot(..)
     , ShotType(..)
+    , all
     , allAimed
     , apCostPenalty
     , chanceToHitPenalty
@@ -51,6 +52,12 @@ allAimed =
     , LeftLeg
     , RightLeg
     ]
+
+
+all : List ShotType
+all =
+    NormalShot
+        :: List.map AimedShot allAimed
 
 
 apCostPenalty : { isAimedShot : Bool } -> Int

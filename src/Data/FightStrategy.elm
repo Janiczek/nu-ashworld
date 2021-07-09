@@ -2,7 +2,9 @@ module Data.FightStrategy exposing
     ( Command(..)
     , Condition(..)
     , FightStrategy(..)
+    , IfData
     , Operator(..)
+    , OperatorData
     , Value(..)
     , decoder
     , doWhatever
@@ -39,9 +41,7 @@ type Operator
 
 
 type Condition
-    = True_
-    | False_
-    | Or Condition Condition
+    = Or Condition Condition
     | And Condition Condition
     | Not Condition
     | Operator OperatorData
@@ -112,12 +112,6 @@ toString strategy =
 conditionToString : Condition -> String
 conditionToString condition =
     case condition of
-        True_ ->
-            "true"
-
-        False_ ->
-            "false"
-
         Or c1 c2 ->
             "("
                 ++ conditionToString c1
@@ -279,16 +273,6 @@ encodeCommand command =
 encodeCondition : Condition -> JE.Value
 encodeCondition condition =
     case condition of
-        True_ ->
-            JE.object
-                [ ( "type", JE.string "True_" )
-                ]
-
-        False_ ->
-            JE.object
-                [ ( "type", JE.string "False_" )
-                ]
-
         Or c1 c2 ->
             JE.object
                 [ ( "type", JE.string "Or" )
@@ -411,12 +395,6 @@ conditionDecoder =
         |> JD.andThen
             (\type_ ->
                 case type_ of
-                    "True_" ->
-                        JD.succeed True_
-
-                    "False_" ->
-                        JD.succeed False_
-
                     "Or" ->
                         JD.succeed Or
                             |> JD.andMap (JD.field "c1" conditionDecoder)

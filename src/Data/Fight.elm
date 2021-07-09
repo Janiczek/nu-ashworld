@@ -3,6 +3,7 @@ module Data.Fight exposing
     , Info
     , Opponent
     , OpponentType(..)
+    , PlayerOpponent
     , Result(..)
     , Who(..)
     , attackDamage

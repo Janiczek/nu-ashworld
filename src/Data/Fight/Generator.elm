@@ -1021,12 +1021,6 @@ evalStrategy state strategy =
 evalCondition : StrategyState -> Condition -> Bool
 evalCondition state condition =
     case condition of
-        True_ ->
-            True
-
-        False_ ->
-            False
-
         Or c1 c2 ->
             evalCondition state c1 || evalCondition state c2
 
