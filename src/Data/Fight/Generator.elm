@@ -401,10 +401,6 @@ generator r =
 
         turn : Who -> OngoingFight -> Generator OngoingFight
         turn who ongoing =
-            let
-                _ =
-                    Debug.log "turn" who
-            in
             ongoing
                 |> resetAp who
                 |> runStrategyRepeatedly who
@@ -659,7 +655,6 @@ runStrategy strategy who ongoing =
         command : Command
         command =
             evalStrategy state strategy
-                |> Debug.log ("chosen command for " ++ Debug.toString who)
     in
     runCommand who ongoing state command
 
@@ -671,7 +666,7 @@ runCommand :
     -> Command
     -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 runCommand who ongoing state command =
-    case Debug.log "command" command of
+    case command of
         Attack shotType ->
             attack who ongoing shotType
 
@@ -854,7 +849,6 @@ attackRandomly who ongoing =
                 )
     in
     shotType
-        |> Random.map (Debug.log "randomly chosen shot type")
         |> Random.andThen (attack who ongoing)
 
 
@@ -1064,21 +1058,20 @@ evalValue state value =
 
         ChanceToHit shotType ->
             toFloat <|
-                Debug.log ("chance to hit " ++ Debug.toString shotType) <|
-                    Logic.unarmedChanceToHit
-                        { attackerAddedSkillPercentages = state.you.addedSkillPercentages
-                        , attackerSpecial = state.you.special
-                        , distanceHexes = state.distanceHexes
-                        , shotType = shotType
-                        , targetArmorClass =
-                            Logic.armorClass
-                                { naturalArmorClass = state.them.naturalArmorClass
-                                , equippedArmor = state.them.equippedArmor
-                                , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
-                                , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
-                                , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
-                                }
-                        }
+                Logic.unarmedChanceToHit
+                    { attackerAddedSkillPercentages = state.you.addedSkillPercentages
+                    , attackerSpecial = state.you.special
+                    , distanceHexes = state.distanceHexes
+                    , shotType = shotType
+                    , targetArmorClass =
+                        Logic.armorClass
+                            { naturalArmorClass = state.them.naturalArmorClass
+                            , equippedArmor = state.them.equippedArmor
+                            , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
+                            , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
+                            , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
+                            }
+                    }
 
         Distance ->
             toFloat state.distanceHexes
