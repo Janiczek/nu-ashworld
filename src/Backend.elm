@@ -1304,8 +1304,8 @@ useItem itemId clientId player model =
                         handleEffect : Item.Effect -> (SPlayer -> SPlayer)
                         handleEffect effect =
                             case effect of
-                                Item.Heal amount ->
-                                    SPlayer.addHp amount
+                                Item.Heal ->
+                                    SPlayer.addHp (Item.healAmount item.kind)
 
                                 Item.RemoveAfterUse ->
                                     SPlayer.removeItem itemId 1

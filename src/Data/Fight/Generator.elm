@@ -13,6 +13,14 @@ import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.FightStrategy as FightStrategy
+    exposing
+        ( Command(..)
+        , Condition(..)
+        , FightStrategy(..)
+        , Operator(..)
+        , Value(..)
+        )
+import Data.Item as Item
 import Data.Message as Message exposing (Message, Type(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
@@ -20,6 +28,8 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
+import Dict
+import Dict.Extra as Dict
 import List.Extra as List
 import Logic exposing (AttackStats)
 import Random exposing (Generator)
@@ -45,6 +55,270 @@ type alias OngoingFight =
     , targetAp : Int
     , reverseLog : List ( Who, Fight.Action )
     }
+
+
+opponent_ : Who -> OngoingFight -> Opponent
+opponent_ who ongoing =
+    case who of
+        Attacker ->
+            ongoing.attacker
+
+        Target ->
+            ongoing.target
+
+
+opponentAp : Who -> OngoingFight -> Int
+opponentAp who ongoing =
+    case who of
+        Attacker ->
+            ongoing.attackerAp
+
+        Target ->
+            ongoing.targetAp
+
+
+apFromPreviousTurn : Who -> OngoingFight -> Int
+apFromPreviousTurn who ongoing =
+    let
+        opponent =
+            opponent_ who ongoing
+
+        usedAp =
+            ongoing.reverseLog
+                |> List.takeWhile (\( w, _ ) -> w == who)
+                |> List.map (\( _, action ) -> apCost opponent action)
+                |> List.sum
+    in
+    (opponent.maxAp - usedAp)
+        |> max 0
+
+
+apCost : Opponent -> Fight.Action -> Int
+apCost opponent action =
+    case action of
+        Fight.Start _ ->
+            0
+
+        Fight.ComeCloser { hexes } ->
+            hexes
+
+        Fight.Attack r_ ->
+            Logic.attackApCost
+                { isAimedShot = ShotType.isAimed r_.shotType
+                , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                }
+
+        Fight.Miss r_ ->
+            Logic.attackApCost
+                { isAimedShot = ShotType.isAimed r_.shotType
+                , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                }
+
+        Fight.Heal _ ->
+            Logic.healApCost
+
+
+subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
+subtractAp who action ongoing =
+    let
+        apToSubtract =
+            apCost (opponent_ who ongoing) action
+    in
+    case who of
+        Attacker ->
+            { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
+
+        Target ->
+            { ongoing | targetAp = ongoing.targetAp - apToSubtract }
+
+
+subtractDistance : Int -> OngoingFight -> OngoingFight
+subtractDistance n ongoing =
+    { ongoing | distanceHexes = ongoing.distanceHexes - n }
+
+
+addLog : Who -> Fight.Action -> OngoingFight -> OngoingFight
+addLog who action ongoing =
+    { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
+
+
+updateOpponent : Who -> (Opponent -> Opponent) -> OngoingFight -> OngoingFight
+updateOpponent who fn ongoing =
+    case who of
+        Attacker ->
+            { ongoing | attacker = fn ongoing.attacker }
+
+        Target ->
+            { ongoing | target = fn ongoing.target }
+
+
+rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
+rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
+    let
+        opponent =
+            opponent_ who ongoing
+
+        otherOpponent =
+            opponent_ (Fight.theOther who) ongoing
+
+        criticalSpec : Maybe Critical.Spec
+        criticalSpec =
+            maybeCriticalEffectCategory
+                |> Maybe.map
+                    (\criticalEffectCategory ->
+                        let
+                            aimedShot : AimedShot
+                            aimedShot =
+                                ShotType.toAimed shotType_
+                        in
+                        case otherOpponent.type_ of
+                            Fight.Player _ ->
+                                -- TODO gender -> womanCriticalSpec
+                                Enemy.manCriticalSpec aimedShot criticalEffectCategory
+
+                            Fight.Npc enemyType ->
+                                Enemy.criticalSpec enemyType aimedShot criticalEffectCategory
+                    )
+
+        criticalGenerator : Generator (Maybe Critical)
+        criticalGenerator =
+            case criticalSpec of
+                Nothing ->
+                    Random.constant Nothing
+
+                Just spec ->
+                    Random.map Just <| rollCritical spec otherOpponent
+    in
+    Random.map2
+        (\damage maybeCritical ->
+            let
+                -- Damage formulas taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
+                -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
+                damage_ =
+                    toFloat damage
+
+                rangedBonus =
+                    -- TODO ranged attacks and perks
+                    0
+
+                ammoDamageMultiplier =
+                    -- TODO ammo in combat
+                    1
+
+                ammoDamageDivisor =
+                    -- TODO ammo in combat
+                    1
+
+                shouldIgnoreArmor : Bool
+                shouldIgnoreArmor =
+                    -- TODO armor ignoring attacks
+                    False
+
+                armorIgnore =
+                    -- we'll later divide DT by this
+                    if shouldIgnoreArmor then
+                        5
+
+                    else
+                        1
+
+                livingAnatomyBonus =
+                    -- TODO check if the opponent is a living creature
+                    if Perk.rank Perk.LivingAnatomy opponent.perks > 0 then
+                        5
+
+                    else
+                        0
+
+                damageThreshold =
+                    -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                    toFloat <|
+                        Logic.damageThresholdNormal
+                            { naturalDamageThresholdNormal =
+                                case otherOpponent.type_ of
+                                    Fight.Player _ ->
+                                        0
+
+                                    Fight.Npc enemyType ->
+                                        Enemy.damageThresholdNormal enemyType
+                            , equippedArmor = otherOpponent.equippedArmor
+                            }
+
+                damageResistance =
+                    -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+                    toFloat <|
+                        Logic.damageResistanceNormal
+                            { naturalDamageResistanceNormal =
+                                case otherOpponent.type_ of
+                                    Fight.Player _ ->
+                                        0
+
+                                    Fight.Npc enemyType ->
+                                        Enemy.damageResistanceNormal enemyType
+                            , equippedArmor = otherOpponent.equippedArmor
+                            , toughnessPerkRanks = Perk.rank Perk.Toughness otherOpponent.perks
+                            }
+
+                ammoDamageResistanceModifier =
+                    -- TODO ammo
+                    0
+
+                criticalHitDamageMultiplier : Int
+                criticalHitDamageMultiplier =
+                    maybeCritical
+                        |> Maybe.map .damageMultiplier
+                        |> Maybe.withDefault 2
+
+                maybeCriticalInfo =
+                    Maybe.map
+                        (\critical -> ( critical.effects, critical.message ))
+                        maybeCritical
+
+                finesseDamageResistanceModifier =
+                    if Trait.isSelected Trait.Finesse opponent.traits then
+                        30
+
+                    else
+                        0
+
+                finalDamageResistance =
+                    -- TODO how should this be ignored by armor-bypassing attacks?
+                    -- TODO beware the +/- signs for the ammo modifier
+                    damageResistance + ammoDamageResistanceModifier + finesseDamageResistanceModifier
+
+                damageBeforeDamageResistance =
+                    ((damage_ + rangedBonus)
+                        * (ammoDamageMultiplier / ammoDamageDivisor)
+                        * (toFloat criticalHitDamageMultiplier / 2)
+                    )
+                        - (damageThreshold / armorIgnore)
+
+                finalDamage =
+                    livingAnatomyBonus
+                        + (if damageBeforeDamageResistance > 0 then
+                            max 1 <|
+                                round <|
+                                    damageBeforeDamageResistance
+                                        * ((100 - min 90 finalDamageResistance) / 100)
+
+                           else
+                            0
+                          )
+            in
+            ( finalDamage
+            , maybeCriticalInfo
+            )
+        )
+        (Random.int
+            opponent.attackStats.minDamage
+            opponent.attackStats.maxDamage
+        )
+        criticalGenerator
+
+
+bothAlive : OngoingFight -> Bool
+bothAlive ongoing =
+    ongoing.attacker.hp > 0 && ongoing.target.hp > 0
 
 
 generator :
@@ -127,13 +401,14 @@ generator r =
 
         turn : Who -> OngoingFight -> Generator OngoingFight
         turn who ongoing =
+            let
+                _ =
+                    Debug.log "turn" who
+            in
             ongoing
                 |> resetAp who
-                |> runStrategy who
+                |> runStrategyRepeatedly who
 
-        --|> Random.constant
-        --|> Random.andThen (comeCloser who)
-        --|> Random.andThen (attackWhilePossible who)
         resetAp : Who -> OngoingFight -> OngoingFight
         resetAp who ongoing =
             case who of
@@ -142,132 +417,6 @@ generator r =
 
                 Target ->
                     { ongoing | targetAp = r.target.maxAp }
-
-        opponent_ : Who -> OngoingFight -> Opponent
-        opponent_ who ongoing =
-            case who of
-                Attacker ->
-                    ongoing.attacker
-
-                Target ->
-                    ongoing.target
-
-        opponentAp : Who -> OngoingFight -> Int
-        opponentAp who ongoing =
-            case who of
-                Attacker ->
-                    ongoing.attackerAp
-
-                Target ->
-                    ongoing.targetAp
-
-        attackWhilePossible : Who -> OngoingFight -> Generator OngoingFight
-        attackWhilePossible who ongoing =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                myHp =
-                    opponent.hp
-
-                otherHp =
-                    opponent_ (Fight.theOther who) ongoing |> .hp
-
-                minApCost =
-                    attackApCost
-                        { isAimedShot = False
-                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                        }
-            in
-            if opponentAp who ongoing >= minApCost && otherHp > 0 && myHp > 0 then
-                Random.constant ongoing
-                    |> Random.andThen (attack who)
-                    |> Random.andThen (attackWhilePossible who)
-
-            else
-                Random.constant ongoing
-
-        addLog : Who -> Fight.Action -> OngoingFight -> OngoingFight
-        addLog who action ongoing =
-            { ongoing | reverseLog = ( who, action ) :: ongoing.reverseLog }
-
-        apCost : Opponent -> Fight.Action -> Int
-        apCost opponent action =
-            case action of
-                Fight.Start _ ->
-                    0
-
-                Fight.ComeCloser { hexes } ->
-                    hexes
-
-                Fight.Attack r_ ->
-                    attackApCost
-                        { isAimedShot = ShotType.isAimed r_.shotType
-                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                        }
-
-                Fight.Miss r_ ->
-                    attackApCost
-                        { isAimedShot = ShotType.isAimed r_.shotType
-                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                        }
-
-        subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
-        subtractAp who action ongoing =
-            let
-                apToSubtract =
-                    apCost (opponent_ who ongoing) action
-            in
-            case who of
-                Attacker ->
-                    { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
-
-                Target ->
-                    { ongoing | targetAp = ongoing.targetAp - apToSubtract }
-
-        apFromPreviousTurn : Who -> OngoingFight -> Int
-        apFromPreviousTurn who ongoing =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                usedAp =
-                    ongoing.reverseLog
-                        |> List.takeWhile (\( w, _ ) -> w == who)
-                        |> List.map (\( _, action ) -> apCost opponent action)
-                        |> List.sum
-            in
-            (opponent.maxAp - usedAp)
-                |> max 0
-
-        chanceToHit : Who -> OngoingFight -> ShotType -> Int
-        chanceToHit who ongoing shot =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                other =
-                    Fight.theOther who
-
-                otherOpponent =
-                    opponent_ other ongoing
-
-                armorClass =
-                    Logic.armorClass
-                        { naturalArmorClass = otherOpponent.naturalArmorClass
-                        , equippedArmor = otherOpponent.equippedArmor
-                        , hasHthEvadePerk = Perk.rank Perk.HthEvade otherOpponent.perks > 0
-                        , unarmedSkill = Skill.get otherOpponent.special otherOpponent.addedSkillPercentages Skill.Unarmed
-                        , apFromPreviousTurn = apFromPreviousTurn other ongoing
-                        }
-            in
-            Logic.unarmedChanceToHit
-                { attackerSpecial = opponent.special
-                , attackerAddedSkillPercentages = opponent.addedSkillPercentages
-                , distanceHexes = ongoing.distanceHexes
-                , shotType = shot
-                , targetArmorClass = armorClass
-                }
 
         shotType : Who -> OngoingFight -> Generator ( ShotType, Int )
         shotType who ongoing =
@@ -289,7 +438,7 @@ generator r =
 
                 apCost_ : Int
                 apCost_ =
-                    attackApCost
+                    Logic.attackApCost
                         { isAimedShot = True
                         , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
                         }
@@ -304,394 +453,28 @@ generator r =
                     []
                 )
 
-        attackApCost :
-            { isAimedShot : Bool
-            , hasBonusHthAttacksPerk : Bool
-            }
-            -> Int
-        attackApCost r_ =
-            let
-                baseApCost : Int
-                baseApCost =
-                    -- TODO vary this based on weapon / ...
-                    3
-
-                fromBonusHthAttacks : Int
-                fromBonusHthAttacks =
-                    if r_.hasBonusHthAttacksPerk then
-                        -1
-
-                    else
-                        0
-            in
-            baseApCost
-                + ShotType.apCostPenalty { isAimedShot = r_.isAimedShot }
-                + fromBonusHthAttacks
-
-        rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
-        rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                otherOpponent =
-                    opponent_ (Fight.theOther who) ongoing
-
-                criticalSpec : Maybe Critical.Spec
-                criticalSpec =
-                    maybeCriticalEffectCategory
-                        |> Maybe.map
-                            (\criticalEffectCategory ->
-                                let
-                                    aimedShot : AimedShot
-                                    aimedShot =
-                                        ShotType.toAimed shotType_
-                                in
-                                case otherOpponent.type_ of
-                                    Fight.Player _ ->
-                                        -- TODO gender -> womanCriticalSpec
-                                        Enemy.manCriticalSpec aimedShot criticalEffectCategory
-
-                                    Fight.Npc enemyType ->
-                                        Enemy.criticalSpec enemyType aimedShot criticalEffectCategory
-                            )
-
-                criticalGenerator : Generator (Maybe Critical)
-                criticalGenerator =
-                    case criticalSpec of
-                        Nothing ->
-                            Random.constant Nothing
-
-                        Just spec ->
-                            Random.map Just <| rollCritical spec otherOpponent
-            in
-            Random.map2
-                (\damage maybeCritical ->
-                    let
-                        -- Damage formulas taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
-                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                        damage_ =
-                            toFloat damage
-
-                        rangedBonus =
-                            -- TODO ranged attacks and perks
-                            0
-
-                        ammoDamageMultiplier =
-                            -- TODO ammo in combat
-                            1
-
-                        ammoDamageDivisor =
-                            -- TODO ammo in combat
-                            1
-
-                        shouldIgnoreArmor : Bool
-                        shouldIgnoreArmor =
-                            -- TODO armor ignoring attacks
-                            False
-
-                        armorIgnore =
-                            -- we'll later divide DT by this
-                            if shouldIgnoreArmor then
-                                5
-
-                            else
-                                1
-
-                        livingAnatomyBonus =
-                            -- TODO check if the opponent is a living creature
-                            if Perk.rank Perk.LivingAnatomy opponent.perks > 0 then
-                                5
-
-                            else
-                                0
-
-                        damageThreshold =
-                            -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                            toFloat <|
-                                Logic.damageThresholdNormal
-                                    { naturalDamageThresholdNormal =
-                                        case otherOpponent.type_ of
-                                            Fight.Player _ ->
-                                                0
-
-                                            Fight.Npc enemyType ->
-                                                Enemy.damageThresholdNormal enemyType
-                                    , equippedArmor = otherOpponent.equippedArmor
-                                    }
-
-                        damageResistance =
-                            -- TODO we're not dealing with plasma/... right now, only _normal_ DR
-                            toFloat <|
-                                Logic.damageResistanceNormal
-                                    { naturalDamageResistanceNormal =
-                                        case otherOpponent.type_ of
-                                            Fight.Player _ ->
-                                                0
-
-                                            Fight.Npc enemyType ->
-                                                Enemy.damageResistanceNormal enemyType
-                                    , equippedArmor = otherOpponent.equippedArmor
-                                    , toughnessPerkRanks = Perk.rank Perk.Toughness otherOpponent.perks
-                                    }
-
-                        ammoDamageResistanceModifier =
-                            -- TODO ammo
-                            0
-
-                        criticalHitDamageMultiplier : Int
-                        criticalHitDamageMultiplier =
-                            maybeCritical
-                                |> Maybe.map .damageMultiplier
-                                |> Maybe.withDefault 2
-
-                        maybeCriticalInfo =
-                            Maybe.map
-                                (\critical -> ( critical.effects, critical.message ))
-                                maybeCritical
-
-                        finesseDamageResistanceModifier =
-                            if Trait.isSelected Trait.Finesse opponent.traits then
-                                30
-
-                            else
-                                0
-
-                        finalDamageResistance =
-                            -- TODO how should this be ignored by armor-bypassing attacks?
-                            -- TODO beware the +/- signs for the ammo modifier
-                            damageResistance + ammoDamageResistanceModifier + finesseDamageResistanceModifier
-
-                        damageBeforeDamageResistance =
-                            ((damage_ + rangedBonus)
-                                * (ammoDamageMultiplier / ammoDamageDivisor)
-                                * (toFloat criticalHitDamageMultiplier / 2)
-                            )
-                                - (damageThreshold / armorIgnore)
-
-                        finalDamage =
-                            livingAnatomyBonus
-                                + (if damageBeforeDamageResistance > 0 then
-                                    max 1 <|
-                                        round <|
-                                            damageBeforeDamageResistance
-                                                * ((100 - min 90 finalDamageResistance) / 100)
-
-                                   else
-                                    0
-                                  )
-                    in
-                    ( finalDamage
-                    , maybeCriticalInfo
-                    )
-                )
-                (Random.int
-                    opponent.attackStats.minDamage
-                    opponent.attackStats.maxDamage
-                )
-                criticalGenerator
-
-        attack : Who -> OngoingFight -> Generator OngoingFight
-        attack who ongoing =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                other : Who
-                other =
-                    Fight.theOther who
-            in
-            -- TODO for now, everything is unarmed
-            shotType who ongoing
-                |> Random.andThen
-                    (\( shot, chance ) ->
-                        let
-                            apCost_ =
-                                attackApCost
-                                    { isAimedShot = ShotType.isAimed shot
-                                    , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                                    }
-                        in
-                        if ongoing.distanceHexes == 0 && opponentAp who ongoing >= apCost_ then
-                            Random.int 1 100
-                                |> Random.andThen
-                                    (\roll ->
-                                        let
-                                            hasHit : Bool
-                                            hasHit =
-                                                roll <= chance
-                                        in
-                                        -- TODO critical misses according to inspiration/fo2-calc/fo2calg.pdf
-                                        if hasHit then
-                                            let
-                                                rollCriticalChanceBonus : Int
-                                                rollCriticalChanceBonus =
-                                                    (chance - roll) // 10
-
-                                                baseCriticalChance : Int
-                                                baseCriticalChance =
-                                                    Logic.unarmedBaseCriticalChance
-                                                        { special = opponent.special
-                                                        , hasFinesseTrait = Trait.isSelected Trait.Finesse opponent.traits
-                                                        , moreCriticalPerkRanks = Perk.rank Perk.MoreCriticals opponent.perks
-                                                        , hasSlayerPerk = Perk.rank Perk.Slayer opponent.perks > 0
-                                                        }
-
-                                                attackStatsCriticalChanceBonus : Int
-                                                attackStatsCriticalChanceBonus =
-                                                    opponent.attackStats.criticalChanceBonus
-
-                                                criticalChance : Int
-                                                criticalChance =
-                                                    min 100 <| baseCriticalChance + rollCriticalChanceBonus + attackStatsCriticalChanceBonus
-                                            in
-                                            Random.weightedBool (toFloat criticalChance / 100)
-                                                |> Random.andThen
-                                                    (\isCritical ->
-                                                        let
-                                                            criticalEffectCategory =
-                                                                if isCritical then
-                                                                    let
-                                                                        betterCriticalsPerkBonus : Int
-                                                                        betterCriticalsPerkBonus =
-                                                                            if Perk.rank Perk.BetterCriticals opponent.perks > 0 then
-                                                                                20
-
-                                                                            else
-                                                                                0
-
-                                                                        heavyHandedTraitPenalty : Int
-                                                                        heavyHandedTraitPenalty =
-                                                                            if Trait.isSelected Trait.HeavyHanded opponent.traits then
-                                                                                -30
-
-                                                                            else
-                                                                                0
-
-                                                                        baseCriticalEffect : Generator Int
-                                                                        baseCriticalEffect =
-                                                                            Random.int 1 100
-                                                                    in
-                                                                    baseCriticalEffect
-                                                                        |> Random.map
-                                                                            (\base ->
-                                                                                Just <|
-                                                                                    Critical.toCategory <|
-                                                                                        base
-                                                                                            + betterCriticalsPerkBonus
-                                                                                            + heavyHandedTraitPenalty
-                                                                            )
-
-                                                                else
-                                                                    Random.constant Nothing
-                                                        in
-                                                        criticalEffectCategory
-                                                            |> Random.andThen (rollDamageAndCriticalInfo who ongoing shot)
-                                                            |> Random.map
-                                                                (\( damage, maybeCriticalEffectsAndMessage ) ->
-                                                                    let
-                                                                        action =
-                                                                            Fight.Attack
-                                                                                { damage = damage
-                                                                                , shotType = shot
-                                                                                , remainingHp = .hp (opponent_ other ongoing) - damage
-                                                                                , isCritical = maybeCriticalEffectsAndMessage /= Nothing
-                                                                                }
-                                                                    in
-                                                                    -- TODO use the critical effects and message!!
-                                                                    ongoing
-                                                                        |> addLog who action
-                                                                        |> subtractAp who action
-                                                                        |> updateOpponent other (subtractHp damage)
-                                                                )
-                                                    )
-
-                                        else
-                                            let
-                                                action =
-                                                    Fight.Miss { shotType = shot }
-                                            in
-                                            ongoing
-                                                |> addLog who action
-                                                |> subtractAp who action
-                                                |> Random.constant
-                                    )
-
-                        else
-                            Random.constant ongoing
-                    )
-
-        comeCloser : Who -> OngoingFight -> Generator OngoingFight
-        comeCloser who ongoing =
-            -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
-            -- Eg. unarmed needs distance 0
-            -- Melee might need distance <2 and might prefer distance 0
-            -- Small guns might need distance <35 and prefer the largest where the chance to hit is ~95% or something
-            -- TODO currently everything is unarmed.
-            if ongoing.distanceHexes <= 0 then
-                Random.constant ongoing
-
-            else
-                let
-                    maxPossibleMove : Int
-                    maxPossibleMove =
-                        min ongoing.distanceHexes (opponentAp who ongoing)
-
-                    action =
-                        Fight.ComeCloser
-                            { hexes = maxPossibleMove
-                            , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
-                            }
-                in
-                ongoing
-                    |> addLog who action
-                    |> subtractDistance maxPossibleMove
-                    |> subtractAp who action
-                    |> Random.constant
-
-        subtractDistance : Int -> OngoingFight -> OngoingFight
-        subtractDistance n ongoing =
-            { ongoing | distanceHexes = ongoing.distanceHexes - n }
-
         turnsBySequenceLoop : OngoingFight -> Generator OngoingFight
         turnsBySequenceLoop ongoing =
-            ongoing
-                |> ifBothAlive
-                    (\ongoing_ ->
-                        turnsBySequence sequenceOrder ongoing_
-                            |> Random.andThen turnsBySequenceLoop
-                    )
+            if bothAlive ongoing then
+                turnsBySequence sequenceOrder ongoing
+                    |> Random.andThen turnsBySequenceLoop
+
+            else
+                Random.constant ongoing
 
         turnsBySequence : List Who -> OngoingFight -> Generator OngoingFight
         turnsBySequence remaining ongoing =
-            ongoing
-                |> ifBothAlive
-                    (\ongoing_ ->
-                        case remaining of
-                            [] ->
-                                Random.constant ongoing_
+            if bothAlive ongoing then
+                case remaining of
+                    [] ->
+                        Random.constant ongoing
 
-                            current :: rest ->
-                                turn current ongoing_
-                                    |> Random.andThen (turnsBySequence rest)
-                    )
-
-        ifBothAlive : (OngoingFight -> Generator OngoingFight) -> OngoingFight -> Generator OngoingFight
-        ifBothAlive fn ongoing =
-            if ongoing.attacker.hp > 0 && ongoing.target.hp > 0 then
-                fn ongoing
+                    current :: rest ->
+                        turn current ongoing
+                            |> Random.andThen (turnsBySequence rest)
 
             else
                 Random.constant ongoing
-
-        updateOpponent : Who -> (Opponent -> Opponent) -> OngoingFight -> OngoingFight
-        updateOpponent who fn ongoing =
-            case who of
-                Attacker ->
-                    { ongoing | attacker = fn ongoing.attacker }
-
-                Target ->
-                    { ongoing | target = fn ongoing.target }
 
         finalizeFight : OngoingFight -> Fight
         finalizeFight ongoing =
@@ -814,6 +597,521 @@ generator r =
         |> Random.map finalizeFight
 
 
+runStrategyRepeatedly : Who -> OngoingFight -> Generator OngoingFight
+runStrategyRepeatedly who ongoing =
+    let
+        opponent : Opponent
+        opponent =
+            opponent_ who ongoing
+
+        go : OngoingFight -> Generator OngoingFight
+        go ongoing_ =
+            if bothAlive ongoing_ then
+                runStrategy opponent.fightStrategy who ongoing_
+                    |> Random.andThen
+                        (\{ ranCommandSuccessfully, nextOngoing } ->
+                            if ranCommandSuccessfully then
+                                go nextOngoing
+
+                            else
+                                Random.constant nextOngoing
+                        )
+
+            else
+                Random.constant ongoing_
+    in
+    go ongoing
+
+
+runStrategy :
+    FightStrategy
+    -> Who
+    -> OngoingFight
+    -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+runStrategy strategy who ongoing =
+    let
+        you : Opponent
+        you =
+            opponent_ who ongoing
+
+        themWho : Who
+        themWho =
+            Fight.theOther who
+
+        them : Opponent
+        them =
+            opponent_ themWho ongoing
+
+        yourAp : Int
+        yourAp =
+            opponentAp who ongoing
+
+        state : StrategyState
+        state =
+            { you = you
+            , them = them
+            , themWho = themWho
+            , yourAp = yourAp
+            , distanceHexes = ongoing.distanceHexes
+            , ongoingFight = ongoing
+            }
+
+        command : Command
+        command =
+            evalStrategy state strategy
+                |> Debug.log ("chosen command for " ++ Debug.toString who)
+    in
+    runCommand who ongoing state command
+
+
+runCommand :
+    Who
+    -> OngoingFight
+    -> StrategyState
+    -> Command
+    -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+runCommand who ongoing state command =
+    case Debug.log "command" command of
+        Attack shotType ->
+            attack who ongoing shotType
+
+        AttackRandomly ->
+            attackRandomly who ongoing
+
+        Heal itemKind ->
+            heal who ongoing itemKind
+
+        MoveForward ->
+            moveForward who ongoing
+
+        DoWhatever ->
+            FightStrategy.doWhatever
+                |> evalStrategy state
+                |> runCommand who ongoing state
+
+
+rejectCommand : OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+rejectCommand ongoing =
+    Random.constant
+        { ranCommandSuccessfully = False
+        , nextOngoing = ongoing
+        }
+
+
+finalizeCommand : OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+finalizeCommand ongoing =
+    Random.constant
+        { ranCommandSuccessfully = True
+        , nextOngoing = ongoing
+        }
+
+
+heal : Who -> OngoingFight -> Item.Kind -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+heal who ongoing itemKind =
+    let
+        opponent =
+            opponent_ who ongoing
+    in
+    if itemCount itemKind opponent <= 0 then
+        rejectCommand ongoing
+        -- TODO validate strategies and tell user the item cannot heal when defining the strategy?
+        {- We're not using <= because there might later be usages for items that
+           damage you instead of healing? Who knows
+        -}
+
+    else if Item.healAmount itemKind == 0 then
+        rejectCommand ongoing
+
+    else
+        let
+            healedHp : Int
+            healedHp =
+                Item.healAmount itemKind
+
+            newHp : Int
+            newHp =
+                opponent.hp + healedHp
+
+            action : Fight.Action
+            action =
+                Fight.Heal
+                    { itemKind = itemKind
+                    , healedHp = healedHp
+                    , newHp = newHp
+                    }
+        in
+        ongoing
+            |> addLog who action
+            |> updateOpponent who (addHp healedHp)
+            |> subtractAp who action
+            |> finalizeCommand
+
+
+itemCount : Item.Kind -> Opponent -> Int
+itemCount kind opponent =
+    opponent.items
+        |> Dict.find (\_ item -> item.kind == kind)
+        |> Maybe.map (Tuple.second >> .count)
+        |> Maybe.withDefault 0
+
+
+moveForward : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+moveForward who ongoing =
+    if ongoing.distanceHexes <= 0 then
+        rejectCommand ongoing
+
+    else
+        -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
+        -- Eg. unarmed needs distance 0
+        -- Melee might need distance <2 and might prefer distance 0
+        -- Small guns might need distance <35 and prefer the largest where the chance to hit is ~95% or something
+        -- TODO currently everything is unarmed.
+        let
+            maxPossibleMove : Int
+            maxPossibleMove =
+                min ongoing.distanceHexes (opponentAp who ongoing)
+
+            action : Fight.Action
+            action =
+                Fight.ComeCloser
+                    { hexes = maxPossibleMove
+                    , remainingDistanceHexes = ongoing.distanceHexes - maxPossibleMove
+                    }
+        in
+        ongoing
+            |> addLog who action
+            |> subtractDistance maxPossibleMove
+            |> subtractAp who action
+            |> finalizeCommand
+
+
+chanceToHit : Who -> OngoingFight -> ShotType -> Int
+chanceToHit who ongoing shot =
+    let
+        opponent =
+            opponent_ who ongoing
+
+        other =
+            Fight.theOther who
+
+        otherOpponent =
+            opponent_ other ongoing
+
+        armorClass =
+            Logic.armorClass
+                { naturalArmorClass = otherOpponent.naturalArmorClass
+                , equippedArmor = otherOpponent.equippedArmor
+                , hasHthEvadePerk = Perk.rank Perk.HthEvade otherOpponent.perks > 0
+                , unarmedSkill = Skill.get otherOpponent.special otherOpponent.addedSkillPercentages Skill.Unarmed
+                , apFromPreviousTurn = apFromPreviousTurn other ongoing
+                }
+    in
+    Logic.unarmedChanceToHit
+        { attackerSpecial = opponent.special
+        , attackerAddedSkillPercentages = opponent.addedSkillPercentages
+        , distanceHexes = ongoing.distanceHexes
+        , shotType = shot
+        , targetArmorClass = armorClass
+        }
+
+
+attackRandomly : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+attackRandomly who ongoing =
+    let
+        shotType : Generator ShotType
+        shotType =
+            let
+                opponent =
+                    opponent_ who ongoing
+
+                availableAp =
+                    opponentAp who ongoing
+
+                shotAndChance : ShotType -> ( Float, ShotType )
+                shotAndChance shot =
+                    let
+                        chance : Int
+                        chance =
+                            chanceToHit who ongoing shot
+                    in
+                    ( toFloat chance, shot )
+
+                aimedShotApCost : Int
+                aimedShotApCost =
+                    Logic.attackApCost
+                        { isAimedShot = True
+                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                        }
+            in
+            Random.weighted
+                (shotAndChance NormalShot)
+                (if availableAp >= aimedShotApCost then
+                    ShotType.allAimed
+                        |> List.map (AimedShot >> shotAndChance)
+
+                 else
+                    []
+                )
+    in
+    shotType
+        |> Random.map (Debug.log "randomly chosen shot type")
+        |> Random.andThen (attack who ongoing)
+
+
+attack : Who -> OngoingFight -> ShotType -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+attack who ongoing shotType =
+    let
+        opponent =
+            opponent_ who ongoing
+
+        other : Who
+        other =
+            Fight.theOther who
+
+        otherOpponent =
+            opponent_ other ongoing
+
+        apCost_ : Int
+        apCost_ =
+            Logic.attackApCost
+                { isAimedShot = ShotType.isAimed shotType
+                , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                }
+
+        chance : Int
+        chance =
+            chanceToHit who ongoing shotType
+    in
+    if ongoing.distanceHexes /= 0 || opponentAp who ongoing < apCost_ then
+        rejectCommand ongoing
+
+    else
+        Random.int 1 100
+            |> Random.andThen
+                (\roll ->
+                    let
+                        hasHit : Bool
+                        hasHit =
+                            roll <= chance
+                    in
+                    -- TODO critical misses according to inspiration/fo2-calc/fo2calg.pdf
+                    if hasHit then
+                        let
+                            rollCriticalChanceBonus : Int
+                            rollCriticalChanceBonus =
+                                (chance - roll) // 10
+
+                            baseCriticalChance : Int
+                            baseCriticalChance =
+                                Logic.unarmedBaseCriticalChance
+                                    { special = opponent.special
+                                    , hasFinesseTrait = Trait.isSelected Trait.Finesse opponent.traits
+                                    , moreCriticalPerkRanks = Perk.rank Perk.MoreCriticals opponent.perks
+                                    , hasSlayerPerk = Perk.rank Perk.Slayer opponent.perks > 0
+                                    }
+
+                            attackStatsCriticalChanceBonus : Int
+                            attackStatsCriticalChanceBonus =
+                                opponent.attackStats.criticalChanceBonus
+
+                            criticalChance : Int
+                            criticalChance =
+                                min 100 <| baseCriticalChance + rollCriticalChanceBonus + attackStatsCriticalChanceBonus
+                        in
+                        Random.weightedBool (toFloat criticalChance / 100)
+                            |> Random.andThen
+                                (\isCritical ->
+                                    let
+                                        criticalEffectCategory =
+                                            if isCritical then
+                                                let
+                                                    betterCriticalsPerkBonus : Int
+                                                    betterCriticalsPerkBonus =
+                                                        if Perk.rank Perk.BetterCriticals opponent.perks > 0 then
+                                                            20
+
+                                                        else
+                                                            0
+
+                                                    heavyHandedTraitPenalty : Int
+                                                    heavyHandedTraitPenalty =
+                                                        if Trait.isSelected Trait.HeavyHanded opponent.traits then
+                                                            -30
+
+                                                        else
+                                                            0
+
+                                                    baseCriticalEffect : Generator Int
+                                                    baseCriticalEffect =
+                                                        Random.int 1 100
+                                                in
+                                                baseCriticalEffect
+                                                    |> Random.map
+                                                        (\base ->
+                                                            Just <|
+                                                                Critical.toCategory <|
+                                                                    base
+                                                                        + betterCriticalsPerkBonus
+                                                                        + heavyHandedTraitPenalty
+                                                        )
+
+                                            else
+                                                Random.constant Nothing
+                                    in
+                                    criticalEffectCategory
+                                        |> Random.andThen (rollDamageAndCriticalInfo who ongoing shotType)
+                                        |> Random.andThen
+                                            (\( damage, maybeCriticalEffectsAndMessage ) ->
+                                                let
+                                                    action : Fight.Action
+                                                    action =
+                                                        Fight.Attack
+                                                            { damage = damage
+                                                            , shotType = shotType
+                                                            , remainingHp = .hp (opponent_ other ongoing) - damage
+                                                            , isCritical = maybeCriticalEffectsAndMessage /= Nothing
+                                                            }
+                                                in
+                                                -- TODO use the critical effects and message!!
+                                                ongoing
+                                                    |> addLog who action
+                                                    |> subtractAp who action
+                                                    |> updateOpponent other (subtractHp damage)
+                                                    |> finalizeCommand
+                                            )
+                                )
+
+                    else
+                        let
+                            action : Fight.Action
+                            action =
+                                Fight.Miss { shotType = shotType }
+                        in
+                        ongoing
+                            |> addLog who action
+                            |> subtractAp who action
+                            |> finalizeCommand
+                )
+
+
+type alias StrategyState =
+    { you : Opponent
+    , them : Opponent
+    , themWho : Who
+    , yourAp : Int
+    , distanceHexes : Int
+    , ongoingFight : OngoingFight
+    }
+
+
+evalStrategy : StrategyState -> FightStrategy -> Command
+evalStrategy state strategy =
+    case strategy of
+        Command command ->
+            command
+
+        If { condition, then_, else_ } ->
+            if evalCondition state condition then
+                evalStrategy state then_
+
+            else
+                evalStrategy state else_
+
+
+evalCondition : StrategyState -> Condition -> Bool
+evalCondition state condition =
+    case condition of
+        True_ ->
+            True
+
+        False_ ->
+            False
+
+        Or c1 c2 ->
+            evalCondition state c1 || evalCondition state c2
+
+        And c1 c2 ->
+            evalCondition state c1 && evalCondition state c2
+
+        Not c ->
+            not <| evalCondition state c
+
+        Operator { op, value, number_ } ->
+            operatorFn
+                op
+                (evalValue state value)
+                number_
+
+
+evalValue : StrategyState -> Value -> Float
+evalValue state value =
+    case value of
+        MyHP ->
+            toFloat state.you.hp
+
+        MyAP ->
+            toFloat state.yourAp
+
+        MyItemCount itemKind ->
+            state.you.items
+                -- TODO should we do unique key instead of just kind???
+                |> Dict.find (\_ item -> item.kind == itemKind)
+                |> Maybe.map (Tuple.second >> .count >> toFloat)
+                |> Maybe.withDefault 0
+
+        ItemsUsed itemKind ->
+            Debug.todo "evalValue ItemsUsed"
+
+        TheirLevel ->
+            state.them.type_
+                |> Fight.opponentXp
+                |> Xp.currentLevel
+                |> toFloat
+
+        ChanceToHit shotType ->
+            toFloat <|
+                Debug.log ("chance to hit " ++ Debug.toString shotType) <|
+                    Logic.unarmedChanceToHit
+                        { attackerAddedSkillPercentages = state.you.addedSkillPercentages
+                        , attackerSpecial = state.you.special
+                        , distanceHexes = state.distanceHexes
+                        , shotType = shotType
+                        , targetArmorClass =
+                            Logic.armorClass
+                                { naturalArmorClass = state.them.naturalArmorClass
+                                , equippedArmor = state.them.equippedArmor
+                                , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
+                                , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
+                                , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
+                                }
+                        }
+
+        Distance ->
+            toFloat state.distanceHexes
+
+
+operatorFn : Operator -> (Float -> Float -> Bool)
+operatorFn op =
+    case op of
+        LT_ ->
+            (<)
+
+        LTE ->
+            (<=)
+
+        EQ_ ->
+            (==)
+
+        NE ->
+            (/=)
+
+        GTE ->
+            (>=)
+
+        GT_ ->
+            (>)
+
+
 targetAlreadyDead :
     { attacker : Opponent
     , target : Opponent
@@ -860,6 +1158,11 @@ subtractHp hp opponent =
     { opponent | hp = max 0 <| opponent.hp - hp }
 
 
+addHp : Int -> Opponent -> Opponent
+addHp hp opponent =
+    { opponent | hp = min opponent.maxHp <| opponent.hp + hp }
+
+
 enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Int -> Enemy.Type -> Generator ( Opponent, Int )
 enemyOpponentGenerator r lastItemId enemyType =
     Enemy.dropGenerator lastItemId (Enemy.dropSpec enemyType)
@@ -902,6 +1205,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , traits = traits
                   , perks = Dict_.empty
                   , caps = caps_
+                  , items = Dict.empty
                   , drops = items
                   , equippedArmor = Enemy.equippedArmor enemyType
                   , naturalArmorClass = Enemy.naturalArmorClass enemyType
@@ -978,6 +1282,7 @@ playerOpponent player =
     , traits = player.traits
     , perks = player.perks
     , caps = player.caps
+    , items = player.items
     , drops = []
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , naturalArmorClass = naturalArmorClass

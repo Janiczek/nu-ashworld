@@ -2555,7 +2555,7 @@ inventoryView _ player =
                         Ok () ->
                             ( False, Nothing )
 
-                        Err ItemCannotByUsedDirectly ->
+                        Err ItemCannotBeUsedDirectly ->
                             ( True, Just "This item cannot be used directly." )
 
                         Err (YouNeedTicks n) ->

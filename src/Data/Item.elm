@@ -17,6 +17,7 @@ module Data.Item exposing
     , equippableType
     , findMergeableId
     , getUniqueKey
+    , healAmount
     , isEquippable
     , kindDecoder
     , name
@@ -79,7 +80,7 @@ all =
 
 
 type Effect
-    = Heal Int
+    = Heal
     | RemoveAfterUse
     | BookRemoveTicks
     | BookAddSkillPercent Skill
@@ -139,6 +140,22 @@ armorClass kind =
 
         MetalArmor ->
             10
+
+        _ ->
+            0
+
+
+healAmount : Kind -> Int
+healAmount kind =
+    case kind of
+        Fruit ->
+            15
+
+        HealingPowder ->
+            30
+
+        Stimpak ->
+            80
 
         _ ->
             0
@@ -384,18 +401,18 @@ usageEffects kind =
     case kind of
         Fruit ->
             -- TODO radiation +1 after some time (2x)
-            [ Heal 15
+            [ Heal
             , RemoveAfterUse
             ]
 
         HealingPowder ->
             -- TODO temporary perception -1?
-            [ Heal 30
+            [ Heal
             , RemoveAfterUse
             ]
 
         Stimpak ->
-            [ Heal 80
+            [ Heal
             , RemoveAfterUse
             ]
 

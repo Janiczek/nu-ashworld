@@ -28,6 +28,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait exposing (Trait)
+import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
@@ -62,6 +63,7 @@ type alias Opponent =
     , traits : Set_.Set Trait
     , perks : Dict_.Dict Perk Int
     , caps : Int
+    , items : Dict Item.Id Item
     , drops : List Item
     , equippedArmor : Maybe Item.Kind
     , naturalArmorClass : Int
@@ -86,7 +88,7 @@ type Who
 
 
 type Action
-    = -- TODO later Reload, Heal, WalkAway, uncousciousness and other debuffs...
+    = -- TODO later Reload, WalkAway, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
     | ComeCloser
         { hexes : Int
@@ -99,6 +101,11 @@ type Action
         , isCritical : Bool -- TODO the string
         }
     | Miss { shotType : ShotType }
+    | Heal
+        { itemKind : Item.Kind
+        , healedHp : Int
+        , newHp : Int
+        }
 
 
 theOther : Who -> Who
@@ -375,6 +382,14 @@ encodeAction action =
                 , ( "shotType", ShotType.encode r.shotType )
                 ]
 
+        Heal r ->
+            JE.object
+                [ ( "type", JE.string "Heal" )
+                , ( "itemKind", Item.encodeKind r.itemKind )
+                , ( "healedHp", JE.int r.healedHp )
+                , ( "newHp", JE.int r.newHp )
+                ]
+
 
 actionDecoder : Decoder Action
 actionDecoder =
@@ -403,6 +418,19 @@ actionDecoder =
                     "Miss" ->
                         JD.field "shotType" ShotType.decoder
                             |> JD.map (\shotType -> Miss { shotType = shotType })
+
+                    "Heal" ->
+                        JD.map3
+                            (\itemKind healedHp newHp ->
+                                Heal
+                                    { itemKind = itemKind
+                                    , healedHp = healedHp
+                                    , newHp = newHp
+                                    }
+                            )
+                            (JD.field "itemKind" Item.kindDecoder)
+                            (JD.field "healedHp" JD.int)
+                            (JD.field "newHp" JD.int)
 
                     _ ->
                         JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"

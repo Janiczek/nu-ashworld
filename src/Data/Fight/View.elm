@@ -247,6 +247,16 @@ view perceptionLevel fight yourName =
                                                         ++ " but "
                                                         ++ names_.subject.verbPresent "miss"
                                                         ++ "."
+
+                                                Fight.Heal r ->
+                                                    names_.subject.verbPresent "heal"
+                                                        ++ " with "
+                                                        ++ Item.name r.itemKind
+                                                        ++ " for "
+                                                        ++ String.fromInt r.healedHp
+                                                        ++ " HP. Current HP: "
+                                                        ++ String.fromInt r.newHp
+                                                        ++ "."
                                     in
                                     H.li []
                                         [ Markdown.toHtml [ HA.class "fight-log-action" ] <|

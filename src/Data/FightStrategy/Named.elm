@@ -8,7 +8,7 @@ module Data.FightStrategy.Named exposing
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
 import Data.FightStrategy
     exposing
-        ( Action(..)
+        ( Command(..)
         , Condition(..)
         , FightStrategy(..)
         , Operator(..)
@@ -33,7 +33,7 @@ all =
 default : NamedStrategy
 default =
     { name = "Default"
-    , strategy = Action DoWhatever
+    , strategy = Command DoWhatever
     }
 
 
@@ -43,22 +43,22 @@ mjaniczek =
     , strategy =
         If
             { condition = Operator { value = Distance, op = GT_, number_ = 0 }
-            , then_ = Action MoveForward
+            , then_ = Command MoveForward
             , else_ =
                 If
                     { condition =
                         And
                             (Operator { value = MyHP, op = LT_, number_ = 40 })
                             (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 10 })
-                    , then_ = Action (Heal Stimpak)
+                    , then_ = Command (Heal Stimpak)
                     , else_ =
                         If
                             { condition =
                                 And
                                     (Operator { value = MyAP, op = GTE, number_ = 3 })
                                     (Operator { value = ChanceToHit (AimedShot Eyes), op = GTE, number_ = 80 })
-                            , then_ = Action (Attack (AimedShot Eyes))
-                            , else_ = Action (Attack NormalShot)
+                            , then_ = Command (Attack (AimedShot Eyes))
+                            , else_ = Command (Attack NormalShot)
                             }
                     }
             }

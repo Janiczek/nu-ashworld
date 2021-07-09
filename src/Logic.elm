@@ -4,11 +4,13 @@ module Logic exposing
     , actionPoints
     , addedSkillPercentages
     , armorClass
+    , attackApCost
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canUseItem
     , damageResistanceNormal
     , damageThresholdNormal
+    , healApCost
     , healPerTick
     , hitpoints
     , maxTraits
@@ -38,6 +40,36 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp exposing (BaseXp(..))
+
+
+attackApCost :
+    { isAimedShot : Bool
+    , hasBonusHthAttacksPerk : Bool
+    }
+    -> Int
+attackApCost r_ =
+    let
+        baseApCost : Int
+        baseApCost =
+            -- TODO vary this based on weapon / ...
+            3
+
+        fromBonusHthAttacks : Int
+        fromBonusHthAttacks =
+            if r_.hasBonusHthAttacksPerk then
+                -1
+
+            else
+                0
+    in
+    baseApCost
+        + ShotType.apCostPenalty { isAimedShot = r_.isAimedShot }
+        + fromBonusHthAttacks
+
+
+healApCost : Int
+healApCost =
+    2
 
 
 hitpoints :
@@ -645,7 +677,7 @@ bookAddedSkillPercentage { currentPercentage, hasComprehensionPerk } =
 type ItemNotUsableReason
     = YouNeedTicks Int
     | YoureAtFullHp
-    | ItemCannotByUsedDirectly
+    | ItemCannotBeUsedDirectly
 
 
 canUseItem :
@@ -668,7 +700,7 @@ canUseItem p kind =
         checkEffect : Item.Effect -> Result ItemNotUsableReason ()
         checkEffect eff =
             case eff of
-                Item.Heal _ ->
+                Item.Heal ->
                     if p.hp >= p.maxHp then
                         Err YoureAtFullHp
 
@@ -692,7 +724,7 @@ canUseItem p kind =
             Item.usageEffects kind
     in
     if List.isEmpty effects then
-        Err ItemCannotByUsedDirectly
+        Err ItemCannotBeUsedDirectly
 
     else
         List.foldl

@@ -1,5 +1,5 @@
 module Data.FightStrategy exposing
-    ( Action(..)
+    ( Command(..)
     , Condition(..)
     , FightStrategy(..)
     , Operator(..)
@@ -19,7 +19,7 @@ import Json.Encode as JE
 
 type FightStrategy
     = If IfData
-    | Action Action
+    | Command Command
 
 
 type alias IfData =
@@ -64,12 +64,12 @@ type Value
     | Distance
 
 
-type Action
+type Command
     = Attack ShotType
     | AttackRandomly
     | Heal Item.Kind
     | MoveForward
-    | {- attack randomly -} DoWhatever
+    | DoWhatever
 
 
 indent : String -> String
@@ -91,8 +91,8 @@ toString strategy =
                 ++ "\nelse\n"
                 ++ indent (toString else_)
 
-        Action action ->
-            case action of
+        Command command ->
+            case command of
                 Attack shotType ->
                     "attack (" ++ shotTypeToString shotType ++ ")"
 
@@ -238,16 +238,16 @@ encode strategy =
                 , ( "else", encode else_ )
                 ]
 
-        Action action ->
+        Command command ->
             JE.object
-                [ ( "type", JE.string "Action" )
-                , ( "action", encodeAction action )
+                [ ( "type", JE.string "Command" )
+                , ( "command", encodeCommand command )
                 ]
 
 
-encodeAction : Action -> JE.Value
-encodeAction action =
-    case action of
+encodeCommand : Command -> JE.Value
+encodeCommand command =
+    case command of
         Attack shotType ->
             JE.object
                 [ ( "type", JE.string "Attack" )
@@ -396,9 +396,9 @@ decoder =
                             |> JD.andMap (JD.field "else" decoder)
                             |> JD.map If
 
-                    "Action" ->
-                        JD.succeed Action
-                            |> JD.andMap (JD.field "action" actionDecoder)
+                    "Command" ->
+                        JD.succeed Command
+                            |> JD.andMap (JD.field "command" commandDecoder)
 
                     _ ->
                         JD.fail <| "Unknown FightStrategy type: " ++ type_
@@ -477,8 +477,8 @@ valueDecoder =
             )
 
 
-actionDecoder : Decoder Action
-actionDecoder =
+commandDecoder : Decoder Command
+commandDecoder =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -501,7 +501,7 @@ actionDecoder =
                         JD.succeed DoWhatever
 
                     _ ->
-                        JD.fail <| "Unknown Action type: " ++ type_
+                        JD.fail <| "Unknown Command type: " ++ type_
             )
 
 
@@ -538,6 +538,6 @@ doWhatever : FightStrategy
 doWhatever =
     If
         { condition = Operator { value = Distance, op = GT_, number_ = 0 }
-        , then_ = Action MoveForward
-        , else_ = Action AttackRandomly
+        , then_ = Command MoveForward
+        , else_ = Command AttackRandomly
         }
