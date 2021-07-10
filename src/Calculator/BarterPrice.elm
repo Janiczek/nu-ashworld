@@ -69,7 +69,7 @@ view model =
             Maybe.map3
                 (\playerBarterSkill vendorBarterSkill basePrice ->
                     Logic.price
-                        { basePrice = basePrice
+                        { baseValue = basePrice
                         , playerBarterSkill = playerBarterSkill
                         , traderBarterSkill = vendorBarterSkill
                         , hasMasterTraderPerk = model.hasMasterTraderPerk
@@ -83,7 +83,7 @@ view model =
         itemView kind =
             let
                 basePrice =
-                    String.fromInt <| Item.basePrice kind
+                    String.fromInt <| Item.baseValue kind
             in
             H.li
                 [ HE.onClick <| SetBasePriceInput basePrice ]

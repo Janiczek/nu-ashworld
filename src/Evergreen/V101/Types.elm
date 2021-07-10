@@ -23,7 +23,7 @@ import Evergreen.V101.Data.Vendor
 import Evergreen.V101.Data.World
 import Evergreen.V101.Frontend.HoveredItem
 import Evergreen.V101.Frontend.Route
-import File
+import File exposing (File)
 import Lamdera
 import Set
 import Time
