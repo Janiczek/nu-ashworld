@@ -600,26 +600,6 @@ runStrategyRepeatedly who ongoing =
 
         go : OngoingFight -> Generator OngoingFight
         go currentOngoing =
-            let
-                themWho : Who
-                themWho =
-                    Fight.theOther who
-
-                state : StrategyState
-                state =
-                    { you = opponent_ who currentOngoing
-                    , them = opponent_ themWho currentOngoing
-                    , themWho = themWho
-                    , yourAp = opponentAp who currentOngoing
-                    , yourItemsUsed = opponentItemsUsed who currentOngoing
-                    , distanceHexes = currentOngoing.distanceHexes
-                    , ongoingFight = currentOngoing
-                    }
-
-                command : Command
-                command =
-                    evalStrategy state opponent.fightStrategy
-            in
             if bothAlive currentOngoing && not (givenUp currentOngoing) && opponentAp who currentOngoing > 0 then
                 runStrategy opponent.fightStrategy who currentOngoing
                     |> Random.andThen

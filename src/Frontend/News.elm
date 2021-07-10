@@ -16,7 +16,35 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1625880726
+    [ { date = 1625920050
+      , title = "Fixes for fight strategies"
+      , text = """
+Running two players with the YOLO strategy has uncovered a few bugs, so here
+are the fixes for them:
+
+* Items in inventory with 0x count can't be used anymore
+
+* Items used during fight get removed correctly: they don't show up as 0x in
+the inventory after the fight
+
+* Exact HP after healing during fight is only shown to you if it was you
+healing yourself, or if you have enough PerceptionLevel to see the opponent's
+exact HP.
+
+* It was possible to craft strategies such that the fight would never end.
+We've now enforced a limit of 1000 actions - after that, both players give up
+the fight and nobody wins.
+
+* If falling back to a backup strategy in case action from your strategy cannot
+be used, we now correctly let the rest of your turn play back instead of
+cutting it after the fallback action.
+
+* Action 'Heal' isn't needlessly taken if you have full HP.
+
+~janiczek
+"""
+      }
+    , { date = 1625880726
       , title = "Fight strategies!"
       , text = """
 You can now choose between different **fight strategies** on the **Settings

@@ -3,4 +3,4 @@ module Data.Version exposing (version)
 
 version : String
 version =
-    "2021.07.10::001"
+    "2021.07.10::002"
