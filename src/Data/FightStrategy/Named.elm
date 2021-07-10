@@ -25,7 +25,8 @@ type alias NamedStrategy =
 all : List NamedStrategy
 all =
     [ default
-    , mjaniczek
+    , conservative
+    , yolo
     ]
 
 
@@ -36,9 +37,9 @@ default =
     }
 
 
-mjaniczek : NamedStrategy
-mjaniczek =
-    { name = "Somewhat intelligent"
+conservative : NamedStrategy
+conservative =
+    { name = "Conservative about Stimpaks"
     , strategy =
         If
             { condition = Operator { value = Distance, op = GT_, number_ = 0 }
@@ -47,18 +48,27 @@ mjaniczek =
                 If
                     { condition =
                         And
-                            (Operator { value = MyHP, op = LT_, number_ = 40 })
+                            (Operator { value = MyHP, op = LT_, number_ = 80 })
                             (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 10 })
                     , then_ = Command (Heal Stimpak)
-                    , else_ =
-                        If
-                            { condition =
-                                And
-                                    (Operator { value = MyAP, op = GTE, number_ = 3 })
-                                    (Operator { value = ChanceToHit (AimedShot Eyes), op = GTE, number_ = 80 })
-                            , then_ = Command (Attack (AimedShot Eyes))
-                            , else_ = Command (Attack NormalShot)
-                            }
+                    , else_ = Command (Attack (AimedShot Eyes))
+                    }
+            }
+    }
+
+
+yolo : NamedStrategy
+yolo =
+    { name = "YOLO about Stimpaks"
+    , strategy =
+        If
+            { condition = Operator { value = Distance, op = GT_, number_ = 0 }
+            , then_ = Command MoveForward
+            , else_ =
+                If
+                    { condition = Operator { value = MyHP, op = LT_, number_ = 500 }
+                    , then_ = Command (Heal Stimpak)
+                    , else_ = Command (Attack (AimedShot Eyes))
                     }
             }
     }

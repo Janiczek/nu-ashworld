@@ -16,7 +16,19 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1623181215
+    [ { date = 1625880726
+      , title = "Fight strategies!"
+      , text = """
+You can now choose between different **fight strategies** on the **Settings
+page** and actually **heal** during fights!
+
+I'll probably implement an editor to let you write your own strategies before I
+dive back into quests.
+
+~janiczek
+"""
+      }
+    , { date = 1623181215
       , title = "Your attacks are logged now, fights have a stats section"
       , text = """
 A little procrastination patch while I chip away at quests:
