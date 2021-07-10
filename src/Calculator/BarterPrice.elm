@@ -28,7 +28,7 @@ type alias Model =
 
 
 init : () -> ( Model, Cmd Msg )
-init flags =
+init _ =
     ( { playerBarterInput = "50"
       , vendorBarterInput = "100"
       , basePriceInput = "250"
@@ -165,7 +165,7 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.none
 
 

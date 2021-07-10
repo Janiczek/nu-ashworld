@@ -428,41 +428,6 @@ generator r =
                 Target ->
                     { ongoing | targetAp = r.target.maxAp }
 
-        shotType : Who -> OngoingFight -> Generator ( ShotType, Int )
-        shotType who ongoing =
-            let
-                opponent =
-                    opponent_ who ongoing
-
-                availableAp =
-                    opponentAp who ongoing
-
-                shotAndChance : ShotType -> ( Float, ( ShotType, Int ) )
-                shotAndChance shot =
-                    let
-                        chance : Int
-                        chance =
-                            chanceToHit who ongoing shot
-                    in
-                    ( toFloat chance, ( shot, chance ) )
-
-                apCost_ : Int
-                apCost_ =
-                    Logic.attackApCost
-                        { isAimedShot = True
-                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                        }
-            in
-            Random.weighted
-                (shotAndChance NormalShot)
-                (if availableAp >= apCost_ then
-                    ShotType.allAimed
-                        |> List.map (AimedShot >> shotAndChance)
-
-                 else
-                    []
-                )
-
         turnsBySequenceLoop : OngoingFight -> Generator OngoingFight
         turnsBySequenceLoop ongoing =
             if bothAlive ongoing then
@@ -865,15 +830,6 @@ attackRandomly who ongoing =
                 availableAp =
                     opponentAp who ongoing
 
-                shotAndChance : ShotType -> ( Float, ShotType )
-                shotAndChance shot =
-                    let
-                        chance : Int
-                        chance =
-                            chanceToHit who ongoing shot
-                    in
-                    ( toFloat chance, shot )
-
                 aimedShotApCost : Int
                 aimedShotApCost =
                     Logic.attackApCost
@@ -881,11 +837,10 @@ attackRandomly who ongoing =
                         , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
                         }
             in
-            Random.weighted
-                (shotAndChance NormalShot)
+            Random.uniform
+                NormalShot
                 (if availableAp >= aimedShotApCost then
-                    ShotType.allAimed
-                        |> List.map (AimedShot >> shotAndChance)
+                    List.map AimedShot ShotType.allAimed
 
                  else
                     []
@@ -904,9 +859,6 @@ attack who ongoing shotType =
         other : Who
         other =
             Fight.theOther who
-
-        otherOpponent =
-            opponent_ other ongoing
 
         apCost_ : Int
         apCost_ =

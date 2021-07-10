@@ -15,6 +15,7 @@ module Data.Map exposing
     )
 
 import Json.Encode as JE
+import List.ExtraExtra as List
 import Set exposing (Set)
 
 
@@ -152,4 +153,4 @@ allTileCoords =
         rows_ =
             List.range 0 (rows - 1)
     in
-    columns_ |> List.concatMap (\x -> rows_ |> List.map (\y -> ( x, y )))
+    columns_ |> List.fastConcatMap (\x -> rows_ |> List.map (\y -> ( x, y )))

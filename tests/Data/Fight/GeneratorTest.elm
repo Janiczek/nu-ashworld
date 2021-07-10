@@ -22,6 +22,9 @@ damageNeverNegative =
     <|
         \attacker target ( currentTime, seed ) ->
             let
+                _ =
+                    Debug.log "attacker strat" attacker.fightStrategy
+
                 ( fight, _ ) =
                     Random.step
                         (Data.Fight.Generator.generator

@@ -2,7 +2,7 @@ module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Action, OpponentType, Who(..))
-import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
+import Data.Fight.ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)

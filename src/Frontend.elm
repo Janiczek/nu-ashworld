@@ -18,7 +18,6 @@ import Data.Map as Map exposing (TileCoords)
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
-import Data.Map.SmallChunk as SmallChunk exposing (SmallChunk)
 import Data.Map.Terrain as Terrain
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
@@ -945,10 +944,6 @@ mapView mouseCoords _ player =
                 bigChunk : BigChunk
                 bigChunk =
                     BigChunk.forCoords mouseCoords_
-
-                smallChunk : SmallChunk
-                smallChunk =
-                    SmallChunk.forCoords mouseCoords_
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -2798,7 +2793,7 @@ messageView zone message _ player =
 
 
 settingsView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-settingsView world player =
+settingsView _ player =
     let
         fightStrategyView : NamedStrategy -> Html FrontendMsg
         fightStrategyView { name, strategy } =
@@ -3207,7 +3202,7 @@ type LinkType
 linkView : Route -> Link -> Html FrontendMsg
 linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
     let
-        ( tag, linkAttrs, maybeRoute ) =
+        ( tag, linkAttrs ) =
             case type_ of
                 LinkOut http ->
                     ( H.a
@@ -3215,7 +3210,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                       , HA.target "_blank"
                       , HA.attributeMaybe HA.title tooltip
                       ]
-                    , Nothing
                     )
 
                 LinkIn { route, isActive } ->
@@ -3225,7 +3219,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                       , HA.attributeIf (isActive currentRoute) <| HA.class "active"
                       , HA.disabled disabled
                       ]
-                    , Just route
                     )
 
                 LinkMsg msg ->
@@ -3234,7 +3227,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                       , HA.attributeMaybe HA.title tooltip
                       , HA.disabled disabled
                       ]
-                    , Nothing
                     )
     in
     tag

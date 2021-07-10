@@ -16,7 +16,6 @@ import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
-import Data.Map.BigChunk as BigChunk
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.SmallChunk as SmallChunk

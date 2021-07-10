@@ -147,17 +147,6 @@ setHp newHp player =
             }
 
 
-setMaxHp : Int -> SPlayer -> SPlayer
-setMaxHp newMaxHp player =
-    { player | maxHp = newMaxHp }
-        |> updateStrengthForAdrenalineRush
-            { oldHp = player.hp
-            , oldMaxHp = player.maxHp
-            , newHp = player.hp
-            , newMaxHp = newMaxHp
-            }
-
-
 addXp : Int -> Posix -> SPlayer -> SPlayer
 addXp n currentTime player =
     let

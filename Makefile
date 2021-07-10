@@ -32,7 +32,9 @@ test-watch-long:
 
 .PHONY: review
 review:
+	gsed --in-place=.bak '/lamdera/d' elm.json
 	yarn elm-review
+	mv elm.json.bak elm.json
 
 .PHONY: build-calculators
 build-calculators: build-calculator-barter-price

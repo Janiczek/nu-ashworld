@@ -2,7 +2,6 @@ module Data.FightStrategy.Named exposing
     ( NamedStrategy
     , all
     , default
-    , mjaniczek
     )
 
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))

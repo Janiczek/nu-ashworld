@@ -34,7 +34,7 @@ module Logic exposing
 import AssocList as Dict_
 import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
-import Data.Item as Item exposing (Kind(..))
+import Data.Item as Item
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
