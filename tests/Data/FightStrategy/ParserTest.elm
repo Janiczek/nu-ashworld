@@ -12,7 +12,6 @@ import Data.FightStrategy as FightStrategy
 import Data.FightStrategy.Parser as FightStrategy
 import Data.Item exposing (Kind(..))
 import Expect
-import Parser as P
 import Test exposing (Test)
 import TestHelpers
     exposing
@@ -32,10 +31,10 @@ value =
         , ( "distance", "distance", Just Distance )
         , ( "item count Stimpak", "Stimpak in inventory", Just (MyItemCount Stimpak) )
         , ( "item count HealingPowder", "Healing Powder in inventory", Just (MyItemCount HealingPowder) )
-        , ( "item count Metal Armor doesn't work", "Metal Armor in inventory", Nothing )
+        , ( "item count - non-healing item also works", "Metal Armor in inventory", Just (MyItemCount MetalArmor) )
         , ( "used Stimpak", "used Stimpak", Just (ItemsUsed Stimpak) )
         , ( "used HealingPowder", "used Healing Powder", Just (ItemsUsed HealingPowder) )
-        , ( "used Metal Armor doesn't work", "used Metal Armor", Nothing )
+        , ( "used - non-healing item also works", "used Metal Armor", Just (ItemsUsed MetalArmor) )
         , ( "chance to hit NormalShot", "chance to hit (unaimed)", Just (ChanceToHit NormalShot) )
         , ( "chance to hit AimedShot Head", "chance to hit (head)", Just (ChanceToHit (AimedShot Head)) )
         , ( "chance to hit AimedShot LeftArm", "chance to hit (left arm)", Just (ChanceToHit (AimedShot LeftArm)) )
@@ -83,7 +82,7 @@ command =
         , ( "attack eyes", "attack (eyes)", Just (Attack (AimedShot Eyes)) )
         , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
         , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
-        , ( "heal Metal Armor", "heal (Metal Armor)", Nothing )
+        , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
         ]
 
 

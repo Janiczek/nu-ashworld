@@ -20,6 +20,7 @@ module Data.Item exposing
     , getUniqueKey
     , healAmount
     , isEquippable
+    , isHealing
     , kindDecoder
     , name
     , usageEffects
@@ -80,14 +81,15 @@ all =
     ]
 
 
+isHealing : Kind -> Bool
+isHealing kind =
+    (healAmount kind /= 0)
+        && List.member Heal (usageEffects kind)
+
+
 allHealing : List Kind
 allHealing =
-    all
-        |> List.filter
-            (\kind ->
-                (healAmount kind /= 0)
-                    && List.member Heal (usageEffects kind)
-            )
+    List.filter isHealing all
 
 
 type Effect

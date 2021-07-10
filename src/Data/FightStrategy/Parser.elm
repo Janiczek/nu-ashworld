@@ -2,7 +2,6 @@ module Data.FightStrategy.Parser exposing
     ( command
     , condition
     , fightStrategy
-    , ifData
     , operator
     , parse
     , shotType
@@ -100,13 +99,13 @@ heal =
     P.succeed Heal
         |. P.keyword "heal"
         |. P.token " ("
-        |= healingItemKind
+        |= itemKind
         |. P.token ")"
 
 
-healingItemKind : Parser Item.Kind
-healingItemKind =
-    Item.allHealing
+itemKind : Parser Item.Kind
+itemKind =
+    Item.all
         |> List.map (\kind -> P.map (\_ -> kind) (P.keyword (Item.name kind)))
         |> P.oneOf
 
@@ -183,7 +182,7 @@ value =
 itemCount : Parser Value
 itemCount =
     P.succeed MyItemCount
-        |= healingItemKind
+        |= itemKind
         |. P.token " "
         |. P.keyword "in inventory"
 
@@ -193,7 +192,7 @@ itemsUsed =
     P.succeed ItemsUsed
         |. P.keyword "used"
         |. P.token " "
-        |= healingItemKind
+        |= itemKind
 
 
 chanceToHit : Parser Value

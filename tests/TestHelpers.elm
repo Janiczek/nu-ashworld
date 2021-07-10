@@ -215,11 +215,26 @@ shotTypeFuzzer =
         |> Fuzz.oneOf
 
 
+itemKindFuzzer : Fuzzer Item.Kind
+itemKindFuzzer =
+    Item.all
+        |> List.map Fuzz.constant
+        |> Fuzz.oneOf
+
+
 healingItemKindFuzzer : Fuzzer Item.Kind
 healingItemKindFuzzer =
     Item.allHealing
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
+
+
+mostlyHealingItemKindFuzzer : Fuzzer Item.Kind
+mostlyHealingItemKindFuzzer =
+    Fuzz.frequency
+        [ ( 9, healingItemKindFuzzer )
+        , ( 1, itemKindFuzzer )
+        ]
 
 
 posixFuzzer : Fuzzer Posix

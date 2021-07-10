@@ -707,7 +707,7 @@ heal who ongoing itemKind =
     if itemCount itemKind opponent <= 0 then
         rejectCommand ongoing
 
-    else if Item.healAmount itemKind == 0 then
+    else if not <| Item.isHealing itemKind then
         -- TODO validate strategies and tell user the item cannot heal when defining the strategy?
         {- We're not using <= because there might later be usages for items that
            damage you instead of healing? Who knows

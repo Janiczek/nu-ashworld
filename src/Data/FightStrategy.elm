@@ -5,11 +5,13 @@ module Data.FightStrategy exposing
     , IfData
     , Operator(..)
     , OperatorData
+    , ValidationError(..)
     , Value(..)
     , decoder
     , doWhatever
     , encode
     , toString
+    , validate
     )
 
 import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
@@ -506,3 +508,82 @@ doWhatever =
         , then_ = Command MoveForward
         , else_ = Command AttackRandomly
         }
+
+
+type ValidationError
+    = ItemDoesntHeal Item.Kind
+
+
+validate : FightStrategy -> List ValidationError
+validate strategy =
+    strategy
+        |> extractItems
+        |> List.filter (not << Item.isHealing)
+        |> List.map ItemDoesntHeal
+
+
+extractItems : FightStrategy -> List Item.Kind
+extractItems strategy =
+    let
+        fromValue : Value -> List Item.Kind
+        fromValue value =
+            case value of
+                MyHP ->
+                    []
+
+                MyAP ->
+                    []
+
+                MyItemCount kind ->
+                    [ kind ]
+
+                ItemsUsed kind ->
+                    [ kind ]
+
+                TheirLevel ->
+                    []
+
+                ChanceToHit _ ->
+                    []
+
+                Distance ->
+                    []
+
+        fromCommand : Command -> List Item.Kind
+        fromCommand command =
+            case command of
+                Attack _ ->
+                    []
+
+                AttackRandomly ->
+                    []
+
+                Heal kind ->
+                    [ kind ]
+
+                MoveForward ->
+                    []
+
+                DoWhatever ->
+                    []
+
+        fromCondition : Condition -> List Item.Kind
+        fromCondition condition =
+            case condition of
+                Or c1 c2 ->
+                    fromCondition c1 ++ fromCondition c2
+
+                And c1 c2 ->
+                    fromCondition c1 ++ fromCondition c2
+
+                Operator { value } ->
+                    fromValue value
+    in
+    case strategy of
+        Command command ->
+            fromCommand command
+
+        If { condition, then_, else_ } ->
+            fromCondition condition
+                ++ extractItems then_
+                ++ extractItems else_
