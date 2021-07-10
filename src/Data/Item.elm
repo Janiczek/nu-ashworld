@@ -6,6 +6,7 @@ module Data.Item exposing
     , Kind(..)
     , UniqueKey
     , all
+    , allHealing
     , armorClass
     , baseValue
     , create
@@ -77,6 +78,16 @@ all =
     , LeatherArmor
     , MetalArmor
     ]
+
+
+allHealing : List Kind
+allHealing =
+    all
+        |> List.filter
+            (\kind ->
+                (healAmount kind /= 0)
+                    && List.member Heal (usageEffects kind)
+            )
 
 
 type Effect

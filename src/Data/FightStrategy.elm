@@ -43,14 +43,13 @@ type Operator
 type Condition
     = Or Condition Condition
     | And Condition Condition
-    | Not Condition
     | Operator OperatorData
 
 
 type alias OperatorData =
-    { op : Operator
-    , value : Value
-    , number_ : Float
+    { value : Value
+    , op : Operator
+    , number_ : Int
     }
 
 
@@ -106,7 +105,7 @@ toString strategy =
                     "move forward"
 
                 DoWhatever ->
-                    "do whatever:\n\n" ++ toString doWhatever
+                    "do whatever"
 
 
 conditionToString : Condition -> String
@@ -126,15 +125,12 @@ conditionToString condition =
                 ++ conditionToString c2
                 ++ ")"
 
-        Not c ->
-            "not " ++ conditionToString c
-
         Operator { op, value, number_ } ->
             valueToString value
                 ++ " "
                 ++ operatorToString op
                 ++ " "
-                ++ String.fromFloat number_
+                ++ String.fromInt number_
 
 
 valueToString : Value -> String
@@ -151,8 +147,8 @@ valueToString value =
                 ++ " in inventory"
 
         ItemsUsed kind ->
-            Item.name kind
-                ++ " used in this fight"
+            "used "
+                ++ Item.name kind
 
         TheirLevel ->
             "opponent's level"
@@ -287,18 +283,12 @@ encodeCondition condition =
                 , ( "c2", encodeCondition c2 )
                 ]
 
-        Not c ->
-            JE.object
-                [ ( "type", JE.string "Not" )
-                , ( "c", encodeCondition c )
-                ]
-
         Operator { op, value, number_ } ->
             JE.object
                 [ ( "type", JE.string "Operator" )
                 , ( "operator", encodeOperator op )
                 , ( "value", encodeValue value )
-                , ( "number", JE.float number_ )
+                , ( "number", JE.int number_ )
                 ]
 
 
@@ -405,14 +395,11 @@ conditionDecoder =
                             |> JD.andMap (JD.field "c1" conditionDecoder)
                             |> JD.andMap (JD.field "c2" conditionDecoder)
 
-                    "Not" ->
-                        JD.map Not (JD.field "c" conditionDecoder)
-
                     "Operator" ->
                         JD.succeed OperatorData
-                            |> JD.andMap (JD.field "operator" operatorDecoder)
                             |> JD.andMap (JD.field "value" valueDecoder)
-                            |> JD.andMap (JD.field "number" JD.float)
+                            |> JD.andMap (JD.field "operator" operatorDecoder)
+                            |> JD.andMap (JD.field "number" JD.int)
                             |> JD.map Operator
 
                     _ ->

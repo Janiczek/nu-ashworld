@@ -27,11 +27,15 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Dict exposing (Dict)
+import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import Fuzz.Extra as Fuzz
 import Logic exposing (AttackStats)
 import Maybe.Extra as Maybe
+import Parser as P exposing (Parser, Problem(..))
 import Random
+import String.Extra as String
+import Test exposing (Test)
 import Time exposing (Posix)
 
 
@@ -166,7 +170,6 @@ conditionFuzzer r =
         Fuzz.oneOf
             [ Fuzz.map2 Or conditionFuzzer_ conditionFuzzer_
             , Fuzz.map2 And conditionFuzzer_ conditionFuzzer_
-            , Fuzz.map Not conditionFuzzer_
             , Fuzz.map Operator operatorDataFuzzer
             ]
 
@@ -195,9 +198,9 @@ ifDataFuzzer r =
 operatorDataFuzzer : Fuzzer OperatorData
 operatorDataFuzzer =
     Fuzz.constant OperatorData
-        |> Fuzz.andMap operatorFuzzer
         |> Fuzz.andMap valueFuzzer
-        |> Fuzz.andMap Fuzz.float
+        |> Fuzz.andMap operatorFuzzer
+        |> Fuzz.andMap Fuzz.int
 
 
 valueFuzzer : Fuzzer Value
@@ -229,8 +232,7 @@ itemKindFuzzer =
 
 healingItemKindFuzzer : Fuzzer Item.Kind
 healingItemKindFuzzer =
-    Item.all
-        |> List.filter (\kind -> Item.healAmount kind /= 0)
+    Item.allHealing
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
 
@@ -370,3 +372,118 @@ specialFuzzer =
         |> Fuzz.andMap (Fuzz.intRange 1 10)
         |> Fuzz.andMap (Fuzz.intRange 1 10)
         |> Fuzz.andMap (Fuzz.intRange 1 10)
+
+
+parserTest : String -> Parser a -> List ( String, String, Maybe a ) -> Test
+parserTest label parser examples =
+    let
+        runTest ( description, input, output ) =
+            Test.test description <|
+                \() ->
+                    input
+                        |> P.run parser
+                        |> expectEqualParseResult input output
+    in
+    Test.describe label <|
+        List.map runTest examples
+
+
+expectEqualParseResult :
+    String
+    -> Maybe a
+    -> Result (List P.DeadEnd) a
+    -> Expectation
+expectEqualParseResult input expected actual =
+    case ( actual, expected ) of
+        ( Err _, Nothing ) ->
+            Expect.pass
+
+        ( Err deadEnds, Just _ ) ->
+            Expect.fail
+                (String.join "\n"
+                    (input
+                        :: "===>"
+                        :: "Err"
+                        :: List.map deadEndToString deadEnds
+                    )
+                )
+
+        ( Ok actual_, Nothing ) ->
+            Expect.fail
+                (String.join "\n"
+                    [ input, "===> should have failed but parsed into ==>", "Ok", "    " ++ Debug.toString actual_ ]
+                )
+
+        ( Ok actual_, Just expected_ ) ->
+            actual_
+                |> Expect.equal expected_
+
+
+deadEndToString : P.DeadEnd -> String
+deadEndToString deadend =
+    problemToString deadend.problem ++ " at row " ++ String.fromInt deadend.row ++ ", col " ++ String.fromInt deadend.col
+
+
+problemToString : P.Problem -> String
+problemToString p =
+    case p of
+        Expecting s ->
+            "expecting '" ++ s ++ "'"
+
+        ExpectingInt ->
+            "expecting int"
+
+        ExpectingHex ->
+            "expecting hex"
+
+        ExpectingOctal ->
+            "expecting octal"
+
+        ExpectingBinary ->
+            "expecting binary"
+
+        ExpectingFloat ->
+            "expecting float"
+
+        ExpectingNumber ->
+            "expecting number"
+
+        ExpectingVariable ->
+            "expecting variable"
+
+        ExpectingSymbol s ->
+            "expecting symbol '" ++ s ++ "'"
+
+        ExpectingKeyword s ->
+            "expecting keyword '" ++ s ++ "'"
+
+        ExpectingEnd ->
+            "expecting end"
+
+        UnexpectedChar ->
+            "unexpected char"
+
+        Problem s ->
+            "problem " ++ s
+
+        BadRepeat ->
+            "bad repeat"
+
+
+multilineInput : String -> String
+multilineInput string =
+    string
+        |> String.unindent
+        |> removeNewlinesAtEnds
+
+
+removeNewlinesAtEnds : String -> String
+removeNewlinesAtEnds string =
+    if String.startsWith "\n" string then
+        removeNewlinesAtEnds (String.dropLeft 1 string)
+
+    else if String.endsWith "\n" string then
+        removeNewlinesAtEnds (String.dropRight 1 string)
+
+    else
+        string

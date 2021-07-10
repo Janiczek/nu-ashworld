@@ -1050,9 +1050,6 @@ evalCondition state condition =
         And c1 c2 ->
             evalCondition state c1 && evalCondition state c2
 
-        Not c ->
-            not <| evalCondition state c
-
         Operator { op, value, number_ } ->
             operatorFn
                 op
@@ -1060,56 +1057,53 @@ evalCondition state condition =
                 number_
 
 
-evalValue : StrategyState -> Value -> Float
+evalValue : StrategyState -> Value -> Int
 evalValue state value =
     case value of
         MyHP ->
-            toFloat state.you.hp
+            state.you.hp
 
         MyAP ->
-            toFloat state.yourAp
+            state.yourAp
 
         MyItemCount itemKind ->
             state.you.items
                 -- TODO should we do unique key instead of just kind???
                 |> Dict.find (\_ item -> item.kind == itemKind)
-                |> Maybe.map (Tuple.second >> .count >> toFloat)
+                |> Maybe.map (Tuple.second >> .count)
                 |> Maybe.withDefault 0
 
         ItemsUsed itemKind ->
             state.yourItemsUsed
                 |> Dict_.get itemKind
                 |> Maybe.withDefault 0
-                |> toFloat
 
         TheirLevel ->
             state.them.type_
                 |> Fight.opponentXp
                 |> Xp.currentLevel
-                |> toFloat
 
         ChanceToHit shotType ->
-            toFloat <|
-                Logic.unarmedChanceToHit
-                    { attackerAddedSkillPercentages = state.you.addedSkillPercentages
-                    , attackerSpecial = state.you.special
-                    , distanceHexes = state.distanceHexes
-                    , shotType = shotType
-                    , targetArmorClass =
-                        Logic.armorClass
-                            { naturalArmorClass = state.them.naturalArmorClass
-                            , equippedArmor = state.them.equippedArmor
-                            , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
-                            , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
-                            , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
-                            }
-                    }
+            Logic.unarmedChanceToHit
+                { attackerAddedSkillPercentages = state.you.addedSkillPercentages
+                , attackerSpecial = state.you.special
+                , distanceHexes = state.distanceHexes
+                , shotType = shotType
+                , targetArmorClass =
+                    Logic.armorClass
+                        { naturalArmorClass = state.them.naturalArmorClass
+                        , equippedArmor = state.them.equippedArmor
+                        , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
+                        , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
+                        , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
+                        }
+                }
 
         Distance ->
-            toFloat state.distanceHexes
+            state.distanceHexes
 
 
-operatorFn : Operator -> (Float -> Float -> Bool)
+operatorFn : Operator -> (Int -> Int -> Bool)
 operatorFn op =
     case op of
         LT_ ->
