@@ -1291,58 +1291,81 @@ useItem itemId clientId player model =
             ( model, Cmd.none )
 
         Just item ->
-            let
-                effects : List Item.Effect
-                effects =
-                    Item.usageEffects item.kind
-            in
-            case Logic.canUseItem player item.kind of
-                Err _ ->
-                    ( model, Cmd.none )
+            if item.count <= 0 then
+                {- In case there is a bug that leaves `0x Stimpak` in our
+                   inventory or something similar. It sometimes happens, we're
+                   not perfect :)
 
-                Ok () ->
-                    let
-                        handleEffect : Item.Effect -> (SPlayer -> SPlayer)
-                        handleEffect effect =
-                            case effect of
-                                Item.Heal ->
-                                    SPlayer.addHp (Item.healAmount item.kind)
-
-                                Item.RemoveAfterUse ->
-                                    SPlayer.removeItem itemId 1
-
-                                Item.BookRemoveTicks ->
-                                    SPlayer.subtractTicks <|
-                                        Logic.bookUseTickCost
-                                            { intelligence = player.special.intelligence }
-
-                                Item.BookAddSkillPercent skill ->
-                                    SPlayer.addSkillPercentage
-                                        (Logic.bookAddedSkillPercentage
-                                            { currentPercentage = Skill.get player.special player.addedSkillPercentages skill
-                                            , hasComprehensionPerk = Perk.rank Perk.Comprehension player.perks > 0
-                                            }
-                                        )
-                                        skill
-
-                        combinedEffects : SPlayer -> SPlayer
-                        combinedEffects =
-                            effects
-                                |> List.map handleEffect
-                                |> List.foldl (>>) identity
-
-                        newModel =
-                            model
-                                |> updatePlayer combinedEffects player.name
-                    in
-                    getWorldLoggedIn player.name newModel
-                        |> Maybe.map
-                            (\world ->
-                                ( newModel
-                                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                                )
+                   When writing this, the occasion was running a fight strategy
+                   and healing inside a fight.
+                -}
+                let
+                    newModel =
+                        model
+                            |> updatePlayer (SPlayer.removeItem itemId 1) player.name
+                in
+                getWorldLoggedIn player.name newModel
+                    |> Maybe.map
+                        (\world ->
+                            ( newModel
+                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
                             )
-                        |> Maybe.withDefault ( model, Cmd.none )
+                        )
+                    |> Maybe.withDefault ( model, Cmd.none )
+
+            else
+                let
+                    effects : List Item.Effect
+                    effects =
+                        Item.usageEffects item.kind
+                in
+                case Logic.canUseItem player item.kind of
+                    Err _ ->
+                        ( model, Cmd.none )
+
+                    Ok () ->
+                        let
+                            handleEffect : Item.Effect -> (SPlayer -> SPlayer)
+                            handleEffect effect =
+                                case effect of
+                                    Item.Heal ->
+                                        SPlayer.addHp (Item.healAmount item.kind)
+
+                                    Item.RemoveAfterUse ->
+                                        SPlayer.removeItem itemId 1
+
+                                    Item.BookRemoveTicks ->
+                                        SPlayer.subtractTicks <|
+                                            Logic.bookUseTickCost
+                                                { intelligence = player.special.intelligence }
+
+                                    Item.BookAddSkillPercent skill ->
+                                        SPlayer.addSkillPercentage
+                                            (Logic.bookAddedSkillPercentage
+                                                { currentPercentage = Skill.get player.special player.addedSkillPercentages skill
+                                                , hasComprehensionPerk = Perk.rank Perk.Comprehension player.perks > 0
+                                                }
+                                            )
+                                            skill
+
+                            combinedEffects : SPlayer -> SPlayer
+                            combinedEffects =
+                                effects
+                                    |> List.map handleEffect
+                                    |> List.foldl (>>) identity
+
+                            newModel =
+                                model
+                                    |> updatePlayer combinedEffects player.name
+                        in
+                        getWorldLoggedIn player.name newModel
+                            |> Maybe.map
+                                (\world ->
+                                    ( newModel
+                                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                    )
+                                )
+                            |> Maybe.withDefault ( model, Cmd.none )
 
 
 unequipArmor : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
