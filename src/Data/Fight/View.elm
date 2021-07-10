@@ -169,7 +169,7 @@ view perceptionLevel fight yourName =
                         [ H.text <| names_.subject.namePossCap ++ " turn"
                         , (first :: rest)
                             |> List.map
-                                (\( _, action ) ->
+                                (\( currentActionWho, action ) ->
                                     let
                                         action_ : String
                                         action_ =
@@ -221,7 +221,7 @@ view perceptionLevel fight yourName =
                                                         ++ " for "
                                                         ++ String.fromInt damage
                                                         ++ " damage."
-                                                        ++ (if Perception.atLeast Perception.Great perceptionLevel then
+                                                        ++ (if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
                                                                 " Remaining HP: "
                                                                     ++ String.fromInt remainingHp
                                                                     ++ "."
@@ -254,9 +254,15 @@ view perceptionLevel fight yourName =
                                                         ++ Item.name r.itemKind
                                                         ++ " for "
                                                         ++ String.fromInt r.healedHp
-                                                        ++ " HP. Current HP: "
-                                                        ++ String.fromInt r.newHp
-                                                        ++ "."
+                                                        ++ " HP."
+                                                        ++ (if currentActionWho == you || Perception.atLeast Perception.Great perceptionLevel then
+                                                                " Current HP: "
+                                                                    ++ String.fromInt r.newHp
+                                                                    ++ "."
+
+                                                            else
+                                                                ""
+                                                           )
                                     in
                                     H.li []
                                         [ Markdown.toHtml [ HA.class "fight-log-action" ] <|
