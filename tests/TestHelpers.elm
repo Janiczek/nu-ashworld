@@ -72,7 +72,7 @@ xpFuzzer =
 
 hpFuzzer : Fuzzer Int
 hpFuzzer =
-    Fuzz.intRange 0 200
+    Fuzz.intRange 1 200
 
 
 maxHpFuzzer : Fuzzer Int
@@ -329,7 +329,7 @@ itemFuzzer =
     Fuzz.map3 Item
         (Fuzz.intRange 0 99999)
         (oneOfValues Item.all)
-        (Fuzz.intRange 0 99999)
+        (Fuzz.intRange 1 500)
 
 
 naturalArmorClassFuzzer : Fuzzer Int

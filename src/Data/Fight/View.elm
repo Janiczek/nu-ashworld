@@ -389,6 +389,9 @@ view perceptionLevel fight yourName =
 
                             Fight.NobodyDead ->
                                 "You both get out of the fight alive."
+
+                            Fight.NobodyDeadGivenUp ->
+                                "You're both so exhausted by this long fight that you agree to finish this some other time."
                        )
             ]
         , H.p [] [ H.text "Stats:" ]

@@ -174,6 +174,9 @@ summary message =
                 Fight.NobodyDead ->
                     "You were attacked by " ++ r.attacker ++ " and both stayed alive"
 
+                Fight.NobodyDeadGivenUp ->
+                    "You were attacked by " ++ r.attacker ++ " but nobody was able to kill the other"
+
         YouAttacked r ->
             case r.fightInfo.result of
                 Fight.AttackerWon _ ->
@@ -190,6 +193,9 @@ summary message =
 
                 Fight.NobodyDead ->
                     "You attacked " ++ r.target ++ " and both stayed alive"
+
+                Fight.NobodyDeadGivenUp ->
+                    "You attacked " ++ r.target ++ " but nobody was able to kill the other"
 
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg

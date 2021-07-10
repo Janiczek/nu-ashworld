@@ -56,7 +56,13 @@ type alias OngoingFight =
     , targetAp : Int
     , targetItemsUsed : Dict_.Dict Item.Kind Int
     , reverseLog : List ( Who, Fight.Action )
+    , actionsTaken : Int
     }
+
+
+maxActionsTaken : Int
+maxActionsTaken =
+    1000
 
 
 opponent_ : Who -> OngoingFight -> Opponent
@@ -138,10 +144,10 @@ subtractAp who action ongoing =
     in
     case who of
         Attacker ->
-            { ongoing | attackerAp = ongoing.attackerAp - apToSubtract }
+            { ongoing | attackerAp = max 0 <| ongoing.attackerAp - apToSubtract }
 
         Target ->
-            { ongoing | targetAp = ongoing.targetAp - apToSubtract }
+            { ongoing | targetAp = max 0 <| ongoing.targetAp - apToSubtract }
 
 
 subtractDistance : Int -> OngoingFight -> OngoingFight
@@ -402,6 +408,7 @@ generator r =
                         , targetAp = r.target.maxAp
                         , targetItemsUsed = Dict_.empty
                         , reverseLog = [ ( Attacker, Fight.Start { distanceHexes = distance } ) ]
+                        , actionsTaken = 0
                         }
                     )
 
@@ -415,9 +422,13 @@ generator r =
 
         turn : Who -> OngoingFight -> Generator OngoingFight
         turn who ongoing =
-            ongoing
-                |> resetAp who
-                |> runStrategyRepeatedly who
+            if bothAlive ongoing && not (givenUp ongoing) then
+                ongoing
+                    |> resetAp who
+                    |> runStrategyRepeatedly who
+
+            else
+                Random.constant ongoing
 
         resetAp : Who -> OngoingFight -> OngoingFight
         resetAp who ongoing =
@@ -430,7 +441,7 @@ generator r =
 
         turnsBySequenceLoop : OngoingFight -> Generator OngoingFight
         turnsBySequenceLoop ongoing =
-            if bothAlive ongoing then
+            if bothAlive ongoing && not (givenUp ongoing) then
                 turnsBySequence sequenceOrder ongoing
                     |> Random.andThen turnsBySequenceLoop
 
@@ -439,7 +450,7 @@ generator r =
 
         turnsBySequence : List Who -> OngoingFight -> Generator OngoingFight
         turnsBySequence remaining ongoing =
-            if bothAlive ongoing then
+            if bothAlive ongoing && not (givenUp ongoing) then
                 case remaining of
                     [] ->
                         Random.constant ongoing
@@ -460,7 +471,10 @@ generator r =
 
                 result : Fight.Result
                 result =
-                    if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
+                    if givenUp ongoing then
+                        Fight.NobodyDeadGivenUp
+
+                    else if ongoing.attacker.hp <= 0 && ongoing.target.hp <= 0 then
                         Fight.BothDead
 
                     else if ongoing.attacker.hp <= 0 then
@@ -572,6 +586,11 @@ generator r =
         |> Random.map finalizeFight
 
 
+givenUp : OngoingFight -> Bool
+givenUp ongoing =
+    ongoing.actionsTaken >= maxActionsTaken
+
+
 runStrategyRepeatedly : Who -> OngoingFight -> Generator OngoingFight
 runStrategyRepeatedly who ongoing =
     let
@@ -580,21 +599,50 @@ runStrategyRepeatedly who ongoing =
             opponent_ who ongoing
 
         go : OngoingFight -> Generator OngoingFight
-        go ongoing_ =
-            if bothAlive ongoing_ && opponentAp who ongoing_ > 0 then
-                runStrategy opponent.fightStrategy who ongoing_
+        go currentOngoing =
+            let
+                themWho : Who
+                themWho =
+                    Fight.theOther who
+
+                state : StrategyState
+                state =
+                    { you = opponent_ who currentOngoing
+                    , them = opponent_ themWho currentOngoing
+                    , themWho = themWho
+                    , yourAp = opponentAp who currentOngoing
+                    , yourItemsUsed = opponentItemsUsed who currentOngoing
+                    , distanceHexes = currentOngoing.distanceHexes
+                    , ongoingFight = currentOngoing
+                    }
+
+                command : Command
+                command =
+                    evalStrategy state opponent.fightStrategy
+            in
+            if bothAlive currentOngoing && not (givenUp currentOngoing) && opponentAp who currentOngoing > 0 then
+                runStrategy opponent.fightStrategy who currentOngoing
                     |> Random.andThen
-                        (\{ ranCommandSuccessfully, nextOngoing } ->
-                            if ranCommandSuccessfully then
-                                go nextOngoing
+                        (\userResult ->
+                            if userResult.ranCommandSuccessfully then
+                                go userResult.nextOngoing
 
                             else
-                                runStrategy FightStrategy.doWhatever who ongoing_
-                                    |> Random.map .nextOngoing
+                                -- fallback strategy: DoWhatever
+                                runStrategy FightStrategy.doWhatever who currentOngoing
+                                    |> Random.andThen
+                                        (\fallbackResult ->
+                                            if fallbackResult.ranCommandSuccessfully then
+                                                go fallbackResult.nextOngoing
+
+                                            else
+                                                -- no meaningful action left, let's end the turn
+                                                Random.constant currentOngoing
+                                        )
                         )
 
             else
-                Random.constant ongoing_
+                Random.constant currentOngoing
     in
     go ongoing
 
@@ -666,7 +714,7 @@ finalizeCommand : OngoingFight -> Generator { ranCommandSuccessfully : Bool, nex
 finalizeCommand ongoing =
     Random.constant
         { ranCommandSuccessfully = True
-        , nextOngoing = ongoing
+        , nextOngoing = { ongoing | actionsTaken = ongoing.actionsTaken + 1 }
         }
 
 
@@ -678,12 +726,15 @@ heal who ongoing itemKind =
     in
     if itemCount itemKind opponent <= 0 then
         rejectCommand ongoing
+
+    else if Item.healAmount itemKind == 0 then
         -- TODO validate strategies and tell user the item cannot heal when defining the strategy?
         {- We're not using <= because there might later be usages for items that
            damage you instead of healing? Who knows
         -}
+        rejectCommand ongoing
 
-    else if Item.healAmount itemKind == 0 then
+    else if opponent.hp == opponent.maxHp then
         rejectCommand ongoing
 
     else

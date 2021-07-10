@@ -81,6 +81,7 @@ type Result
     | TargetAlreadyDead
     | BothDead
     | NobodyDead
+    | NobodyDeadGivenUp
 
 
 type Who
@@ -222,11 +223,15 @@ encodeResult result =
         NobodyDead ->
             JE.object [ ( "type", JE.string "NobodyDead" ) ]
 
+        NobodyDeadGivenUp ->
+            JE.object [ ( "type", JE.string "NobodyDeadGivenUp" ) ]
+
 
 resultDecoder : Decoder Result
 resultDecoder =
     JD.oneOf
-        [ resultDecoderV2
+        [ resultDecoderV3
+        , resultDecoderV2
         , resultDecoderV1
         ]
 
@@ -319,6 +324,57 @@ resultDecoderV2 =
 
                     "NobodyDead" ->
                         JD.succeed NobodyDead
+
+                    _ ->
+                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
+            )
+
+
+{-| Adding the `NobodyDeadGivenUp` result type
+-}
+resultDecoderV3 : Decoder Result
+resultDecoderV3 =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "AttackerWon" ->
+                        JD.map3
+                            (\xp caps items ->
+                                AttackerWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    , itemsGained = items
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+                            (JD.field "itemsGained" (JD.list Item.decoder))
+
+                    "TargetWon" ->
+                        JD.map3
+                            (\xp caps items ->
+                                TargetWon
+                                    { xpGained = xp
+                                    , capsGained = caps
+                                    , itemsGained = items
+                                    }
+                            )
+                            (JD.field "xpGained" JD.int)
+                            (JD.field "capsGained" JD.int)
+                            (JD.field "itemsGained" (JD.list Item.decoder))
+
+                    "TargetAlreadyDead" ->
+                        JD.succeed TargetAlreadyDead
+
+                    "BothDead" ->
+                        JD.succeed BothDead
+
+                    "NobodyDead" ->
+                        JD.succeed NobodyDead
+
+                    "NobodyDeadGivenUp" ->
+                        JD.succeed NobodyDeadGivenUp
 
                     _ ->
                         JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"

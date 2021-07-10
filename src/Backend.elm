@@ -278,6 +278,9 @@ update msg model =
                                 Fight.NobodyDead ->
                                     identity
 
+                                Fight.NobodyDeadGivenUp ->
+                                    identity
+
                                 Fight.TargetAlreadyDead ->
                                     identity
 

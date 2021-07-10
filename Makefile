@@ -1,3 +1,6 @@
+SEED ?= "$$RANDOM"
+FUZZ ?= "100"
+
 .PHONY: watch
 watch:
 	elmid --watched-folder=src src/DummyMain.elm
@@ -9,7 +12,7 @@ start:
 .PHONY: test
 test:
 	gsed --in-place=.bak '/lamdera/d' elm.json
-	yarn elm-test-rs || true
+	yarn elm-test-rs --seed=${SEED} --fuzz=${FUZZ} || true
 	mv elm.json.bak elm.json
 
 .PHONY: test-long
