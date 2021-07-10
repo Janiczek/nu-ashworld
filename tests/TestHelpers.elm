@@ -143,17 +143,9 @@ commandFuzzer =
     Fuzz.oneOf
         [ Fuzz.map Attack shotTypeFuzzer
         , Fuzz.constant AttackRandomly
-        , Fuzz.map Heal mostlyHealingItemKindFuzzer
+        , Fuzz.map Heal healingItemKindFuzzer
         , Fuzz.constant MoveForward
         , Fuzz.constant DoWhatever
-        ]
-
-
-mostlyHealingItemKindFuzzer : Fuzzer Item.Kind
-mostlyHealingItemKindFuzzer =
-    Fuzz.frequency
-        [ ( 9, healingItemKindFuzzer )
-        , ( 1, itemKindFuzzer )
         ]
 
 
@@ -208,8 +200,8 @@ valueFuzzer =
     Fuzz.oneOf
         [ Fuzz.constant MyHP
         , Fuzz.constant MyAP
-        , Fuzz.map MyItemCount mostlyHealingItemKindFuzzer
-        , Fuzz.map ItemsUsed mostlyHealingItemKindFuzzer
+        , Fuzz.map MyItemCount healingItemKindFuzzer
+        , Fuzz.map ItemsUsed healingItemKindFuzzer
         , Fuzz.constant TheirLevel
         , Fuzz.map ChanceToHit shotTypeFuzzer
         , Fuzz.constant Distance
@@ -219,13 +211,6 @@ valueFuzzer =
 shotTypeFuzzer : Fuzzer ShotType
 shotTypeFuzzer =
     ShotType.all
-        |> List.map Fuzz.constant
-        |> Fuzz.oneOf
-
-
-itemKindFuzzer : Fuzzer Item.Kind
-itemKindFuzzer =
-    Item.all
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
 

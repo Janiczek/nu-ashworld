@@ -141,8 +141,18 @@ operatorCondition =
         |. P.token " "
         |= operator
         |. P.token " "
-        |= P.int
+        |= possiblyNegativeInt
         |> P.map Operator
+
+
+possiblyNegativeInt : Parser Int
+possiblyNegativeInt =
+    P.oneOf
+        [ P.succeed negate
+            |. P.symbol "-"
+            |= P.int
+        , P.int
+        ]
 
 
 operator : Parser Operator

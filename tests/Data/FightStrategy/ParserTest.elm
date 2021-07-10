@@ -1,7 +1,7 @@
 module Data.FightStrategy.ParserTest exposing (..)
 
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
-import Data.FightStrategy
+import Data.FightStrategy as FightStrategy
     exposing
         ( Command(..)
         , Condition(..)
@@ -14,7 +14,12 @@ import Data.Item exposing (Kind(..))
 import Expect
 import Parser as P
 import Test exposing (Test)
-import TestHelpers exposing (multilineInput, parserTest)
+import TestHelpers
+    exposing
+        ( fightStrategyFuzzer
+        , multilineInput
+        , parserTest
+        )
 
 
 value : Test
@@ -171,3 +176,16 @@ fightStrategy =
                 )
           )
         ]
+
+
+roundtrip : Test
+roundtrip =
+    Test.fuzz
+        (fightStrategyFuzzer { maxDepth = 5 })
+        "(strategy |> toString |> parse) == strategy"
+    <|
+        \strategy ->
+            strategy
+                |> FightStrategy.toString
+                |> FightStrategy.parse
+                |> Expect.equal (Ok strategy)
