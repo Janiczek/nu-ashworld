@@ -581,7 +581,7 @@ runStrategyRepeatedly who ongoing =
 
         go : OngoingFight -> Generator OngoingFight
         go ongoing_ =
-            if bothAlive ongoing_ then
+            if bothAlive ongoing_ && opponentAp who ongoing_ > 0 then
                 runStrategy opponent.fightStrategy who ongoing_
                     |> Random.andThen
                         (\{ ranCommandSuccessfully, nextOngoing } ->
@@ -589,7 +589,8 @@ runStrategyRepeatedly who ongoing =
                                 go nextOngoing
 
                             else
-                                Random.constant nextOngoing
+                                runStrategy FightStrategy.doWhatever who ongoing_
+                                    |> Random.map .nextOngoing
                         )
 
             else
