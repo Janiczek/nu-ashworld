@@ -716,15 +716,16 @@ decItem : Item.Kind -> Opponent -> Opponent
 decItem kind opponent =
     { opponent
         | items =
-            Dict.map
-                (\_ item ->
-                    if item.kind == kind then
-                        { item | count = item.count - 1 }
+            opponent.items
+                |> Dict.map
+                    (\_ item ->
+                        if item.kind == kind && item.count > 0 then
+                            { item | count = item.count - 1 }
 
-                    else
-                        item
-                )
-                opponent.items
+                        else
+                            item
+                    )
+                |> Dict.filter (\_ { count } -> count > 0)
     }
 
 
