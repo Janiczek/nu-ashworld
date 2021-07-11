@@ -405,7 +405,29 @@ update msg model =
             )
 
         SetFightStrategyText text ->
-            ( { model | route = Route.setSettingsFightStrategyText text model.route }
+            ( { model
+                | route =
+                    model.route
+                        |> Route.mapSettings (\r -> { r | fightStrategyText = text })
+              }
+            , Cmd.none
+            )
+
+        HoverFightStrategyError error ->
+            ( { model
+                | route =
+                    model.route
+                        |> Route.mapSettings (\r -> { r | hoveredError = Just error })
+              }
+            , Cmd.none
+            )
+
+        StopHoveringFightStrategyError ->
+            ( { model
+                | route =
+                    model.route
+                        |> Route.mapSettings (\r -> { r | hoveredError = Nothing })
+              }
             , Cmd.none
             )
 
@@ -864,6 +886,7 @@ contentView model =
                         withCreatedPlayer world <|
                             settingsFightStrategyView
                                 r.fightStrategyText
+                                r.hoveredError
 
                     Route.FightStrategySyntaxHelp ->
                         settingsFightStrategySyntaxHelpView
@@ -2846,6 +2869,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
                 (Route.Settings
                     { subroute = Route.FightStrategy
                     , fightStrategyText = fightStrategyText
+                    , hoveredError = Nothing
                     }
                 )
             )
@@ -2869,10 +2893,11 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
 
 settingsFightStrategyView :
     String
+    -> Maybe { index : Int, row : Int, col : Int }
     -> WorldLoggedInData
     -> CPlayer
     -> List (Html FrontendMsg)
-settingsFightStrategyView fightStrategyText _ player =
+settingsFightStrategyView fightStrategyText hoveredError _ player =
     let
         hasChanged : Bool
         hasChanged =
@@ -2907,8 +2932,8 @@ settingsFightStrategyView fightStrategyText _ player =
                 Err deadEnds_ ->
                     deadEnds_
 
-        viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
-        viewDeadEnd deadEnd =
+        viewDeadEnd : Int -> Parser.DeadEnd -> Html FrontendMsg
+        viewDeadEnd index deadEnd =
             let
                 item : String
                 item =
@@ -2938,7 +2963,17 @@ settingsFightStrategyView fightStrategyText _ player =
                         ++ ", column "
                         ++ String.fromInt deadEnd.col
             in
-            H.li [ HA.class "fight-strategy-dead-end" ]
+            H.li
+                [ HA.class "fight-strategy-dead-end"
+                , HA.classList [ ( "hovered", Just index == Maybe.map .index hoveredError ) ]
+                , HE.onMouseOver <|
+                    HoverFightStrategyError
+                        { index = index
+                        , row = deadEnd.row
+                        , col = deadEnd.col
+                        }
+                , HE.onMouseOut StopHoveringFightStrategyError
+                ]
                 [ H.span [] [ H.text item ]
                 , H.span
                     [ HA.class "fight-strategy-dead-end-location" ]
@@ -2978,6 +3013,7 @@ settingsFightStrategyView fightStrategyText _ player =
                         (Route.Settings
                             { subroute = Route.FightStrategySyntaxHelp
                             , fightStrategyText = fightStrategyText
+                            , hoveredError = Nothing
                             }
                         )
                     )
@@ -3035,7 +3071,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 , H.ul [ HA.class "fight-strategy-dead-ends" ]
                     (deadEnds
                         |> List.sortBy deadEndCategorization
-                        |> List.map viewDeadEnd
+                        |> List.indexedMap viewDeadEnd
                     )
                 ]
             )
@@ -3583,6 +3619,7 @@ loggedInLinksView player currentRoute =
                         (Route.Settings
                             { subroute = Route.FightStrategy
                             , fightStrategyText = p.fightStrategyText
+                            , hoveredError = Nothing
                             }
                         )
                         Nothing

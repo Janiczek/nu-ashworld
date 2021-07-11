@@ -7,9 +7,9 @@ module Frontend.Route exposing
     , isMessagesRelatedRoute
     , loggedOut
     , mapBarterState
+    , mapSettings
     , needsAdmin
     , needsLogin
-    , setSettingsFightStrategyText
     )
 
 import Data.Barter as Barter
@@ -30,10 +30,14 @@ type Route
     | Message Message
     | CharCreation
     | Admin AdminRoute
-    | Settings
-        { fightStrategyText : String
-        , subroute : SettingsRoute
-        }
+    | Settings SettingsData
+
+
+type alias SettingsData =
+    { fightStrategyText : String
+    , subroute : SettingsRoute
+    , hoveredError : Maybe { index : Int, row : Int, col : Int }
+    }
 
 
 type SettingsRoute
@@ -132,11 +136,11 @@ mapBarterState fn route =
             route
 
 
-setSettingsFightStrategyText : String -> Route -> Route
-setSettingsFightStrategyText text route =
+mapSettings : (SettingsData -> SettingsData) -> Route -> Route
+mapSettings fn route =
     case route of
         Settings r ->
-            Settings { r | fightStrategyText = text }
+            Settings (fn r)
 
         _ ->
             route

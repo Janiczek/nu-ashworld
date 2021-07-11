@@ -104,6 +104,12 @@ type FrontendMsg
     | HoverItem HoveredItem
     | StopHoveringItem
     | SetFightStrategyText String
+    | HoverFightStrategyError
+        { index : Int
+        , row : Int
+        , col : Int
+        }
+    | StopHoveringFightStrategyError
 
 
 type BarterMsg
