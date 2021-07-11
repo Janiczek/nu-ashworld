@@ -46,6 +46,7 @@ type Condition
     = Or Condition Condition
     | And Condition Condition
     | Operator OperatorData
+    | OpponentIsPlayer
 
 
 type alias OperatorData =
@@ -60,7 +61,6 @@ type Value
     | MyAP
     | MyItemCount Item.Kind
     | ItemsUsed Item.Kind
-    | TheirLevel
     | ChanceToHit ShotType
     | Distance
 
@@ -89,7 +89,7 @@ toString strategy =
                 ++ conditionToString condition
                 ++ " then\n"
                 ++ indent (toString then_)
-                ++ "\nelse\n"
+                ++ "\n\nelse\n"
                 ++ indent (toString else_)
 
         Command command ->
@@ -127,6 +127,9 @@ conditionToString condition =
                 ++ conditionToString c2
                 ++ ")"
 
+        OpponentIsPlayer ->
+            "opponent is player"
+
         Operator { op, value, number_ } ->
             valueToString value
                 ++ " "
@@ -145,15 +148,12 @@ valueToString value =
             "my AP"
 
         MyItemCount kind ->
-            Item.name kind
-                ++ " in inventory"
-
-        ItemsUsed kind ->
-            "used "
+            "number of available "
                 ++ Item.name kind
 
-        TheirLevel ->
-            "opponent's level"
+        ItemsUsed kind ->
+            "number of used "
+                ++ Item.name kind
 
         ChanceToHit shotType ->
             "chance to hit ("
@@ -285,6 +285,11 @@ encodeCondition condition =
                 , ( "c2", encodeCondition c2 )
                 ]
 
+        OpponentIsPlayer ->
+            JE.object
+                [ ( "type", JE.string "OpponentIsPlayer" )
+                ]
+
         Operator { op, value, number_ } ->
             JE.object
                 [ ( "type", JE.string "Operator" )
@@ -342,11 +347,6 @@ encodeValue value =
                 , ( "item", Item.encodeKind itemKind )
                 ]
 
-        TheirLevel ->
-            JE.object
-                [ ( "type", JE.string "TheirLevel" )
-                ]
-
         ChanceToHit shotType ->
             JE.object
                 [ ( "type", JE.string "ChanceToHit" )
@@ -397,6 +397,9 @@ conditionDecoder =
                             |> JD.andMap (JD.field "c1" conditionDecoder)
                             |> JD.andMap (JD.field "c2" conditionDecoder)
 
+                    "OpponentIsPlayer" ->
+                        JD.succeed OpponentIsPlayer
+
                     "Operator" ->
                         JD.succeed OperatorData
                             |> JD.andMap (JD.field "value" valueDecoder)
@@ -428,9 +431,6 @@ valueDecoder =
                     "ItemsUsed" ->
                         JD.succeed ItemsUsed
                             |> JD.andMap (JD.field "item" Item.kindDecoder)
-
-                    "TheirLevel" ->
-                        JD.succeed TheirLevel
 
                     "ChanceToHit" ->
                         JD.succeed ChanceToHit
@@ -540,9 +540,6 @@ extractItems strategy =
                 ItemsUsed kind ->
                     [ kind ]
 
-                TheirLevel ->
-                    []
-
                 ChanceToHit _ ->
                     []
 
@@ -575,6 +572,9 @@ extractItems strategy =
 
                 And c1 c2 ->
                     fromCondition c1 ++ fromCondition c2
+
+                OpponentIsPlayer ->
+                    []
 
                 Operator { value } ->
                     fromValue value

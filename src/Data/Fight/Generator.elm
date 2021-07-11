@@ -1050,6 +1050,9 @@ evalCondition state condition =
         And c1 c2 ->
             evalCondition state c1 && evalCondition state c2
 
+        OpponentIsPlayer ->
+            Fight.isPlayer state.them.type_
+
         Operator { op, value, number_ } ->
             operatorFn
                 op
@@ -1077,11 +1080,6 @@ evalValue state value =
             state.yourItemsUsed
                 |> Dict_.get itemKind
                 |> Maybe.withDefault 0
-
-        TheirLevel ->
-            state.them.type_
-                |> Fight.opponentXp
-                |> Xp.currentLevel
 
         ChanceToHit shotType ->
             Logic.unarmedChanceToHit

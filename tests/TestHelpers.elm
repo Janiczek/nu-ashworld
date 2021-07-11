@@ -163,6 +163,7 @@ conditionFuzzer r =
             [ Fuzz.map2 Or conditionFuzzer_ conditionFuzzer_
             , Fuzz.map2 And conditionFuzzer_ conditionFuzzer_
             , Fuzz.map Operator operatorDataFuzzer
+            , Fuzz.constant OpponentIsPlayer
             ]
 
 
@@ -202,7 +203,6 @@ valueFuzzer =
         , Fuzz.constant MyAP
         , Fuzz.map MyItemCount healingItemKindFuzzer
         , Fuzz.map ItemsUsed healingItemKindFuzzer
-        , Fuzz.constant TheirLevel
         , Fuzz.map ChanceToHit shotTypeFuzzer
         , Fuzz.constant Distance
         ]

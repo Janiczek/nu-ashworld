@@ -65,6 +65,10 @@ p {
   max-width: 60ch;
 }
 
+pre {
+  font-family: BQN386;
+}
+
 button, input, textarea {
   font-family: BQN386;
   border: none;
@@ -74,7 +78,9 @@ button, input, textarea {
   padding: 0;
   margin: 0;
 }
-
+button:disabled {
+  color: var(--fg03);
+}
 input:focus, textarea:focus {
   outline: none;
 }
@@ -454,11 +460,6 @@ table tbody tr:hover td {
   background: transparent;
   color: var(--fg01);
   font-size: 18px;
-}
-
-.character-special-attribute-dec button:disabled,
-.character-special-attribute-inc button:disabled {
-  color: var(--fg03);
 }
 
 .character-special-attribute-dec button:not(:disabled):hover,
@@ -995,38 +996,107 @@ table tbody tr:hover td {
   text-align: right;
 }
 
-.fight-strategy {
+/* select+option taken mainly from https://codepen.io/5t3ph/pen/MWyyYNz */
+.fight-strategy-select-wrapper {
+  display: grid;
+  grid-template-areas: "select";
+  align-items: center;
   position: relative;
-}
-.fight-strategy-input {
-  position: absolute;
-  opacity: 0;
+  font-family: BQN386;
+  min-width: 20ch;
+  max-width: 50ch;
+  border-radius: 4px;
+  font-size: 18px;
   cursor: pointer;
+  background-color: var(--fg02);
 }
-.fight-strategy-fake-input {
+.fight-strategy-select-wrapper::after {
+  grid-area: select;
+  content: "∨";
+  justify-self: end;
+  color: #000000; /* we can't affect <option> color, so we give up and make the arrow have the same color */
+  padding-right: 8px;
+}
+.fight-strategy-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  border: none;
+  margin: 0;
+  padding: 4px 32px 4px 8px;
+  width: 100%;
+  font-family: BQN386;
+  font-size: inherit;
+  cursor: inherit;
+  line-height: inherit;
+  z-index: 1;
+  outline: none;
+  grid-area: select;
+}
+.fight-strategy-select::-ms-expand {
+  display: none;
+}
+.fight-strategy-select:focus + .fight-strategy-select-focus {
   position: absolute;
-  left: 0;
-  top: 0;
-  height: 1em;
-  width: 4ch;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  border: 2px solid var(--fg01);
+  border-radius: inherit;
 }
-.fight-strategy-fake-input:after {
-  font-family: BQN386;
-  content: "[ ]";
+/* end of select */
+
+.fight-strategy-grid {
+  display: grid;
+  grid-template-areas: "textarea info";
 }
-.fight-strategy-input:checked ~ .fight-strategy-fake-input:after {
-  content: "[X]";
+.fight-strategy-textarea {
+  background-color: var(--bg02);
+  grid-area: textarea;
+  width: 50ch;
+  height: 25em;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 4px;
 }
-.fight-strategy-text {
-  margin-left: 4ch;
+.fight-strategy-info {
+  grid-area: info;
 }
-.fight-strategy:hover .fight-strategy-fake-input:after {
-  color: var(--fg01);
+
+.fight-strategy-save-btn {
 }
-.fight-strategy:hover .fight-strategy-name {
-  color: var(--fg01);
+.fight-strategy-dead-ends {
+  margin: 0;
+  padding: 0;
 }
-.fight-strategy-code {
-  font-family: BQN386;
-  color: var(--fg03);
+.fight-strategy-dead-end {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.fight-strategy-dead-end-location {
+  margin-left: 2ch;
+}
+.fight-strategy-syntax-help {
+  font-size: 16px;
+}
+.fight-strategy-syntax-help-reference {
+  color: var(--fg-highlight);
+}
+.fight-strategy-syntax-help-grid {
+  display: grid;
+  grid-template-areas: 'cheatsheet hover';
+}
+.fight-strategy-syntax-help-cheatsheet {
+  grid-area: cheatsheet;
+}
+.fight-strategy-syntax-help-hover {
+  grid-area: hover;
+  margin-left: 2ch;
+}
+.fight-strategy-syntax-help-hover-description {
+  white-space: pre-wrap;
 }

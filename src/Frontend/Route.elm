@@ -1,6 +1,7 @@
 module Frontend.Route exposing
     ( AdminRoute(..)
     , Route(..)
+    , SettingsRoute(..)
     , TownRoute(..)
     , barterState
     , isMessagesRelatedRoute
@@ -8,6 +9,7 @@ module Frontend.Route exposing
     , mapBarterState
     , needsAdmin
     , needsLogin
+    , setSettingsCustomFightStrategyText
     )
 
 import Data.Barter as Barter
@@ -29,6 +31,14 @@ type Route
     | CharCreation
     | Admin AdminRoute
     | Settings
+        { customFightStrategyText : String
+        , subroute : SettingsRoute
+        }
+
+
+type SettingsRoute
+    = FightStrategy
+    | FightStrategySyntaxHelp
 
 
 type TownRoute
@@ -79,7 +89,7 @@ needsLogin route =
         Admin _ ->
             False
 
-        Settings ->
+        Settings _ ->
             True
 
 
@@ -117,6 +127,16 @@ mapBarterState fn route =
     case route of
         Town (Store r) ->
             Town (Store { r | barter = fn r.barter })
+
+        _ ->
+            route
+
+
+setSettingsCustomFightStrategyText : String -> Route -> Route
+setSettingsCustomFightStrategyText text route =
+    case route of
+        Settings r ->
+            Settings { r | customFightStrategyText = text }
 
         _ ->
             route
@@ -161,5 +181,5 @@ isMessagesRelatedRoute route =
         Admin _ ->
             False
 
-        Settings ->
+        Settings _ ->
             False

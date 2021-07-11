@@ -9,8 +9,10 @@ import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Fight.ShotType as ShotType
 import Data.Fight.View
-import Data.FightStrategy as FightStrategy
-import Data.FightStrategy.Named as FightStrategy exposing (NamedStrategy)
+import Data.FightStrategy as FightStrategy exposing (FightStrategy)
+import Data.FightStrategy.Help as FightStrategyHelp
+import Data.FightStrategy.Named as FightStrategy
+import Data.FightStrategy.Parser as FightStrategy
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
@@ -61,9 +63,13 @@ import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
+import List.Extra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
+import Parser
+import Result.Extra as Result
 import Set exposing (Set)
+import String.Extra as String
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
 import Task
@@ -99,6 +105,11 @@ init _ key =
       , alertMessage = Nothing
       , mapMouseCoords = Nothing
       , hoveredItem = Nothing
+      , fightStrategyInput =
+            FightStrategy.promoted
+                |> Tuple.second
+                |> FightStrategy.toString
+      , selectedFightStrategy = Tuple.first FightStrategy.promoted
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -395,6 +406,24 @@ update msg model =
 
         StopHoveringItem ->
             ( { model | hoveredItem = Nothing }
+            , Cmd.none
+            )
+
+        SelectFightStrategy strategyName ->
+            ( { model | selectedFightStrategy = strategyName }
+            , Cmd.none
+            )
+
+        SetFightStrategyText text ->
+            ( { model
+                | route = Route.setSettingsCustomFightStrategyText text model.route
+                , selectedFightStrategy =
+                    if model.selectedFightStrategy /= FightStrategy.custom then
+                        FightStrategy.custom
+
+                    else
+                        model.selectedFightStrategy
+              }
             , Cmd.none
             )
 
@@ -847,10 +876,21 @@ contentView model =
             ( Route.Admin _, _ ) ->
                 contentUnavailableToNonAdminView
 
-            ( Route.Settings, WorldLoggedIn world ) ->
-                withCreatedPlayer world settingsView
+            ( Route.Settings r, WorldLoggedIn world ) ->
+                case r.subroute of
+                    Route.FightStrategy ->
+                        withCreatedPlayer world <|
+                            settingsFightStrategyView
+                                { customFightStrategyText = r.customFightStrategyText
+                                , selectedFightStrategy = model.selectedFightStrategy
+                                }
 
-            ( Route.Settings, _ ) ->
+                    Route.FightStrategySyntaxHelp ->
+                        settingsFightStrategySyntaxHelpView
+                            model.hoveredItem
+                            r.customFightStrategyText
+
+            ( Route.Settings _, _ ) ->
                 contentUnavailableToLoggedOutView
         )
 
@@ -2792,41 +2832,261 @@ messageView zone message _ player =
     ]
 
 
-settingsView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
-settingsView _ player =
+settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> String -> List (Html FrontendMsg)
+settingsFightStrategySyntaxHelpView maybeHoveredItem customFightStrategyText =
     let
-        fightStrategyView : NamedStrategy -> Html FrontendMsg
-        fightStrategyView { name, strategy } =
-            H.div
-                [ HE.onClick <| AskToSetFightStrategy strategy
-                , HA.class "fight-strategy"
-                ]
-                [ H.label
-                    [ HA.for name ]
-                    [ H.input
-                        [ HA.type_ "radio"
-                        , HA.name "fight-strategy"
-                        , HA.value name
-                        , HA.checked (strategy == player.fightStrategy)
-                        , HA.class "fight-strategy-input"
+        viewMarkup : FightStrategyHelp.Markup -> Html FrontendMsg
+        viewMarkup markup =
+            case markup of
+                FightStrategyHelp.Text text ->
+                    H.text text
+
+                FightStrategyHelp.Reference reference ->
+                    H.span
+                        [ HA.class "fight-strategy-syntax-help-reference"
+                        , HE.onMouseOver <| HoverItem <| HoveredFightStrategyReference reference
+                        , HE.onMouseOut StopHoveringItem
                         ]
-                        []
-                    , H.span [ HA.class "fight-strategy-fake-input" ] []
-                    , H.div
-                        [ HA.class "fight-strategy-text" ]
-                        [ H.span
-                            [ HA.class "fight-strategy-name" ]
-                            [ H.text name ]
-                        , H.pre
-                            [ HA.class "fight-strategy-code" ]
-                            [ H.text <| FightStrategy.toString strategy ]
-                        ]
-                    ]
-                ]
+                        [ H.text <| FightStrategyHelp.referenceText reference ]
+
+        hoverInfo =
+            case maybeHoveredItem of
+                Nothing ->
+                    { title = "Hover for help"
+                    , description = ""
+                    }
+
+                Just hoveredItem ->
+                    HoveredItem.text hoveredItem
     in
-    [ pageTitleView "Settings"
-    , H.h3 [] [ H.text "Fight strategy" ]
-    , H.div [] (List.map fightStrategyView FightStrategy.all)
+    [ pageTitleView "Fight Strategy syntax help"
+    , H.button
+        [ HE.onClick
+            (GoToRoute
+                (Route.Settings
+                    { subroute = Route.FightStrategy
+                    , customFightStrategyText = customFightStrategyText
+                    }
+                )
+            )
+        ]
+        [ H.text "[Back]" ]
+    , H.div
+        [ HA.class "fight-strategy-syntax-help-grid" ]
+        [ H.pre
+            [ HA.class "fight-strategy-syntax-help-cheatsheet" ]
+            (List.map viewMarkup FightStrategyHelp.help)
+        , H.div
+            [ HA.class "fight-strategy-syntax-help-hover" ]
+            [ H.h3 [] [ H.text hoverInfo.title ]
+            , H.pre
+                [ HA.class "fight-strategy-syntax-help-hover-description" ]
+                [ H.text hoverInfo.description ]
+            ]
+        ]
+    ]
+
+
+settingsFightStrategyView :
+    { customFightStrategyText : String
+    , selectedFightStrategy : String
+    }
+    -> WorldLoggedInData
+    -> CPlayer
+    -> List (Html FrontendMsg)
+settingsFightStrategyView { customFightStrategyText, selectedFightStrategy } _ player =
+    let
+        isCustom : Bool
+        isCustom =
+            selectedFightStrategy == FightStrategy.custom
+
+        namedStrategy : Maybe FightStrategy
+        namedStrategy =
+            Dict.get selectedFightStrategy FightStrategy.all
+
+        input : String
+        input =
+            if isCustom then
+                customFightStrategyText
+
+            else
+                namedStrategy
+                    |> Maybe.map FightStrategy.toString
+                    |> Maybe.withDefault ""
+
+        hasCustomChanged : Bool
+        hasCustomChanged =
+            customFightStrategyText /= player.customFightStrategyText
+
+        options : List String
+        options =
+            FightStrategy.custom
+                :: (FightStrategy.all |> Dict.keys |> List.sort)
+
+        parseResult : Result (List Parser.DeadEnd) FightStrategy
+        parseResult =
+            FightStrategy.parse customFightStrategyText
+
+        endRow : Int
+        endRow =
+            1 + String.countOccurrences "\n" customFightStrategyText
+
+        endCol : Int
+        endCol =
+            customFightStrategyText
+                |> String.lines
+                |> List.last
+                |> Maybe.map String.length
+                |> Maybe.withDefault 1
+                |> max 1
+
+        isDeadEndAtEndOfString : Parser.DeadEnd -> Bool
+        isDeadEndAtEndOfString deadEnd =
+            deadEnd.row == endRow && deadEnd.col == endCol
+
+        deadEnds =
+            case parseResult of
+                Ok _ ->
+                    []
+
+                Err deadEnds_ ->
+                    deadEnds_
+
+        viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
+        viewDeadEnd deadEnd =
+            let
+                item : String
+                item =
+                    case deadEnd.problem of
+                        Parser.ExpectingInt ->
+                            "a number"
+
+                        Parser.Expecting string ->
+                            "'" ++ string ++ "'"
+
+                        Parser.ExpectingSymbol string ->
+                            "'" ++ string ++ "'"
+
+                        Parser.ExpectingKeyword string ->
+                            "'" ++ string ++ "'"
+
+                        Parser.ExpectingEnd ->
+                            "end of the strategy"
+
+                        _ ->
+                            "<HEY YOU FOUND A BUG> " ++ Debug.toString deadEnd.problem
+
+                location : String
+                location =
+                    " at line "
+                        ++ String.fromInt deadEnd.row
+                        ++ ", column "
+                        ++ String.fromInt deadEnd.col
+            in
+            H.li [ HA.class "fight-strategy-dead-end" ]
+                [ H.span [] [ H.text item ]
+                , H.span
+                    [ HA.class "fight-strategy-dead-end-location" ]
+                    [ H.text location ]
+                ]
+
+        deadEndCategorization : Parser.DeadEnd -> ( ( Int, Int ), String, String )
+        deadEndCategorization deadEnd =
+            let
+                ( item, category ) =
+                    case deadEnd.problem of
+                        Parser.ExpectingInt ->
+                            ( "", "int" )
+
+                        Parser.Expecting string ->
+                            ( string, "3: token" )
+
+                        Parser.ExpectingSymbol string ->
+                            ( string, "2: symbol" )
+
+                        Parser.ExpectingKeyword string ->
+                            ( string, "1: keyword" )
+
+                        _ ->
+                            ( "", "weird" )
+            in
+            ( ( deadEnd.row, deadEnd.col )
+            , category
+            , item
+            )
+    in
+    [ pageTitleView "Settings: Fight Strategy"
+    , H.div
+        [ HA.class "fight-strategy-select-wrapper" ]
+        [ H.select
+            [ HE.onChange SelectFightStrategy
+            , HA.class "fight-strategy-select"
+            ]
+            (options
+                |> List.map
+                    (\name ->
+                        H.option
+                            [ HA.value name
+                            , HA.selected <| selectedFightStrategy == name
+                            ]
+                            [ H.text name ]
+                    )
+            )
+        , H.span [ HA.class "fight-strategy-select-focus" ] []
+        ]
+    , H.div
+        [ HA.class "fight-strategy-grid" ]
+        [ H.textarea
+            [ HE.onInput SetFightStrategyText
+            , HA.class "fight-strategy-textarea"
+            , HA.value input
+            ]
+            []
+        , H.div
+            [ HA.class "fight-strategy-info" ]
+            (if Result.isOk parseResult then
+                [ H.div [] [ H.text "Info:" ]
+                , H.text "Your strategy is OK"
+                ]
+
+             else
+                [ H.div []
+                    [ H.text "How to proceed "
+                    , H.button
+                        [ HE.onClick
+                            (GoToRoute
+                                (Route.Settings
+                                    { subroute = Route.FightStrategySyntaxHelp
+                                    , customFightStrategyText = customFightStrategyText
+                                    }
+                                )
+                            )
+                        ]
+                        [ H.text "[Help]" ]
+                    ]
+                , H.div []
+                    [ H.text <|
+                        if String.isEmpty (String.trim customFightStrategyText) then
+                            "Start with"
+
+                        else
+                            "There should be"
+                    ]
+                , H.ul [ HA.class "fight-strategy-dead-ends" ]
+                    (deadEnds
+                        |> List.sortBy deadEndCategorization
+                        |> List.map viewDeadEnd
+                    )
+                ]
+            )
+        ]
+    , H.button
+        [ HA.class "fight-strategy-save-btn"
+        , HA.disabled <|
+            (isCustom && not hasCustomChanged)
+                || Result.isErr parseResult
+        ]
+        [ H.text "[ Save TODO ]" ]
     ]
 
 
@@ -3361,7 +3621,14 @@ loggedInLinksView player currentRoute =
 
                       else
                         linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
-                    , linkIn "Settings" Route.Settings Nothing False
+                    , linkIn "Settings"
+                        (Route.Settings
+                            { subroute = Route.FightStrategy
+                            , customFightStrategyText = p.customFightStrategyText
+                            }
+                        )
+                        Nothing
+                        False
                     , linkInFull "Messages"
                         Route.Messages
                         Route.isMessagesRelatedRoute

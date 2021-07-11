@@ -29,7 +29,15 @@ import Parser as P exposing ((|.), (|=), Parser)
 
 parse : String -> Result (List P.DeadEnd) FightStrategy
 parse string =
-    P.run fightStrategy string
+    P.run parser string
+
+
+parser : Parser FightStrategy
+parser =
+    P.succeed identity
+        |= fightStrategy
+        |. P.spaces
+        |. P.end
 
 
 fightStrategy : Parser FightStrategy
@@ -114,6 +122,7 @@ condition : Parser Condition
 condition =
     P.oneOf
         [ binary
+        , P.map (\_ -> OpponentIsPlayer) (P.keyword "opponent is player")
         , operatorCondition
         ]
 
@@ -173,7 +182,6 @@ value =
         , P.map (\_ -> MyAP) (P.keyword "my AP")
         , itemCount
         , itemsUsed
-        , P.map (\_ -> TheirLevel) (P.keyword "opponent's level")
         , chanceToHit
         , P.map (\_ -> Distance) (P.keyword "distance")
         ]
@@ -182,15 +190,15 @@ value =
 itemCount : Parser Value
 itemCount =
     P.succeed MyItemCount
-        |= itemKind
+        |. P.keyword "number of available"
         |. P.token " "
-        |. P.keyword "in inventory"
+        |= itemKind
 
 
 itemsUsed : Parser Value
 itemsUsed =
     P.succeed ItemsUsed
-        |. P.keyword "used"
+        |. P.keyword "number of used"
         |. P.token " "
         |= itemKind
 

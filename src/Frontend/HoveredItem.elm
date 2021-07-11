@@ -1,5 +1,6 @@
 module Frontend.HoveredItem exposing (HoveredItem(..), text)
 
+import Data.FightStrategy.Help as FightStrategyHelp
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
@@ -11,6 +12,7 @@ type HoveredItem
     | HoveredTrait Trait
     | HoveredSpecial Special.Type
     | HoveredSkill Skill
+    | HoveredFightStrategyReference FightStrategyHelp.Reference
 
 
 text : HoveredItem -> { title : String, description : String }
@@ -41,4 +43,9 @@ text hoveredItem =
                         else
                             "\n\nThis skill is not useful in the game yet."
                        )
+            }
+
+        HoveredFightStrategyReference reference ->
+            { title = FightStrategyHelp.referenceTitle reference
+            , description = FightStrategyHelp.referenceDescription reference
             }

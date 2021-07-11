@@ -27,14 +27,13 @@ value =
         FightStrategy.value
         [ ( "my HP", "my HP", Just MyHP )
         , ( "my AP", "my AP", Just MyAP )
-        , ( "their level", "opponent's level", Just TheirLevel )
         , ( "distance", "distance", Just Distance )
-        , ( "item count Stimpak", "Stimpak in inventory", Just (MyItemCount Stimpak) )
-        , ( "item count HealingPowder", "Healing Powder in inventory", Just (MyItemCount HealingPowder) )
-        , ( "item count - non-healing item also works", "Metal Armor in inventory", Just (MyItemCount MetalArmor) )
-        , ( "used Stimpak", "used Stimpak", Just (ItemsUsed Stimpak) )
-        , ( "used HealingPowder", "used Healing Powder", Just (ItemsUsed HealingPowder) )
-        , ( "used - non-healing item also works", "used Metal Armor", Just (ItemsUsed MetalArmor) )
+        , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount Stimpak) )
+        , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount HealingPowder) )
+        , ( "item count - non-healing item also works", "number of available Metal Armor", Just (MyItemCount MetalArmor) )
+        , ( "used Stimpak", "number of used Stimpak", Just (ItemsUsed Stimpak) )
+        , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed HealingPowder) )
+        , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed MetalArmor) )
         , ( "chance to hit NormalShot", "chance to hit (unaimed)", Just (ChanceToHit NormalShot) )
         , ( "chance to hit AimedShot Head", "chance to hit (head)", Just (ChanceToHit (AimedShot Head)) )
         , ( "chance to hit AimedShot LeftArm", "chance to hit (left arm)", Just (ChanceToHit (AimedShot LeftArm)) )
@@ -92,6 +91,7 @@ condition =
         FightStrategy.condition
         [ ( "op: my HP < 50", "my HP < 50", Just (Operator { value = MyHP, op = LT_, number_ = 50 }) )
         , ( "op: my AP >= 3", "my AP >= 3", Just (Operator { value = MyAP, op = GTE, number_ = 3 }) )
+        , ( "opponent is player", "opponent is player", Just OpponentIsPlayer )
         , ( "and"
           , "(my HP < 50 and my AP >= 3)"
           , Just
@@ -157,7 +157,7 @@ fightStrategy =
         , ( "nested if"
           , """
             if my HP < 10 then heal (Fruit) else
-            if used Fruit > 200 then heal (Stimpak) else
+            if number of used Fruit > 200 then heal (Stimpak) else
             attack randomly
             """
                 |> multilineInput

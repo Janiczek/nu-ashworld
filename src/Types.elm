@@ -50,6 +50,8 @@ type alias FrontendModel =
     , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     , hoveredItem : Maybe HoveredItem
+    , fightStrategyInput : String
+    , selectedFightStrategy : String
     }
 
 
@@ -103,6 +105,8 @@ type FrontendMsg
     | BarterMsg BarterMsg
     | HoverItem HoveredItem
     | StopHoveringItem
+    | SelectFightStrategy String
+    | SetFightStrategyText String
 
 
 type BarterMsg

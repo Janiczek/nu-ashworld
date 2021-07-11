@@ -1,7 +1,8 @@
 module Data.FightStrategy.Named exposing
-    ( NamedStrategy
-    , all
+    ( all
+    , custom
     , default
+    , promoted
     )
 
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
@@ -14,61 +15,65 @@ import Data.FightStrategy
         , Value(..)
         )
 import Data.Item exposing (Kind(..))
+import Dict exposing (Dict)
 
 
-type alias NamedStrategy =
-    { name : String
-    , strategy : FightStrategy
-    }
-
-
-all : List NamedStrategy
+all : Dict String FightStrategy
 all =
-    [ default
-    , conservative
-    , yolo
-    ]
+    Dict.fromList
+        [ default
+        , conservative
+        , yolo
+        ]
 
 
-default : NamedStrategy
+promoted : ( String, FightStrategy )
+promoted =
+    conservative
+
+
+default : ( String, FightStrategy )
 default =
-    { name = "Default"
-    , strategy = Command DoWhatever
-    }
+    ( "1: Default"
+    , Command DoWhatever
+    )
 
 
-conservative : NamedStrategy
+conservative : ( String, FightStrategy )
 conservative =
-    { name = "Conservative about Stimpaks"
-    , strategy =
-        If
-            { condition = Operator { value = Distance, op = GT_, number_ = 0 }
-            , then_ = Command MoveForward
-            , else_ =
-                If
-                    { condition =
-                        And
-                            (Operator { value = MyHP, op = LT_, number_ = 80 })
-                            (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 10 })
-                    , then_ = Command (Heal Stimpak)
-                    , else_ = Command (Attack (AimedShot Eyes))
-                    }
-            }
-    }
+    ( "2: Conservative about Stimpaks"
+    , If
+        { condition = Operator { value = Distance, op = GT_, number_ = 0 }
+        , then_ = Command MoveForward
+        , else_ =
+            If
+                { condition =
+                    And
+                        (Operator { value = MyHP, op = LT_, number_ = 80 })
+                        (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 10 })
+                , then_ = Command (Heal Stimpak)
+                , else_ = Command (Attack (AimedShot Eyes))
+                }
+        }
+    )
 
 
-yolo : NamedStrategy
+yolo : ( String, FightStrategy )
 yolo =
-    { name = "YOLO about Stimpaks"
-    , strategy =
-        If
-            { condition = Operator { value = Distance, op = GT_, number_ = 0 }
-            , then_ = Command MoveForward
-            , else_ =
-                If
-                    { condition = Operator { value = MyHP, op = LT_, number_ = 500 }
-                    , then_ = Command (Heal Stimpak)
-                    , else_ = Command (Attack (AimedShot Eyes))
-                    }
-            }
-    }
+    ( "3: YOLO about Stimpaks"
+    , If
+        { condition = Operator { value = Distance, op = GT_, number_ = 0 }
+        , then_ = Command MoveForward
+        , else_ =
+            If
+                { condition = Operator { value = MyHP, op = LT_, number_ = 500 }
+                , then_ = Command (Heal Stimpak)
+                , else_ = Command (Attack (AimedShot Eyes))
+                }
+        }
+    )
+
+
+custom : String
+custom =
+    "0: Custom"
