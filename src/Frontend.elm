@@ -3052,6 +3052,17 @@ settingsFightStrategyView fightStrategyText _ player =
                             [ H.text "Hover the notes below to see where the problem is." ]
                         , H.p
                             [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text "If needed, ask on Discord in the "
+                            , H.a
+                                [ HA.href discordFightStrategiesChannelInviteLink
+                                , HA.target "_blank"
+                                , HA.class "fight-strategy-info-link"
+                                ]
+                                [ H.text "#fight-strategies" ]
+                            , H.text " channel."
+                            ]
+                        , H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
                             [ H.text <|
                                 if String.isEmpty (String.trim fightStrategyText) then
                                     "Start with:"
@@ -3061,7 +3072,13 @@ settingsFightStrategyView fightStrategyText _ player =
                                         ++ String.fromInt firstDeadEndRow
                                         ++ ", column "
                                         ++ String.fromInt firstDeadEndColumn
-                                        ++ ", there should be one of:"
+                                        ++ ", there should be"
+                                        ++ (if List.length deadEnds > 1 then
+                                                " one of:"
+
+                                            else
+                                                ":"
+                                           )
                             ]
                         , H.ul [ HA.class "fight-strategy-dead-ends" ]
                             (deadEnds
@@ -3805,3 +3822,8 @@ logoView =
             ]
             [ H.text Version.version ]
         ]
+
+
+discordFightStrategiesChannelInviteLink : String
+discordFightStrategiesChannelInviteLink =
+    "https://discord.gg/9NuCZs3YZa"

@@ -1060,6 +1060,12 @@ table tbody tr:hover td {
 .fight-strategy-info-paragraph {
   margin-top: 16px;
 }
+.fight-strategy-info-link {
+  color: var(--fg01);
+}
+.fight-strategy-info-link:hover {
+  color: var(--fg-highlight);
+}
 .fight-strategy-help-btn {
   margin-left: 1ch;
 }
