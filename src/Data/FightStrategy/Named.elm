@@ -58,7 +58,7 @@ yolo =
         , then_ = Command MoveForward
         , else_ =
             If
-                { condition = Operator { value = MyHP, op = LT_, number_ = 500 }
+                { condition = Operator { value = MyHP, op = LT_, number_ = 80 }
                 , then_ = Command (Heal Stimpak)
                 , else_ = Command (Attack (AimedShot Eyes))
                 }
