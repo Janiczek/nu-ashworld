@@ -3048,7 +3048,7 @@ settingsFightStrategyView fightStrategyText _ player =
                             [ H.text "Your strategy is not finished yet." ]
                         , H.p
                             [ HA.class "fight-strategy-info-paragraph" ]
-                            [ H.text "Hover the notes below to see where the problem is." ]
+                            [ H.text "See the yellow indicator on the left and the notes below to figure out where the problem is." ]
                         , H.p
                             [ HA.class "fight-strategy-info-paragraph" ]
                             [ H.text "If needed, ask on Discord in the "
