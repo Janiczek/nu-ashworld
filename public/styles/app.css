@@ -1081,8 +1081,13 @@ table tbody tr:hover td {
 .fight-strategy-dead-end:hover {
   color: var(--fg01);
 }
-.fight-strategy-dead-end-location {
-  margin-left: 2ch;
+.fight-strategy-warnings {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fight-strategy-warning:hover {
+  color: var(--fg01);
 }
 .fight-strategy-syntax-help {
   font-size: 16px;

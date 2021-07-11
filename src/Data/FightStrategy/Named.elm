@@ -13,7 +13,6 @@ import Data.FightStrategy
         , Value(..)
         )
 import Data.Item exposing (Kind(..))
-import Dict exposing (Dict)
 
 
 all : List ( String, FightStrategy )

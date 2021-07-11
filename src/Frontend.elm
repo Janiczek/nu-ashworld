@@ -2884,23 +2884,6 @@ settingsFightStrategyView fightStrategyText _ player =
         parseResult =
             FightStrategy.parse fightStrategyText
 
-        endRow : Int
-        endRow =
-            1 + String.countOccurrences "\n" fightStrategyText
-
-        endCol : Int
-        endCol =
-            fightStrategyText
-                |> String.lines
-                |> List.last
-                |> Maybe.map String.length
-                |> Maybe.withDefault 1
-                |> max 1
-
-        isDeadEndAtEndOfString : Parser.DeadEnd -> Bool
-        isDeadEndAtEndOfString deadEnd =
-            deadEnd.row == endRow && deadEnd.col == endCol
-
         deadEnds : List Parser.DeadEnd
         deadEnds =
             case parseResult of
@@ -2909,6 +2892,16 @@ settingsFightStrategyView fightStrategyText _ player =
 
                 Err deadEnds_ ->
                     deadEnds_
+
+        viewWarning : FightStrategy.ValidationWarning -> Html FrontendMsg
+        viewWarning warning =
+            H.li
+                [ HA.class "fight-strategy-warning" ]
+                [ H.text <|
+                    case warning of
+                        FightStrategy.ItemDoesntHeal itemKind ->
+                            "Item doesn't heal: " ++ Item.name itemKind
+                ]
 
         viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
         viewDeadEnd deadEnd =
@@ -2994,6 +2987,12 @@ settingsFightStrategyView fightStrategyText _ player =
         firstDeadEndColumn =
             Maybe.map .col firstDeadEnd
                 |> Maybe.withDefault 1
+
+        warnings : List FightStrategy.ValidationWarning
+        warnings =
+            parseResult
+                |> Result.map FightStrategy.warnings
+                |> Result.withDefault []
     in
     [ pageTitleView "Settings: Fight Strategy"
     , H.div
@@ -3085,6 +3084,18 @@ settingsFightStrategyView fightStrategyText _ player =
                                 |> List.sortBy deadEndCategorization
                                 |> List.map viewDeadEnd
                             )
+                        ]
+                   )
+                ++ (if List.isEmpty warnings then
+                        []
+
+                    else
+                        [ H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text "Warnings:" ]
+                        , H.ul
+                            [ HA.class "fight-strategy-warnings" ]
+                            (List.map viewWarning warnings)
                         ]
                    )
             )

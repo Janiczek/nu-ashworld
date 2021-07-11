@@ -5,13 +5,13 @@ module Data.FightStrategy exposing
     , IfData
     , Operator(..)
     , OperatorData
-    , ValidationError(..)
+    , ValidationWarning(..)
     , Value(..)
     , decoder
     , doWhatever
     , encode
     , toString
-    , validate
+    , warnings
     )
 
 import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
@@ -510,12 +510,12 @@ doWhatever =
         }
 
 
-type ValidationError
+type ValidationWarning
     = ItemDoesntHeal Item.Kind
 
 
-validate : FightStrategy -> List ValidationError
-validate strategy =
+warnings : FightStrategy -> List ValidationWarning
+warnings strategy =
     strategy
         |> extractItems
         |> List.filter (not << Item.isHealing)

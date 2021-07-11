@@ -7,7 +7,7 @@ module Data.FightStrategy.Help exposing
     , referenceTitle
     )
 
-import Parser as P exposing ((|.), (|=), Parser)
+import Parser as P exposing (Parser)
 
 
 help : List Markup
