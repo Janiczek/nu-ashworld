@@ -2929,7 +2929,7 @@ settingsFightStrategyView fightStrategyText _ player =
                             "end of the strategy"
 
                         _ ->
-                            "<HEY YOU FOUND A BUG> " ++ Debug.toString deadEnd.problem
+                            "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>"
             in
             H.li
                 [ HA.class "fight-strategy-dead-end" ]
