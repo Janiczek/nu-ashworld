@@ -63,13 +63,11 @@ import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Lamdera
-import List.Extra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Parser
 import Result.Extra as Result
 import Set exposing (Set)
-import String.Extra as String
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
 import Task
