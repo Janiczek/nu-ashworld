@@ -46,6 +46,7 @@
     },
     "test-dependencies": {
         "direct": {
+            "elm-community/string-extra": "4.0.1",
             "elm-explorations/test": "1.2.2",
             "ktonon/elm-test-extra": "2.0.1"
         },
