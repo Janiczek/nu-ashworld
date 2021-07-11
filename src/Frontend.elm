@@ -2926,6 +2926,10 @@ settingsFightStrategyView fightStrategyText _ player =
                         Parser.ExpectingEnd ->
                             "end of the strategy"
 
+                        Parser.UnexpectedChar ->
+                            -- we're only using `chompIf` for whitespace in nonemptySpaces
+                            "a space"
+
                         _ ->
                             "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>"
             in

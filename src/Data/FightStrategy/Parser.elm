@@ -52,15 +52,15 @@ ifData : Parser IfData
 ifData =
     P.succeed IfData
         |. P.keyword "if"
-        |. P.spaces
+        |. nonemptySpaces
         |= condition
-        |. P.spaces
+        |. nonemptySpaces
         |. P.keyword "then"
-        |. P.spaces
+        |. nonemptySpaces
         |= P.lazy (\_ -> fightStrategy)
-        |. P.spaces
+        |. nonemptySpaces
         |. P.keyword "else"
-        |. P.spaces
+        |. nonemptySpaces
         |= P.lazy (\_ -> fightStrategy)
 
 
@@ -131,14 +131,16 @@ binary : Parser Condition
 binary =
     P.succeed (\c1 op c2 -> op c1 c2)
         |. P.token "("
+        |. P.spaces
         |= P.lazy (\_ -> condition)
-        |. P.token " "
+        |. nonemptySpaces
         |= P.oneOf
             [ P.map (\_ -> Or) (P.keyword "or")
             , P.map (\_ -> And) (P.keyword "and")
             ]
-        |. P.token " "
+        |. nonemptySpaces
         |= P.lazy (\_ -> condition)
+        |. P.spaces
         |. P.token ")"
 
 
@@ -146,9 +148,9 @@ operatorCondition : Parser Condition
 operatorCondition =
     P.succeed OperatorData
         |= value
-        |. P.token " "
+        |. P.spaces
         |= operator
-        |. P.token " "
+        |. P.spaces
         |= possiblyNegativeInt
         |> P.map Operator
 
@@ -191,7 +193,7 @@ itemCount : Parser Value
 itemCount =
     P.succeed MyItemCount
         |. P.keyword "number of available"
-        |. P.token " "
+        |. nonemptySpaces
         |= itemKind
 
 
@@ -199,7 +201,7 @@ itemsUsed : Parser Value
 itemsUsed =
     P.succeed ItemsUsed
         |. P.keyword "number of used"
-        |. P.token " "
+        |. nonemptySpaces
         |= itemKind
 
 
@@ -210,3 +212,24 @@ chanceToHit =
         |. P.token " ("
         |= shotType
         |. P.token ")"
+
+
+nonemptySpaces : Parser ()
+nonemptySpaces =
+    P.succeed ()
+        |. singleNonemptySpace
+        |. P.spaces
+
+
+singleNonemptySpace : Parser ()
+singleNonemptySpace =
+    P.chompIf (\c -> c == ' ' || c == '\t' || c == '\n')
+        |> P.getChompedString
+        |> P.andThen
+            (\string ->
+                if String.isEmpty string then
+                    P.problem "empty whitespace"
+
+                else
+                    P.succeed ()
+            )

@@ -136,6 +136,26 @@ condition =
                     )
                 )
           )
+        , ( "multiline"
+          , """
+            (my HP < 100
+              and (number of used Stimpak < 50
+              and (number of used Healing Powder < 50
+              or   number of used Fruit < 50)))
+            """
+                |> multilineInput
+          , Just
+                (And
+                    (Operator { value = MyHP, op = LT_, number_ = 100 })
+                    (And
+                        (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 50 })
+                        (Or
+                            (Operator { value = ItemsUsed HealingPowder, op = LT_, number_ = 50 })
+                            (Operator { value = ItemsUsed Fruit, op = LT_, number_ = 50 })
+                        )
+                    )
+                )
+          )
         ]
 
 
