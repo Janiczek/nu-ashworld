@@ -218,9 +218,9 @@ update msg model =
             , Lamdera.sendToBackend Wander
             )
 
-        AskToSetFightStrategy strategy ->
+        AskToSetFightStrategy ( strategy, text ) ->
             ( model
-            , Lamdera.sendToBackend <| SetFightStrategy strategy
+            , Lamdera.sendToBackend <| SetFightStrategy ( strategy, text )
             )
 
         ImportButtonClicked ->
@@ -408,36 +408,7 @@ update msg model =
             ( { model
                 | route =
                     model.route
-                        |> Route.mapSettings
-                            (\r ->
-                                { r
-                                    | fightStrategyText = text
-                                    , hoveredError =
-                                        if Result.isOk (FightStrategy.parse text) then
-                                            Nothing
-
-                                        else
-                                            r.hoveredError
-                                }
-                            )
-              }
-            , Cmd.none
-            )
-
-        HoverFightStrategyError error ->
-            ( { model
-                | route =
-                    model.route
-                        |> Route.mapSettings (\r -> { r | hoveredError = Just error })
-              }
-            , Cmd.none
-            )
-
-        StopHoveringFightStrategyError ->
-            ( { model
-                | route =
-                    model.route
-                        |> Route.mapSettings (\r -> { r | hoveredError = Nothing })
+                        |> Route.mapSettings (\r -> { r | fightStrategyText = text })
               }
             , Cmd.none
             )
@@ -571,9 +542,7 @@ updateFromBackend msg model =
             )
 
         YourCurrentWorld world ->
-            ( { model
-                | world = WorldLoggedIn world
-              }
+            ( { model | world = WorldLoggedIn world }
             , Cmd.none
             )
 
@@ -897,7 +866,6 @@ contentView model =
                         withCreatedPlayer world <|
                             settingsFightStrategyView
                                 r.fightStrategyText
-                                r.hoveredError
 
                     Route.FightStrategySyntaxHelp ->
                         settingsFightStrategySyntaxHelpView
@@ -2880,7 +2848,6 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
                 (Route.Settings
                     { subroute = Route.FightStrategy
                     , fightStrategyText = fightStrategyText
-                    , hoveredError = Nothing
                     }
                 )
             )
@@ -2904,14 +2871,13 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
 
 settingsFightStrategyView :
     String
-    -> Maybe { index : Int, row : Int, col : Int }
     -> WorldLoggedInData
     -> CPlayer
     -> List (Html FrontendMsg)
-settingsFightStrategyView fightStrategyText hoveredError _ player =
+settingsFightStrategyView fightStrategyText _ player =
     let
-        hasChanged : Bool
-        hasChanged =
+        hasTextChanged : Bool
+        hasTextChanged =
             fightStrategyText /= player.fightStrategyText
 
         parseResult : Result (List Parser.DeadEnd) FightStrategy
@@ -2935,6 +2901,7 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
         isDeadEndAtEndOfString deadEnd =
             deadEnd.row == endRow && deadEnd.col == endCol
 
+        deadEnds : List Parser.DeadEnd
         deadEnds =
             case parseResult of
                 Ok _ ->
@@ -2943,9 +2910,13 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
                 Err deadEnds_ ->
                     deadEnds_
 
-        viewDeadEnd : Int -> Parser.DeadEnd -> Html FrontendMsg
-        viewDeadEnd index deadEnd =
+        viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
+        viewDeadEnd deadEnd =
             let
+                wrapped : String -> String
+                wrapped string =
+                    "\"" ++ string ++ "\""
+
                 item : String
                 item =
                     case deadEnd.problem of
@@ -2953,43 +2924,23 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
                             "a number"
 
                         Parser.Expecting string ->
-                            "'" ++ string ++ "'"
+                            wrapped string
 
                         Parser.ExpectingSymbol string ->
-                            "'" ++ string ++ "'"
+                            wrapped string
 
                         Parser.ExpectingKeyword string ->
-                            "'" ++ string ++ "'"
+                            wrapped string
 
                         Parser.ExpectingEnd ->
                             "end of the strategy"
 
                         _ ->
                             "<HEY YOU FOUND A BUG> " ++ Debug.toString deadEnd.problem
-
-                location : String
-                location =
-                    " at line "
-                        ++ String.fromInt deadEnd.row
-                        ++ ", column "
-                        ++ String.fromInt deadEnd.col
             in
             H.li
-                [ HA.class "fight-strategy-dead-end"
-                , HA.classList [ ( "hovered", Just index == Maybe.map .index hoveredError ) ]
-                , HE.onMouseOver <|
-                    HoverFightStrategyError
-                        { index = index
-                        , row = deadEnd.row
-                        , col = deadEnd.col
-                        }
-                , HE.onMouseOut StopHoveringFightStrategyError
-                ]
-                [ H.span [] [ H.text item ]
-                , H.span
-                    [ HA.class "fight-strategy-dead-end-location" ]
-                    [ H.text location ]
-                ]
+                [ HA.class "fight-strategy-dead-end" ]
+                [ H.text <| "- " ++ item ]
 
         deadEndCategorization : Parser.DeadEnd -> ( ( Int, Int ), String, String )
         deadEndCategorization deadEnd =
@@ -3024,12 +2975,25 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
                         (Route.Settings
                             { subroute = Route.FightStrategySyntaxHelp
                             , fightStrategyText = fightStrategyText
-                            , hoveredError = Nothing
                             }
                         )
                     )
                 ]
                 [ H.text "[Syntax cheatsheet]" ]
+
+        firstDeadEnd : Maybe Parser.DeadEnd
+        firstDeadEnd =
+            List.head deadEnds
+
+        firstDeadEndRow : Int
+        firstDeadEndRow =
+            Maybe.map .row firstDeadEnd
+                |> Maybe.withDefault 1
+
+        firstDeadEndColumn : Int
+        firstDeadEndColumn =
+            Maybe.map .col firstDeadEnd
+                |> Maybe.withDefault 1
     in
     [ pageTitleView "Settings: Fight Strategy"
     , H.div
@@ -3054,56 +3018,81 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
             , HA.value fightStrategyText
             ]
             []
-        , hoveredError
+        , firstDeadEnd
             |> H.viewMaybe
-                (\error ->
+                (\{ row, col } ->
                     H.div
                         [ HA.class "fight-strategy-hovered-error"
                         , cssVars
-                            [ ( "--error-row", String.fromInt error.row )
-                            , ( "--error-col", String.fromInt error.col )
+                            [ ( "--error-row", String.fromInt row )
+                            , ( "--error-col", String.fromInt col )
                             ]
                         ]
                         []
                 )
         , H.div
             [ HA.class "fight-strategy-info" ]
-            (if Result.isOk parseResult then
-                [ H.div
-                    [ HA.class "fight-strategy-info-heading" ]
-                    [ H.text "Info:"
-                    , helpBtn
-                    ]
-                , H.text "Your strategy is OK"
+            (H.div
+                [ HA.class "fight-strategy-info-heading" ]
+                [ H.text "Info:"
+                , helpBtn
                 ]
+                :: (if Result.isOk parseResult then
+                        [ H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text "Your strategy is OK" ]
+                        ]
 
-             else
-                [ H.div
-                    [ HA.class "fight-strategy-info-heading" ]
-                    [ H.text "How to proceed:"
-                    , helpBtn
-                    ]
-                , H.div []
-                    [ H.text <|
-                        if String.isEmpty (String.trim fightStrategyText) then
-                            "Start with"
+                    else
+                        [ H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text "Your strategy is not finished yet." ]
+                        , H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text "Hover the notes below to see where the problem is." ]
+                        , H.p
+                            [ HA.class "fight-strategy-info-paragraph" ]
+                            [ H.text <|
+                                if String.isEmpty (String.trim fightStrategyText) then
+                                    "Start with:"
 
-                        else
-                            "There should be"
-                    ]
-                , H.ul [ HA.class "fight-strategy-dead-ends" ]
-                    (deadEnds
-                        |> List.sortBy deadEndCategorization
-                        |> List.indexedMap viewDeadEnd
-                    )
-                ]
+                                else
+                                    "At line "
+                                        ++ String.fromInt firstDeadEndRow
+                                        ++ ", column "
+                                        ++ String.fromInt firstDeadEndColumn
+                                        ++ ", there should be one of:"
+                            ]
+                        , H.ul [ HA.class "fight-strategy-dead-ends" ]
+                            (deadEnds
+                                |> List.sortBy deadEndCategorization
+                                |> List.map viewDeadEnd
+                            )
+                        ]
+                   )
             )
         ]
-    , H.button
-        [ HA.class "fight-strategy-save-btn"
-        , HA.disabled <| not hasChanged || Result.isErr parseResult
+    , H.div
+        [ HA.class "fight-strategy-buttons" ]
+        [ H.button
+            [ HA.class "fight-strategy-save-btn"
+            , HA.disabled <| not hasTextChanged || Result.isErr parseResult
+            , parseResult
+                |> Result.toMaybe
+                |> HA.attributeMaybe
+                    (\strategy ->
+                        HE.onClick <|
+                            AskToSetFightStrategy ( strategy, fightStrategyText )
+                    )
+            ]
+            [ H.text "[Save]" ]
+        , H.button
+            [ HA.class "fight-strategy-reset-btn"
+            , HA.disabled <| not hasTextChanged
+            , HE.onClick <| SetFightStrategyText player.fightStrategyText
+            ]
+            [ H.text "[Reset to saved]" ]
         ]
-        [ H.text "[ Save TODO ]" ]
     ]
 
 
@@ -3642,7 +3631,6 @@ loggedInLinksView player currentRoute =
                         (Route.Settings
                             { subroute = Route.FightStrategy
                             , fightStrategyText = p.fightStrategyText
-                            , hoveredError = Nothing
                             }
                         )
                         Nothing

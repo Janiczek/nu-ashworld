@@ -1033,6 +1033,8 @@ table tbody tr:hover td {
   white-space: pre;
 }
 .fight-strategy-hovered-error {
+  pointer-events: none;
+  user-select: none;
   border-bottom: 2px;
   width: 3ch;
   height: 1em;
@@ -1055,25 +1057,22 @@ table tbody tr:hover td {
   grid-area: info;
   margin-left: 16px;
 }
-.fight-strategy-info-heading {
-  margin-bottom: 16px;
+.fight-strategy-info-paragraph {
+  margin-top: 16px;
 }
 .fight-strategy-help-btn {
   margin-left: 1ch;
 }
 
-.fight-strategy-save-btn {
+.fight-strategy-reset-btn {
+  margin-left: 1ch;
 }
 .fight-strategy-dead-ends {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
-.fight-strategy-dead-end {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-.fight-strategy-dead-end.hovered {
+.fight-strategy-dead-end:hover {
   color: var(--fg01);
 }
 .fight-strategy-dead-end-location {

@@ -482,10 +482,11 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
 
-        SetFightStrategy strategy ->
+        SetFightStrategy ( strategy, text ) ->
             JE.object
                 [ ( "type", JE.string "SetFightStrategy" )
                 , ( "strategy", FightStrategy.encode strategy )
+                , ( "text", JE.string text )
                 ]
 
         RefreshPlease ->
@@ -710,8 +711,8 @@ updateFromFrontend sessionId clientId msg model =
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
 
-        SetFightStrategy strategy ->
-            withLoggedInCreatedPlayer <| setFightStrategy strategy
+        SetFightStrategy ( strategy, text ) ->
+            withLoggedInCreatedPlayer <| setFightStrategy ( strategy, text )
 
         ChoosePerk perk ->
             withLoggedInCreatedPlayer <| choosePerk perk
@@ -1270,12 +1271,12 @@ equipItem itemId clientId player model =
                 ( model, Cmd.none )
 
 
-setFightStrategy : FightStrategy -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-setFightStrategy strategy clientId player model =
+setFightStrategy : ( FightStrategy, String ) -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+setFightStrategy ( strategy, text ) clientId player model =
     let
         newModel =
             model
-                |> updatePlayer (SPlayer.setFightStrategy strategy) player.name
+                |> updatePlayer (SPlayer.setFightStrategy ( strategy, text )) player.name
     in
     getWorldLoggedIn player.name newModel
         |> Maybe.map

@@ -563,9 +563,12 @@ equipItem { id } player =
                         |> (\p -> { p | equippedArmor = Just { item | count = 1 } })
 
 
-setFightStrategy : FightStrategy -> SPlayer -> SPlayer
-setFightStrategy strategy player =
-    { player | fightStrategy = strategy }
+setFightStrategy : ( FightStrategy, String ) -> SPlayer -> SPlayer
+setFightStrategy ( strategy, text ) player =
+    { player
+        | fightStrategy = strategy
+        , fightStrategyText = text
+    }
 
 
 setItems : Dict Item.Id Item -> SPlayer -> SPlayer

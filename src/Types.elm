@@ -80,7 +80,7 @@ type FrontendMsg
     | AskToChoosePerk Perk
     | AskToEquipItem Item.Id
     | AskToUnequipArmor
-    | AskToSetFightStrategy FightStrategy
+    | AskToSetFightStrategy ( FightStrategy, String )
     | AskForExport
     | ImportButtonClicked
     | ImportFileSelected File
@@ -104,12 +104,6 @@ type FrontendMsg
     | HoverItem HoveredItem
     | StopHoveringItem
     | SetFightStrategyText String
-    | HoverFightStrategyError
-        { index : Int
-        , row : Int
-        , col : Int
-        }
-    | StopHoveringFightStrategyError
 
 
 type BarterMsg
@@ -138,7 +132,7 @@ type ToBackend
     | UseItem Item.Id
     | Wander
     | EquipItem Item.Id
-    | SetFightStrategy FightStrategy
+    | SetFightStrategy ( FightStrategy, String )
     | UnequipArmor
     | RefreshPlease
     | TagSkill Skill

@@ -36,7 +36,6 @@ type Route
 type alias SettingsData =
     { fightStrategyText : String
     , subroute : SettingsRoute
-    , hoveredError : Maybe { index : Int, row : Int, col : Int }
     }
 
 
