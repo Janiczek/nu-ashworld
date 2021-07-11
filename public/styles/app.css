@@ -12,6 +12,7 @@
   --fg01-fully-transparent: rgba(60,248,0,0);
   --fg03-half-transparent: rgba(0,124,0,0.5);
   --fg-highlight-transparent: rgba(252,253,125,0.25);
+  --fg-highlight-fully-transparent: rgba(252,253,125,0);
 
   /* filters for the logo calculated with https://codepen.io/sosuke/pen/Pjoqqp */
   --filter-fg02: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
@@ -1001,6 +1002,10 @@ table tbody tr:hover td {
   grid-template-areas: 
     "examples info"
     "textarea info";
+  --textarea-margin-top: 16px;
+  --textarea-padding: 16px;
+  --textarea-font-size: 16px;
+  --textarea-line-height: 18px;
 }
 .fight-strategy-examples {
   grid-area: examples;
@@ -1017,12 +1022,34 @@ table tbody tr:hover td {
 .fight-strategy-textarea {
   background-color: var(--bg02);
   grid-area: textarea;
-  width: 50ch;
+  width: 60ch;
   height: 25em;
-  margin-top: 16px;
+  margin-top: var(--textarea-margin-top);
   margin-bottom: 16px;
-  padding: 16px;
+  padding: var(--textarea-padding);
   border-radius: 4px;
+  font-size: var(--textarea-font-size);
+  line-height: var(--textarea-line-height);
+  white-space: pre;
+}
+.fight-strategy-hovered-error {
+  border-bottom: 2px;
+  width: 3ch;
+  height: 1em;
+  background-color: var(--fg-highlight-transparent);
+  margin-left: -2px;
+  padding-left: 2px;
+  border-left: 2px solid var(--fg-highlight);
+  background: var(--fg-highlight);
+  background: linear-gradient(90deg, var(--fg-highlight-transparent) 0%, var(--fg-highlight-fully-transparent) 100%);
+  grid-area: textarea;
+  font-size: var(--textarea-font-size);
+  line-height: var(--textarea-line-height);
+  transform: translate(
+    calc((var(--error-col) - 1) * 1ch                         + var(--textarea-padding)),
+    calc((var(--error-row) - 1) * var(--textarea-line-height) + var(--textarea-padding) + var(--textarea-margin-top))
+  );
+
 }
 .fight-strategy-info {
   grid-area: info;

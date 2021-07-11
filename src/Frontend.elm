@@ -408,7 +408,18 @@ update msg model =
             ( { model
                 | route =
                     model.route
-                        |> Route.mapSettings (\r -> { r | fightStrategyText = text })
+                        |> Route.mapSettings
+                            (\r ->
+                                { r
+                                    | fightStrategyText = text
+                                    , hoveredError =
+                                        if Result.isOk (FightStrategy.parse text) then
+                                            Nothing
+
+                                        else
+                                            r.hoveredError
+                                }
+                            )
               }
             , Cmd.none
             )
@@ -3043,6 +3054,18 @@ settingsFightStrategyView fightStrategyText hoveredError _ player =
             , HA.value fightStrategyText
             ]
             []
+        , hoveredError
+            |> H.viewMaybe
+                (\error ->
+                    H.div
+                        [ HA.class "fight-strategy-hovered-error"
+                        , cssVars
+                            [ ( "--error-row", String.fromInt error.row )
+                            , ( "--error-col", String.fromInt error.col )
+                            ]
+                        ]
+                        []
+                )
         , H.div
             [ HA.class "fight-strategy-info" ]
             (if Result.isOk parseResult then
