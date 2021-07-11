@@ -16,7 +16,25 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1626033582
+    [ { date = 1626037313
+      , title = "Fight strategy editor now more lenient toward whitespace"
+      , text = """
+While experimienting with the editor I found I'd like it to allow me to write eg.
+
+```
+if    ((opponent is player
+    and my AP < 4)
+    and my HP < 100)
+then do whatever
+else attack (eyes)
+```
+
+In other words, newlines all over the place. And that's now possible!
+
+~janiczek
+"""
+      }
+    , { date = 1626033582
       , title = "Fight strategy editor"
       , text = """
 You can now write your own fight strategies in the **editor** on the Settings page.

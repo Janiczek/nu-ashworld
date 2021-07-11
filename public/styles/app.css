@@ -415,6 +415,16 @@ table tbody tr:hover td {
   max-width: 60ch;
 }
 
+
+.news-item-text pre {
+  padding-left: 32px;
+}
+.news-item-text pre code {
+  font-family: BQN386;
+  font-size: 16px;
+  color: var(--fg01);
+}
+
 .news-item-text a {
   color: var(--fg-highlight);
   position: relative;
