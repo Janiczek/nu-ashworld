@@ -1022,7 +1022,7 @@ table tbody tr:hover td {
 .fight-strategy-textarea {
   background-color: var(--bg02);
   grid-area: textarea;
-  width: 60ch;
+  width: 70ch;
   height: 25em;
   margin-top: var(--textarea-margin-top);
   margin-bottom: 16px;
