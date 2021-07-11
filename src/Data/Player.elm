@@ -363,7 +363,12 @@ sPlayerDecoderV5 =
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap
+            (JD.field "fightStrategy"
+                (FightStrategy.decoder
+                    |> JD.map FightStrategy.toString
+                )
+            )
 
 
 {-| Adding fightStrategyText
