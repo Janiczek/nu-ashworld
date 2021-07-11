@@ -105,10 +105,6 @@ init _ key =
       , alertMessage = Nothing
       , mapMouseCoords = Nothing
       , hoveredItem = Nothing
-      , fightStrategyInput =
-            FightStrategy.promoted
-                |> Tuple.second
-                |> FightStrategy.toString
       , selectedFightStrategy = Tuple.first FightStrategy.promoted
       }
     , Cmd.batch
