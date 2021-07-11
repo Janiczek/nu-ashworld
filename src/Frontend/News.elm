@@ -16,7 +16,19 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1625920050
+    [ { date = 1626033582
+      , title = "Fight strategy editor"
+      , text = """
+You can now write your own fight strategies in the **editor** on the Settings page.
+
+You can learn what's possible from the **examples** above the editor or via the **syntax cheatsheet** page. The info bar on the right of the editor should lead you through writing your strategies.
+
+There is a [#fight-strategies](https://discord.gg/9NuCZs3YZa) channel on the Discord where you can ask for help or share your own creations.
+
+~janiczek
+"""
+      }
+    , { date = 1625920050
       , title = "Fixes for fight strategies"
       , text = """
 Running two players with the YOLO strategy has uncovered a few bugs, so here
