@@ -9,7 +9,7 @@ module Frontend.Route exposing
     , mapBarterState
     , needsAdmin
     , needsLogin
-    , setSettingsCustomFightStrategyText
+    , setSettingsFightStrategyText
     )
 
 import Data.Barter as Barter
@@ -31,7 +31,7 @@ type Route
     | CharCreation
     | Admin AdminRoute
     | Settings
-        { customFightStrategyText : String
+        { fightStrategyText : String
         , subroute : SettingsRoute
         }
 
@@ -132,11 +132,11 @@ mapBarterState fn route =
             route
 
 
-setSettingsCustomFightStrategyText : String -> Route -> Route
-setSettingsCustomFightStrategyText text route =
+setSettingsFightStrategyText : String -> Route -> Route
+setSettingsFightStrategyText text route =
     case route of
         Settings r ->
-            Settings { r | customFightStrategyText = text }
+            Settings { r | fightStrategyText = text }
 
         _ ->
             route

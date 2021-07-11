@@ -1,8 +1,6 @@
 module Data.FightStrategy.Named exposing
     ( all
-    , custom
     , default
-    , promoted
     )
 
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
@@ -18,30 +16,24 @@ import Data.Item exposing (Kind(..))
 import Dict exposing (Dict)
 
 
-all : Dict String FightStrategy
+all : List ( String, FightStrategy )
 all =
-    Dict.fromList
-        [ default
-        , conservative
-        , yolo
-        ]
-
-
-promoted : ( String, FightStrategy )
-promoted =
-    conservative
+    [ default
+    , conservative
+    , yolo
+    ]
 
 
 default : ( String, FightStrategy )
 default =
-    ( "1: Default"
+    ( "Default"
     , Command DoWhatever
     )
 
 
 conservative : ( String, FightStrategy )
 conservative =
-    ( "2: Conservative about Stimpaks"
+    ( "Conservative"
     , If
         { condition = Operator { value = Distance, op = GT_, number_ = 0 }
         , then_ = Command MoveForward
@@ -60,7 +52,7 @@ conservative =
 
 yolo : ( String, FightStrategy )
 yolo =
-    ( "3: YOLO about Stimpaks"
+    ( "YOLO"
     , If
         { condition = Operator { value = Distance, op = GT_, number_ = 0 }
         , then_ = Command MoveForward
@@ -72,8 +64,3 @@ yolo =
                 }
         }
     )
-
-
-custom : String
-custom =
-    "0: Custom"

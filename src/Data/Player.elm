@@ -80,7 +80,7 @@ type alias SPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
-    , customFightStrategyText : String
+    , fightStrategyText : String
     }
 
 
@@ -106,7 +106,7 @@ type alias CPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
-    , customFightStrategyText : String
+    , fightStrategyText : String
     }
 
 
@@ -159,7 +159,7 @@ encodeSPlayer player =
         , ( "availablePerks", JE.int player.availablePerks )
         , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
         , ( "fightStrategy", FightStrategy.encode player.fightStrategy )
-        , ( "customFightStrategyText", JE.string player.customFightStrategyText )
+        , ( "fightStrategyText", JE.string player.fightStrategyText )
         ]
 
 
@@ -366,7 +366,7 @@ sPlayerDecoderV5 =
         |> JD.andMap (JD.succeed "")
 
 
-{-| Adding customFightStrategyText
+{-| Adding fightStrategyText
 -}
 sPlayerDecoderV6 : Decoder SPlayer
 sPlayerDecoderV6 =
@@ -392,7 +392,7 @@ sPlayerDecoderV6 =
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
-        |> JD.andMap (JD.field "customFightStrategyText" JD.string)
+        |> JD.andMap (JD.field "fightStrategyText" JD.string)
 
 
 serverToClient : SPlayer -> CPlayer
@@ -417,7 +417,7 @@ serverToClient p =
     , availablePerks = p.availablePerks
     , equippedArmor = p.equippedArmor
     , fightStrategy = p.fightStrategy
-    , customFightStrategyText = p.customFightStrategyText
+    , fightStrategyText = p.fightStrategyText
     }
 
 
@@ -546,5 +546,7 @@ fromNewChar currentTime auth newChar =
             , availablePerks = 0
             , equippedArmor = Nothing
             , fightStrategy = Tuple.second FightStrategy.default
-            , customFightStrategyText = ""
+            , fightStrategyText =
+                Tuple.second FightStrategy.default
+                    |> FightStrategy.toString
             }

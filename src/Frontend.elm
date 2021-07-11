@@ -105,7 +105,6 @@ init _ key =
       , alertMessage = Nothing
       , mapMouseCoords = Nothing
       , hoveredItem = Nothing
-      , selectedFightStrategy = Tuple.first FightStrategy.promoted
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -405,21 +404,8 @@ update msg model =
             , Cmd.none
             )
 
-        SelectFightStrategy strategyName ->
-            ( { model | selectedFightStrategy = strategyName }
-            , Cmd.none
-            )
-
         SetFightStrategyText text ->
-            ( { model
-                | route = Route.setSettingsCustomFightStrategyText text model.route
-                , selectedFightStrategy =
-                    if model.selectedFightStrategy /= FightStrategy.custom then
-                        FightStrategy.custom
-
-                    else
-                        model.selectedFightStrategy
-              }
+            ( { model | route = Route.setSettingsFightStrategyText text model.route }
             , Cmd.none
             )
 
@@ -877,14 +863,12 @@ contentView model =
                     Route.FightStrategy ->
                         withCreatedPlayer world <|
                             settingsFightStrategyView
-                                { customFightStrategyText = r.customFightStrategyText
-                                , selectedFightStrategy = model.selectedFightStrategy
-                                }
+                                r.fightStrategyText
 
                     Route.FightStrategySyntaxHelp ->
                         settingsFightStrategySyntaxHelpView
                             model.hoveredItem
-                            r.customFightStrategyText
+                            r.fightStrategyText
 
             ( Route.Settings _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -2829,7 +2813,7 @@ messageView zone message _ player =
 
 
 settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> String -> List (Html FrontendMsg)
-settingsFightStrategySyntaxHelpView maybeHoveredItem customFightStrategyText =
+settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
     let
         viewMarkup : FightStrategyHelp.Markup -> Html FrontendMsg
         viewMarkup markup =
@@ -2861,7 +2845,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem customFightStrategyText =
             (GoToRoute
                 (Route.Settings
                     { subroute = Route.FightStrategy
-                    , customFightStrategyText = customFightStrategyText
+                    , fightStrategyText = fightStrategyText
                     }
                 )
             )
@@ -2884,52 +2868,27 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem customFightStrategyText =
 
 
 settingsFightStrategyView :
-    { customFightStrategyText : String
-    , selectedFightStrategy : String
-    }
+    String
     -> WorldLoggedInData
     -> CPlayer
     -> List (Html FrontendMsg)
-settingsFightStrategyView { customFightStrategyText, selectedFightStrategy } _ player =
+settingsFightStrategyView fightStrategyText _ player =
     let
-        isCustom : Bool
-        isCustom =
-            selectedFightStrategy == FightStrategy.custom
-
-        namedStrategy : Maybe FightStrategy
-        namedStrategy =
-            Dict.get selectedFightStrategy FightStrategy.all
-
-        input : String
-        input =
-            if isCustom then
-                customFightStrategyText
-
-            else
-                namedStrategy
-                    |> Maybe.map FightStrategy.toString
-                    |> Maybe.withDefault ""
-
-        hasCustomChanged : Bool
-        hasCustomChanged =
-            customFightStrategyText /= player.customFightStrategyText
-
-        options : List String
-        options =
-            FightStrategy.custom
-                :: (FightStrategy.all |> Dict.keys |> List.sort)
+        hasChanged : Bool
+        hasChanged =
+            fightStrategyText /= player.fightStrategyText
 
         parseResult : Result (List Parser.DeadEnd) FightStrategy
         parseResult =
-            FightStrategy.parse customFightStrategyText
+            FightStrategy.parse fightStrategyText
 
         endRow : Int
         endRow =
-            1 + String.countOccurrences "\n" customFightStrategyText
+            1 + String.countOccurrences "\n" fightStrategyText
 
         endCol : Int
         endCol =
-            customFightStrategyText
+            fightStrategyText
                 |> String.lines
                 |> List.last
                 |> Maybe.map String.length
@@ -3010,59 +2969,64 @@ settingsFightStrategyView { customFightStrategyText, selectedFightStrategy } _ p
             , category
             , item
             )
+
+        helpBtn =
+            H.button
+                [ HA.class "fight-strategy-help-btn"
+                , HE.onClick
+                    (GoToRoute
+                        (Route.Settings
+                            { subroute = Route.FightStrategySyntaxHelp
+                            , fightStrategyText = fightStrategyText
+                            }
+                        )
+                    )
+                ]
+                [ H.text "[Syntax cheatsheet]" ]
     in
     [ pageTitleView "Settings: Fight Strategy"
     , H.div
-        [ HA.class "fight-strategy-select-wrapper" ]
-        [ H.select
-            [ HE.onChange SelectFightStrategy
-            , HA.class "fight-strategy-select"
-            ]
-            (options
-                |> List.map
-                    (\name ->
-                        H.option
-                            [ HA.value name
-                            , HA.selected <| selectedFightStrategy == name
-                            ]
-                            [ H.text name ]
-                    )
-            )
-        , H.span [ HA.class "fight-strategy-select-focus" ] []
-        ]
-    , H.div
         [ HA.class "fight-strategy-grid" ]
-        [ H.textarea
+        [ H.div [ HA.class "fight-strategy-examples" ]
+            (H.text "Examples: "
+                :: (FightStrategy.all
+                        |> List.map
+                            (\( name, strategy ) ->
+                                H.button
+                                    [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
+                                    , HA.class "fight-strategy-example"
+                                    ]
+                                    [ H.text name ]
+                            )
+                        |> List.intersperse (H.text ", ")
+                   )
+            )
+        , H.textarea
             [ HE.onInput SetFightStrategyText
             , HA.class "fight-strategy-textarea"
-            , HA.value input
+            , HA.value fightStrategyText
             ]
             []
         , H.div
             [ HA.class "fight-strategy-info" ]
             (if Result.isOk parseResult then
-                [ H.div [] [ H.text "Info:" ]
+                [ H.div
+                    [ HA.class "fight-strategy-info-heading" ]
+                    [ H.text "Info:"
+                    , helpBtn
+                    ]
                 , H.text "Your strategy is OK"
                 ]
 
              else
-                [ H.div []
-                    [ H.text "How to proceed "
-                    , H.button
-                        [ HE.onClick
-                            (GoToRoute
-                                (Route.Settings
-                                    { subroute = Route.FightStrategySyntaxHelp
-                                    , customFightStrategyText = customFightStrategyText
-                                    }
-                                )
-                            )
-                        ]
-                        [ H.text "[Help]" ]
+                [ H.div
+                    [ HA.class "fight-strategy-info-heading" ]
+                    [ H.text "How to proceed:"
+                    , helpBtn
                     ]
                 , H.div []
                     [ H.text <|
-                        if String.isEmpty (String.trim customFightStrategyText) then
+                        if String.isEmpty (String.trim fightStrategyText) then
                             "Start with"
 
                         else
@@ -3078,9 +3042,7 @@ settingsFightStrategyView { customFightStrategyText, selectedFightStrategy } _ p
         ]
     , H.button
         [ HA.class "fight-strategy-save-btn"
-        , HA.disabled <|
-            (isCustom && not hasCustomChanged)
-                || Result.isErr parseResult
+        , HA.disabled <| not hasChanged || Result.isErr parseResult
         ]
         [ H.text "[ Save TODO ]" ]
     ]
@@ -3620,7 +3582,7 @@ loggedInLinksView player currentRoute =
                     , linkIn "Settings"
                         (Route.Settings
                             { subroute = Route.FightStrategy
-                            , customFightStrategyText = p.customFightStrategyText
+                            , fightStrategyText = p.fightStrategyText
                             }
                         )
                         Nothing
