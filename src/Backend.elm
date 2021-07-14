@@ -1035,36 +1035,16 @@ barterAfterValidation barterState vendor location player model =
 
 readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 readMessage message clientId player model =
-    let
-        newModel =
-            model
-                |> updatePlayer (SPlayer.readMessage message) player.name
-    in
-    getWorldLoggedIn player.name newModel
-        |> Maybe.map
-            (\world ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+    model
+        |> updatePlayer (SPlayer.readMessage message) player.name
+        |> sendCurrentWorld player.name clientId
 
 
 removeMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 removeMessage message clientId player model =
-    let
-        newModel =
-            model
-                |> updatePlayer (SPlayer.removeMessage message) player.name
-    in
-    getWorldLoggedIn player.name newModel
-        |> Maybe.map
-            (\world ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+    model
+        |> updatePlayer (SPlayer.removeMessage message) player.name
+        |> sendCurrentWorld player.name clientId
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1111,23 +1091,13 @@ moveTo newCoords pathTaken clientId player model =
         ( model, Cmd.none )
 
     else
-        let
-            newModel =
-                model
-                    |> updatePlayer
-                        (SPlayer.subtractTicks tickCost
-                            >> SPlayer.setLocation (Map.toTileNum newCoords)
-                        )
-                        player.name
-        in
-        getWorldLoggedIn player.name newModel
-            |> Maybe.map
-                (\world ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                    )
+        model
+            |> updatePlayer
+                (SPlayer.subtractTicks tickCost
+                    >> SPlayer.setLocation (Map.toTileNum newCoords)
                 )
-            |> Maybe.withDefault ( model, Cmd.none )
+                player.name
+            |> sendCurrentWorld player.name clientId
 
 
 createNewChar : NewChar -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1190,20 +1160,9 @@ tagSkill skill clientId player model =
             Set_.member skill player.taggedSkills
     in
     if unusedTags > 0 && not isTagged then
-        let
-            newModel : Model
-            newModel =
-                model
-                    |> updatePlayer (SPlayer.tagSkill skill) player.name
-        in
-        getWorldLoggedIn player.name newModel
-            |> Maybe.map
-                (\world ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                    )
-                )
-            |> Maybe.withDefault ( model, Cmd.none )
+        model
+            |> updatePlayer (SPlayer.tagSkill skill) player.name
+            |> sendCurrentWorld player.name clientId
 
     else
         -- TODO notify the user?
@@ -1212,37 +1171,16 @@ tagSkill skill clientId player model =
 
 useSkillPoints : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 useSkillPoints skill clientId player model =
-    let
-        newModel : Model
-        newModel =
-            model
-                |> updatePlayer (SPlayer.useSkillPoints skill) player.name
-    in
-    getWorldLoggedIn player.name newModel
-        |> Maybe.map
-            (\world ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+    model
+        |> updatePlayer (SPlayer.useSkillPoints skill) player.name
+        |> sendCurrentWorld player.name clientId
 
 
 healMe : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 healMe clientId player model =
-    let
-        newModel =
-            model
-                |> updatePlayer SPlayer.healUsingTick player.name
-    in
-    getWorldLoggedIn player.name newModel
-        |> Maybe.map
-            (\world ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+    model
+        |> updatePlayer SPlayer.healUsingTick player.name
+        |> sendCurrentWorld player.name clientId
 
 
 equipItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1253,19 +1191,9 @@ equipItem itemId clientId player model =
 
         Just item ->
             if Item.isEquippable item.kind then
-                let
-                    newModel =
-                        model
-                            |> updatePlayer (SPlayer.equipItem item) player.name
-                in
-                getWorldLoggedIn player.name newModel
-                    |> Maybe.map
-                        (\world ->
-                            ( newModel
-                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                            )
-                        )
-                    |> Maybe.withDefault ( model, Cmd.none )
+                model
+                    |> updatePlayer (SPlayer.equipItem item) player.name
+                    |> sendCurrentWorld player.name clientId
 
             else
                 ( model, Cmd.none )
@@ -1273,19 +1201,9 @@ equipItem itemId clientId player model =
 
 setFightStrategy : ( FightStrategy, String ) -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 setFightStrategy ( strategy, text ) clientId player model =
-    let
-        newModel =
-            model
-                |> updatePlayer (SPlayer.setFightStrategy ( strategy, text )) player.name
-    in
-    getWorldLoggedIn player.name newModel
-        |> Maybe.map
-            (\world ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+    model
+        |> updatePlayer (SPlayer.setFightStrategy ( strategy, text )) player.name
+        |> sendCurrentWorld player.name clientId
 
 
 useItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1303,19 +1221,9 @@ useItem itemId clientId player model =
                    When writing this, the occasion was running a fight strategy
                    and healing inside a fight.
                 -}
-                let
-                    newModel =
-                        model
-                            |> updatePlayer (SPlayer.removeItem itemId 1) player.name
-                in
-                getWorldLoggedIn player.name newModel
-                    |> Maybe.map
-                        (\world ->
-                            ( newModel
-                            , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                            )
-                        )
-                    |> Maybe.withDefault ( model, Cmd.none )
+                model
+                    |> updatePlayer (SPlayer.removeItem itemId 1) player.name
+                    |> sendCurrentWorld player.name clientId
 
             else
                 let
@@ -1357,19 +1265,10 @@ useItem itemId clientId player model =
                                 effects
                                     |> List.map handleEffect
                                     |> List.foldl (>>) identity
-
-                            newModel =
-                                model
-                                    |> updatePlayer combinedEffects player.name
                         in
-                        getWorldLoggedIn player.name newModel
-                            |> Maybe.map
-                                (\world ->
-                                    ( newModel
-                                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                                    )
-                                )
-                            |> Maybe.withDefault ( model, Cmd.none )
+                        model
+                            |> updatePlayer combinedEffects player.name
+                            |> sendCurrentWorld player.name clientId
 
 
 unequipArmor : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1378,20 +1277,10 @@ unequipArmor clientId player model =
         Nothing ->
             ( model, Cmd.none )
 
-        Just armor ->
-            let
-                newModel =
-                    model
-                        |> updatePlayer SPlayer.unequipArmor player.name
-            in
-            getWorldLoggedIn player.name newModel
-                |> Maybe.map
-                    (\world ->
-                        ( newModel
-                        , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                        )
-                    )
-                |> Maybe.withDefault ( model, Cmd.none )
+        Just _ ->
+            model
+                |> updatePlayer SPlayer.unequipArmor player.name
+                |> sendCurrentWorld player.name clientId
 
 
 wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1623,34 +1512,36 @@ choosePerk perk clientId player model =
             }
             perk
     then
-        let
-            newModel =
-                model
-                    |> updatePlayer
-                        (identity
-                            >> SPlayer.incPerkRank perk
-                            >> SPlayer.decAvailablePerks
-                            >> (case Dict_.get perk (oneTimePerkEffects model.time) of
-                                    Nothing ->
-                                        identity
+        model
+            |> updatePlayer
+                (identity
+                    >> SPlayer.incPerkRank perk
+                    >> SPlayer.decAvailablePerks
+                    >> (case Dict_.get perk (oneTimePerkEffects model.time) of
+                            Nothing ->
+                                identity
 
-                                    Just effect ->
-                                        effect
-                               )
-                        )
-                        player.name
-        in
-        getWorldLoggedIn player.name newModel
-            |> Maybe.map
-                (\world ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
-                    )
+                            Just effect ->
+                                effect
+                       )
                 )
-            |> Maybe.withDefault ( model, Cmd.none )
+                player.name
+            |> sendCurrentWorld player.name clientId
 
     else
         ( model, Cmd.none )
+
+
+sendCurrentWorld : PlayerName -> ClientId -> Model -> ( Model, Cmd BackendMsg )
+sendCurrentWorld playerName clientId model =
+    getWorldLoggedIn playerName model
+        |> Maybe.map
+            (\world ->
+                ( model
+                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
