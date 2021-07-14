@@ -3,7 +3,7 @@ module Data.Fight.View exposing (view)
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Action, OpponentType, Who(..))
 import Data.Fight.ShotType exposing (AimedShot, ShotType(..))
-import Data.Item as Item
+import Data.Item as Item exposing (Item)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
@@ -47,6 +47,19 @@ addS verb =
 
     else
         verb ++ "s"
+
+
+viewLoot : List Item -> String
+viewLoot itemsGained =
+    String.join ", "
+        (List.map
+            (\item ->
+                String.fromInt item.count
+                    ++ "x "
+                    ++ Item.name item.kind
+            )
+            itemsGained
+        )
 
 
 view : PerceptionLevel -> Fight.Info -> PlayerName -> Html msg
@@ -291,15 +304,7 @@ view perceptionLevel fight yourName =
 
                                             else
                                                 " You also looted "
-                                                    ++ String.join ", "
-                                                        (List.map
-                                                            (\item ->
-                                                                String.fromInt item.count
-                                                                    ++ "x "
-                                                                    ++ Item.name item.kind
-                                                            )
-                                                            itemsGained
-                                                        )
+                                                    ++ viewLoot itemsGained
                                                     ++ "."
                                            )
 
@@ -314,15 +319,7 @@ view perceptionLevel fight yourName =
 
                                             else
                                                 " They also looted "
-                                                    ++ String.join ", "
-                                                        (List.map
-                                                            (\item ->
-                                                                String.fromInt item.count
-                                                                    ++ "x "
-                                                                    ++ Item.name item.kind
-                                                            )
-                                                            itemsGained
-                                                        )
+                                                    ++ viewLoot itemsGained
                                                     ++ "."
                                            )
 
@@ -339,15 +336,7 @@ view perceptionLevel fight yourName =
 
                                                 else
                                                     " They also looted "
-                                                        ++ String.join ", "
-                                                            (List.map
-                                                                (\item ->
-                                                                    String.fromInt item.count
-                                                                        ++ "x "
-                                                                        ++ Item.name item.kind
-                                                                )
-                                                                itemsGained
-                                                            )
+                                                        ++ viewLoot itemsGained
                                                         ++ "."
                                                )
 
@@ -365,15 +354,7 @@ view perceptionLevel fight yourName =
 
                                             else
                                                 " You also looted "
-                                                    ++ String.join ", "
-                                                        (List.map
-                                                            (\item ->
-                                                                String.fromInt item.count
-                                                                    ++ "x "
-                                                                    ++ Item.name item.kind
-                                                            )
-                                                            itemsGained
-                                                        )
+                                                    ++ viewLoot itemsGained
                                                     ++ "."
                                            )
 
