@@ -1601,14 +1601,14 @@ expandedQuestView player questsProgress quest =
                     , if Set_.member quest player.questsActive then
                         H.button
                             [ HA.class "quest-toggle-btn"
-                            , HE.onClick <| AskToStopProgressing quest
+                            , HE.onClickStopPropagation <| AskToStopProgressing quest
                             ]
                             [ H.text "[STOP]" ]
 
                       else
                         H.button
                             [ HA.class "quest-toggle-btn"
-                            , HE.onClick <| AskToStartProgressing quest
+                            , HE.onClickStopPropagation <| AskToStartProgressing quest
                             ]
                             [ H.text "[START]" ]
                     ]

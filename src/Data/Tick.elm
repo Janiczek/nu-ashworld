@@ -1,5 +1,6 @@
 module Data.Tick exposing
     ( TickPerIntervalCurve(..)
+    , baseTicksPerInterval
     , curveDecoder
     , curveToString
     , encodeCurve
@@ -104,3 +105,8 @@ ticksAddedPerInterval curve currentTicks =
 
             else
                 0
+
+
+baseTicksPerInterval : Int
+baseTicksPerInterval =
+    4

@@ -15,6 +15,7 @@ module Logic exposing
     , hitpoints
     , mainWorldName
     , maxTraits
+    , minTicksPerHourNeededForQuest
     , naturalArmorClass
     , newCharSpecial
     , perkRate
@@ -780,6 +781,15 @@ damageResistanceNormal r =
 mainWorldName : String
 mainWorldName =
     "main"
+
+
+minTicksPerHourNeededForQuest : Int
+minTicksPerHourNeededForQuest =
+    Quest.allEngagement
+        |> List.map ticksGivenPerQuestEngagement
+        |> List.filter (\tph -> tph /= 0)
+        |> List.minimum
+        |> Maybe.withDefault 1
 
 
 ticksGivenPerQuestEngagement : Quest.Engagement -> Int

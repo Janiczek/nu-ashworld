@@ -659,7 +659,19 @@ stopProgressing quest player =
 startProgressing : Quest.Name -> SPlayer -> SPlayer
 startProgressing quest player =
     let
-        _ =
-            Debug.todo "Check the user still has enough ticks/hour left for this"
+        usedTicksPerHour : Int
+        usedTicksPerHour =
+            player.questsActive
+                |> Set_.toList
+                |> List.map (questEngagement player >> Logic.ticksGivenPerQuestEngagement)
+                |> List.sum
+
+        availableTicksPerHour : Int
+        availableTicksPerHour =
+            Tick.baseTicksPerInterval - usedTicksPerHour
     in
-    { player | questsActive = Set_.insert quest player.questsActive }
+    if availableTicksPerHour >= Logic.minTicksPerHourNeededForQuest then
+        { player | questsActive = Set_.insert quest player.questsActive }
+
+    else
+        player

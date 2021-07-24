@@ -8,6 +8,7 @@ module Data.Quest exposing
     , Quest
     , SkillRequirement(..)
     , all
+    , allEngagement
     , allForLocation
     , decoder
     , encode
@@ -212,6 +213,14 @@ type Engagement
     = NotProgressing
     | ProgressingSlowly
     | Progressing
+
+
+allEngagement : List Engagement
+allEngagement =
+    [ NotProgressing
+    , ProgressingSlowly
+    , Progressing
+    ]
 
 
 title : Name -> String

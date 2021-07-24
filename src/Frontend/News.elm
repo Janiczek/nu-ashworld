@@ -54,6 +54,7 @@ TODO:
 * TODO global rewards - track them in backend model?
 * TODO global rewards - use them?
 * TODO write more details to the news about the geckos
+* TODO check that we're not progressing quests when hard cap is reached
 
 ~janiczek
 """
