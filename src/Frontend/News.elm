@@ -30,11 +30,18 @@ Changelog:
 * new item: **BB Gun** (value $3500, small gun, uses BB ammo, can't currently be used)
 * new item: **BB Ammo** (value $20, ammo, can't currently be used)
 
+* new enemy: **Silver Gecko**
+* new enemy: **Tough Silver Gecko**
+* new enemy: **Golden Gecko**
+* new enemy: **Tough Golden Gecko**
+* new enemy: **Fire Gecko**
+* new enemy: **Tough Fire Gecko**
+
 TODO:
 
 * TODO make some vendors sell meat jerky
-* TODO new enemy: silver gecko (and make them drop the skin)
-* TODO new enemy: golden gecko (and make them drop the skin)
+* TODO new enemy: silver gecko
+* TODO make geckos drop the skins if attacker has the perk
 
 ~janiczek
 """
