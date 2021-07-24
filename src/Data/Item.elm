@@ -189,6 +189,9 @@ healAmount kind =
         HealingPowder ->
             30
 
+        MeatJerky ->
+            40
+
         Stimpak ->
             80
 

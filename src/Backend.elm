@@ -192,11 +192,13 @@ getPlayerData_ worldName world player model =
                     )
                 |> Maybe.withDefault Perception.Atrocious
 
-        sortedPlayers =
+        players =
             world.players
                 |> Dict.values
                 |> List.filterMap Player.getPlayerData
-                |> Ladder.sort
+
+        sortedPlayers =
+            Ladder.sort players
 
         isCurrentPlayer p =
             p.name == auth.name
@@ -231,7 +233,36 @@ getPlayerData_ worldName world player model =
                                 otherPlayer
                 )
     , vendors = world.vendors
-    , questsProgress = world.questsProgress
+    , questsProgress =
+        {- TODO perhaps we should keep these values cached instead of
+           recalculating them all the time
+        -}
+        world.questsProgress
+            |> Dict_.map
+                (\quest ticksGiven ->
+                    let
+                        engagements : List Quest.Engagement
+                        engagements =
+                            players
+                                |> List.map (\player_ -> SPlayer.questEngagement player_ quest)
+
+                        playersActive : Int
+                        playersActive =
+                            engagements
+                                |> List.filter (\e -> e /= Quest.NotProgressing)
+                                |> List.length
+
+                        ticksPerHour : Int
+                        ticksPerHour =
+                            engagements
+                                |> List.map Logic.ticksGivenPerQuestEngagement
+                                |> List.sum
+                    in
+                    { ticksGiven = ticksGiven
+                    , ticksPerHour = ticksPerHour
+                    , playersActive = playersActive
+                    }
+                )
     }
 
 

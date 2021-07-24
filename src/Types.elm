@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import AssocList as Dict_
+import AssocSet as Set_
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed, Plaintext)
@@ -64,6 +65,7 @@ type alias FrontendModel =
     , fightInfo : Maybe Fight.Info
     , barter : Barter.State
     , fightStrategyText : String
+    , expandedQuests : Set_.Set Quest.Name
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
@@ -131,6 +133,8 @@ type FrontendMsg
     | SetAdminNewWorldName String
     | ToggleAdminNewWorldFast
     | AskToCreateNewWorld
+    | ExpandQuestItem Quest.Name
+    | CollapseQuestItem Quest.Name
 
 
 type BarterMsg

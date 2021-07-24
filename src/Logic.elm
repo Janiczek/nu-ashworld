@@ -25,6 +25,7 @@ module Logic exposing
     , skillPointCost
     , skillPointsPerLevel
     , tickHealPercentage
+    , ticksGivenPerQuestEngagement
     , totalTags
     , unarmedAttackStats
     , unarmedBaseCriticalChance
@@ -37,6 +38,7 @@ import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Item as Item
 import Data.Perk as Perk exposing (Perk)
+import Data.Quest as Quest exposing (Engagement(..))
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -778,3 +780,16 @@ damageResistanceNormal r =
 mainWorldName : String
 mainWorldName =
     "main"
+
+
+ticksGivenPerQuestEngagement : Quest.Engagement -> Int
+ticksGivenPerQuestEngagement engagement =
+    case engagement of
+        NotProgressing ->
+            0
+
+        ProgressingSlowly ->
+            1
+
+        Progressing ->
+            2

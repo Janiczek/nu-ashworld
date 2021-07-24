@@ -322,7 +322,7 @@ equippedArmorKindFuzzer =
 armorKindFuzzer : Fuzzer Item.Kind
 armorKindFuzzer =
     Item.all
-        |> List.filter (\kind -> Item.equippableType kind == Just Item.Armor)
+        |> List.filter (\kind -> Item.type_ kind == Just Item.Armor)
         |> oneOfValues
 
 

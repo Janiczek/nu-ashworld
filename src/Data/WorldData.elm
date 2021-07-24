@@ -63,7 +63,7 @@ type alias PlayerData =
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
     , vendors : Dict_.Dict Vendor.Name Vendor
-    , questsProgress : Dict_.Dict Quest.Name Int
+    , questsProgress : Dict_.Dict Quest.Name Quest.Progress
     }
 
 

@@ -37,6 +37,7 @@ import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception exposing (PerceptionLevel)
@@ -82,6 +83,7 @@ type alias SPlayer =
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
+    , questsActive : Set_.Set Quest.Name
     }
 
 
@@ -108,6 +110,7 @@ type alias CPlayer =
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
+    , questsActive : Set_.Set Quest.Name
     }
 
 
@@ -162,6 +165,7 @@ encodeSPlayer player =
         , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
         , ( "fightStrategy", FightStrategy.encode player.fightStrategy )
         , ( "fightStrategyText", JE.string player.fightStrategyText )
+        , ( "questsActive", Set_.encode Quest.encode player.questsActive )
         ]
 
 
@@ -225,6 +229,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Set_.empty)
         |> JD.map
             (\player ->
                 let
@@ -268,6 +273,7 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Set_.empty)
         |> JD.map
             (\player ->
                 let
@@ -312,6 +318,7 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Set_.empty)
 
 
 {-| Adding equippedArmor
@@ -342,6 +349,7 @@ sPlayerDecoderV4 =
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Set_.empty)
 
 
 {-| Adding fightStrategy
@@ -377,6 +385,7 @@ sPlayerDecoderV5 =
                     |> JD.map FightStrategy.toString
                 )
             )
+        |> JD.andMap (JD.succeed Set_.empty)
 
 
 {-| Adding fightStrategyText
@@ -407,6 +416,7 @@ sPlayerDecoderV6 =
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
+        |> JD.andMap (JD.succeed Set_.empty)
 
 
 {-| Adding worldName
@@ -437,6 +447,38 @@ sPlayerDecoderV7 =
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
+        |> JD.andMap (JD.succeed Set_.empty)
+
+
+{-| Adding questsActive
+-}
+sPlayerDecoderV8 : Decoder SPlayer
+sPlayerDecoderV8 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "worldName" JD.string)
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
+        |> JD.andMap (JD.field "fightStrategyText" JD.string)
+        |> JD.andMap (JD.field "questsActive" (Set_.decoder Quest.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -462,6 +504,7 @@ serverToClient p =
     , equippedArmor = p.equippedArmor
     , fightStrategy = p.fightStrategy
     , fightStrategyText = p.fightStrategyText
+    , questsActive = p.questsActive
     }
 
 
@@ -598,4 +641,5 @@ fromNewChar currentTime auth newChar =
             , fightStrategyText =
                 Tuple.second FightStrategy.default
                     |> FightStrategy.toString
+            , questsActive = Set_.empty
             }

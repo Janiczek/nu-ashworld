@@ -24,7 +24,7 @@ import Evergreen.V104.Data.World
 import Evergreen.V104.Data.WorldData
 import Evergreen.V104.Frontend.HoveredItem
 import Evergreen.V104.Frontend.Route
-import File
+import File exposing (File)
 import Lamdera
 import Queue
 import Set
