@@ -557,7 +557,7 @@ processGameTickForPlayers worldName model =
                 { world
                     | players =
                         Dict.map
-                            (always (Player.map (SPlayer.tick world.tickPerIntervalCurve)))
+                            (always (Player.map (SPlayer.tick model.time world.tickPerIntervalCurve)))
                             world.players
                 }
             )
@@ -573,7 +573,6 @@ processGameTickForQuests worldName model =
                         Dict_.map
                             (\quest progressPerPlayer ->
                                 progressPerPlayer
-                                    |> Debug.log ("progress for q " ++ Quest.title quest)
                                     |> Dict.map
                                         (\playerName progress ->
                                             let
@@ -590,11 +589,8 @@ processGameTickForQuests worldName model =
                                                                 quest
                                                                     |> SPlayer.questEngagement player_
                                                                     |> Logic.ticksGivenPerQuestEngagement
-                                                                    |> Debug.log ("given for player " ++ playerName)
                                                             )
-                                                        |> Debug.log "given?"
                                                         |> Maybe.withDefault 0
-                                                        |> Debug.log "given"
                                             in
                                             progress + ticksGiven
                                         )

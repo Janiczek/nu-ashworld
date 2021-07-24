@@ -278,10 +278,11 @@ addPerksOnLevelup newLevel player =
         |> setAvailablePerks newAvailablePerks
 
 
-tick : TickPerIntervalCurve -> SPlayer -> SPlayer
-tick worldTickCurve player =
+tick : Posix -> TickPerIntervalCurve -> SPlayer -> SPlayer
+tick currentTime worldTickCurve player =
     player
         |> addTicks (ticksPerHourAvailableAfterQuests worldTickCurve player)
+        |> addQuestProgressXp currentTime
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp Logic.healPerTick
@@ -289,6 +290,34 @@ tick worldTickCurve player =
             else
                 identity
            )
+
+
+addQuestProgressXp : Posix -> SPlayer -> SPlayer
+addQuestProgressXp currentTime player =
+    let
+        xpPerQuest : Dict_.Dict Quest.Name Int
+        xpPerQuest =
+            player.questsActive
+                |> Set_.toList
+                |> List.map
+                    (\quest ->
+                        ( quest
+                        , quest
+                            |> questEngagement player
+                            |> Logic.ticksGivenPerQuestEngagement
+                            |> (*) (Quest.xpPerTickGiven quest)
+                        )
+                    )
+                |> Dict_.fromList
+
+        totalXp : Int
+        totalXp =
+            xpPerQuest
+                |> Dict_.values
+                |> List.sum
+    in
+    player
+        |> addXp totalXp currentTime
 
 
 healManuallyUsingTick : SPlayer -> SPlayer

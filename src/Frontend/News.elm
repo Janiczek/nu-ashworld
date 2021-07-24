@@ -55,6 +55,7 @@ TODO:
 * TODO global rewards - use them?
 * TODO write more details to the news about the geckos
 * TODO check that we're not progressing quests when hard cap is reached
+* TODO maybe quest finish XP reward for those who gave enough?
 
 ~janiczek
 """
