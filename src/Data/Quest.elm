@@ -5,7 +5,6 @@ module Data.Quest exposing
     , PlayerRequirement(..)
     , PlayerReward(..)
     , Progress
-    , Quest
     , SkillRequirement(..)
     , all
     , allEngagement
@@ -15,7 +14,6 @@ module Data.Quest exposing
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
-    , location
     , locationQuestRequirements
     , playerRequirementTitle
     , playerRequirements
@@ -37,12 +35,6 @@ import Data.Special as Special
 import Data.Vendor as Vendor exposing (Name(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-
-
-type alias Quest =
-    { name : Name
-    , ticksGiven : Int
-    }
 
 
 type Name

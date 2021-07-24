@@ -76,7 +76,6 @@ import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
-import List.Extra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Parser
