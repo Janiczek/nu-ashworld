@@ -541,7 +541,16 @@ update msg model =
 
 processGameTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
 processGameTick worldName model =
-    ( model
+    -- TODO refresh the affected users that are logged-in?
+    model
+        |> processGameTickForPlayers worldName
+        |> processGameTickForQuests worldName
+        |> restockVendors worldName
+
+
+processGameTickForPlayers : String -> Model -> Model
+processGameTickForPlayers worldName model =
+    model
         |> updateWorld worldName
             (\world ->
                 -- TODO refresh the affected users that are logged-in
@@ -552,8 +561,47 @@ processGameTick worldName model =
                             world.players
                 }
             )
-    , Cmd.none
-    )
+
+
+processGameTickForQuests : String -> Model -> Model
+processGameTickForQuests worldName model =
+    model
+        |> updateWorld worldName
+            (\world ->
+                { world
+                    | questsProgress =
+                        Dict_.map
+                            (\quest progressPerPlayer ->
+                                progressPerPlayer
+                                    |> Debug.log ("progress for q " ++ Quest.title quest)
+                                    |> Dict.map
+                                        (\playerName progress ->
+                                            let
+                                                player : Maybe SPlayer
+                                                player =
+                                                    Dict.get playerName world.players
+                                                        |> Maybe.andThen Player.getPlayerData
+
+                                                ticksGiven : Int
+                                                ticksGiven =
+                                                    player
+                                                        |> Maybe.map
+                                                            (\player_ ->
+                                                                quest
+                                                                    |> SPlayer.questEngagement player_
+                                                                    |> Logic.ticksGivenPerQuestEngagement
+                                                                    |> Debug.log ("given for player " ++ playerName)
+                                                            )
+                                                        |> Debug.log "given?"
+                                                        |> Maybe.withDefault 0
+                                                        |> Debug.log "given"
+                                            in
+                                            progress + ticksGiven
+                                        )
+                            )
+                            world.questsProgress
+                }
+            )
 
 
 withLoggedInPlayer_ :
@@ -1428,7 +1476,7 @@ useSkillPoints skill clientId world worldName player model =
 healMe : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 healMe clientId _ worldName player model =
     model
-        |> updatePlayer worldName player.name SPlayer.healUsingTick
+        |> updatePlayer worldName player.name SPlayer.healManuallyUsingTick
         |> sendCurrentWorld worldName player.name clientId
 
 
@@ -1945,11 +1993,42 @@ stopProgressing quest clientId _ worldName player model =
 
 
 startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-startProgressing quest clientId _ worldName player model =
+startProgressing quest clientId world worldName player model =
     let
+        ensurePlayerIsInQuestProgressDict : World -> World
+        ensurePlayerIsInQuestProgressDict world_ =
+            if SPlayer.canStartProgressing quest world.tickPerIntervalCurve player then
+                { world_
+                    | questsProgress =
+                        world_.questsProgress
+                            |> Dict_.update quest
+                                (\maybePlayersProgress ->
+                                    case maybePlayersProgress of
+                                        Nothing ->
+                                            Just (Dict.singleton player.name 0)
+
+                                        Just playersProgress ->
+                                            playersProgress
+                                                |> Dict.update player.name
+                                                    (\maybePlayerProgress ->
+                                                        case maybePlayerProgress of
+                                                            Nothing ->
+                                                                Just 0
+
+                                                            Just n ->
+                                                                Just n
+                                                    )
+                                                |> Just
+                                )
+                }
+
+            else
+                world_
+
         newModel =
             model
-                |> updatePlayer worldName player.name (SPlayer.startProgressing quest)
+                |> updatePlayer worldName player.name (SPlayer.startProgressing quest world.tickPerIntervalCurve)
+                |> updateWorld worldName ensurePlayerIsInQuestProgressDict
     in
     getPlayerData worldName player.name newModel
         |> Maybe.map

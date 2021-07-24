@@ -6,9 +6,10 @@ module Data.Player.SPlayer exposing
     , addMessage
     , addSkillPercentage
     , addXp
+    , canStartProgressing
     , decAvailablePerks
     , equipItem
-    , healUsingTick
+    , healManuallyUsingTick
     , incLosses
     , incPerkRank
     , incSpecial
@@ -280,7 +281,7 @@ addPerksOnLevelup newLevel player =
 tick : TickPerIntervalCurve -> SPlayer -> SPlayer
 tick worldTickCurve player =
     player
-        |> addTicks (Tick.ticksAddedPerInterval worldTickCurve player.ticks)
+        |> addTicks (ticksPerHourAvailableAfterQuests worldTickCurve player)
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp Logic.healPerTick
@@ -290,8 +291,8 @@ tick worldTickCurve player =
            )
 
 
-healUsingTick : SPlayer -> SPlayer
-healUsingTick player =
+healManuallyUsingTick : SPlayer -> SPlayer
+healManuallyUsingTick player =
     if player.hp >= player.maxHp || player.ticks <= 0 then
         player
 
@@ -656,22 +657,28 @@ stopProgressing quest player =
     { player | questsActive = Set_.remove quest player.questsActive }
 
 
-startProgressing : Quest.Name -> SPlayer -> SPlayer
-startProgressing quest player =
-    let
-        usedTicksPerHour : Int
-        usedTicksPerHour =
-            player.questsActive
-                |> Set_.toList
-                |> List.map (questEngagement player >> Logic.ticksGivenPerQuestEngagement)
-                |> List.sum
+canStartProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> Bool
+canStartProgressing quest worldTickCurve player =
+    ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.minTicksPerHourNeededForQuest
 
-        availableTicksPerHour : Int
-        availableTicksPerHour =
-            Tick.baseTicksPerInterval - usedTicksPerHour
-    in
-    if availableTicksPerHour >= Logic.minTicksPerHourNeededForQuest then
+
+startProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> SPlayer
+startProgressing quest worldTickCurve player =
+    if canStartProgressing quest worldTickCurve player then
         { player | questsActive = Set_.insert quest player.questsActive }
 
     else
         player
+
+
+ticksPerHourUsedOnQuests : SPlayer -> Int
+ticksPerHourUsedOnQuests player =
+    player.questsActive
+        |> Set_.toList
+        |> List.map (questEngagement player >> Logic.ticksGivenPerQuestEngagement)
+        |> List.sum
+
+
+ticksPerHourAvailableAfterQuests : TickPerIntervalCurve -> SPlayer -> Int
+ticksPerHourAvailableAfterQuests worldTickCurve player =
+    Tick.ticksAddedPerInterval worldTickCurve player.ticks - ticksPerHourUsedOnQuests player
