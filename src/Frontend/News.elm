@@ -16,7 +16,30 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1638276029
+    [ { date = 0
+      , title = "TODO"
+      , text = """
+Changelog: 
+
+* items are now **sorted by type** (food, books, armor, ...) on the inventory page
+
+* new perk: **Gecko Skinning**: each gecko kill has a guaranteed drop of gecko skin. Given as a reward for a quest.
+
+* new item: **Meat Jerky** (value $30, heals 40 HP)
+* new item: **Beer** (value $200, can't currently be used)
+* new item: **BB Gun** (value $3500, small gun, uses BB ammo, can't currently be used)
+* new item: **BB Ammo** (value $20, ammo, can't currently be used)
+
+TODO:
+
+* TODO make some vendors sell meat jerky
+* TODO new enemy: silver gecko (and make them drop the skin)
+* TODO new enemy: golden gecko (and make them drop the skin)
+
+~janiczek
+"""
+      }
+    , { date = 1638276029
       , title = "Worlds, fix for a vendor bug"
       , text = """
 A big release in preparation for my talk about NuAshworld at NDC Oslo 2021 :)
@@ -43,7 +66,7 @@ the main world, 1x per minute for the NDC Oslo world.)
     , { date = 1626037313
       , title = "Fight strategy editor now more lenient toward whitespace"
       , text = """
-While experimienting with the editor I found I'd like it to allow me to write eg.
+While experimenting with the editor I found I'd like it to allow me to write eg.
 
 ```
 if    ((opponent is player

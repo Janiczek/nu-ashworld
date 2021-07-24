@@ -1,11 +1,11 @@
 module Data.Perk exposing
     ( Perk(..)
     , all
-    , allApplicable
+    , allApplicableForLevelup
     , decoder
     , description
     , encode
-    , isApplicable
+    , isApplicableForLevelup
     , maxRank
     , name
     , rank
@@ -103,6 +103,8 @@ type Perk
       -- lvl 24
       -- TODO Sniper -- needs ranged weapons
     | Slayer
+      -- special
+    | GeckoSkinning
 
 
 all : List Perk
@@ -148,6 +150,7 @@ all =
     , Tag
     , Thief
     , Toughness
+    , GeckoSkinning
     ]
 
 
@@ -276,6 +279,9 @@ name perk =
 
         BonusHthAttacks ->
             "Bonus HtH Attacks"
+
+        GeckoSkinning ->
+            "Gecko Skinning"
 
 
 multipleRankPerks : Dict_.Dict Perk Int
@@ -428,6 +434,9 @@ encode perk =
             BonusHthAttacks ->
                 "bonus-hth-attacks"
 
+            GeckoSkinning ->
+                "gecko-skinning"
+
 
 decoder : Decoder Perk
 decoder =
@@ -558,6 +567,9 @@ decoder =
                     "bonus-hth-attacks" ->
                         JD.succeed BonusHthAttacks
 
+                    "gecko-skinning" ->
+                        JD.succeed GeckoSkinning
+
                     _ ->
                         JD.fail <| "unknown Perk: '" ++ perk ++ "'"
             )
@@ -569,18 +581,18 @@ rank perk perks =
         |> Maybe.withDefault 0
 
 
-allApplicable :
+allApplicableForLevelup :
     { level : Int
     , special : Special
     , addedSkillPercentages : Dict_.Dict Skill Int
     , perks : Dict_.Dict Perk Int
     }
     -> List Perk
-allApplicable r =
-    List.filter (isApplicable r) all
+allApplicableForLevelup r =
+    List.filter (isApplicableForLevelup r) all
 
 
-isApplicable :
+isApplicableForLevelup :
     { level : Int
     , special : Special
     , addedSkillPercentages : Dict_.Dict Skill Int
@@ -588,7 +600,7 @@ isApplicable :
     }
     -> Perk
     -> Bool
-isApplicable r perk =
+isApplicableForLevelup r perk =
     let
         skill : Skill -> Int
         skill =
@@ -725,6 +737,9 @@ isApplicable r perk =
 
                 BonusHthAttacks ->
                     r.level >= 15 && s.agility >= 6
+
+                GeckoSkinning ->
+                    False
            )
 
 
@@ -854,3 +869,6 @@ description perk =
 
         Toughness ->
             "When you are tough, you take less damage.  Each level of this Perk adds +10% to your general damage resistance."
+
+        GeckoSkinning ->
+            "You have the knowledge of how to skin geckos properly to get their hides."
