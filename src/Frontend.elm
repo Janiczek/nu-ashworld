@@ -34,6 +34,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -1431,6 +1432,7 @@ townMainSquareView location _ _ =
 
       else
         H.div [] [ H.text "No vendor in this town..." ]
+    , H.text <| Debug.toString (Quest.allForLocation location)
     ]
 
 
