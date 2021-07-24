@@ -8,6 +8,7 @@
   --fg-highlight: #FCFD7D;
 
   --bg02-half-transparent: rgba(16,36,12,0.5);
+  --bg01-abovehalf-transparent: rgba(17,24,16,0.625);
   --fg01-half-transparent: rgba(60,248,0,0.5);
   --fg01-fully-transparent: rgba(60,248,0,0);
   --fg03-half-transparent: rgba(0,124,0,0.5);
@@ -1200,4 +1201,39 @@ table tbody tr:hover td {
 }
 #admin-new-world-form label input[type="checkbox"] {
   margin-right: 1ch;
+}
+.quest:not(:first-child) {
+  margin-top: 20px;
+}
+.quest-players {
+  color: var(--fg03);
+}
+.quest-number {
+  color: var(--fg02);
+}
+.quest-name {
+  color: var(--fg01);
+}
+.quest-progressbar {
+  color: var(--fg03);
+  margin-top: 20px;
+}
+.quest-progressbar-text {
+  margin-left: 1ch;
+}
+.quest-toggle-btn {
+  margin-left: 1ch;
+}
+.quest-requirements-title {
+  margin-top: 20px;
+}
+.quest-requirements-list {
+  padding-inline-start: 4ch;
+}
+.quest-requirements-none {
+  margin-left: 4ch;
+  color: var(--fg03);
+}
+.quest-xp-per-tick {
+  color: var(--fg03);
 }

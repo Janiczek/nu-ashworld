@@ -11,6 +11,7 @@ module Data.Vendor exposing
     , getFrom
     , isInLocation
     , name
+    , nameWithLocation
     , removeItem
     , restockVendors
     , subtractCaps
@@ -390,6 +391,25 @@ addItem item vendor =
 
 name : Name -> String
 name name_ =
+    case name_ of
+        ArroyoHakunin ->
+            "Hakunin"
+
+        KlamathMaidaBuckner ->
+            "Maida Buckner"
+
+        DenFlick ->
+            "Flick"
+
+        ModocJo ->
+            "Jo"
+
+        VaultCityHappyHarry ->
+            "Happy Harry"
+
+
+nameWithLocation : Name -> String
+nameWithLocation name_ =
     case name_ of
         ArroyoHakunin ->
             "Hakunin (Arroyo)"

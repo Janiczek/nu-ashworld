@@ -76,6 +76,7 @@ import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
+import List.Extra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Parser
@@ -1431,16 +1432,230 @@ townMainSquareView location _ _ =
         hasQuests =
             not <| List.isEmpty quests
 
-        questView : Quest.Name -> Html FrontendMsg
-        questView quest =
-            H.li
-                []
-                [ H.text <| Quest.title quest
-                , H.ul []
-                    [ H.li [] [ H.text <| Debug.toString <| Quest.questRequirements quest ]
-                    , H.li [] [ H.text <| Debug.toString <| Quest.ticksNeeded quest ]
-                    , H.li [] [ H.text <| Debug.toString <| Quest.xpPerTickGiven quest ]
+        todoHardcodedProgress : List Int
+        todoHardcodedProgress =
+            [ 10, 40, 80 ]
+
+        todoHardcodedIsStarted : List Bool
+        todoHardcodedIsStarted =
+            [ True, False ]
+
+        todoHardcodedPlayersActive : List Int
+        todoHardcodedPlayersActive =
+            [ 2, 5, 6 ]
+
+        todoHardcodedTicksPerHour : List Int
+        todoHardcodedTicksPerHour =
+            [ 4, 8, 6, 5 ]
+
+        progressbarView : { ticksGiven : Int, ticksNeeded : Int } -> Html FrontendMsg
+        progressbarView { ticksGiven, ticksNeeded } =
+            let
+                percentDone : Float
+                percentDone =
+                    toFloat ticksGiven / toFloat ticksNeeded
+
+                totalCount : Int
+                totalCount =
+                    20
+
+                doneCount : Int
+                doneCount =
+                    clamp 0 totalCount <|
+                        round (toFloat totalCount * percentDone)
+
+                emptyCount : Int
+                emptyCount =
+                    totalCount - doneCount
+            in
+            H.div [ HA.class "quest-progressbar" ]
+                [ H.span [] [ H.text "[" ]
+                , H.span [] [ H.text <| String.repeat doneCount "=" ++ String.repeat emptyCount "-" ]
+                , H.span [] [ H.text "]" ]
+                , H.span [ HA.class "quest-progressbar-text" ]
+                    [ H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt (round (percentDone * 100)) ++ "%" ]
+                    , H.span [] [ H.text " done (" ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt ticksGiven ]
+                    , H.span [] [ H.text "/" ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt ticksNeeded ]
+                    , H.span [] [ H.text " ticks)" ]
                     ]
+                ]
+
+        questRequirementView : Quest.Name -> Html FrontendMsg
+        questRequirementView quest =
+            H.li [] [ H.text <| Quest.title quest ]
+
+        playerRequirementView : Quest.PlayerRequirement -> Html FrontendMsg
+        playerRequirementView req =
+            H.li [] [ H.text <| Quest.playerRequirementTitle req ]
+
+        globalRewardView : Quest.GlobalReward -> Html FrontendMsg
+        globalRewardView quest =
+            H.li [] [ H.text <| Quest.globalRewardTitle quest ]
+
+        playerRewardView : Quest.PlayerReward -> Html FrontendMsg
+        playerRewardView req =
+            H.li [] [ H.text <| Quest.playerRewardTitle req ]
+
+        questView : Int -> Bool -> Int -> Int -> Quest.Name -> Html FrontendMsg
+        questView todoPercentProgress todoIsStarted todoPlayersActive todoTicksPerHour quest =
+            let
+                todoTicksGiven : Int
+                todoTicksGiven =
+                    round <| toFloat ticksNeeded * toFloat todoPercentProgress / 100
+
+                isStarted : Bool
+                isStarted =
+                    todoIsStarted
+
+                playersActive : Int
+                playersActive =
+                    todoPlayersActive
+
+                ticksPerHour : Int
+                ticksPerHour =
+                    todoTicksPerHour
+
+                questRequirements : List Quest.Name
+                questRequirements =
+                    Quest.questRequirements quest
+
+                playerRequirements : List Quest.PlayerRequirement
+                playerRequirements =
+                    Quest.playerRequirements quest
+
+                globalRewards : List Quest.GlobalReward
+                globalRewards =
+                    Quest.globalRewards quest
+
+                playerRewards : List Quest.PlayerReward
+                playerRewards =
+                    Quest.playerRewards quest
+
+                ticksNeeded : Int
+                ticksNeeded =
+                    Quest.ticksNeeded quest
+            in
+            H.li
+                [ HA.class "quest" ]
+                [ H.div []
+                    [ H.span
+                        [ -- TODO onClick collapse/expand
+                          HA.class "quest-name"
+                        ]
+                        [ H.text <| Quest.title quest ]
+                    , if isStarted then
+                        H.button
+                            [ -- TODO onClick
+                              HA.class "quest-toggle-btn"
+                            ]
+                            [ H.text "[STOP]" ]
+
+                      else
+                        H.button
+                            [ -- TODO onClick
+                              HA.class "quest-toggle-btn"
+                            ]
+                            [ H.text "[START]" ]
+                    ]
+                , progressbarView
+                    { ticksGiven = todoTicksGiven
+                    , ticksNeeded = ticksNeeded
+                    }
+                , H.div [ HA.class "quest-players" ]
+                    [ H.span [] [ H.text "Players active: " ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt playersActive ]
+                    , H.span [] [ H.text " (" ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt ticksPerHour ]
+                    , H.span [] [ H.text " ticks/hour)" ]
+                    ]
+                , H.div [ HA.class "quest-xp-per-tick" ]
+                    [ H.text "XP per tick: "
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
+                    ]
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Quest Requirements" ]
+                , if List.isEmpty questRequirements then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map questRequirementView questRequirements)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Player Requirements"
+                    , H.span
+                        [ HA.class "deemphasized" ]
+                        [ H.text " (affect ticks/hour)" ]
+                    ]
+                , if List.isEmpty playerRequirements then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map playerRequirementView playerRequirements)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Global Rewards" ]
+                , if List.isEmpty globalRewards then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map globalRewardView globalRewards)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    (if List.isEmpty playerRewards then
+                        [ H.text "Player Rewards" ]
+
+                     else
+                        [ H.text "Player Rewards"
+                        , H.span
+                            [ HA.class "deemphasized" ]
+                            [ H.text " (if given " ]
+                        , H.span
+                            [ HA.class "quest-number" ]
+                            [ H.text <|
+                                String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                                    ++ "+"
+                            ]
+                        , H.span
+                            [ HA.class "deemphasized" ]
+                            [ H.text " ticks)" ]
+                        ]
+                    )
+                , if List.isEmpty playerRewards then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map playerRewardView playerRewards)
                 ]
     in
     [ pageTitleView <| "Town: " ++ Location.name location
@@ -1460,7 +1675,13 @@ townMainSquareView location _ _ =
         H.text "No quests in this town..."
     , H.viewIf hasQuests <|
         H.ul []
-            (List.map questView quests)
+            (List.map5 questView
+                (List.cycle (List.length quests) todoHardcodedProgress)
+                (List.cycle (List.length quests) todoHardcodedIsStarted)
+                (List.cycle (List.length quests) todoHardcodedPlayersActive)
+                (List.cycle (List.length quests) todoHardcodedTicksPerHour)
+                quests
+            )
     ]
 
 
@@ -1836,7 +2057,7 @@ townStoreView barter location world player =
                 vendorNameView =
                     H.div
                         [ HA.id "town-store-vendor-name" ]
-                        [ H.text <| "Vendor: " ++ Vendor.name vendor.name ]
+                        [ H.text <| "Vendor: " ++ Vendor.nameWithLocation vendor.name ]
 
                 playerTradedValueView : Html FrontendMsg
                 playerTradedValueView =
