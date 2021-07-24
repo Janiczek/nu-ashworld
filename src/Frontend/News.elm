@@ -21,6 +21,8 @@ items =
       , text = """
 Changelog: 
 
+* Quests!!
+
 * items are now **sorted by type** (food, books, armor, ...) on the inventory page
 
 * new perk: **Gecko Skinning**: each gecko kill has a guaranteed drop of gecko skin. Given as a reward for a quest.
@@ -51,6 +53,7 @@ TODO:
 * TODO handle quest complete (player rewards)
 * TODO global rewards - track them in backend model?
 * TODO global rewards - use them?
+* TODO write more details to the news about the geckos
 
 ~janiczek
 """
