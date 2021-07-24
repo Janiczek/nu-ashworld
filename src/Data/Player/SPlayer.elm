@@ -560,11 +560,14 @@ equipItem { id } player =
             player
 
         Just item ->
-            case Item.equippableType item.kind of
-                Nothing ->
+            case Item.type_ item.kind of
+                Item.Food ->
                     player
 
-                Just Item.Armor ->
+                Item.Book ->
+                    player
+
+                Item.Armor ->
                     player
                         |> (if player.equippedArmor /= Nothing then
                                 unequipArmor
@@ -574,6 +577,16 @@ equipItem { id } player =
                            )
                         |> removeItem item.id 1
                         |> (\p -> { p | equippedArmor = Just { item | count = 1 } })
+
+                Item.Ammo ->
+                    player
+
+                Item.Misc ->
+                    player
+
+                Item.SmallGun ->
+                    -- TODO equip weapons
+                    player
 
 
 setFightStrategy : ( FightStrategy, String ) -> SPlayer -> SPlayer

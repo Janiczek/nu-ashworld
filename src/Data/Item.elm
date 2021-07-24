@@ -1,9 +1,9 @@
 module Data.Item exposing
     ( Effect(..)
-    , EquippableType(..)
     , Id
     , Item
     , Kind(..)
+    , Type(..)
     , UniqueKey
     , all
     , allHealing
@@ -15,7 +15,6 @@ module Data.Item exposing
     , decoder
     , encode
     , encodeKind
-    , equippableType
     , findMergeableId
     , getUniqueKey
     , healAmount
@@ -24,6 +23,8 @@ module Data.Item exposing
     , isHealing
     , kindDecoder
     , name
+    , typeName
+    , type_
     , usageEffects
     )
 
@@ -53,6 +54,7 @@ type alias Id =
 type Kind
     = Fruit
     | HealingPowder
+    | MeatJerky
     | Stimpak
     | BigBookOfScience
     | DeansElectronics
@@ -63,12 +65,16 @@ type Kind
     | LeatherJacket
     | LeatherArmor
     | MetalArmor
+    | Beer
+    | BBGun
+    | BBAmmo
 
 
 all : List Kind
 all =
     [ Fruit
     , HealingPowder
+    , MeatJerky
     , Stimpak
     , BigBookOfScience
     , DeansElectronics
@@ -79,6 +85,9 @@ all =
     , LeatherJacket
     , LeatherArmor
     , MetalArmor
+    , Beer
+    , BBGun
+    , BBAmmo
     ]
 
 
@@ -109,6 +118,9 @@ baseValue kind =
         HealingPowder ->
             20
 
+        MeatJerky ->
+            30
+
         Stimpak ->
             175
 
@@ -138,6 +150,15 @@ baseValue kind =
 
         MetalArmor ->
             1100
+
+        Beer ->
+            200
+
+        BBGun ->
+            3500
+
+        BBAmmo ->
+            20
 
 
 armorClass : Kind -> Int
@@ -239,6 +260,9 @@ encodeKind kind =
         HealingPowder ->
             JE.string "healing-powder"
 
+        MeatJerky ->
+            JE.string "meat-jerky"
+
         Stimpak ->
             JE.string "stimpak"
 
@@ -269,6 +293,15 @@ encodeKind kind =
         MetalArmor ->
             JE.string "metal-armor"
 
+        Beer ->
+            JE.string "beer"
+
+        BBGun ->
+            JE.string "bb-gun"
+
+        BBAmmo ->
+            JE.string "bb-ammo"
+
 
 kindDecoder : Decoder Kind
 kindDecoder =
@@ -281,6 +314,9 @@ kindDecoder =
 
                     "healing-powder" ->
                         JD.succeed HealingPowder
+
+                    "meat-jerky" ->
+                        JD.succeed MeatJerky
 
                     "stimpak" ->
                         JD.succeed Stimpak
@@ -312,6 +348,15 @@ kindDecoder =
                     "metal-armor" ->
                         JD.succeed MetalArmor
 
+                    "beer" ->
+                        JD.succeed Beer
+
+                    "bb-gun" ->
+                        JD.succeed BBGun
+
+                    "bb-ammo" ->
+                        JD.succeed BBAmmo
+
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
             )
@@ -325,6 +370,9 @@ name kind =
 
         HealingPowder ->
             "Healing Powder"
+
+        MeatJerky ->
+            "Meat Jerky"
 
         Stimpak ->
             "Stimpak"
@@ -355,6 +403,15 @@ name kind =
 
         MetalArmor ->
             "Metal Armor"
+
+        Beer ->
+            "Beer"
+
+        BBGun ->
+            "BB Gun"
+
+        BBAmmo ->
+            "BB Ammo"
 
 
 create :
@@ -390,6 +447,7 @@ non-upgraded one and it becoming automatically (wrongly) upgraded too.
 
 -}
 type alias UniqueKey =
+    -- TODO mods
     { kind : Kind }
 
 
@@ -421,6 +479,11 @@ usageEffects kind =
 
         HealingPowder ->
             -- TODO temporary perception -1?
+            [ Heal
+            , RemoveAfterUse
+            ]
+
+        MeatJerky ->
             [ Heal
             , RemoveAfterUse
             ]
@@ -472,56 +535,102 @@ usageEffects kind =
         MetalArmor ->
             []
 
+        Beer ->
+            []
 
-type EquippableType
-    = -- TODO | LeftHand
-      -- TODO | RightHand
-      Armor
+        BBGun ->
+            []
+
+        BBAmmo ->
+            []
 
 
-equippableType : Kind -> Maybe EquippableType
-equippableType kind =
+type Type
+    = Food
+    | Armor
+    | SmallGun
+    | Book
+    | Misc
+    | Ammo
+
+
+isEquippableType : Type -> Bool
+isEquippableType type__ =
+    case type__ of
+        Food ->
+            False
+
+        Armor ->
+            True
+
+        SmallGun ->
+            True
+
+        Book ->
+            False
+
+        Misc ->
+            False
+
+        Ammo ->
+            False
+
+
+type_ : Kind -> Type
+type_ kind =
     case kind of
         Fruit ->
-            Nothing
+            Food
 
         HealingPowder ->
-            Nothing
+            Food
+
+        MeatJerky ->
+            Food
 
         Stimpak ->
-            Nothing
+            Food
 
         BigBookOfScience ->
-            Nothing
+            Book
 
         DeansElectronics ->
-            Nothing
+            Book
 
         FirstAidBook ->
-            Nothing
+            Book
 
         GunsAndBullets ->
-            Nothing
+            Book
 
         ScoutHandbook ->
-            Nothing
+            Book
 
         Robes ->
-            Just Armor
+            Armor
 
         LeatherJacket ->
-            Just Armor
+            Armor
 
         LeatherArmor ->
-            Just Armor
+            Armor
 
         MetalArmor ->
-            Just Armor
+            Armor
+
+        Beer ->
+            Misc
+
+        BBGun ->
+            SmallGun
+
+        BBAmmo ->
+            Ammo
 
 
 isEquippable : Kind -> Bool
 isEquippable kind =
-    equippableType kind /= Nothing
+    isEquippableType (type_ kind)
 
 
 isBook : Kind -> Bool
@@ -562,3 +671,37 @@ isBook kind =
 
         MetalArmor ->
             False
+
+        MeatJerky ->
+            False
+
+        Beer ->
+            False
+
+        BBGun ->
+            False
+
+        BBAmmo ->
+            False
+
+
+typeName : Type -> String
+typeName type__ =
+    case type__ of
+        Food ->
+            "Food"
+
+        Book ->
+            "Book"
+
+        Armor ->
+            "Armor"
+
+        Misc ->
+            "Miscellaneous"
+
+        SmallGun ->
+            "Small Gun"
+
+        Ammo ->
+            "Ammo"
