@@ -663,9 +663,6 @@ questEngagement player quest =
 
                         Specific skill_ ->
                             oneSkill percentage skill_
-
-                SpecialRequirement { attribute, value } ->
-                    Special.get attribute player.special >= value
     in
     if Set_.member quest player.questsActive then
         if List.isEmpty reqs then

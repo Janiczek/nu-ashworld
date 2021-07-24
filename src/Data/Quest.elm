@@ -1435,7 +1435,6 @@ playerRewards name =
 
 type PlayerRequirement
     = SkillRequirement { skill : SkillRequirement, percentage : Int }
-    | SpecialRequirement { attribute : Special.Type, value : Int }
 
 
 type SkillRequirement
@@ -1457,9 +1456,6 @@ playerRequirementTitle req =
                 ++ " "
                 ++ String.fromInt percentage
                 ++ "%"
-
-        SpecialRequirement { attribute, value } ->
-            Special.label attribute ++ " " ++ String.fromInt value
 
 
 playerRequirements : Name -> List PlayerRequirement
