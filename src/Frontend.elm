@@ -1527,30 +1527,35 @@ townMainSquareView expandedQuests location { questsProgress } player =
 
 questView : CPlayer -> Dict_.Dict Quest.Name Quest.Progress -> Set_.Set Quest.Name -> Quest.Name -> Html FrontendMsg
 questView player questsProgress expandedQuests quest =
-    let
-        isExpanded : Bool
-        isExpanded =
-            Set_.member quest expandedQuests
-    in
-    H.li
-        [ HE.onClick
-            (if isExpanded then
-                CollapseQuestItem quest
+    case Dict_.get quest questsProgress of
+        Nothing ->
+            H.text "BUG: couldn't get quest progress, please report this"
 
-             else
-                ExpandQuestItem quest
-            )
-        , HA.classList
-            [ ( "quest", True )
-            , ( "expanded", isExpanded )
-            ]
-        ]
-        (if isExpanded then
-            expandedQuestView player questsProgress quest
+        Just progress ->
+            let
+                isExpanded : Bool
+                isExpanded =
+                    Set_.member quest expandedQuests
+            in
+            H.li
+                [ HE.onClick
+                    (if isExpanded then
+                        CollapseQuestItem quest
 
-         else
-            collapsedQuestView quest
-        )
+                     else
+                        ExpandQuestItem quest
+                    )
+                , HA.classList
+                    [ ( "quest", True )
+                    , ( "expanded", isExpanded )
+                    ]
+                ]
+                (if isExpanded then
+                    expandedQuestView player progress quest
+
+                 else
+                    collapsedQuestView quest
+                )
 
 
 collapsedQuestView : Quest.Name -> List (Html FrontendMsg)
@@ -1559,153 +1564,148 @@ collapsedQuestView quest =
     ]
 
 
-expandedQuestView : CPlayer -> Dict_.Dict Quest.Name Quest.Progress -> Quest.Name -> List (Html FrontendMsg)
-expandedQuestView player questsProgress quest =
-    case Dict_.get quest questsProgress of
-        Nothing ->
-            [ H.text "BUG: couldn't get quest progress, please report this" ]
+expandedQuestView : CPlayer -> Quest.Progress -> Quest.Name -> List (Html FrontendMsg)
+expandedQuestView player progress quest =
+    let
+        liText : String -> Html FrontendMsg
+        liText text =
+            H.li [] [ H.text text ]
 
-        Just progress ->
-            let
-                liText : String -> Html FrontendMsg
-                liText text =
-                    H.li [] [ H.text text ]
+        questRequirements : List Quest.Name
+        questRequirements =
+            Quest.questRequirements quest
 
-                questRequirements : List Quest.Name
-                questRequirements =
-                    Quest.questRequirements quest
+        playerRequirements : List Quest.PlayerRequirement
+        playerRequirements =
+            Quest.playerRequirements quest
 
-                playerRequirements : List Quest.PlayerRequirement
-                playerRequirements =
-                    Quest.playerRequirements quest
+        globalRewards : List Quest.GlobalReward
+        globalRewards =
+            Quest.globalRewards quest
 
-                globalRewards : List Quest.GlobalReward
-                globalRewards =
-                    Quest.globalRewards quest
+        playerRewards : List Quest.PlayerReward
+        playerRewards =
+            Quest.playerRewards quest
 
-                playerRewards : List Quest.PlayerReward
-                playerRewards =
-                    Quest.playerRewards quest
-
-                ticksNeeded : Int
-                ticksNeeded =
-                    Quest.ticksNeeded quest
-            in
-            [ H.div [ HA.class "quest-inner" ]
-                [ H.div []
-                    [ H.span
-                        [ HA.class "quest-name"
-                        , HE.onClick <| CollapseQuestItem quest
-                        ]
-                        [ H.text <| Quest.title quest ]
-                    , if Set_.member quest player.questsActive then
-                        H.button
-                            [ HA.class "quest-toggle-btn"
-                            , HE.onClickStopPropagation <| AskToStopProgressing quest
-                            ]
-                            [ H.text "[STOP]" ]
-
-                      else
-                        H.button
-                            [ HA.class "quest-toggle-btn"
-                            , HE.onClickStopPropagation <| AskToStartProgressing quest
-                            ]
-                            [ H.text "[START]" ]
-                    ]
-                , questProgressbarView
-                    { ticksGiven = progress.ticksGiven
-                    , ticksNeeded = ticksNeeded
-                    , ticksGivenByPlayer = progress.ticksGivenByPlayer
-                    }
-                , H.div [ HA.class "quest-players" ]
-                    [ H.span [] [ H.text "Players active: " ]
-                    , H.span
-                        [ HA.class "quest-number" ]
-                        [ H.text <| String.fromInt progress.playersActive ]
-                    , H.span [] [ H.text " (" ]
-                    , H.span
-                        [ HA.class "quest-number" ]
-                        [ H.text <| String.fromInt progress.ticksPerHour ]
-                    , H.span [] [ H.text " ticks/hour)" ]
-                    ]
-                , H.div [ HA.class "quest-xp-per-tick" ]
-                    [ H.text "XP per tick: "
-                    , H.span
-                        [ HA.class "quest-number" ]
-                        [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
-                    ]
-                , H.div
-                    [ HA.class "quest-requirements-title" ]
-                    [ H.text "Quest Requirements" ]
-                , if List.isEmpty questRequirements then
-                    H.div
-                        [ HA.class "quest-requirements-none" ]
-                        [ H.text "NONE" ]
-
-                  else
-                    H.ul
-                        [ HA.class "quest-requirements-list" ]
-                        (List.map (Quest.title >> liText) questRequirements)
-                , H.div
-                    [ HA.class "quest-requirements-title" ]
-                    [ H.text "Player Requirements"
-                    , H.span
-                        [ HA.class "deemphasized" ]
-                        [ H.text " (affect ticks/hour)" ]
-                    ]
-                , if List.isEmpty playerRequirements then
-                    H.div
-                        [ HA.class "quest-requirements-none" ]
-                        [ H.text "NONE" ]
-
-                  else
-                    H.ul
-                        [ HA.class "quest-requirements-list" ]
-                        (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
-                , H.div
-                    [ HA.class "quest-requirements-title" ]
-                    [ H.text "Global Rewards" ]
-                , if List.isEmpty globalRewards then
-                    H.div
-                        [ HA.class "quest-requirements-none" ]
-                        [ H.text "NONE" ]
-
-                  else
-                    H.ul
-                        [ HA.class "quest-requirements-list" ]
-                        (List.map (Quest.globalRewardTitle >> liText) globalRewards)
-                , H.div
-                    [ HA.class "quest-requirements-title" ]
-                    (if List.isEmpty playerRewards then
-                        [ H.text "Player Rewards" ]
-
-                     else
-                        [ H.text "Player Rewards"
-                        , H.span
-                            [ HA.class "deemphasized" ]
-                            [ H.text " (if you give " ]
-                        , H.span
-                            [ HA.class "quest-number" ]
-                            [ H.text <|
-                                String.fromInt (Quest.ticksNeededForPlayerReward quest)
-                                    ++ "+"
-                            ]
-                        , H.span
-                            [ HA.class "deemphasized" ]
-                            [ H.text " ticks)" ]
-                        ]
-                    )
-                , if List.isEmpty playerRewards then
-                    H.div
-                        [ HA.class "quest-requirements-none" ]
-                        [ H.text "NONE" ]
-
-                  else
-                    H.ul
-                        [ HA.class "quest-requirements-list" ]
-                        (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+        ticksNeeded : Int
+        ticksNeeded =
+            Quest.ticksNeeded quest
+    in
+    [ H.div [ HA.class "quest-inner" ]
+        [ H.div []
+            [ H.span
+                [ HA.class "quest-name"
+                , HE.onClick <| CollapseQuestItem quest
                 ]
+                [ H.text <| Quest.title quest ]
+            , if Set_.member quest player.questsActive then
+                H.button
+                    [ HA.class "quest-toggle-btn"
+                    , HE.onClickStopPropagation <| AskToStopProgressing quest
+                    ]
+                    [ H.text "[STOP]" ]
+
+              else
+                H.button
+                    [ HA.class "quest-toggle-btn"
+                    , HE.onClickStopPropagation <| AskToStartProgressing quest
+                    ]
+                    [ H.text "[START]" ]
             ]
+        , questProgressbarView
+            { ticksGiven = progress.ticksGiven
+            , ticksNeeded = ticksNeeded
+            , ticksGivenByPlayer = progress.ticksGivenByPlayer
+            }
+        , H.div [ HA.class "quest-players" ]
+            [ H.span [] [ H.text "Players active: " ]
+            , H.span
+                [ HA.class "quest-number" ]
+                [ H.text <| String.fromInt progress.playersActive ]
+            , H.span [] [ H.text " (" ]
+            , H.span
+                [ HA.class "quest-number" ]
+                [ H.text <| String.fromInt progress.ticksPerHour ]
+            , H.span [] [ H.text " ticks/hour)" ]
+            ]
+        , H.div [ HA.class "quest-xp-per-tick" ]
+            [ H.text "XP per tick: "
+            , H.span
+                [ HA.class "quest-number" ]
+                [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
+            ]
+        , H.div
+            [ HA.class "quest-requirements-title" ]
+            [ H.text "Quest Requirements" ]
+        , if List.isEmpty questRequirements then
+            H.div
+                [ HA.class "quest-requirements-none" ]
+                [ H.text "NONE" ]
+
+          else
+            H.ul
+                [ HA.class "quest-requirements-list" ]
+                (List.map (Quest.title >> liText) questRequirements)
+        , H.div
+            [ HA.class "quest-requirements-title" ]
+            [ H.text "Player Requirements"
+            , H.span
+                [ HA.class "deemphasized" ]
+                [ H.text " (affect ticks/hour)" ]
+            ]
+        , if List.isEmpty playerRequirements then
+            H.div
+                [ HA.class "quest-requirements-none" ]
+                [ H.text "NONE" ]
+
+          else
+            H.ul
+                [ HA.class "quest-requirements-list" ]
+                (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
+        , H.div
+            [ HA.class "quest-requirements-title" ]
+            [ H.text "Global Rewards" ]
+        , if List.isEmpty globalRewards then
+            H.div
+                [ HA.class "quest-requirements-none" ]
+                [ H.text "NONE" ]
+
+          else
+            H.ul
+                [ HA.class "quest-requirements-list" ]
+                (List.map (Quest.globalRewardTitle >> liText) globalRewards)
+        , H.div
+            [ HA.class "quest-requirements-title" ]
+            (if List.isEmpty playerRewards then
+                [ H.text "Player Rewards" ]
+
+             else
+                [ H.text "Player Rewards"
+                , H.span
+                    [ HA.class "deemphasized" ]
+                    [ H.text " (if you give " ]
+                , H.span
+                    [ HA.class "quest-number" ]
+                    [ H.text <|
+                        String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                            ++ "+"
+                    ]
+                , H.span
+                    [ HA.class "deemphasized" ]
+                    [ H.text " ticks)" ]
+                ]
+            )
+        , if List.isEmpty playerRewards then
+            H.div
+                [ HA.class "quest-requirements-none" ]
+                [ H.text "NONE" ]
+
+          else
+            H.ul
+                [ HA.class "quest-requirements-list" ]
+                (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+        ]
+    ]
 
 
 townStoreView :
