@@ -205,9 +205,9 @@ encodeToBackendMsg msg =
                 , ( "json", JE.string "<omitted>" )
                 ]
 
-        AdminToBackend (CreateNewWorld name fast) ->
+        AdminToBackend (CreateNewWorld worldName fast) ->
             JE.object
                 [ ( "type", JE.string "AdminToBackend CreateNewWorld" )
-                , ( "name", JE.string name )
+                , ( "name", JE.string worldName )
                 , ( "fast", JE.bool fast )
                 ]

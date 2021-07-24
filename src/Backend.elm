@@ -1016,8 +1016,8 @@ updateAdmin clientId msg model =
                     , Lamdera.sendToFrontend clientId <| AlertMessage <| JD.errorToString error
                     )
 
-        CreateNewWorld name fast ->
-            if Dict.member name model.worlds then
+        CreateNewWorld worldName fast ->
+            if Dict.member worldName model.worlds then
                 ( model, Cmd.none )
 
             else
@@ -1026,7 +1026,7 @@ updateAdmin clientId msg model =
                         { model
                             | worlds =
                                 Dict.insert
-                                    name
+                                    worldName
                                     (World.init { fast = fast })
                                     model.worlds
                         }

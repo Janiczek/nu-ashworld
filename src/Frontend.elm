@@ -4290,6 +4290,7 @@ adminLinksView currentRoute =
             , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
             , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
+            , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]
     in
