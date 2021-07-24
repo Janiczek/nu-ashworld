@@ -1213,11 +1213,22 @@ table tbody tr:hover td {
   padding-right: 8px;
   color: var(--fg02);
 }
+.quest:not(.expanded) {
+  cursor: pointer;
+}
+.quest:not(.expanded):hover,
+.quest:not(.expanded):hover:before {
+  color: var(--fg01);
+}
 .quest.expanded:before {
   content: '[-]';
 }
-.quest:not(:first-child) {
-  margin-top: 20px;
+.quest-inner {
+  display: inline-block;
+  vertical-align: top;
+}
+.quest.expanded:not(:last-child) {
+  margin-bottom: 20px;
 }
 .quest-players {
   color: var(--fg03);
@@ -1226,6 +1237,9 @@ table tbody tr:hover td {
   color: var(--fg02);
 }
 .quest-name {
+  cursor: pointer;
+}
+.quest-name:hover {
   color: var(--fg01);
 }
 .quest-progressbar {
@@ -1237,6 +1251,9 @@ table tbody tr:hover td {
 }
 .quest-toggle-btn {
   margin-left: 1ch;
+}
+.quest-toggle-btn:hover {
+  color: var(--fg-highlight);
 }
 .quest-requirements-title {
   margin-top: 20px;

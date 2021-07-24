@@ -42,6 +42,11 @@ TODO:
 * TODO make some vendors sell meat jerky
 * TODO new enemy: silver gecko
 * TODO make geckos drop the skins if attacker has the perk
+* TODO new item: silver gecko skin
+* TODO new item: golden gecko skin
+* TODO new item: fire gecko skin
+* TODO on each tick, progress the quests
+* TODO validate startProgressing
 
 ~janiczek
 """

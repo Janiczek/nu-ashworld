@@ -135,6 +135,8 @@ type FrontendMsg
     | AskToCreateNewWorld
     | ExpandQuestItem Quest.Name
     | CollapseQuestItem Quest.Name
+    | AskToStopProgressing Quest.Name
+    | AskToStartProgressing Quest.Name
 
 
 type BarterMsg
@@ -174,6 +176,8 @@ type ToBackend
     | RemoveMessage Message.Id
     | Barter Barter.State
     | AdminToBackend AdminToBackend
+    | StopProgressing Quest.Name
+    | StartProgressing Quest.Name
 
 
 type AdminToBackend

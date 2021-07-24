@@ -545,6 +545,16 @@ update msg ({ loginForm } as model) =
             , Cmd.none
             )
 
+        AskToStopProgressing quest ->
+            ( model
+            , Lamdera.sendToBackend <| StopProgressing quest
+            )
+
+        AskToStartProgressing quest ->
+            ( model
+            , Lamdera.sendToBackend <| StartProgressing quest
+            )
+
 
 resetBarter : Model -> ( Model, Cmd FrontendMsg )
 resetBarter model =
@@ -1432,8 +1442,13 @@ mapLoggedOutView =
     ]
 
 
-questProgressbarView : { ticksGiven : Int, ticksNeeded : Int } -> Html FrontendMsg
-questProgressbarView { ticksGiven, ticksNeeded } =
+questProgressbarView :
+    { ticksGiven : Int
+    , ticksNeeded : Int
+    , ticksGivenByPlayer : Int
+    }
+    -> Html FrontendMsg
+questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
     let
         percentDone : Float
         percentDone =
@@ -1468,7 +1483,11 @@ questProgressbarView { ticksGiven, ticksNeeded } =
             , H.span
                 [ HA.class "quest-number" ]
                 [ H.text <| String.fromInt ticksNeeded ]
-            , H.span [] [ H.text " ticks)" ]
+            , H.span [] [ H.text " ticks, you gave " ]
+            , H.span
+                [ HA.class "quest-number" ]
+                [ H.text <| String.fromInt ticksGivenByPlayer ]
+            , H.span [] [ H.text ")" ]
             ]
         ]
 
@@ -1542,148 +1561,151 @@ collapsedQuestView quest =
 
 expandedQuestView : CPlayer -> Dict_.Dict Quest.Name Quest.Progress -> Quest.Name -> List (Html FrontendMsg)
 expandedQuestView player questsProgress quest =
-    let
-        liText : String -> Html FrontendMsg
-        liText text =
-            H.li [] [ H.text text ]
+    case Dict_.get quest questsProgress of
+        Nothing ->
+            [ H.text "BUG: couldn't get quest progress, please report this" ]
 
-        progress : Quest.Progress
-        progress =
-            Dict_.get quest questsProgress
-                |> Maybe.withDefault Quest.emptyProgress
+        Just progress ->
+            let
+                liText : String -> Html FrontendMsg
+                liText text =
+                    H.li [] [ H.text text ]
 
-        questRequirements : List Quest.Name
-        questRequirements =
-            Quest.questRequirements quest
+                questRequirements : List Quest.Name
+                questRequirements =
+                    Quest.questRequirements quest
 
-        playerRequirements : List Quest.PlayerRequirement
-        playerRequirements =
-            Quest.playerRequirements quest
+                playerRequirements : List Quest.PlayerRequirement
+                playerRequirements =
+                    Quest.playerRequirements quest
 
-        globalRewards : List Quest.GlobalReward
-        globalRewards =
-            Quest.globalRewards quest
+                globalRewards : List Quest.GlobalReward
+                globalRewards =
+                    Quest.globalRewards quest
 
-        playerRewards : List Quest.PlayerReward
-        playerRewards =
-            Quest.playerRewards quest
+                playerRewards : List Quest.PlayerReward
+                playerRewards =
+                    Quest.playerRewards quest
 
-        ticksNeeded : Int
-        ticksNeeded =
-            Quest.ticksNeeded quest
-    in
-    [ H.div []
-        [ H.span
-            [ HA.class "quest-name"
-            , HE.onClick <| CollapseQuestItem quest
+                ticksNeeded : Int
+                ticksNeeded =
+                    Quest.ticksNeeded quest
+            in
+            [ H.div [ HA.class "quest-inner" ]
+                [ H.div []
+                    [ H.span
+                        [ HA.class "quest-name"
+                        , HE.onClick <| CollapseQuestItem quest
+                        ]
+                        [ H.text <| Quest.title quest ]
+                    , if Set_.member quest player.questsActive then
+                        H.button
+                            [ HA.class "quest-toggle-btn"
+                            , HE.onClick <| AskToStopProgressing quest
+                            ]
+                            [ H.text "[STOP]" ]
+
+                      else
+                        H.button
+                            [ HA.class "quest-toggle-btn"
+                            , HE.onClick <| AskToStartProgressing quest
+                            ]
+                            [ H.text "[START]" ]
+                    ]
+                , questProgressbarView
+                    { ticksGiven = progress.ticksGiven
+                    , ticksNeeded = ticksNeeded
+                    , ticksGivenByPlayer = progress.ticksGivenByPlayer
+                    }
+                , H.div [ HA.class "quest-players" ]
+                    [ H.span [] [ H.text "Players active: " ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt progress.playersActive ]
+                    , H.span [] [ H.text " (" ]
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt progress.ticksPerHour ]
+                    , H.span [] [ H.text " ticks/hour)" ]
+                    ]
+                , H.div [ HA.class "quest-xp-per-tick" ]
+                    [ H.text "XP per tick: "
+                    , H.span
+                        [ HA.class "quest-number" ]
+                        [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
+                    ]
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Quest Requirements" ]
+                , if List.isEmpty questRequirements then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map (Quest.title >> liText) questRequirements)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Player Requirements"
+                    , H.span
+                        [ HA.class "deemphasized" ]
+                        [ H.text " (affect ticks/hour)" ]
+                    ]
+                , if List.isEmpty playerRequirements then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    [ H.text "Global Rewards" ]
+                , if List.isEmpty globalRewards then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map (Quest.globalRewardTitle >> liText) globalRewards)
+                , H.div
+                    [ HA.class "quest-requirements-title" ]
+                    (if List.isEmpty playerRewards then
+                        [ H.text "Player Rewards" ]
+
+                     else
+                        [ H.text "Player Rewards"
+                        , H.span
+                            [ HA.class "deemphasized" ]
+                            [ H.text " (if you give " ]
+                        , H.span
+                            [ HA.class "quest-number" ]
+                            [ H.text <|
+                                String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                                    ++ "+"
+                            ]
+                        , H.span
+                            [ HA.class "deemphasized" ]
+                            [ H.text " ticks)" ]
+                        ]
+                    )
+                , if List.isEmpty playerRewards then
+                    H.div
+                        [ HA.class "quest-requirements-none" ]
+                        [ H.text "NONE" ]
+
+                  else
+                    H.ul
+                        [ HA.class "quest-requirements-list" ]
+                        (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+                ]
             ]
-            [ H.text <| Quest.title quest ]
-        , if Set_.member quest player.questsActive then
-            H.button
-                [ -- TODO onClick
-                  HA.class "quest-toggle-btn"
-                ]
-                [ H.text "[STOP]" ]
-
-          else
-            H.button
-                [ -- TODO onClick
-                  HA.class "quest-toggle-btn"
-                ]
-                [ H.text "[START]" ]
-        ]
-    , questProgressbarView
-        { ticksGiven = progress.ticksGiven
-        , ticksNeeded = ticksNeeded
-        }
-    , H.div [ HA.class "quest-players" ]
-        [ H.span [] [ H.text "Players active: " ]
-        , H.span
-            [ HA.class "quest-number" ]
-            [ H.text <| String.fromInt progress.playersActive ]
-        , H.span [] [ H.text " (" ]
-        , H.span
-            [ HA.class "quest-number" ]
-            [ H.text <| String.fromInt progress.ticksPerHour ]
-        , H.span [] [ H.text " ticks/hour)" ]
-        ]
-    , H.div [ HA.class "quest-xp-per-tick" ]
-        [ H.text "XP per tick: "
-        , H.span
-            [ HA.class "quest-number" ]
-            [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
-        ]
-    , H.div
-        [ HA.class "quest-requirements-title" ]
-        [ H.text "Quest Requirements" ]
-    , if List.isEmpty questRequirements then
-        H.div
-            [ HA.class "quest-requirements-none" ]
-            [ H.text "NONE" ]
-
-      else
-        H.ul
-            [ HA.class "quest-requirements-list" ]
-            (List.map (Quest.title >> liText) questRequirements)
-    , H.div
-        [ HA.class "quest-requirements-title" ]
-        [ H.text "Player Requirements"
-        , H.span
-            [ HA.class "deemphasized" ]
-            [ H.text " (affect ticks/hour)" ]
-        ]
-    , if List.isEmpty playerRequirements then
-        H.div
-            [ HA.class "quest-requirements-none" ]
-            [ H.text "NONE" ]
-
-      else
-        H.ul
-            [ HA.class "quest-requirements-list" ]
-            (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
-    , H.div
-        [ HA.class "quest-requirements-title" ]
-        [ H.text "Global Rewards" ]
-    , if List.isEmpty globalRewards then
-        H.div
-            [ HA.class "quest-requirements-none" ]
-            [ H.text "NONE" ]
-
-      else
-        H.ul
-            [ HA.class "quest-requirements-list" ]
-            (List.map (Quest.globalRewardTitle >> liText) globalRewards)
-    , H.div
-        [ HA.class "quest-requirements-title" ]
-        (if List.isEmpty playerRewards then
-            [ H.text "Player Rewards" ]
-
-         else
-            [ H.text "Player Rewards"
-            , H.span
-                [ HA.class "deemphasized" ]
-                [ H.text " (if given " ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <|
-                    String.fromInt (Quest.ticksNeededForPlayerReward quest)
-                        ++ "+"
-                ]
-            , H.span
-                [ HA.class "deemphasized" ]
-                [ H.text " ticks)" ]
-            ]
-        )
-    , if List.isEmpty playerRewards then
-        H.div
-            [ HA.class "quest-requirements-none" ]
-            [ H.text "NONE" ]
-
-      else
-        H.ul
-            [ HA.class "quest-requirements-list" ]
-            (List.map (Quest.playerRewardTitle >> liText) playerRewards)
-    ]
 
 
 townStoreView :
@@ -3064,15 +3086,15 @@ inventoryView _ player =
                 , npcExtraBonus = 0
                 }
 
-        chanceToHitAtArmorClass : Int -> Int
-        chanceToHitAtArmorClass targetArmorClass =
+        chanceToHitAtArmorClass0 : Int
+        chanceToHitAtArmorClass0 =
             Logic.unarmedChanceToHit
                 { attackerAddedSkillPercentages = player.addedSkillPercentages
                 , attackerSpecial = player.special
                 , -- TODO parameterize by this after we get non-unarmed combat
                   distanceHexes = 0
                 , shotType = ShotType.NormalShot
-                , targetArmorClass = targetArmorClass
+                , targetArmorClass = 0
                 }
     in
     [ pageTitleView "Inventory"
@@ -3130,9 +3152,7 @@ inventoryView _ player =
         []
         [ H.li [] [ H.text <| "Min Damage: " ++ String.fromInt attackStats.minDamage ]
         , H.li [] [ H.text <| "Max Damage: " ++ String.fromInt attackStats.maxDamage ]
-        , H.li [] [ H.text <| "Chance to hit at target armor class 0: " ++ String.fromInt (chanceToHitAtArmorClass 0) ++ "%" ]
-        , H.li [] [ H.text <| "Chance to hit at target armor class 10: " ++ String.fromInt (chanceToHitAtArmorClass 10) ++ "%" ]
-        , H.li [] [ H.text <| "Chance to hit at target armor class 20: " ++ String.fromInt (chanceToHitAtArmorClass 20) ++ "%" ]
+        , H.li [] [ H.text <| "Chance to hit at target armor class 0: " ++ String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
         ]
     ]
 

@@ -22,6 +22,7 @@ import Data.Quest as Quest
 import Data.Tick as Tick exposing (TickPerIntervalCurve(..))
 import Data.Vendor as Vendor exposing (Vendor)
 import Dict exposing (Dict)
+import Dict.ExtraExtra as Dict
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
@@ -60,7 +61,7 @@ type alias World =
     , tickFrequency : Time.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
     , vendorRestockFrequency : Time.Interval
-    , questsProgress : Dict_.Dict Quest.Name Int
+    , questsProgress : Dict_.Dict Quest.Name (Dict PlayerName Int)
 
     -- TODO perhaps have the shops here too, for some manual admin addition of items?
     -- TODO perhaps have the global rewards here too, for manual addition?
@@ -95,7 +96,7 @@ init { fast } =
     , vendorRestockFrequency = vendorRestockFrequency
     , questsProgress =
         Quest.all
-            |> List.map (\q -> ( q, 0 ))
+            |> List.map (\q -> ( q, Dict.empty ))
             |> Dict_.fromList
     }
 
@@ -174,7 +175,7 @@ decoderV1 =
             , vendorRestockFrequency = Time.Hour
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
         )
@@ -207,7 +208,7 @@ decoderV2 =
             , vendorRestockFrequency = Time.Hour
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
         )
@@ -241,7 +242,7 @@ decoderV3 =
             , vendorRestockFrequency = vendorRestockFrequency
             , questsProgress =
                 Quest.all
-                    |> List.map (\q -> ( q, 0 ))
+                    |> List.map (\q -> ( q, Dict.empty ))
                     |> Dict_.fromList
             }
         )
@@ -300,4 +301,4 @@ decoderV4 =
         |> JD.andMap (JD.field "tickFrequency" Time.intervalDecoder)
         |> JD.andMap (JD.field "tickPerIntervalCurve" Tick.curveDecoder)
         |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)
-        |> JD.andMap (JD.field "questsProgress" (Dict_.decoder Quest.decoder JD.int))
+        |> JD.andMap (JD.field "questsProgress" (Dict_.decoder Quest.decoder (Dict.decoder JD.string JD.int)))

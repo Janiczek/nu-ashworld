@@ -24,6 +24,8 @@ module Data.Player.SPlayer exposing
     , setHp
     , setItems
     , setLocation
+    , startProgressing
+    , stopProgressing
     , subtractCaps
     , subtractTicks
     , tagSkill
@@ -647,3 +649,17 @@ questEngagement player quest =
 
     else
         NotProgressing
+
+
+stopProgressing : Quest.Name -> SPlayer -> SPlayer
+stopProgressing quest player =
+    { player | questsActive = Set_.remove quest player.questsActive }
+
+
+startProgressing : Quest.Name -> SPlayer -> SPlayer
+startProgressing quest player =
+    let
+        _ =
+            Debug.todo "Check the user still has enough ticks/hour left for this"
+    in
+    { player | questsActive = Set_.insert quest player.questsActive }

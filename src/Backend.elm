@@ -173,6 +173,9 @@ getPlayerData worldName playerName model =
             )
 
 
+{-| A "child" helper of getPlayerData for when you already have
+the `Player SPlayer` value fetched.
+-}
 getPlayerData_ : World.Name -> World -> Player SPlayer -> Model -> PlayerData
 getPlayerData_ worldName world player model =
     let
@@ -239,7 +242,7 @@ getPlayerData_ worldName world player model =
         -}
         world.questsProgress
             |> Dict_.map
-                (\quest ticksGiven ->
+                (\quest ticksGivenPerPlayer ->
                     let
                         engagements : List Quest.Engagement
                         engagements =
@@ -257,10 +260,24 @@ getPlayerData_ worldName world player model =
                             engagements
                                 |> List.map Logic.ticksGivenPerQuestEngagement
                                 |> List.sum
+
+                        ticksGiven : Int
+                        ticksGiven =
+                            ticksGivenPerPlayer
+                                |> Dict.values
+                                |> List.sum
+
+                        ticksGivenByPlayer : Int
+                        ticksGivenByPlayer =
+                            player
+                                |> Player.getPlayerData
+                                |> Maybe.andThen (\{ name } -> Dict.get name ticksGivenPerPlayer)
+                                |> Maybe.withDefault 0
                     in
                     { ticksGiven = ticksGiven
                     , ticksPerHour = ticksPerHour
                     , playersActive = playersActive
+                    , ticksGivenByPlayer = ticksGivenByPlayer
                     }
                 )
     }
@@ -275,11 +292,11 @@ update msg model =
     case msg of
         Connected _ clientId ->
             let
-                world =
+                worlds =
                     getWorlds model
             in
             ( model
-            , Lamdera.sendToFrontend clientId <| CurrentWorlds world
+            , Lamdera.sendToFrontend clientId <| CurrentWorlds worlds
             )
 
         Disconnected _ clientId ->
@@ -931,9 +948,9 @@ updateFromFrontend sessionId clientId msg model =
                     Just { worldName, playerName } ->
                         getPlayerData worldName playerName model
                             |> Maybe.map
-                                (\world ->
+                                (\data ->
                                     ( model
-                                    , Lamdera.sendToFrontend clientId <| CurrentPlayer world
+                                    , Lamdera.sendToFrontend clientId <| CurrentPlayer data
                                     )
                                 )
                             |> Maybe.withDefault (loggedOut ())
@@ -961,6 +978,12 @@ updateFromFrontend sessionId clientId msg model =
 
         AdminToBackend adminMsg ->
             withAdmin (updateAdmin clientId adminMsg)
+
+        StopProgressing quest ->
+            withLoggedInCreatedPlayer (stopProgressing quest)
+
+        StartProgressing quest ->
+            withLoggedInCreatedPlayer (startProgressing quest)
 
 
 updateAdmin : ClientId -> AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -1902,3 +1925,37 @@ createItem worldName world { uniqueKey, count } model =
     ( item
     , { model | worlds = model.worlds |> Dict.insert worldName { world | lastItemId = newLastId } }
     )
+
+
+stopProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+stopProgressing quest clientId _ worldName player model =
+    let
+        newModel =
+            model
+                |> updatePlayer worldName player.name (SPlayer.stopProgressing quest)
+    in
+    getPlayerData worldName player.name newModel
+        |> Maybe.map
+            (\data ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
+
+
+startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+startProgressing quest clientId _ worldName player model =
+    let
+        newModel =
+            model
+                |> updatePlayer worldName player.name (SPlayer.startProgressing quest)
+    in
+    getPlayerData worldName player.name newModel
+        |> Maybe.map
+            (\data ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )

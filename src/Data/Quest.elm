@@ -10,7 +10,6 @@ module Data.Quest exposing
     , all
     , allForLocation
     , decoder
-    , emptyProgress
     , encode
     , exclusiveWith
     , globalRewardTitle
@@ -205,14 +204,7 @@ type alias Progress =
     { playersActive : Int
     , ticksPerHour : Int
     , ticksGiven : Int
-    }
-
-
-emptyProgress : Progress
-emptyProgress =
-    { playersActive = 0
-    , ticksPerHour = 0
-    , ticksGiven = 0
+    , ticksGivenByPlayer : Int
     }
 
 

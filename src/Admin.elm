@@ -183,6 +183,18 @@ encodeToBackendMsg msg =
                 , ( "perk", Perk.encode perk )
                 ]
 
+        StopProgressing quest ->
+            JE.object
+                [ ( "type", JE.string "StopProgressing" )
+                , ( "quest", Quest.encode quest )
+                ]
+
+        StartProgressing quest ->
+            JE.object
+                [ ( "type", JE.string "StartProgressing" )
+                , ( "quest", Quest.encode quest )
+                ]
+
         AdminToBackend ExportJson ->
             JE.object
                 [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
