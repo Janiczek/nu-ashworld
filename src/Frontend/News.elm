@@ -47,6 +47,10 @@ TODO:
 * TODO new item: fire gecko skin
 * TODO on each tick, progress the quests
 * TODO validate startProgressing
+* TODO handle quest complete (global rewards)
+* TODO handle quest complete (player rewards)
+* TODO global rewards - track them in backend model?
+* TODO global rewards - use them?
 
 ~janiczek
 """
