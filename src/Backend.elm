@@ -34,11 +34,11 @@ import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Vendor as Vendor exposing (Vendor)
-import Data.World
+import Data.WorldView
     exposing
-        ( AdminData
-        , WorldLoggedInData
-        , WorldLoggedOutData
+        ( AdminView
+        , LoggedInView
+        , LoggedOutView
         )
 import Data.Xp as Xp
 import Dict exposing (Dict)
@@ -100,16 +100,16 @@ restockVendors model =
         (Vendor.restockVendors model.lastItemId model.vendors)
 
 
-getAdminData : Model -> AdminData
-getAdminData model =
+getAdminView : Model -> AdminView
+getAdminView model =
     { players = Dict.values model.players
     , loggedInPlayers = Dict.values model.loggedInPlayers
     , nextWantedTick = model.nextWantedTick
     }
 
 
-getWorldLoggedOut : Model -> WorldLoggedOutData
-getWorldLoggedOut model =
+getLoggedOutView : Model -> LoggedOutView
+getLoggedOutView model =
     { players =
         model.players
             |> Dict.values
@@ -119,14 +119,14 @@ getWorldLoggedOut model =
     }
 
 
-getWorldLoggedIn : PlayerName -> Model -> Maybe WorldLoggedInData
-getWorldLoggedIn playerName model =
+getLoggedInView : PlayerName -> Model -> Maybe LoggedInView
+getLoggedInView playerName model =
     Dict.get playerName model.players
-        |> Maybe.map (\player -> getWorldLoggedIn_ player model)
+        |> Maybe.map (\player -> getLoggedInView_ player model)
 
 
-getWorldLoggedIn_ : Player SPlayer -> Model -> WorldLoggedInData
-getWorldLoggedIn_ player model =
+getLoggedInView_ : Player SPlayer -> Model -> LoggedInView
+getLoggedInView_ player model =
     let
         auth : Auth Verified
         auth =
@@ -190,7 +190,7 @@ update msg model =
         Connected _ clientId ->
             let
                 world =
-                    getWorldLoggedOut model
+                    getLoggedOutView model
             in
             ( model
             , Lamdera.sendToFrontend clientId <| InitWorld world
@@ -335,7 +335,7 @@ update msg model =
                                             fight_.finalTarget
                            )
             in
-            getWorldLoggedIn sPlayer.name newModel
+            getLoggedInView sPlayer.name newModel
                 |> Maybe.map
                     (\world ->
                         ( newModel
@@ -586,12 +586,12 @@ updateFromFrontend sessionId clientId msg model =
             if Auth.isAdminName auth then
                 if Auth.adminPasswordChecksOut auth then
                     let
-                        adminData : AdminData
-                        adminData =
-                            getAdminData model
+                        adminView : AdminView
+                        adminView =
+                            getAdminView model
                     in
                     ( { model | adminLoggedIn = Just ( sessionId, clientId ) }
-                    , Lamdera.sendToFrontend clientId <| YoureLoggedInAsAdmin adminData
+                    , Lamdera.sendToFrontend clientId <| YoureLoggedInAsAdmin adminView
                     )
 
                 else
@@ -613,7 +613,7 @@ updateFromFrontend sessionId clientId msg model =
                                 Player.getAuth player
                         in
                         if Auth.verify auth playerAuth then
-                            getWorldLoggedIn auth.name model
+                            getLoggedInView auth.name model
                                 |> Maybe.map
                                     (\world ->
                                         let
@@ -621,7 +621,7 @@ updateFromFrontend sessionId clientId msg model =
                                                 Dict.partition (\_ name -> name == auth.name) model.loggedInPlayers
 
                                             worldLoggedOut =
-                                                getWorldLoggedOut model
+                                                getLoggedOutView model
                                         in
                                         ( { model | loggedInPlayers = Dict.insert clientId auth.name otherPlayers }
                                         , Cmd.batch <|
@@ -671,7 +671,7 @@ updateFromFrontend sessionId clientId msg model =
                                     }
 
                                 world =
-                                    getWorldLoggedIn_ player model
+                                    getLoggedInView_ player model
                             in
                             ( newModel
                             , Lamdera.sendToFrontend clientId <| YoureRegistered world
@@ -687,7 +687,7 @@ updateFromFrontend sessionId clientId msg model =
                         { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
 
                 world =
-                    getWorldLoggedOut newModel
+                    getLoggedOutView newModel
             in
             ( newModel
             , Lamdera.sendToFrontend clientId <| YoureLoggedOut world
@@ -721,12 +721,12 @@ updateFromFrontend sessionId clientId msg model =
             let
                 loggedOut () =
                     ( model
-                    , Lamdera.sendToFrontend clientId <| RefreshedLoggedOut <| getWorldLoggedOut model
+                    , Lamdera.sendToFrontend clientId <| RefreshedLoggedOut <| getLoggedOutView model
                     )
             in
             if isAdmin sessionId clientId model then
                 ( model
-                , Lamdera.sendToFrontend clientId <| CurrentAdminData <| getAdminData model
+                , Lamdera.sendToFrontend clientId <| CurrentAdminView <| getAdminView model
                 )
 
             else
@@ -735,7 +735,7 @@ updateFromFrontend sessionId clientId msg model =
                         loggedOut ()
 
                     Just playerName ->
-                        getWorldLoggedIn playerName model
+                        getLoggedInView playerName model
                             |> Maybe.map
                                 (\world ->
                                     ( model
@@ -789,7 +789,7 @@ updateAdmin clientId msg model =
                 Ok newModel ->
                     ( { newModel | adminLoggedIn = model.adminLoggedIn }
                     , Cmd.batch
-                        [ Lamdera.sendToFrontend clientId <| CurrentAdminData <| getAdminData newModel
+                        [ Lamdera.sendToFrontend clientId <| CurrentAdminView <| getAdminView newModel
                         , Lamdera.sendToFrontend clientId <| AlertMessage "Import successful!"
                         ]
                     )
@@ -903,7 +903,7 @@ barter barterState clientId location player model =
                     newModel =
                         barterAfterValidation barterState vendor location player model
                 in
-                getWorldLoggedIn player.name newModel
+                getLoggedInView player.name newModel
                     |> Maybe.map
                         (\world ->
                             ( newModel
@@ -1135,9 +1135,9 @@ createNewCharWithTime newChar currentTime clientId player model =
                         newModel =
                             { model | players = Dict.insert auth.name newPlayer model.players }
 
-                        world : WorldLoggedInData
+                        world : LoggedInView
                         world =
-                            getWorldLoggedIn_ newPlayer newModel
+                            getLoggedInView_ newPlayer newModel
                     in
                     ( newModel
                     , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar world
@@ -1534,7 +1534,7 @@ choosePerk perk clientId player model =
 
 sendCurrentWorld : PlayerName -> ClientId -> Model -> ( Model, Cmd BackendMsg )
 sendCurrentWorld playerName clientId model =
-    getWorldLoggedIn playerName model
+    getLoggedInView playerName model
         |> Maybe.map
             (\world ->
                 ( model

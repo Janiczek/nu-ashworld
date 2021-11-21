@@ -37,11 +37,11 @@ import Data.Tick as Tick
 import Data.Trait as Trait exposing (Trait)
 import Data.Vendor as Vendor
 import Data.Version as Version
-import Data.World as World
+import Data.WorldView as WorldView
     exposing
-        ( AdminData
-        , World(..)
-        , WorldLoggedInData
+        ( AdminView
+        , LoggedInView
+        , WorldView(..)
         )
 import Data.Xp as Xp
 import DateFormat
@@ -96,7 +96,7 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init _ key =
     ( { key = key
       , route = Route.News
-      , world = WorldNotInitialized Auth.init
+      , worldView = NotInitialized Auth.init
       , time = Time.millisToPosix 0
       , zone = Time.utc
       , newChar = NewChar.init
@@ -120,10 +120,10 @@ update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg model =
     case msg of
         GoToRoute route ->
-            ( if Route.needsAdmin route && not (World.isAdmin model.world) then
+            ( if Route.needsAdmin route && not (WorldView.isAdmin model.worldView) then
                 model
 
-              else if Route.needsLogin route && not (World.isLoggedIn model.world) then
+              else if Route.needsLogin route && not (WorldView.isLoggedIn model.worldView) then
                 model
 
               else
@@ -155,7 +155,7 @@ update msg model =
             )
 
         Login ->
-            World.getAuth model.world
+            WorldView.getAuth model.worldView
                 |> Maybe.map Auth.hash
                 |> Maybe.map
                     (\auth ->
@@ -166,7 +166,7 @@ update msg model =
                 |> Maybe.withDefault ( model, Cmd.none )
 
         Register ->
-            World.getAuth model.world
+            WorldView.getAuth model.worldView
                 |> Maybe.map Auth.hash
                 |> Maybe.map
                     (\auth ->
@@ -263,10 +263,10 @@ update msg model =
 
         SetAuthName newName ->
             ( { model
-                | world =
-                    World.mapAuth
+                | worldView =
+                    WorldView.mapAuth
                         (\auth -> { auth | name = newName })
-                        model.world
+                        model.worldView
                 , alertMessage = Nothing
               }
             , Cmd.none
@@ -274,10 +274,10 @@ update msg model =
 
         SetAuthPassword newPassword ->
             ( { model
-                | world =
-                    World.mapAuth
+                | worldView =
+                    WorldView.mapAuth
                         (Auth.setPlaintextPassword newPassword)
-                        model.world
+                        model.worldView
                 , alertMessage = Nothing
               }
             , Cmd.none
@@ -329,8 +329,8 @@ update msg model =
             )
 
         MapMouseAtCoords mouseCoords ->
-            case model.world of
-                WorldLoggedIn world ->
+            case model.worldView of
+                LoggedIn world ->
                     case world.player of
                         Player cPlayer ->
                             let
@@ -485,7 +485,7 @@ updateFromBackend msg model =
     case msg of
         YoureLoggedIn world ->
             ( { model
-                | world = WorldLoggedIn world
+                | worldView = LoggedIn world
                 , alertMessage = Nothing
                 , route =
                     case world.player of
@@ -498,9 +498,9 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        YoureLoggedInAsAdmin adminData ->
+        YoureLoggedInAsAdmin adminView_ ->
             ( { model
-                | world = WorldAdmin adminData
+                | worldView = Admin adminView_
                 , alertMessage = Nothing
               }
             , Cmd.none
@@ -508,7 +508,7 @@ updateFromBackend msg model =
 
         YoureRegistered world ->
             ( { model
-                | world = WorldLoggedIn world
+                | worldView = LoggedIn world
                 , alertMessage = Nothing
                 , route = Route.CharCreation
               }
@@ -522,7 +522,7 @@ updateFromBackend msg model =
 
         YouHaveCreatedChar world ->
             ( { model
-                | world = WorldLoggedIn world
+                | worldView = LoggedIn world
                 , route = Route.Ladder
                 , alertMessage = Nothing
                 , newChar = NewChar.init
@@ -532,7 +532,7 @@ updateFromBackend msg model =
 
         YoureLoggedOut world ->
             ( { model
-                | world = WorldLoggedOut Auth.init world
+                | worldView = LoggedOut Auth.init world
                 , alertMessage = Nothing
                 , route = Route.loggedOut model.route
               }
@@ -540,19 +540,19 @@ updateFromBackend msg model =
             )
 
         YourCurrentWorld world ->
-            ( { model | world = WorldLoggedIn world }
+            ( { model | worldView = LoggedIn world }
             , Cmd.none
             )
 
-        CurrentAdminData data ->
-            ( { model | world = WorldAdmin data }
+        CurrentAdminView data ->
+            ( { model | worldView = Admin data }
             , Cmd.none
             )
 
-        InitWorld world ->
-            case model.world of
-                WorldNotInitialized auth ->
-                    ( { model | world = WorldLoggedOut auth world }
+        InitWorld worldView ->
+            case model.worldView of
+                NotInitialized auth ->
+                    ( { model | worldView = LoggedOut auth worldView }
                     , Cmd.none
                     )
 
@@ -562,12 +562,12 @@ updateFromBackend msg model =
         RefreshedLoggedOut world ->
             let
                 auth =
-                    model.world
-                        |> World.getAuth
+                    model.worldView
+                        |> WorldView.getAuth
                         |> Maybe.withDefault Auth.init
             in
             ( { model
-                | world = WorldLoggedOut auth world
+                | worldView = LoggedOut auth world
                 , route = Route.loggedOut model.route
               }
             , Cmd.none
@@ -576,7 +576,7 @@ updateFromBackend msg model =
         YourFightResult ( fightInfo, world ) ->
             ( { model
                 | route = Route.Fight fightInfo
-                , world = WorldLoggedIn world
+                , worldView = LoggedIn world
               }
             , Cmd.none
             )
@@ -608,7 +608,7 @@ updateFromBackend msg model =
             )
 
         BarterDone ( world, maybeMessage ) ->
-            { model | world = WorldLoggedIn world }
+            { model | worldView = LoggedIn world }
                 |> resetBarter
                 |> (case maybeMessage of
                         Nothing ->
@@ -631,17 +631,17 @@ view model =
         , favicon32View
         , genericFaviconView
         , genericFavicon2View
-        , case model.world of
-            WorldNotInitialized _ ->
+        , case model.worldView of
+            NotInitialized _ ->
                 notInitializedView model
 
-            WorldLoggedOut _ _ ->
+            LoggedOut _ _ ->
                 loggedOutView model
 
-            WorldLoggedIn data ->
+            LoggedIn data ->
                 loggedInView data model
 
-            WorldAdmin data ->
+            Admin data ->
                 adminView data model
         ]
     }
@@ -655,8 +655,8 @@ appView { leftNav } model =
     H.div
         [ HA.id "app"
         , HA.classList
-            [ ( "logged-in", World.isLoggedIn model.world )
-            , ( "admin", World.isAdmin model.world )
+            [ ( "logged-in", WorldView.isLoggedIn model.worldView )
+            , ( "admin", WorldView.isAdmin model.worldView )
             ]
         ]
         [ H.div [ HA.id "left-nav" ]
@@ -743,7 +743,7 @@ serverTickView zone currentTime serverTick =
 contentView : Model -> Html FrontendMsg
 contentView model =
     let
-        withCreatedPlayer : WorldLoggedInData -> (WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
+        withCreatedPlayer : LoggedInView -> (LoggedInView -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
         withCreatedPlayer world fn =
             case world.player of
                 NeedsCharCreated _ ->
@@ -752,7 +752,7 @@ contentView model =
                 Player cPlayer ->
                     fn world cPlayer
 
-        withLocation : WorldLoggedInData -> (Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
+        withLocation : LoggedInView -> (Location -> LoggedInView -> CPlayer -> List (Html FrontendMsg)) -> List (Html FrontendMsg)
         withLocation world fn =
             world.player
                 |> Player.getPlayerData
@@ -761,46 +761,46 @@ contentView model =
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
     H.div [ HA.id "content" ]
-        (case ( model.route, model.world ) of
-            ( Route.Character, WorldLoggedIn world ) ->
+        (case ( model.route, model.worldView ) of
+            ( Route.Character, LoggedIn world ) ->
                 withCreatedPlayer world (characterView model.hoveredItem)
 
             ( Route.Character, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Inventory, WorldLoggedIn world ) ->
+            ( Route.Inventory, LoggedIn world ) ->
                 withCreatedPlayer world inventoryView
 
             ( Route.Inventory, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Map, WorldLoggedIn world ) ->
+            ( Route.Map, LoggedIn world ) ->
                 withCreatedPlayer world (mapView model.mapMouseCoords)
 
             ( Route.Map, _ ) ->
                 mapLoggedOutView
 
-            ( Route.Ladder, WorldLoggedIn world ) ->
+            ( Route.Ladder, LoggedIn world ) ->
                 case world.player of
                     NeedsCharCreated _ ->
                         ladderView
                             { loggedInPlayer = Nothing
-                            , players = World.allPlayers world
+                            , players = WorldView.allPlayers world
                             }
 
                     Player cPlayer ->
                         ladderView
                             { loggedInPlayer = Just cPlayer
-                            , players = World.allPlayers world
+                            , players = WorldView.allPlayers world
                             }
 
-            ( Route.Ladder, WorldLoggedOut _ world ) ->
+            ( Route.Ladder, LoggedOut _ world ) ->
                 ladderView
                     { loggedInPlayer = Nothing
                     , players = world.players
                     }
 
-            ( Route.Ladder, WorldAdmin data ) ->
+            ( Route.Ladder, Admin data ) ->
                 ladderView
                     { loggedInPlayer = Nothing
                     , players =
@@ -810,13 +810,13 @@ contentView model =
                             |> List.map (Player.serverToClientOther Perception.Perfect)
                     }
 
-            ( Route.Ladder, WorldNotInitialized _ ) ->
+            ( Route.Ladder, NotInitialized _ ) ->
                 ladderLoadingView
 
-            ( Route.Town Route.MainSquare, WorldLoggedIn world ) ->
+            ( Route.Town Route.MainSquare, LoggedIn world ) ->
                 withLocation world townMainSquareView
 
-            ( Route.Town (Route.Store { barter }), WorldLoggedIn world ) ->
+            ( Route.Town (Route.Store { barter }), LoggedIn world ) ->
                 withLocation world (townStoreView barter)
 
             ( Route.Town _, _ ) ->
@@ -828,37 +828,37 @@ contentView model =
             ( Route.News, _ ) ->
                 newsView model.zone
 
-            ( Route.Fight fightInfo, WorldLoggedIn world ) ->
+            ( Route.Fight fightInfo, LoggedIn world ) ->
                 withCreatedPlayer world (fightView fightInfo)
 
             ( Route.Fight _, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Messages, WorldLoggedIn world ) ->
+            ( Route.Messages, LoggedIn world ) ->
                 withCreatedPlayer world (messagesView model.time model.zone)
 
             ( Route.Messages, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Message message, WorldLoggedIn world ) ->
+            ( Route.Message message, LoggedIn world ) ->
                 withCreatedPlayer world (messageView model.zone message)
 
             ( Route.Message _, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.CharCreation, WorldLoggedIn _ ) ->
+            ( Route.CharCreation, LoggedIn _ ) ->
                 newCharView model.hoveredItem model.newChar
 
             ( Route.CharCreation, _ ) ->
                 contentUnavailableToLoggedOutView
 
-            ( Route.Admin Route.LoggedIn, WorldAdmin data ) ->
+            ( Route.Admin Route.LoggedIn, Admin data ) ->
                 adminLoggedInView data
 
             ( Route.Admin _, _ ) ->
                 contentUnavailableToNonAdminView
 
-            ( Route.Settings r, WorldLoggedIn world ) ->
+            ( Route.Settings r, LoggedIn world ) ->
                 case r.subroute of
                     Route.FightStrategy ->
                         withCreatedPlayer world <|
@@ -902,7 +902,7 @@ Many thanks to Patreons:
     ]
 
 
-adminLoggedInView : AdminData -> List (Html FrontendMsg)
+adminLoggedInView : AdminView -> List (Html FrontendMsg)
 adminLoggedInView data =
     [ pageTitleView "Admin :: Logged In"
     , if List.isEmpty data.loggedInPlayers then
@@ -917,7 +917,7 @@ adminLoggedInView data =
 
 mapView :
     Maybe ( TileCoords, Set TileCoords )
-    -> WorldLoggedInData
+    -> LoggedInView
     -> CPlayer
     -> List (Html FrontendMsg)
 mapView mouseCoords _ player =
@@ -1247,7 +1247,7 @@ mapLoggedOutView =
     ]
 
 
-townMainSquareView : Location -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+townMainSquareView : Location -> LoggedInView -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView location _ _ =
     [ pageTitleView <| "Town: " ++ Location.name location
     , if Vendor.isInLocation location then
@@ -1265,7 +1265,7 @@ townMainSquareView location _ _ =
 townStoreView :
     Barter.State
     -> Location
-    -> WorldLoggedInData
+    -> LoggedInView
     -> CPlayer
     -> List (Html FrontendMsg)
 townStoreView barter location world player =
@@ -2091,7 +2091,7 @@ newCharSkillsView newChar =
         }
 
 
-characterView : Maybe HoveredItem -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+characterView : Maybe HoveredItem -> LoggedInView -> CPlayer -> List (Html FrontendMsg)
 characterView maybeHoveredItem _ player =
     let
         level =
@@ -2539,7 +2539,7 @@ charPerksView perks =
         ]
 
 
-inventoryView : WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+inventoryView : LoggedInView -> CPlayer -> List (Html FrontendMsg)
 inventoryView _ player =
     let
         inventoryTotalValue : Int
@@ -2705,7 +2705,7 @@ inventoryView _ player =
     ]
 
 
-messagesView : Posix -> Time.Zone -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+messagesView : Posix -> Time.Zone -> LoggedInView -> CPlayer -> List (Html FrontendMsg)
 messagesView currentTime zone _ player =
     [ pageTitleView "Messages"
     , H.table [ HA.id "messages-table" ]
@@ -2784,7 +2784,7 @@ messagesView currentTime zone _ player =
     ]
 
 
-messageView : Time.Zone -> Message -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+messageView : Time.Zone -> Message -> LoggedInView -> CPlayer -> List (Html FrontendMsg)
 messageView zone message _ player =
     let
         perceptionLevel =
@@ -2869,7 +2869,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
 
 settingsFightStrategyView :
     String
-    -> WorldLoggedInData
+    -> LoggedInView
     -> CPlayer
     -> List (Html FrontendMsg)
 settingsFightStrategyView fightStrategyText _ player =
@@ -3149,7 +3149,7 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-fightView : Fight.Info -> WorldLoggedInData -> CPlayer -> List (Html FrontendMsg)
+fightView : Fight.Info -> LoggedInView -> CPlayer -> List (Html FrontendMsg)
 fightView fight _ player =
     let
         youAreAttacker =
@@ -3377,7 +3377,7 @@ notInitializedView : Model -> Html FrontendMsg
 notInitializedView model =
     appView
         { leftNav =
-            [ loginFormView model.world
+            [ loginFormView model.worldView
             , alertMessageView model.alertMessage
             , loadingNavView
             ]
@@ -3398,7 +3398,7 @@ loggedOutView : Model -> Html FrontendMsg
 loggedOutView model =
     appView
         { leftNav =
-            [ loginFormView model.world
+            [ loginFormView model.worldView
             , alertMessageView model.alertMessage
             , loggedOutLinksView model.route
             ]
@@ -3406,7 +3406,7 @@ loggedOutView model =
         model
 
 
-loggedInView : WorldLoggedInData -> Model -> Html FrontendMsg
+loggedInView : LoggedInView -> Model -> Html FrontendMsg
 loggedInView world model =
     appView
         { leftNav =
@@ -3418,11 +3418,11 @@ loggedInView world model =
         model
 
 
-adminView : AdminData -> Model -> Html FrontendMsg
-adminView adminData model =
+adminView : AdminView -> Model -> Html FrontendMsg
+adminView adminView_ model =
     appView
         { leftNav =
-            [ H.viewMaybe (serverTickView model.zone model.time) adminData.nextWantedTick
+            [ H.viewMaybe (serverTickView model.zone model.time) adminView_.nextWantedTick
             , alertMessageView model.alertMessage
             , adminLinksView model.route
             ]
@@ -3441,9 +3441,9 @@ alertMessageView maybeMessage =
             )
 
 
-loginFormView : World -> Html FrontendMsg
-loginFormView world =
-    World.getAuth world
+loginFormView : WorldView -> Html FrontendMsg
+loginFormView worldView =
+    WorldView.getAuth worldView
         |> H.viewMaybe
             (\auth ->
                 let

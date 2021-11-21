@@ -23,12 +23,12 @@ import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
 import Data.Vendor as Vendor exposing (Vendor)
-import Data.World
+import Data.WorldView
     exposing
-        ( AdminData
-        , World
-        , WorldLoggedInData
-        , WorldLoggedOutData
+        ( AdminView
+        , LoggedInView
+        , LoggedOutView
+        , WorldView
         )
 import Dict exposing (Dict)
 import File exposing (File)
@@ -45,7 +45,7 @@ type alias FrontendModel =
     , time : Posix
     , zone : Time.Zone
     , route : Route
-    , world : World
+    , worldView : WorldView
     , newChar : NewChar
     , alertMessage : Maybe String
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
@@ -161,18 +161,18 @@ type BackendMsg
 
 
 type ToFrontend
-    = YourCurrentWorld WorldLoggedInData
-    | InitWorld WorldLoggedOutData
-    | RefreshedLoggedOut WorldLoggedOutData
-    | CurrentAdminData AdminData
-    | YourFightResult ( Fight.Info, WorldLoggedInData )
-    | YoureLoggedIn WorldLoggedInData
-    | YoureRegistered WorldLoggedInData
+    = YourCurrentWorld LoggedInView
+    | InitWorld LoggedOutView
+    | RefreshedLoggedOut LoggedOutView
+    | CurrentAdminView AdminView
+    | YourFightResult ( Fight.Info, LoggedInView )
+    | YoureLoggedIn LoggedInView
+    | YoureRegistered LoggedInView
     | CharCreationError NewChar.CreationError
-    | YouHaveCreatedChar WorldLoggedInData
-    | YoureLoggedOut WorldLoggedOutData
+    | YouHaveCreatedChar LoggedInView
+    | YoureLoggedOut LoggedOutView
     | AlertMessage String
-    | YoureLoggedInAsAdmin AdminData
+    | YoureLoggedInAsAdmin AdminView
     | JsonExportDone String
-    | BarterDone ( WorldLoggedInData, Maybe Barter.Message )
+    | BarterDone ( LoggedInView, Maybe Barter.Message )
     | BarterMessage Barter.Message

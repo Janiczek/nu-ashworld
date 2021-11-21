@@ -1,8 +1,8 @@
-module Data.World exposing
-    ( AdminData
-    , World(..)
-    , WorldLoggedInData
-    , WorldLoggedOutData
+module Data.WorldView exposing
+    ( AdminView
+    , LoggedInView
+    , LoggedOutView
+    , WorldView(..)
     , allPlayers
     , getAuth
     , isAdmin
@@ -27,16 +27,16 @@ import Time exposing (Posix)
 
 {-| TODO it would be nice if we didn't have to send the hashed password back to the user
 -}
-type World
-    = WorldNotInitialized (Auth Plaintext)
-    | WorldLoggedOut (Auth Plaintext) WorldLoggedOutData
-    | WorldLoggedIn WorldLoggedInData
-    | WorldAdmin AdminData
+type WorldView
+    = NotInitialized (Auth Plaintext)
+    | LoggedOut (Auth Plaintext) LoggedOutView
+    | LoggedIn LoggedInView
+    | Admin AdminView
 
 
 {-| Very similar to Types.BackendModel
 -}
-type alias AdminData =
+type alias AdminView =
     { players : List (Player SPlayer)
     , loggedInPlayers : List PlayerName
     , nextWantedTick : Maybe Posix
@@ -45,12 +45,12 @@ type alias AdminData =
     }
 
 
-type alias WorldLoggedOutData =
+type alias LoggedOutView =
     { players : List COtherPlayer
     }
 
 
-type alias WorldLoggedInData =
+type alias LoggedInView =
     { player : Player CPlayer
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
@@ -59,7 +59,7 @@ type alias WorldLoggedInData =
     }
 
 
-allPlayers : WorldLoggedInData -> List COtherPlayer
+allPlayers : LoggedInView -> List COtherPlayer
 allPlayers world =
     case world.player of
         NeedsCharCreated _ ->
@@ -73,65 +73,65 @@ allPlayers world =
                 }
 
 
-isLoggedIn : World -> Bool
+isLoggedIn : WorldView -> Bool
 isLoggedIn world =
     case world of
-        WorldNotInitialized _ ->
+        NotInitialized _ ->
             False
 
-        WorldLoggedOut _ _ ->
+        LoggedOut _ _ ->
             False
 
-        WorldLoggedIn _ ->
+        LoggedIn _ ->
             True
 
-        WorldAdmin _ ->
+        Admin _ ->
             False
 
 
-isAdmin : World -> Bool
+isAdmin : WorldView -> Bool
 isAdmin world =
     case world of
-        WorldNotInitialized _ ->
+        NotInitialized _ ->
             False
 
-        WorldLoggedOut _ _ ->
+        LoggedOut _ _ ->
             False
 
-        WorldLoggedIn _ ->
+        LoggedIn _ ->
             False
 
-        WorldAdmin _ ->
+        Admin _ ->
             True
 
 
-getAuth : World -> Maybe (Auth Plaintext)
+getAuth : WorldView -> Maybe (Auth Plaintext)
 getAuth world =
     case world of
-        WorldNotInitialized auth ->
+        NotInitialized auth ->
             Just auth
 
-        WorldLoggedOut auth _ ->
+        LoggedOut auth _ ->
             Just auth
 
-        WorldLoggedIn _ ->
+        LoggedIn _ ->
             Nothing
 
-        WorldAdmin _ ->
+        Admin _ ->
             Nothing
 
 
-mapAuth : (Auth Plaintext -> Auth Plaintext) -> World -> World
+mapAuth : (Auth Plaintext -> Auth Plaintext) -> WorldView -> WorldView
 mapAuth fn world =
     case world of
-        WorldNotInitialized auth ->
-            WorldNotInitialized <| fn auth
+        NotInitialized auth ->
+            NotInitialized <| fn auth
 
-        WorldLoggedOut auth data ->
-            WorldLoggedOut (fn auth) data
+        LoggedOut auth data ->
+            LoggedOut (fn auth) data
 
-        WorldLoggedIn data ->
-            WorldLoggedIn data
+        LoggedIn data ->
+            LoggedIn data
 
-        WorldAdmin data ->
-            WorldAdmin data
+        Admin data ->
+            Admin data
