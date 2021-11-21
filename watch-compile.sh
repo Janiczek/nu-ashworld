@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-COLOR_OFF="\e[0m";
-DIM="\e[2m";
+COLOR_OFF="\033[0m";
+DIM="\033[2m";
 
 LOCKNAME=$(cat /dev/urandom | LC_ALL=C tr -cd 'a-f0-9' | head -c 16);
 LOCKFILE="/tmp/elm-lock-${LOCKNAME}"
