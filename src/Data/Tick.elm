@@ -1,15 +1,20 @@
 module Data.Tick exposing
-    ( limit
+    ( TickPerIntervalCurve(..)
+    , curveDecoder
+    , encodeCurve
+    , limit
     , nextTick
     , ticksAddedPerInterval
     )
 
+import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 import Time exposing (Posix)
 import Time.Extra as Time
 
 
-nextTick : Posix -> { nextTick : Posix, millisTillNextTick : Int }
-nextTick time =
+nextTick : Time.Interval -> Posix -> { nextTick : Posix, millisTillNextTick : Int }
+nextTick tickFrequency time =
     let
         nextTick_ =
             Time.ceiling tickFrequency Time.utc time
@@ -19,26 +24,78 @@ nextTick time =
     }
 
 
-tickFrequency : Time.Interval
-tickFrequency =
-    Time.Hour
-
-
 limit : Int
 limit =
     200
 
 
-ticksAddedPerInterval : Int -> Int
-ticksAddedPerInterval currentTicks =
-    if currentTicks < (limit // 4) then
-        -- 0-50 will take ~0.5 day to fill
-        4
+type TickPerIntervalCurve
+    = QuarterAndRest
+        { quarter : Int
+        , rest : Int
+        }
+    | Linear Int
 
-    else if currentTicks < limit then
-        -- 50-200 will take ~3 days to fill
-        2
 
-    else
-        -- hard cap at 200 = takes 87.5 hours to max = ~half a week
-        0
+encodeCurve : TickPerIntervalCurve -> JE.Value
+encodeCurve curve =
+    case curve of
+        QuarterAndRest { quarter, rest } ->
+            JE.object
+                [ ( "type", JE.string "quarterAndRest" )
+                , ( "quarter", JE.int quarter )
+                , ( "rest", JE.int rest )
+                ]
+
+        Linear n ->
+            JE.object
+                [ ( "type", JE.string "linear" )
+                , ( "n", JE.int n )
+                ]
+
+
+curveDecoder : Decoder TickPerIntervalCurve
+curveDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "quarterAndRest" ->
+                        JD.map2
+                            (\quarter rest ->
+                                QuarterAndRest
+                                    { quarter = quarter
+                                    , rest = rest
+                                    }
+                            )
+                            (JD.field "quarter" JD.int)
+                            (JD.field "rest" JD.int)
+
+                    "linear" ->
+                        JD.map Linear
+                            (JD.field "n" JD.int)
+
+                    _ ->
+                        JD.fail <| "Unknown curve type: '" ++ type_ ++ "'"
+            )
+
+
+ticksAddedPerInterval : TickPerIntervalCurve -> Int -> Int
+ticksAddedPerInterval curve currentTicks =
+    case curve of
+        Linear n ->
+            if currentTicks < limit then
+                n
+
+            else
+                0
+
+        QuarterAndRest { quarter, rest } ->
+            if currentTicks < (limit // 4) then
+                quarter
+
+            else if currentTicks < limit then
+                rest
+
+            else
+                0

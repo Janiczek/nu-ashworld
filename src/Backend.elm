@@ -34,11 +34,11 @@ import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Vendor as Vendor exposing (Vendor)
-import Data.WorldView
+import Data.World as World exposing (World)
+import Data.WorldData
     exposing
-        ( AdminView
-        , LoggedInView
-        , LoggedOutView
+        ( AdminData
+        , PlayerData
         )
 import Data.Xp as Xp
 import Dict exposing (Dict)
@@ -74,59 +74,93 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    let
-        model =
-            { players = Dict.empty
-            , loggedInPlayers = Dict.empty
-            , nextWantedTick = Nothing
-            , adminLoggedIn = Nothing
-            , time = Time.millisToPosix 0
-            , vendors = Vendor.emptyVendors
-            , lastItemId = 0
-            }
-    in
-    ( model
-    , Cmd.batch
-        [ Task.perform Tick Time.now
-        , restockVendors model
-        ]
+    ( { worlds = Dict.empty
+      , time = Time.millisToPosix 0
+      , loggedInPlayers = Dict.empty
+      , adminLoggedIn = Nothing
+      }
+    , Task.perform Tick Time.now
     )
 
 
-restockVendors : Model -> Cmd BackendMsg
-restockVendors model =
-    Random.generate
-        GeneratedNewVendorsStock
-        (Vendor.restockVendors model.lastItemId model.vendors)
+restockVendors : World.Name -> Model -> Cmd BackendMsg
+restockVendors worldName model =
+    -- TODO only restock based on vendorRestockFrequency
+    -- TODO don't forget to restock vendors when you create a world
+    case Dict.get worldName model.worlds of
+        Nothing ->
+            Cmd.none
+
+        Just world ->
+            Random.generate
+                (GeneratedNewVendorsStock worldName)
+                (Vendor.restockVendors world.lastItemId world.vendors)
 
 
-getAdminView : Model -> AdminView
-getAdminView model =
-    { players = Dict.values model.players
-    , loggedInPlayers = Dict.values model.loggedInPlayers
-    , nextWantedTick = model.nextWantedTick
-    }
-
-
-getLoggedOutView : Model -> LoggedOutView
-getLoggedOutView model =
-    { players =
-        model.players
+getAdminData : Model -> AdminData
+getAdminData model =
+    { worlds =
+        model.worlds
+            |> Dict.map
+                (\_ world ->
+                    { players = world.players
+                    , nextWantedTick = world.nextWantedTick
+                    , description = world.description
+                    , startedAt = world.startedAt
+                    , tickFrequency = world.tickFrequency
+                    , tickPerIntervalCurve = world.tickPerIntervalCurve
+                    , vendorRestockFrequency = world.vendorRestockFrequency
+                    }
+                )
+    , loggedInPlayers =
+        model.loggedInPlayers
             |> Dict.values
-            |> List.filterMap Player.getPlayerData
-            |> Ladder.sort
-            |> List.map (Player.serverToClientOther Perception.Atrocious)
+            |> List.gatherEqualsBy .worldName
+            |> List.map
+                (\( first, rest ) ->
+                    ( first.worldName
+                    , (first :: rest)
+                        |> List.map .playerName
+                    )
+                )
+            |> Dict.fromList
     }
 
 
-getLoggedInView : PlayerName -> Model -> Maybe LoggedInView
-getLoggedInView playerName model =
-    Dict.get playerName model.players
-        |> Maybe.map (\player -> getLoggedInView_ player model)
+getWorlds : Model -> List World.Info
+getWorlds model =
+    model.worlds
+        |> Dict.toList
+        |> List.map
+            (\( worldName, world ) ->
+                { name = worldName
+                , description = world.description
+                , playersCount = Dict.size world.players
+                , startedAt = world.startedAt
+                }
+            )
 
 
-getLoggedInView_ : Player SPlayer -> Model -> LoggedInView
-getLoggedInView_ player model =
+getPlayerData : World.Name -> PlayerName -> Model -> Maybe PlayerData
+getPlayerData worldName playerName model =
+    model.worlds
+        |> Dict.get worldName
+        |> Maybe.andThen
+            (\world ->
+                Dict.get playerName world.players
+                    |> Maybe.map
+                        (\player ->
+                            getPlayerData_
+                                worldName
+                                world
+                                player
+                                model
+                        )
+            )
+
+
+getPlayerData_ : World.Name -> World -> Player SPlayer -> Model -> PlayerData
+getPlayerData_ worldName world player model =
     let
         auth : Auth Verified
         auth =
@@ -145,7 +179,7 @@ getLoggedInView_ player model =
                 |> Maybe.withDefault Perception.Atrocious
 
         sortedPlayers =
-            model.players
+            world.players
                 |> Dict.values
                 |> List.filterMap Player.getPlayerData
                 |> Ladder.sort
@@ -161,7 +195,9 @@ getLoggedInView_ player model =
                 -- TODO find this info in a non-Maybe way?
                 |> Maybe.withDefault 1
     in
-    { player = Player.map Player.serverToClient player
+    { worldName = worldName
+    , tickFrequency = world.tickFrequency
+    , player = Player.map Player.serverToClient player
     , playerRank = playerRank
     , otherPlayers =
         sortedPlayers
@@ -176,7 +212,7 @@ getLoggedInView_ player model =
                                 perceptionLevel
                                 otherPlayer
                 )
-    , vendors = model.vendors
+    , vendors = world.vendors
     }
 
 
@@ -190,10 +226,10 @@ update msg model =
         Connected _ clientId ->
             let
                 world =
-                    getLoggedOutView model
+                    getWorlds model
             in
             ( model
-            , Lamdera.sendToFrontend clientId <| InitWorld world
+            , Lamdera.sendToFrontend clientId <| CurrentWorlds world
             )
 
         Disconnected _ clientId ->
@@ -202,37 +238,58 @@ update msg model =
             )
 
         Tick currentTime ->
-            case model.nextWantedTick of
-                Nothing ->
-                    let
-                        { nextTick } =
-                            Tick.nextTick currentTime
-                    in
-                    ( { model
-                        | nextWantedTick = Just nextTick
-                        , time = currentTime
-                      }
-                    , Cmd.none
-                    )
-
-                Just nextWantedTick ->
-                    if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
+            let
+                modelWithTime =
+                    { model | time = currentTime }
+            in
+            model.worlds
+                |> Dict.keys
+                |> List.foldl
+                    (\worldName ( accModel, cmd ) ->
                         let
-                            { nextTick } =
-                                Tick.nextTick currentTime
+                            ( newModel, newCmd ) =
+                                case Dict.get worldName accModel.worlds of
+                                    Nothing ->
+                                        ( accModel, Cmd.none )
+
+                                    Just world ->
+                                        case world.nextWantedTick of
+                                            Nothing ->
+                                                let
+                                                    { nextTick } =
+                                                        Tick.nextTick world.tickFrequency currentTime
+                                                in
+                                                ( { accModel
+                                                    | worlds =
+                                                        accModel.worlds
+                                                            |> Dict.insert worldName { world | nextWantedTick = Just nextTick }
+                                                  }
+                                                , Cmd.none
+                                                )
+
+                                            Just nextWantedTick ->
+                                                if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
+                                                    let
+                                                        { nextTick } =
+                                                            Tick.nextTick world.tickFrequency currentTime
+                                                    in
+                                                    { accModel
+                                                        | worlds =
+                                                            accModel.worlds
+                                                                |> Dict.insert worldName { world | nextWantedTick = Just nextTick }
+                                                    }
+                                                        |> processTick worldName
+
+                                                else
+                                                    ( accModel
+                                                    , Cmd.none
+                                                    )
                         in
-                        { model
-                            | nextWantedTick = Just nextTick
-                            , time = currentTime
-                        }
-                            |> processTick
+                        ( newModel, Cmd.batch [ cmd, newCmd ] )
+                    )
+                    ( modelWithTime, Cmd.none )
 
-                    else
-                        ( { model | time = currentTime }
-                        , Cmd.none
-                        )
-
-        GeneratedFight clientId sPlayer ( fight_, newItemId ) ->
+        GeneratedFight clientId worldName sPlayer ( fight_, newItemId ) ->
             let
                 targetIsPlayer : Bool
                 targetIsPlayer =
@@ -244,11 +301,15 @@ update msg model =
                         Fight.Npc _ ->
                             identity
 
-                        Fight.Player { name } ->
-                            updatePlayer fn name
+                        Fight.Player player ->
+                            updatePlayer worldName player.name fn
 
                 newModel =
-                    { model | lastItemId = newItemId }
+                    { model
+                        | worlds =
+                            model.worlds
+                                |> Dict.update worldName (Maybe.map (\world -> { world | lastItemId = newItemId }))
+                    }
                         |> updateIfPlayer
                             (\player ->
                                 player
@@ -335,7 +396,7 @@ update msg model =
                                             fight_.finalTarget
                            )
             in
-            getLoggedInView sPlayer.name newModel
+            getPlayerData worldName sPlayer.name newModel
                 |> Maybe.map
                     (\world ->
                         ( newModel
@@ -352,11 +413,15 @@ update msg model =
         CreateNewCharWithTime clientId newChar time ->
             withLoggedInPlayer clientId (createNewCharWithTime newChar time)
 
-        GeneratedNewVendorsStock ( vendors, newLastItemId ) ->
-            ( { model
-                | vendors = vendors
-                , lastItemId = newLastItemId
-              }
+        GeneratedNewVendorsStock worldName ( vendors, newLastItemId ) ->
+            ( model
+                |> updateWorld worldName
+                    (\world ->
+                        { world
+                            | vendors = vendors
+                            , lastItemId = newLastItemId
+                        }
+                    )
             , Cmd.none
             )
 
@@ -364,24 +429,41 @@ update msg model =
             ( model, Cmd.none )
 
 
-processTick : Model -> ( Model, Cmd BackendMsg )
-processTick model =
-    -- TODO refresh the affected users that are logged-in
-    ( { model
-        | players =
-            Dict.map
-                (always (Player.map SPlayer.tick))
-                model.players
-      }
-    , restockVendors model
+processTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
+processTick worldName model =
+    ( model
+        |> updateWorld worldName
+            (\world ->
+                -- TODO refresh the affected users that are logged-in
+                { world
+                    | players =
+                        Dict.map
+                            (always (Player.map (SPlayer.tick world.tickPerIntervalCurve)))
+                            world.players
+                }
+            )
+    , restockVendors worldName model
     )
 
 
-withLoggedInPlayer_ : Model -> ClientId -> (ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+withLoggedInPlayer_ :
+    Model
+    -> ClientId
+    -> (ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg ))
+    -> ( Model, Cmd BackendMsg )
 withLoggedInPlayer_ model clientId fn =
     Dict.get clientId model.loggedInPlayers
-        |> Maybe.andThen (\name -> Dict.get name model.players)
-        |> Maybe.map (\player -> fn clientId player model)
+        |> Maybe.andThen
+            (\{ worldName, playerName } ->
+                Dict.get worldName model.worlds
+                    |> Maybe.map (\world -> ( world, worldName, playerName ))
+            )
+        |> Maybe.andThen
+            (\( world, worldName, playerName ) ->
+                Dict.get playerName world.players
+                    |> Maybe.map
+                        (\player -> fn clientId world worldName player model)
+            )
         |> Maybe.withDefault ( model, Cmd.none )
 
 
@@ -396,35 +478,35 @@ logAndUpdateFromFrontend =
 
 logAndUpdateFromFrontend_ : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 logAndUpdateFromFrontend_ sessionId clientId msg model =
-    let
-        playerName : String
-        playerName =
-            Dict.get clientId model.loggedInPlayers
-                |> Maybe.withDefault ""
+    Dict.get clientId model.loggedInPlayers
+        |> Maybe.map
+            (\{ playerName, worldName } ->
+                let
+                    logMsgCmd : Cmd BackendMsg
+                    logMsgCmd =
+                        Http.request
+                            { method = "POST"
+                            , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
+                            , headers = [ Http.header "x-api-key" Env.loggingApiKey ]
+                            , body =
+                                Http.jsonBody <|
+                                    JE.object
+                                        [ ( "session-id", JE.string sessionId )
+                                        , ( "client-id", JE.string clientId )
+                                        , ( "player-name", JE.string playerName )
+                                        , ( "to-backend-msg", JE.string <| JE.encode 0 <| encodeToBackendMsg msg )
+                                        ]
+                            , expect = Http.expectWhatever (always LoggedToBackendMsg)
+                            , tracker = Nothing
+                            , timeout = Nothing
+                            }
 
-        logMsgCmd : Cmd BackendMsg
-        logMsgCmd =
-            Http.request
-                { method = "POST"
-                , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
-                , headers = [ Http.header "x-api-key" Env.loggingApiKey ]
-                , body =
-                    Http.jsonBody <|
-                        JE.object
-                            [ ( "session-id", JE.string sessionId )
-                            , ( "client-id", JE.string clientId )
-                            , ( "player-name", JE.string playerName )
-                            , ( "to-backend-msg", JE.string <| JE.encode 0 <| encodeToBackendMsg msg )
-                            ]
-                , expect = Http.expectWhatever (always LoggedToBackendMsg)
-                , tracker = Nothing
-                , timeout = Nothing
-                }
-
-        ( newModel, normalCmd ) =
-            updateFromFrontend sessionId clientId msg model
-    in
-    ( newModel, Cmd.batch [ logMsgCmd, normalCmd ] )
+                    ( newModel, normalCmd ) =
+                        updateFromFrontend sessionId clientId msg model
+                in
+                ( newModel, Cmd.batch [ logMsgCmd, normalCmd ] )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 encodeToBackendMsg : ToBackend -> JE.Value
@@ -550,18 +632,32 @@ encodeToBackendMsg msg =
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
+        withLoggedInPlayer :
+            (ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg ))
+            -> ( Model, Cmd BackendMsg )
         withLoggedInPlayer =
             withLoggedInPlayer_ model clientId
 
-        withLoggedInCreatedPlayer : (ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withLoggedInCreatedPlayer :
+            (ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg ))
+            -> ( Model, Cmd BackendMsg )
         withLoggedInCreatedPlayer fn =
             Dict.get clientId model.loggedInPlayers
-                |> Maybe.andThen (\name -> Dict.get name model.players)
-                |> Maybe.andThen Player.getPlayerData
-                |> Maybe.map (\player -> fn clientId player model)
+                |> Maybe.andThen
+                    (\{ worldName, playerName } ->
+                        Dict.get worldName model.worlds
+                            |> Maybe.andThen
+                                (\world ->
+                                    Dict.get playerName world.players
+                                        |> Maybe.andThen Player.getPlayerData
+                                        |> Maybe.map (\player -> fn clientId world worldName player model)
+                                )
+                    )
                 |> Maybe.withDefault ( model, Cmd.none )
 
-        withAdmin : (Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withAdmin :
+            (Model -> ( Model, Cmd BackendMsg ))
+            -> ( Model, Cmd BackendMsg )
         withAdmin fn =
             if isAdmin sessionId clientId model then
                 fn model
@@ -569,16 +665,18 @@ updateFromFrontend sessionId clientId msg model =
             else
                 ( model, Cmd.none )
 
-        withLocation : (ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )) -> ( Model, Cmd BackendMsg )
+        withLocation :
+            (ClientId -> World -> World.Name -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg ))
+            -> ( Model, Cmd BackendMsg )
         withLocation fn =
             withLoggedInCreatedPlayer
-                (\cId ({ location } as player) m ->
+                (\cId w wn ({ location } as player) m ->
                     case Location.location location of
                         Nothing ->
                             ( model, Cmd.none )
 
                         Just loc ->
-                            fn cId loc player m
+                            fn cId w wn loc player m
                 )
     in
     case msg of
@@ -586,12 +684,12 @@ updateFromFrontend sessionId clientId msg model =
             if Auth.isAdminName auth then
                 if Auth.adminPasswordChecksOut auth then
                     let
-                        adminView : AdminView
-                        adminView =
-                            getAdminView model
+                        adminData : AdminData
+                        adminData =
+                            getAdminData model
                     in
                     ( { model | adminLoggedIn = Just ( sessionId, clientId ) }
-                    , Lamdera.sendToFrontend clientId <| YoureLoggedInAsAdmin adminView
+                    , Lamdera.sendToFrontend clientId <| YoureLoggedInAsAdmin adminData
                     )
 
                 else
@@ -600,45 +698,62 @@ updateFromFrontend sessionId clientId msg model =
                     )
 
             else
-                case Dict.get auth.name model.players of
+                case Dict.get auth.worldName model.worlds of
                     Nothing ->
                         ( model
                         , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
                         )
 
-                    Just player ->
-                        let
-                            playerAuth : Auth Verified
-                            playerAuth =
-                                Player.getAuth player
-                        in
-                        if Auth.verify auth playerAuth then
-                            getLoggedInView auth.name model
-                                |> Maybe.map
-                                    (\world ->
-                                        let
-                                            ( loggedOutPlayers, otherPlayers ) =
-                                                Dict.partition (\_ name -> name == auth.name) model.loggedInPlayers
+                    Just world ->
+                        case Dict.get auth.name world.players of
+                            Nothing ->
+                                ( model
+                                , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
+                                )
 
-                                            worldLoggedOut =
-                                                getLoggedOutView model
-                                        in
-                                        ( { model | loggedInPlayers = Dict.insert clientId auth.name otherPlayers }
-                                        , Cmd.batch <|
-                                            (Lamdera.sendToFrontend clientId <| YoureLoggedIn world)
-                                                :: (loggedOutPlayers
-                                                        |> Dict.keys
-                                                        |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut worldLoggedOut)
-                                                   )
-                                        )
+                            Just player ->
+                                let
+                                    playerAuth : Auth Verified
+                                    playerAuth =
+                                        Player.getAuth player
+                                in
+                                if Auth.verify auth playerAuth then
+                                    getPlayerData auth.worldName auth.name model
+                                        |> Maybe.map
+                                            (\data ->
+                                                let
+                                                    ( loggedOutPlayers, otherPlayers ) =
+                                                        Dict.partition
+                                                            (\_ names -> names.worldName == auth.worldName && names.playerName == auth.name)
+                                                            model.loggedInPlayers
+
+                                                    loggedOutData =
+                                                        getWorlds model
+                                                in
+                                                ( { model
+                                                    | loggedInPlayers =
+                                                        Dict.insert
+                                                            clientId
+                                                            { worldName = auth.worldName
+                                                            , playerName = auth.name
+                                                            }
+                                                            otherPlayers
+                                                  }
+                                                , Cmd.batch <|
+                                                    (Lamdera.sendToFrontend clientId <| YoureLoggedIn data)
+                                                        :: (loggedOutPlayers
+                                                                |> Dict.keys
+                                                                |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut loggedOutData)
+                                                           )
+                                                )
+                                            )
+                                        -- weird?
+                                        |> Maybe.withDefault ( model, Cmd.none )
+
+                                else
+                                    ( model
+                                    , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
                                     )
-                                -- weird?
-                                |> Maybe.withDefault ( model, Cmd.none )
-
-                        else
-                            ( model
-                            , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
-                            )
 
         RegisterMe auth ->
             if Auth.isAdminName auth then
@@ -647,35 +762,51 @@ updateFromFrontend sessionId clientId msg model =
                 )
 
             else
-                case Dict.get auth.name model.players of
-                    Just _ ->
+                case Dict.get auth.worldName model.worlds of
+                    Nothing ->
                         ( model
-                        , Lamdera.sendToFrontend clientId <| AlertMessage "Username exists"
+                        , Lamdera.sendToFrontend clientId <| AlertMessage "World not found"
                         )
 
-                    Nothing ->
-                        if Auth.isEmpty auth.password then
-                            ( model
-                            , Lamdera.sendToFrontend clientId <| AlertMessage "Password is empty"
-                            )
+                    Just world ->
+                        case Dict.get auth.name world.players of
+                            Just _ ->
+                                ( model
+                                , Lamdera.sendToFrontend clientId <| AlertMessage "Username exists"
+                                )
 
-                        else
-                            let
-                                player =
-                                    NeedsCharCreated <| Auth.promote auth
+                            Nothing ->
+                                if Auth.isEmpty auth.password then
+                                    ( model
+                                    , Lamdera.sendToFrontend clientId <| AlertMessage "Password is empty"
+                                    )
 
-                                newModel =
-                                    { model
-                                        | players = Dict.insert auth.name player model.players
-                                        , loggedInPlayers = Dict.insert clientId auth.name model.loggedInPlayers
-                                    }
+                                else
+                                    let
+                                        player =
+                                            NeedsCharCreated <| Auth.promote auth
 
-                                world =
-                                    getLoggedInView_ player model
-                            in
-                            ( newModel
-                            , Lamdera.sendToFrontend clientId <| YoureRegistered world
-                            )
+                                        newWorld =
+                                            { world | players = Dict.insert auth.name player world.players }
+
+                                        newModel =
+                                            { model
+                                                | loggedInPlayers =
+                                                    Dict.insert
+                                                        clientId
+                                                        { worldName = auth.worldName
+                                                        , playerName = auth.name
+                                                        }
+                                                        model.loggedInPlayers
+                                                , worlds = model.worlds |> Dict.insert auth.worldName newWorld
+                                            }
+
+                                        data =
+                                            getPlayerData_ auth.worldName newWorld player model
+                                    in
+                                    ( newModel
+                                    , Lamdera.sendToFrontend clientId <| YoureRegistered data
+                                    )
 
         LogMeOut ->
             let
@@ -687,7 +818,7 @@ updateFromFrontend sessionId clientId msg model =
                         { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
 
                 world =
-                    getLoggedOutView newModel
+                    getWorlds newModel
             in
             ( newModel
             , Lamdera.sendToFrontend clientId <| YoureLoggedOut world
@@ -721,12 +852,12 @@ updateFromFrontend sessionId clientId msg model =
             let
                 loggedOut () =
                     ( model
-                    , Lamdera.sendToFrontend clientId <| RefreshedLoggedOut <| getLoggedOutView model
+                    , Lamdera.sendToFrontend clientId <| CurrentWorlds <| getWorlds model
                     )
             in
             if isAdmin sessionId clientId model then
                 ( model
-                , Lamdera.sendToFrontend clientId <| CurrentAdminView <| getAdminView model
+                , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData model
                 )
 
             else
@@ -734,12 +865,12 @@ updateFromFrontend sessionId clientId msg model =
                     Nothing ->
                         loggedOut ()
 
-                    Just playerName ->
-                        getLoggedInView playerName model
+                    Just { worldName, playerName } ->
+                        getPlayerData worldName playerName model
                             |> Maybe.map
                                 (\world ->
                                     ( model
-                                    , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                                    , Lamdera.sendToFrontend clientId <| CurrentPlayer world
                                     )
                                 )
                             |> Maybe.withDefault (loggedOut ())
@@ -789,7 +920,7 @@ updateAdmin clientId msg model =
                 Ok newModel ->
                     ( { newModel | adminLoggedIn = model.adminLoggedIn }
                     , Cmd.batch
-                        [ Lamdera.sendToFrontend clientId <| CurrentAdminView <| getAdminView newModel
+                        [ Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
                         , Lamdera.sendToFrontend clientId <| AlertMessage "Import successful!"
                         ]
                     )
@@ -801,13 +932,13 @@ updateAdmin clientId msg model =
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool
-isAdmin sessionId clientId { adminLoggedIn } =
-    adminLoggedIn == Just ( sessionId, clientId )
+isAdmin sessionId clientId model =
+    model.adminLoggedIn == Just ( sessionId, clientId )
 
 
-barter : Barter.State -> ClientId -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-barter barterState clientId location player model =
-    case Maybe.map (Vendor.getFrom model.vendors) (Vendor.forLocation location) of
+barter : Barter.State -> ClientId -> World -> World.Name -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+barter barterState clientId world worldName location player model =
+    case Maybe.map (Vendor.getFrom world.vendors) (Vendor.forLocation location) of
         Nothing ->
             ( model, Cmd.none )
 
@@ -901,15 +1032,15 @@ barter barterState clientId location player model =
             then
                 let
                     newModel =
-                        barterAfterValidation barterState vendor location player model
+                        barterAfterValidation barterState vendor world worldName location player model
                 in
-                getLoggedInView player.name newModel
+                getPlayerData worldName player.name newModel
                     |> Maybe.map
-                        (\world ->
+                        (\data ->
                             ( newModel
                             , Lamdera.sendToFrontend clientId <|
                                 BarterDone
-                                    ( world
+                                    ( data
                                     , if vendorValue == 0 then
                                         Just Barter.YouGaveStuffForFree
 
@@ -935,24 +1066,24 @@ barter barterState clientId location player model =
                 )
 
 
-barterAfterValidation : Barter.State -> Vendor -> Location -> SPlayer -> Model -> Model
-barterAfterValidation barterState vendor location player model =
+barterAfterValidation : Barter.State -> Vendor -> World -> World.Name -> Location -> SPlayer -> Model -> Model
+barterAfterValidation barterState vendor world worldName location player model =
     let
         removePlayerCaps : Int -> Model -> Model
         removePlayerCaps amount =
-            updatePlayer (SPlayer.subtractCaps amount) player.name
+            updatePlayer worldName player.name (SPlayer.subtractCaps amount)
 
         addPlayerCaps : Int -> Model -> Model
         addPlayerCaps amount =
-            updatePlayer (SPlayer.addCaps amount) player.name
+            updatePlayer worldName player.name (SPlayer.addCaps amount)
 
         removeVendorCaps : Int -> Model -> Model
         removeVendorCaps amount =
-            updateVendor (Vendor.subtractCaps amount) location
+            updateVendor worldName location (Vendor.subtractCaps amount)
 
         addVendorCaps : Int -> Model -> Model
         addVendorCaps amount =
-            updateVendor (Vendor.addCaps amount) location
+            updateVendor worldName location (Vendor.addCaps amount)
 
         removePlayerItems : Dict Item.Id Int -> Model -> Model
         removePlayerItems items model_ =
@@ -960,8 +1091,9 @@ barterAfterValidation barterState vendor location player model =
                 |> Dict.foldl
                     (\id count accModel ->
                         updatePlayer
-                            (SPlayer.removeItem id count)
+                            worldName
                             player.name
+                            (SPlayer.removeItem id count)
                             accModel
                     )
                     model_
@@ -972,8 +1104,9 @@ barterAfterValidation barterState vendor location player model =
                 |> Dict.foldl
                     (\id count accModel ->
                         updateVendor
-                            (Vendor.removeItem id count)
+                            worldName
                             location
+                            (Vendor.removeItem id count)
                             accModel
                     )
                     model_
@@ -992,8 +1125,9 @@ barterAfterValidation barterState vendor location player model =
 
                             Just item ->
                                 updateVendor
-                                    (Vendor.addItem { item | count = count })
+                                    worldName
                                     location
+                                    (Vendor.addItem { item | count = count })
                                     accModel
                     )
                     model_
@@ -1012,8 +1146,9 @@ barterAfterValidation barterState vendor location player model =
 
                             Just item ->
                                 updatePlayer
-                                    (SPlayer.addItem { item | count = count })
+                                    worldName
                                     player.name
+                                    (SPlayer.addItem { item | count = count })
                                     accModel
                     )
                     model_
@@ -1033,22 +1168,22 @@ barterAfterValidation barterState vendor location player model =
         |> addPlayerItems barterState.vendorItems
 
 
-readMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-readMessage message clientId player model =
+readMessage : Message -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+readMessage message clientId world worldName player model =
     model
-        |> updatePlayer (SPlayer.readMessage message) player.name
-        |> sendCurrentWorld player.name clientId
+        |> updatePlayer worldName player.name (SPlayer.readMessage message)
+        |> sendCurrentWorld worldName player.name clientId
 
 
-removeMessage : Message -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-removeMessage message clientId player model =
+removeMessage : Message -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+removeMessage message clientId world worldName player model =
     model
-        |> updatePlayer (SPlayer.removeMessage message) player.name
-        |> sendCurrentWorld player.name clientId
+        |> updatePlayer worldName player.name (SPlayer.removeMessage message)
+        |> sendCurrentWorld worldName player.name clientId
 
 
-moveTo : TileCoords -> Set TileCoords -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-moveTo newCoords pathTaken clientId player model =
+moveTo : TileCoords -> Set TileCoords -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+moveTo newCoords pathTaken clientId _ worldName player model =
     let
         currentCoords : TileCoords
         currentCoords =
@@ -1093,15 +1228,16 @@ moveTo newCoords pathTaken clientId player model =
     else
         model
             |> updatePlayer
+                worldName
+                player.name
                 (SPlayer.subtractTicks tickCost
                     >> SPlayer.setLocation (Map.toTileNum newCoords)
                 )
-                player.name
-            |> sendCurrentWorld player.name clientId
+            |> sendCurrentWorld worldName player.name clientId
 
 
-createNewChar : NewChar -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
-createNewChar newChar clientId player model =
+createNewChar : NewChar -> ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
+createNewChar newChar clientId world worldName player model =
     case player of
         Player _ ->
             ( model, Cmd.none )
@@ -1112,8 +1248,8 @@ createNewChar newChar clientId player model =
             )
 
 
-createNewCharWithTime : NewChar -> Posix -> ClientId -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
-createNewCharWithTime newChar currentTime clientId player model =
+createNewCharWithTime : NewChar -> Posix -> ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
+createNewCharWithTime newChar currentTime clientId world worldName player model =
     case player of
         Player _ ->
             ( model, Cmd.none )
@@ -1133,19 +1269,22 @@ createNewCharWithTime newChar currentTime clientId player model =
 
                         newModel : Model
                         newModel =
-                            { model | players = Dict.insert auth.name newPlayer model.players }
+                            updateWorld
+                                worldName
+                                (\world_ -> { world_ | players = Dict.insert auth.name newPlayer world_.players })
+                                model
 
-                        world : LoggedInView
-                        world =
-                            getLoggedInView_ newPlayer newModel
+                        data : PlayerData
+                        data =
+                            getPlayerData_ worldName world newPlayer newModel
                     in
                     ( newModel
-                    , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar world
+                    , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar data
                     )
 
 
-tagSkill : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-tagSkill skill clientId player model =
+tagSkill : Skill -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+tagSkill skill clientId _ worldName player model =
     let
         totalTagsAvailable : Int
         totalTagsAvailable =
@@ -1161,30 +1300,30 @@ tagSkill skill clientId player model =
     in
     if unusedTags > 0 && not isTagged then
         model
-            |> updatePlayer (SPlayer.tagSkill skill) player.name
-            |> sendCurrentWorld player.name clientId
+            |> updatePlayer worldName player.name (SPlayer.tagSkill skill)
+            |> sendCurrentWorld worldName player.name clientId
 
     else
         -- TODO notify the user?
         ( model, Cmd.none )
 
 
-useSkillPoints : Skill -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-useSkillPoints skill clientId player model =
+useSkillPoints : Skill -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+useSkillPoints skill clientId world worldName player model =
     model
-        |> updatePlayer (SPlayer.useSkillPoints skill) player.name
-        |> sendCurrentWorld player.name clientId
+        |> updatePlayer worldName player.name (SPlayer.useSkillPoints skill)
+        |> sendCurrentWorld worldName player.name clientId
 
 
-healMe : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-healMe clientId player model =
+healMe : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+healMe clientId _ worldName player model =
     model
-        |> updatePlayer SPlayer.healUsingTick player.name
-        |> sendCurrentWorld player.name clientId
+        |> updatePlayer worldName player.name SPlayer.healUsingTick
+        |> sendCurrentWorld worldName player.name clientId
 
 
-equipItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-equipItem itemId clientId player model =
+equipItem : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipItem itemId clientId world worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
@@ -1192,22 +1331,22 @@ equipItem itemId clientId player model =
         Just item ->
             if Item.isEquippable item.kind then
                 model
-                    |> updatePlayer (SPlayer.equipItem item) player.name
-                    |> sendCurrentWorld player.name clientId
+                    |> updatePlayer worldName player.name (SPlayer.equipItem item)
+                    |> sendCurrentWorld worldName player.name clientId
 
             else
                 ( model, Cmd.none )
 
 
-setFightStrategy : ( FightStrategy, String ) -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-setFightStrategy ( strategy, text ) clientId player model =
+setFightStrategy : ( FightStrategy, String ) -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+setFightStrategy ( strategy, text ) clientId _ worldName player model =
     model
-        |> updatePlayer (SPlayer.setFightStrategy ( strategy, text )) player.name
-        |> sendCurrentWorld player.name clientId
+        |> updatePlayer worldName player.name (SPlayer.setFightStrategy ( strategy, text ))
+        |> sendCurrentWorld worldName player.name clientId
 
 
-useItem : Item.Id -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-useItem itemId clientId player model =
+useItem : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+useItem itemId clientId world worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
@@ -1222,8 +1361,8 @@ useItem itemId clientId player model =
                    and healing inside a fight.
                 -}
                 model
-                    |> updatePlayer (SPlayer.removeItem itemId 1) player.name
-                    |> sendCurrentWorld player.name clientId
+                    |> updatePlayer worldName player.name (SPlayer.removeItem itemId 1)
+                    |> sendCurrentWorld worldName player.name clientId
 
             else
                 let
@@ -1267,24 +1406,24 @@ useItem itemId clientId player model =
                                     |> List.foldl (>>) identity
                         in
                         model
-                            |> updatePlayer combinedEffects player.name
-                            |> sendCurrentWorld player.name clientId
+                            |> updatePlayer worldName player.name combinedEffects
+                            |> sendCurrentWorld worldName player.name clientId
 
 
-unequipArmor : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-unequipArmor clientId player model =
+unequipArmor : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+unequipArmor clientId world worldName player model =
     case player.equippedArmor of
         Nothing ->
             ( model, Cmd.none )
 
         Just _ ->
             model
-                |> updatePlayer SPlayer.unequipArmor player.name
-                |> sendCurrentWorld player.name clientId
+                |> updatePlayer worldName player.name SPlayer.unequipArmor
+                |> sendCurrentWorld worldName player.name clientId
 
 
-wander : ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-wander clientId player model =
+wander : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+wander clientId world worldName player model =
     let
         isInTown : Bool
         isInTown =
@@ -1313,12 +1452,12 @@ wander clientId player model =
         in
         ( model
         , Random.generate
-            (GeneratedFight clientId player)
+            (GeneratedFight clientId worldName player)
             (enemyTypeGenerator
                 |> Random.andThen
                     (FightGen.enemyOpponentGenerator
                         { hasFortuneFinderPerk = Perk.rank Perk.FortuneFinder player.perks > 0 }
-                        model.lastItemId
+                        world.lastItemId
                     )
                 |> Random.andThen
                     (\( enemyOpponent, newItemId ) ->
@@ -1497,8 +1636,8 @@ oneTimePerkEffects currentTime =
         |> Dict_.fromList
 
 
-choosePerk : Perk -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-choosePerk perk clientId player model =
+choosePerk : Perk -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+choosePerk perk clientId world worldName player model =
     let
         level =
             Xp.currentLevel player.xp
@@ -1514,6 +1653,8 @@ choosePerk perk clientId player model =
     then
         model
             |> updatePlayer
+                worldName
+                player.name
                 (identity
                     >> SPlayer.incPerkRank perk
                     >> SPlayer.decAvailablePerks
@@ -1525,27 +1666,26 @@ choosePerk perk clientId player model =
                                 effect
                        )
                 )
-                player.name
-            |> sendCurrentWorld player.name clientId
+            |> sendCurrentWorld worldName player.name clientId
 
     else
         ( model, Cmd.none )
 
 
-sendCurrentWorld : PlayerName -> ClientId -> Model -> ( Model, Cmd BackendMsg )
-sendCurrentWorld playerName clientId model =
-    getLoggedInView playerName model
+sendCurrentWorld : World.Name -> PlayerName -> ClientId -> Model -> ( Model, Cmd BackendMsg )
+sendCurrentWorld worldName playerName clientId model =
+    getPlayerData worldName playerName model
         |> Maybe.map
             (\world ->
                 ( model
-                , Lamdera.sendToFrontend clientId <| YourCurrentWorld world
+                , Lamdera.sendToFrontend clientId <| CurrentPlayer world
                 )
             )
         |> Maybe.withDefault ( model, Cmd.none )
 
 
-fight : PlayerName -> ClientId -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-fight otherPlayerName clientId sPlayer model =
+fight : PlayerName -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+fight otherPlayerName clientId world worldName sPlayer model =
     if sPlayer.ticks <= 0 then
         ( model, Cmd.none )
 
@@ -1553,7 +1693,7 @@ fight otherPlayerName clientId sPlayer model =
         ( model, Cmd.none )
 
     else
-        Dict.get otherPlayerName model.players
+        Dict.get otherPlayerName world.players
             |> Maybe.andThen Player.getPlayerData
             |> Maybe.map
                 (\target ->
@@ -1561,13 +1701,14 @@ fight otherPlayerName clientId sPlayer model =
                         update
                             (GeneratedFight
                                 clientId
+                                worldName
                                 sPlayer
                                 ( FightGen.targetAlreadyDead
                                     { attacker = FightGen.playerOpponent sPlayer
                                     , target = FightGen.playerOpponent target
                                     , currentTime = model.time
                                     }
-                                , model.lastItemId
+                                , world.lastItemId
                                 )
                             )
                             model
@@ -1575,13 +1716,13 @@ fight otherPlayerName clientId sPlayer model =
                     else
                         ( model
                         , Random.generate
-                            (GeneratedFight clientId sPlayer)
+                            (GeneratedFight clientId worldName sPlayer)
                             (FightGen.generator
                                 { attacker = FightGen.playerOpponent sPlayer
                                 , target = FightGen.playerOpponent target
                                 , currentTime = model.time
                                 }
-                                |> Random.map (\fight_ -> ( fight_, model.lastItemId ))
+                                |> Random.map (\fight_ -> ( fight_, world.lastItemId ))
                             )
                         )
                 )
@@ -1597,39 +1738,77 @@ subscriptions _ =
         ]
 
 
-savePlayer : SPlayer -> Model -> Model
-savePlayer newPlayer model =
-    updatePlayer (always newPlayer) newPlayer.name model
+savePlayer : World.Name -> SPlayer -> Model -> Model
+savePlayer worldName newPlayer model =
+    updatePlayer worldName newPlayer.name (always newPlayer) model
 
 
-updatePlayer : (SPlayer -> SPlayer) -> PlayerName -> Model -> Model
-updatePlayer fn playerName model =
-    { model | players = Dict.update playerName (Maybe.map (Player.map fn)) model.players }
+updateWorld_ : World.Name -> (World -> ( World, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
+updateWorld_ worldName fn model =
+    case Dict.get worldName model.worlds of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just world ->
+            let
+                ( newWorld, cmd ) =
+                    fn world
+            in
+            ( { model | worlds = Dict.insert worldName newWorld model.worlds }
+            , cmd
+            )
 
 
-updateVendor : (Vendor -> Vendor) -> Location -> Model -> Model
-updateVendor fn location model =
-    { model
-        | vendors =
-            case Vendor.forLocation location of
-                Nothing ->
-                    model.vendors
-
-                Just vendorName ->
-                    Dict_.update vendorName (Maybe.map fn) model.vendors
-    }
+updateWorld : World.Name -> (World -> World) -> Model -> Model
+updateWorld worldName fn model =
+    { model | worlds = Dict.update worldName (Maybe.map fn) model.worlds }
 
 
-createItem : { uniqueKey : Item.UniqueKey, count : Int } -> Model -> ( Item, Model )
-createItem { uniqueKey, count } model =
+updatePlayer : World.Name -> PlayerName -> (SPlayer -> SPlayer) -> Model -> Model
+updatePlayer worldName playerName fn model =
+    model
+        |> updateWorld
+            worldName
+            (\world ->
+                { world
+                    | players =
+                        Dict.update
+                            playerName
+                            (Maybe.map (Player.map fn))
+                            world.players
+                }
+            )
+
+
+updateVendor : World.Name -> Location -> (Vendor -> Vendor) -> Model -> Model
+updateVendor worldName location fn model =
+    model
+        |> updateWorld
+            worldName
+            (\world ->
+                { world
+                    | vendors =
+                        case Vendor.forLocation location of
+                            Nothing ->
+                                world.vendors
+
+                            Just vendorName ->
+                                Dict_.update vendorName (Maybe.map fn) world.vendors
+                }
+            )
+
+
+createItem : World.Name -> World -> { uniqueKey : Item.UniqueKey, count : Int } -> Model -> ( Item, Model )
+createItem worldName world { uniqueKey, count } model =
+    -- TODO why is this not used?
     let
         ( item, newLastId ) =
             Item.create
-                { lastId = model.lastItemId
+                { lastId = world.lastItemId
                 , uniqueKey = uniqueKey
                 , count = count
                 }
     in
     ( item
-    , { model | lastItemId = newLastId }
+    , { model | worlds = model.worlds |> Dict.insert worldName { world | lastItemId = newLastId } }
     )

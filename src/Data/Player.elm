@@ -60,6 +60,7 @@ type Player a
 type alias SPlayer =
     { name : PlayerName
     , password : Password Verified
+    , worldName : String
     , hp : Int
     , maxHp : Int
     , xp : Int
@@ -140,6 +141,7 @@ encodeSPlayer player =
     JE.object
         [ ( "name", JE.string player.name )
         , ( "password", Auth.encodePassword player.password )
+        , ( "worldName", JE.string player.worldName )
         , ( "hp", JE.int player.hp )
         , ( "maxHp", JE.int player.maxHp )
         , ( "xp", JE.int player.xp )
@@ -185,7 +187,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV6
+        [ sPlayerDecoderV7
+        , sPlayerDecoderV6
         , sPlayerDecoderV5
         , sPlayerDecoderV4
         , sPlayerDecoderV3
@@ -201,6 +204,7 @@ sPlayerDecoderV1 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -243,6 +247,7 @@ sPlayerDecoderV2 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -286,6 +291,7 @@ sPlayerDecoderV3 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -315,6 +321,7 @@ sPlayerDecoderV4 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -344,6 +351,7 @@ sPlayerDecoderV5 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -378,6 +386,37 @@ sPlayerDecoderV6 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.field "hp" JD.int)
+        |> JD.andMap (JD.field "maxHp" JD.int)
+        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "special" Special.decoder)
+        |> JD.andMap (JD.field "caps" JD.int)
+        |> JD.andMap (JD.field "ticks" JD.int)
+        |> JD.andMap (JD.field "wins" JD.int)
+        |> JD.andMap (JD.field "losses" JD.int)
+        |> JD.andMap (JD.field "location" JD.int)
+        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
+        |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
+        |> JD.andMap (JD.field "fightStrategyText" JD.string)
+
+
+{-| Adding worldName
+-}
+sPlayerDecoderV7 : Decoder SPlayer
+sPlayerDecoderV7 =
+    JD.succeed SPlayer
+        |> JD.andMap (JD.field "name" JD.string)
+        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "worldName" JD.string)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -479,6 +518,7 @@ getAuth player =
         Player data ->
             { name = data.name
             , password = data.password
+            , worldName = data.worldName
             }
 
 
@@ -528,6 +568,7 @@ fromNewChar currentTime auth newChar =
             in
             { name = auth.name
             , password = auth.password
+            , worldName = auth.worldName
             , hp = hp
             , maxHp = hp
             , xp = 0

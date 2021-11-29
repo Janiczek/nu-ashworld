@@ -1,5 +1,6 @@
 module Frontend.Route exposing
     ( AdminRoute(..)
+    , PlayerRoute(..)
     , Route(..)
     , SettingsRoute(..)
     , TownRoute(..)
@@ -9,27 +10,34 @@ module Frontend.Route exposing
     , mapBarterState
     , mapSettings
     , needsAdmin
-    , needsLogin
+    , needsPlayer
     )
 
 import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Message exposing (Message)
+import Data.World as World
 
 
 type Route
-    = Character
-    | Inventory
+    = About
+    | News
     | Map
+    | WorldsList
+    | PlayerRoute PlayerRoute
+    | AdminRoute AdminRoute
+
+
+type PlayerRoute
+    = AboutWorld
+    | Character
+    | Inventory
     | Ladder
     | Town TownRoute
-    | About
-    | News
     | Fight Fight.Info
     | Messages
     | Message Message
     | CharCreation
-    | Admin AdminRoute
     | Settings SettingsData
 
 
@@ -50,26 +58,19 @@ type TownRoute
 
 
 type AdminRoute
-    = LoggedIn
+    = AdminWorldsList
+    | AdminWorldDetail World.Name
+    | AdminPlayersList World.Name
 
 
-needsLogin : Route -> Bool
-needsLogin route =
+needsPlayer : Route -> Bool
+needsPlayer route =
     case route of
-        Character ->
+        PlayerRoute _ ->
             True
 
-        Inventory ->
-            True
-
-        Map ->
+        AdminRoute _ ->
             False
-
-        Ladder ->
-            False
-
-        Town _ ->
-            True
 
         About ->
             False
@@ -77,38 +78,38 @@ needsLogin route =
         News ->
             False
 
-        Fight _ ->
-            True
-
-        Messages ->
-            True
-
-        Message _ ->
-            True
-
-        CharCreation ->
-            True
-
-        Admin _ ->
+        Map ->
             False
 
-        Settings _ ->
-            True
+        WorldsList ->
+            False
 
 
 needsAdmin : Route -> Bool
 needsAdmin route =
     case route of
-        Admin _ ->
+        AdminRoute _ ->
             True
 
-        _ ->
+        PlayerRoute _ ->
+            False
+
+        About ->
+            False
+
+        News ->
+            False
+
+        Map ->
+            False
+
+        WorldsList ->
             False
 
 
 loggedOut : Route -> Route
 loggedOut route =
-    if needsLogin route || needsAdmin route then
+    if needsPlayer route || needsAdmin route then
         News
 
     else
@@ -118,7 +119,7 @@ loggedOut route =
 barterState : Route -> Maybe Barter.State
 barterState route =
     case route of
-        Town (Store { barter }) ->
+        PlayerRoute (Town (Store { barter })) ->
             Just barter
 
         _ ->
@@ -128,8 +129,8 @@ barterState route =
 mapBarterState : (Barter.State -> Barter.State) -> Route -> Route
 mapBarterState fn route =
     case route of
-        Town (Store r) ->
-            Town (Store { r | barter = fn r.barter })
+        PlayerRoute (Town (Store r)) ->
+            PlayerRoute (Town (Store { r | barter = fn r.barter }))
 
         _ ->
             route
@@ -138,8 +139,8 @@ mapBarterState fn route =
 mapSettings : (SettingsData -> SettingsData) -> Route -> Route
 mapSettings fn route =
     case route of
-        Settings r ->
-            Settings (fn r)
+        PlayerRoute (Settings r) ->
+            PlayerRoute (Settings (fn r))
 
         _ ->
             route
@@ -148,41 +149,37 @@ mapSettings fn route =
 isMessagesRelatedRoute : Route -> Bool
 isMessagesRelatedRoute route =
     case route of
-        Character ->
-            False
+        PlayerRoute subroute ->
+            case subroute of
+                Messages ->
+                    True
 
-        Inventory ->
-            False
+                Message _ ->
+                    True
 
-        Map ->
-            False
+                AboutWorld ->
+                    False
 
-        Ladder ->
-            False
+                Character ->
+                    False
 
-        Town _ ->
-            False
+                Inventory ->
+                    False
 
-        About ->
-            False
+                Ladder ->
+                    False
 
-        News ->
-            False
+                Town _ ->
+                    False
 
-        Fight _ ->
-            False
+                Fight _ ->
+                    False
 
-        Messages ->
-            True
+                CharCreation ->
+                    False
 
-        Message _ ->
-            True
+                Settings _ ->
+                    False
 
-        CharCreation ->
-            False
-
-        Admin _ ->
-            False
-
-        Settings _ ->
+        _ ->
             False

@@ -30,6 +30,7 @@ import Sha256
 type alias Auth a =
     { name : String
     , password : Password a
+    , worldName : String
     }
 
 
@@ -37,6 +38,7 @@ init : Auth a
 init =
     { name = ""
     , password = Password ""
+    , worldName = ""
     }
 
 
@@ -45,6 +47,7 @@ encode auth =
     JE.object
         [ ( "name", JE.string auth.name )
         , ( "password", encodePassword auth.password )
+        , ( "worldName", JE.string auth.worldName )
         ]
 
 
@@ -58,6 +61,7 @@ verifiedDecoder =
     JD.succeed Auth
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" verifiedPasswordDecoder)
+        |> JD.andMap (JD.field "worldName" JD.string)
 
 
 verifiedPasswordDecoder : Decoder (Password Verified)
@@ -88,6 +92,7 @@ type alias HasAuth a =
     { a
         | name : String
         , password : Password Verified
+        , worldName : String
     }
 
 
@@ -95,6 +100,7 @@ setPlaintextPassword : String -> Auth a -> Auth Plaintext
 setPlaintextPassword password_ auth =
     { name = auth.name
     , password = Password password_
+    , worldName = auth.worldName
     }
 
 
@@ -106,12 +112,14 @@ hash auth =
     in
     { name = auth.name
     , password = Password <| Sha256.sha256 password_
+    , worldName = auth.worldName
     }
 
 
 verify : Auth Hashed -> HasAuth a -> Bool
 verify auth sourceOfTruth =
     (auth.name == sourceOfTruth.name)
+        && (auth.worldName == sourceOfTruth.worldName)
         && verifyPassword auth.password sourceOfTruth.password
 
 
@@ -131,6 +139,7 @@ promote auth =
     in
     { name = auth.name
     , password = Password password_
+    , worldName = auth.worldName
     }
 
 

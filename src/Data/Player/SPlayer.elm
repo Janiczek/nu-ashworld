@@ -42,7 +42,7 @@ import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
-import Data.Tick as Tick
+import Data.Tick as Tick exposing (TickPerIntervalCurve)
 import Data.Trait as Trait
 import Data.Xp as Xp
 import Dict exposing (Dict)
@@ -268,10 +268,10 @@ addPerksOnLevelup newLevel player =
         |> setAvailablePerks newAvailablePerks
 
 
-tick : SPlayer -> SPlayer
-tick player =
+tick : TickPerIntervalCurve -> SPlayer -> SPlayer
+tick worldTickCurve player =
     player
-        |> addTicks (Tick.ticksAddedPerInterval player.ticks)
+        |> addTicks (Tick.ticksAddedPerInterval worldTickCurve player.ticks)
         |> (if player.hp < player.maxHp then
                 -- Logic.healingRate already accounts for tick healing rate multiplier
                 addHp Logic.healPerTick
