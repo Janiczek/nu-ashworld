@@ -753,7 +753,7 @@ contentView model =
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
                     AdminWorldsList ->
-                        Debug.todo "admin worlds list"
+                        adminWorldsListView data
 
                     AdminWorldDetail worldName ->
                         adminWorldDetailView worldName data
@@ -3735,6 +3735,21 @@ commonLinksView currentRoute =
          ]
             |> List.map (linkView currentRoute)
         )
+
+
+adminWorldsListView : AdminData -> List (Html FrontendMsg)
+adminWorldsListView data =
+    [ pageTitleView <| "Admin :: Worlds"
+    , data.worlds
+        |> Dict.keys
+        |> List.map
+            (\name ->
+                H.li
+                    [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail name))) ]
+                    [ H.text name ]
+            )
+        |> H.ul []
+    ]
 
 
 adminWorldDetailView : World.Name -> AdminData -> List (Html FrontendMsg)
