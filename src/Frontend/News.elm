@@ -16,7 +16,29 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1626037313
+    [ { date = 1638276029
+      , title = "Worlds, fix for a vendor bug"
+      , text = """
+A big release in preparation for my talk about NuAshworld at NDC Oslo 2021 :)
+
+You can now play on different worlds with different tick speed settings.
+
+* For reference, the default speed on the "main" world is 2-4 ticks (depending
+on whether you have above or below 50 ticks) per hour.
+* The world for NDC Oslo will run at 1-2 ticks per second.
+* Depending on how that one goes, I'll create a public "blitz round" world
+after the conference.
+
+A bug was fixed related to being in the middle of a trade while the vendor
+restocks.
+
+(Vendor restock frequency is separate from the tick frequency; 1x per hour on
+the main world, 1x per minute for the NDC Oslo world.)
+
+~janiczek
+"""
+      }
+    , { date = 1626037313
       , title = "Fight strategy editor now more lenient toward whitespace"
       , text = """
 While experimienting with the editor I found I'd like it to allow me to write eg.
