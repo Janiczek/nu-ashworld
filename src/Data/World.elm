@@ -13,6 +13,7 @@ import Data.Vendor as Vendor exposing (Vendor)
 import Dict exposing (Dict)
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
+import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import Lamdera exposing (ClientId, SessionId)
@@ -37,6 +38,7 @@ type alias Info =
 type alias World =
     { players : Dict PlayerName (Player SPlayer)
     , nextWantedTick : Maybe Posix
+    , nextVendorRestockTick : Maybe Posix
     , vendors : Dict_.Dict Vendor.Name Vendor
     , lastItemId : Int
     , description : String
@@ -56,6 +58,7 @@ encode world =
                 |> JE.list (Player.encode Player.encodeSPlayer)
           )
         , ( "nextWantedTick", JEE.maybe Iso8601.encode world.nextWantedTick )
+        , ( "nextVendorRestockTick", JEE.maybe Iso8601.encode world.nextVendorRestockTick )
         , ( "vendors", Vendor.encodeVendors world.vendors )
         , ( "description", JE.string world.description )
         , ( "startedAt", Iso8601.encode world.startedAt )
@@ -109,6 +112,7 @@ decoderV1 =
             in
             { players = players
             , nextWantedTick = nextWantedTick
+            , nextVendorRestockTick = Nothing
             , vendors = vendors
             , lastItemId = lastItemId players vendors
             , description = ""
@@ -137,6 +141,7 @@ decoderV2 =
         (\players nextWantedTick vendors ->
             { players = players
             , nextWantedTick = nextWantedTick
+            , nextVendorRestockTick = Nothing
             , vendors = vendors
             , lastItemId = lastItemId players vendors
             , description = ""
@@ -158,14 +163,15 @@ decoderV2 =
         (JD.field "vendors" Vendor.vendorsDecoder)
 
 
-{-| adds "description", "startedAt", "tickFrequency", "tickPerIntervalCurve", "vendorRestockFrequency" fields
+{-| adds "description", "startedAt", "tickFrequency", "tickPerIntervalCurve", "vendorRestockFrequency", "nextVendorRestockTick" fields
 -}
 decoderV3 : Decoder World
 decoderV3 =
-    JD.map8
-        (\players nextWantedTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency ->
+    JD.succeed
+        (\players nextWantedTick nextVendorRestockTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency ->
             { players = players
             , nextWantedTick = nextWantedTick
+            , nextVendorRestockTick = nextVendorRestockTick
             , vendors = vendors
             , lastItemId = lastItemId players vendors
             , description = description
@@ -175,18 +181,20 @@ decoderV3 =
             , vendorRestockFrequency = vendorRestockFrequency
             }
         )
-        (JD.field "players"
-            (JD.list
-                (Player.decoder Player.sPlayerDecoder
-                    |> JD.map (\player -> ( Player.getAuth player |> .name, player ))
+        |> JD.andMap
+            (JD.field "players"
+                (JD.list
+                    (Player.decoder Player.sPlayerDecoder
+                        |> JD.map (\player -> ( Player.getAuth player |> .name, player ))
+                    )
+                    |> JD.map Dict.fromList
                 )
-                |> JD.map Dict.fromList
             )
-        )
-        (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
-        (JD.field "vendors" Vendor.vendorsDecoder)
-        (JD.field "description" JD.string)
-        (JD.field "startedAt" Iso8601.decoder)
-        (JD.field "tickFrequency" Time.intervalDecoder)
-        (JD.field "tickPerIntervalCurve" Tick.curveDecoder)
-        (JD.field "vendorRestockFrequency" Time.intervalDecoder)
+        |> JD.andMap (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
+        |> JD.andMap (JD.field "nextVendorRestockTick" (JD.maybe Iso8601.decoder))
+        |> JD.andMap (JD.field "vendors" Vendor.vendorsDecoder)
+        |> JD.andMap (JD.field "description" JD.string)
+        |> JD.andMap (JD.field "startedAt" Iso8601.decoder)
+        |> JD.andMap (JD.field "tickFrequency" Time.intervalDecoder)
+        |> JD.andMap (JD.field "tickPerIntervalCurve" Tick.curveDecoder)
+        |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)

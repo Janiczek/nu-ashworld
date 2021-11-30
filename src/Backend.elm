@@ -3,6 +3,7 @@ module Backend exposing (..)
 import Admin
 import AssocList as Dict_
 import AssocSet as Set_
+import Cmd.Extra as Cmd
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -56,6 +57,7 @@ import Set exposing (Set)
 import Set.ExtraExtra as Set
 import Task
 import Time exposing (Posix)
+import Time.Extra as Time
 import Types exposing (..)
 
 
@@ -83,11 +85,11 @@ init =
     )
 
 
-restockVendors : World.Name -> Model -> Cmd BackendMsg
+restockVendors : World.Name -> Model -> ( Model, Cmd BackendMsg )
 restockVendors worldName model =
-    -- TODO only restock based on vendorRestockFrequency
     -- TODO don't forget to restock vendors when you create a world
-    case Dict.get worldName model.worlds of
+    ( model
+    , case Dict.get worldName model.worlds of
         Nothing ->
             Cmd.none
 
@@ -95,6 +97,7 @@ restockVendors worldName model =
             Random.generate
                 (GeneratedNewVendorsStock worldName)
                 (Vendor.restockVendors world.lastItemId world.vendors)
+    )
 
 
 getAdminData : Model -> AdminData
@@ -253,37 +256,54 @@ update msg model =
                                         ( accModel, Cmd.none )
 
                                     Just world ->
-                                        case world.nextWantedTick of
-                                            Nothing ->
-                                                let
-                                                    { nextTick } =
-                                                        Tick.nextTick world.tickFrequency currentTime
-                                                in
-                                                ( { accModel
-                                                    | worlds =
-                                                        accModel.worlds
-                                                            |> Dict.insert worldName { world | nextWantedTick = Just nextTick }
-                                                  }
-                                                , Cmd.none
+                                        let
+                                            processTick : Time.Interval -> Maybe Posix -> (Posix -> World -> World) -> (World.Name -> Model -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
+                                            processTick tickFrequency nextWantedTick updateNextWantedTick postprocess model_ =
+                                                case nextWantedTick of
+                                                    Nothing ->
+                                                        let
+                                                            { nextTick } =
+                                                                Tick.nextTick tickFrequency currentTime
+                                                        in
+                                                        ( { accModel
+                                                            | worlds =
+                                                                accModel.worlds
+                                                                    |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
+                                                          }
+                                                        , Cmd.none
+                                                        )
+
+                                                    Just nextWantedTick_ ->
+                                                        if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick_ then
+                                                            let
+                                                                { nextTick } =
+                                                                    Tick.nextTick tickFrequency currentTime
+                                                            in
+                                                            { accModel
+                                                                | worlds =
+                                                                    accModel.worlds
+                                                                        |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
+                                                            }
+                                                                |> postprocess worldName
+
+                                                        else
+                                                            ( accModel
+                                                            , Cmd.none
+                                                            )
+                                        in
+                                        accModel
+                                            |> processTick
+                                                world.tickFrequency
+                                                world.nextWantedTick
+                                                (\nextTick world_ -> { world_ | nextWantedTick = Just nextTick })
+                                                processGameTick
+                                            |> Cmd.andThen
+                                                (processTick
+                                                    world.vendorRestockFrequency
+                                                    world.nextVendorRestockTick
+                                                    (\nextTick world_ -> { world_ | nextVendorRestockTick = Just nextTick })
+                                                    restockVendors
                                                 )
-
-                                            Just nextWantedTick ->
-                                                if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick then
-                                                    let
-                                                        { nextTick } =
-                                                            Tick.nextTick world.tickFrequency currentTime
-                                                    in
-                                                    { accModel
-                                                        | worlds =
-                                                            accModel.worlds
-                                                                |> Dict.insert worldName { world | nextWantedTick = Just nextTick }
-                                                    }
-                                                        |> processTick worldName
-
-                                                else
-                                                    ( accModel
-                                                    , Cmd.none
-                                                    )
                         in
                         ( newModel, Cmd.batch [ cmd, newCmd ] )
                     )
@@ -435,8 +455,8 @@ update msg model =
             ( model, Cmd.none )
 
 
-processTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
-processTick worldName model =
+processGameTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
+processGameTick worldName model =
     ( model
         |> updateWorld worldName
             (\world ->
@@ -448,7 +468,7 @@ processTick worldName model =
                             world.players
                 }
             )
-    , restockVendors worldName model
+    , Cmd.none
     )
 
 
