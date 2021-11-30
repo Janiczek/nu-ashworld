@@ -756,7 +756,7 @@ contentView model =
                         Debug.todo "admin worlds list"
 
                     AdminWorldDetail worldName ->
-                        Debug.todo "admin world detail"
+                        adminWorldDetailView worldName data
 
                     AdminPlayersList worldName ->
                         Debug.todo "admin players list"
@@ -3735,6 +3735,25 @@ commonLinksView currentRoute =
          ]
             |> List.map (linkView currentRoute)
         )
+
+
+adminWorldDetailView : World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldDetailView worldName data =
+    case Dict.get worldName data.worlds of
+        Nothing ->
+            contentUnavailableView <|
+                "World '"
+                    ++ worldName
+                    ++ "' not found"
+
+        Just world ->
+            [ pageTitleView <| "Admin :: World: " ++ worldName
+            , H.div [] [ H.text "Logged in players" ]
+            , Dict.get worldName data.loggedInPlayers
+                |> Maybe.withDefault []
+                |> List.map (\name -> H.li [] [ H.text name ])
+                |> H.ul []
+            ]
 
 
 playerInfoView : Player CPlayer -> Html FrontendMsg
