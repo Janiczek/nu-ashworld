@@ -10,7 +10,7 @@ import Data.Fight.Generator exposing (Fight)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
-import Data.Message exposing (Message)
+import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player
@@ -52,16 +52,15 @@ type alias FrontendModel =
     , loginForm : Auth Plaintext
     , worlds : Maybe (List World.Info)
     , worldData : WorldData
-    , worldModel : WorldModel
-    }
 
-
-type alias WorldModel =
-    { worldName : World.Name
-    , newChar : NewChar
+    -- mostly player frontend state:
     , alertMessage : Maybe String
+    , newChar : NewChar
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
     , hoveredItem : Maybe HoveredItem
+    , fightInfo : Maybe Fight.Info
+    , barter : Barter.State
+    , fightStrategyText : String
     }
 
 
@@ -82,6 +81,7 @@ type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
     | GoToRoute Route
+    | GoToTownStore
     | Logout
     | Login
     | Register
@@ -112,8 +112,8 @@ type FrontendMsg
     | MapMouseAtCoords TileCoords
     | MapMouseOut
     | MapMouseClick
-    | OpenMessage Message
-    | AskToRemoveMessage Message
+    | OpenMessage Message.Id
+    | AskToRemoveMessage Message.Id
     | BarterMsg BarterMsg
     | HoverItem HoveredItem
     | StopHoveringItem
@@ -153,8 +153,8 @@ type ToBackend
     | UseSkillPoints Skill
     | ChoosePerk Perk
     | MoveTo TileCoords (Set TileCoords)
-    | MessageWasRead Message
-    | RemoveMessage Message
+    | MessageWasRead Message.Id
+    | RemoveMessage Message.Id
     | Barter Barter.State
     | AdminToBackend AdminToBackend
 

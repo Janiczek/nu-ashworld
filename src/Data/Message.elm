@@ -1,8 +1,9 @@
 module Data.Message exposing
-    ( Message
-    , Type(..)
+    ( Content(..)
+    , Id
+    , Message
     , content
-    , decoder
+    , dictDecoder
     , encode
     , fullDate
     , new
@@ -15,6 +16,7 @@ import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
+import Dict exposing (Dict)
 import Html exposing (Attribute, Html)
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
@@ -24,14 +26,19 @@ import Markdown
 import Time exposing (Posix)
 
 
+type alias Id =
+    Int
+
+
 type alias Message =
-    { type_ : Type
+    { id : Id
+    , content : Content
     , hasBeenRead : Bool
     , date : Posix
     }
 
 
-type Type
+type Content
     = Welcome
     | YouAdvancedLevel
         { -- perkAvailable : Bool
@@ -51,23 +58,65 @@ type Type
 encode : Message -> JE.Value
 encode message =
     JE.object
-        [ ( "type", encodeType message.type_ )
+        [ ( "id", JE.int message.id )
+        , ( "content", encodeContent message.content )
         , ( "hasBeenRead", JE.bool message.hasBeenRead )
         , ( "date", Iso8601.encode message.date )
         ]
 
 
-decoder : Decoder Message
-decoder =
-    JD.succeed Message
-        |> JD.andMap (JD.field "type" typeDecoder)
-        |> JD.andMap (JD.field "hasBeenRead" JD.bool)
-        |> JD.andMap (JD.field "date" Iso8601.decoder)
+{-| TODO sometime in the future, with hard reset, once all messages have IDs, we
+could change this back into decoder?
+-}
+dictDecoder : Decoder (Dict Id Message)
+dictDecoder =
+    JD.oneOf
+        [ dictDecoderV2
+        , dictDecoderV1
+        ]
 
 
-encodeType : Type -> JE.Value
-encodeType type_ =
-    case type_ of
+dictDecoderV1 : Decoder (Dict Id Message)
+dictDecoderV1 =
+    JD.list
+        (JD.succeed
+            (\content_ hasBeenRead date id ->
+                { id = id
+                , content = content_
+                , hasBeenRead = hasBeenRead
+                , date = date
+                }
+            )
+            |> JD.andMap (JD.field "type" contentDecoder)
+            |> JD.andMap (JD.field "hasBeenRead" JD.bool)
+            |> JD.andMap (JD.field "date" Iso8601.decoder)
+        )
+        |> JD.map
+            (List.indexedMap (\id toMessage -> ( id, toMessage id ))
+                >> Dict.fromList
+            )
+
+
+{-| Adds ID, changes type into content
+-}
+dictDecoderV2 : Decoder (Dict Id Message)
+dictDecoderV2 =
+    JD.list
+        (JD.succeed Message
+            |> JD.andMap (JD.field "id" JD.int)
+            |> JD.andMap (JD.field "content" contentDecoder)
+            |> JD.andMap (JD.field "hasBeenRead" JD.bool)
+            |> JD.andMap (JD.field "date" Iso8601.decoder)
+        )
+        |> JD.map
+            (List.map (\message -> ( message.id, message ))
+                >> Dict.fromList
+            )
+
+
+encodeContent : Content -> JE.Value
+encodeContent content_ =
+    case content_ of
         Welcome ->
             JE.object [ ( "type", JE.string "Welcome" ) ]
 
@@ -92,8 +141,8 @@ encodeType type_ =
                 ]
 
 
-typeDecoder : Decoder Type
-typeDecoder =
+contentDecoder : Decoder Content
+contentDecoder =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -132,17 +181,19 @@ typeDecoder =
             )
 
 
-new : Posix -> Type -> Message
-new date type_ =
-    { type_ = type_
+new : Id -> Posix -> Content -> Message
+new lastMessageId date content_ =
+    { id = lastMessageId + 1
+    , content = content_
     , hasBeenRead = False
     , date = date
     }
 
 
-newRead : Posix -> Type -> Message
-newRead date type_ =
-    { type_ = type_
+newRead : Id -> Posix -> Content -> Message
+newRead lastMessageId date content_ =
+    { id = lastMessageId + 1
+    , content = content_
     , hasBeenRead = True
     , date = date
     }
@@ -150,7 +201,7 @@ newRead date type_ =
 
 summary : Message -> String
 summary message =
-    case message.type_ of
+    case message.content of
         Welcome ->
             "Welcome!"
 
@@ -200,7 +251,7 @@ summary message =
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
-    case message.type_ of
+    case message.content of
         Welcome ->
             Markdown.toHtml attributes
                 "Welcome to NuAshworld! You know, war... war never changes."

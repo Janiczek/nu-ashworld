@@ -2,21 +2,19 @@ module Frontend.Route exposing
     ( AdminRoute(..)
     , PlayerRoute(..)
     , Route(..)
-    , SettingsRoute(..)
-    , TownRoute(..)
-    , barterState
+    , fromUrl
     , isMessagesRelatedRoute
     , loggedOut
-    , mapBarterState
-    , mapSettings
     , needsAdmin
     , needsPlayer
     )
 
 import Data.Barter as Barter
 import Data.Fight as Fight
-import Data.Message exposing (Message)
+import Data.Message as Message exposing (Message)
 import Data.World as World
+import Url exposing (Url)
+import Url.Parser as P exposing ((</>), Parser)
 
 
 type Route
@@ -24,6 +22,7 @@ type Route
     | News
     | Map
     | WorldsList
+    | NotFound Url
     | PlayerRoute PlayerRoute
     | AdminRoute AdminRoute
 
@@ -33,28 +32,14 @@ type PlayerRoute
     | Character
     | Inventory
     | Ladder
-    | Town TownRoute
-    | Fight Fight.Info
+    | TownMainSquare
+    | TownStore
+    | Fight
     | Messages
-    | Message Message
+    | Message Message.Id
     | CharCreation
-    | Settings SettingsData
-
-
-type alias SettingsData =
-    { fightStrategyText : String
-    , subroute : SettingsRoute
-    }
-
-
-type SettingsRoute
-    = FightStrategy
-    | FightStrategySyntaxHelp
-
-
-type TownRoute
-    = MainSquare
-    | Store { barter : Barter.State }
+    | SettingsFightStrategy
+    | SettingsFightStrategySyntaxHelp
 
 
 type AdminRoute
@@ -84,6 +69,9 @@ needsPlayer route =
         WorldsList ->
             False
 
+        NotFound _ ->
+            False
+
 
 needsAdmin : Route -> Bool
 needsAdmin route =
@@ -106,6 +94,9 @@ needsAdmin route =
         WorldsList ->
             False
 
+        NotFound _ ->
+            False
+
 
 loggedOut : Route -> Route
 loggedOut route =
@@ -114,36 +105,6 @@ loggedOut route =
 
     else
         route
-
-
-barterState : Route -> Maybe Barter.State
-barterState route =
-    case route of
-        PlayerRoute (Town (Store { barter })) ->
-            Just barter
-
-        _ ->
-            Nothing
-
-
-mapBarterState : (Barter.State -> Barter.State) -> Route -> Route
-mapBarterState fn route =
-    case route of
-        PlayerRoute (Town (Store r)) ->
-            PlayerRoute (Town (Store { r | barter = fn r.barter }))
-
-        _ ->
-            route
-
-
-mapSettings : (SettingsData -> SettingsData) -> Route -> Route
-mapSettings fn route =
-    case route of
-        PlayerRoute (Settings r) ->
-            PlayerRoute (Settings (fn r))
-
-        _ ->
-            route
 
 
 isMessagesRelatedRoute : Route -> Bool
@@ -169,17 +130,69 @@ isMessagesRelatedRoute route =
                 Ladder ->
                     False
 
-                Town _ ->
+                TownMainSquare ->
                     False
 
-                Fight _ ->
+                TownStore ->
+                    False
+
+                Fight ->
                     False
 
                 CharCreation ->
                     False
 
-                Settings _ ->
+                SettingsFightStrategy ->
+                    False
+
+                SettingsFightStrategySyntaxHelp ->
                     False
 
         _ ->
             False
+
+
+fromUrl : Url -> Route
+fromUrl url =
+    P.parse parser url
+        |> Maybe.withDefault (NotFound url)
+
+
+parser : Parser (Route -> a) a
+parser =
+    P.oneOf
+        [ P.map News P.top
+        , P.map News <| P.s "news"
+        , P.map About <| P.s "about"
+        , P.map Map <| P.s "map"
+        , P.map WorldsList <| P.s "worlds"
+        , P.map AdminRoute <| P.s "admin" </> adminParser
+        , P.map PlayerRoute <| P.s "game" </> playerParser
+        ]
+
+
+adminParser : Parser (AdminRoute -> a) a
+adminParser =
+    P.oneOf
+        [ P.map AdminWorldsList <| P.s "worlds"
+        , P.map AdminWorldDetail <| P.s "world" </> P.string
+        , P.map AdminPlayersList <| P.s "world" </> P.string </> P.s "players"
+        ]
+
+
+playerParser : Parser (PlayerRoute -> a) a
+playerParser =
+    P.oneOf
+        [ P.map AboutWorld <| P.s "about"
+        , P.map Character <| P.s "character"
+        , P.map Inventory <| P.s "inventory"
+        , P.map Ladder <| P.s "ladder"
+        , P.map TownMainSquare <| P.s "town"
+        , P.map TownStore <| P.s "town" </> P.s "store"
+        , P.map Fight <| P.s "fight"
+        , P.map Messages <| P.s "messages"
+        , P.map Message <| P.s "messages" </> P.int
+        , P.map CharCreation <| P.s "character-creation"
+        , P.map SettingsFightStrategy <| P.s "settings" </> P.s "fight-strategy"
+        , P.map SettingsFightStrategySyntaxHelp <| P.s "settings" </> P.s "fight-strategy" </> P.s "help"
+        ]

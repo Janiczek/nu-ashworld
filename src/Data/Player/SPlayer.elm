@@ -37,7 +37,7 @@ import AssocSet as Set_
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
-import Data.Message as Message exposing (Message, Type(..))
+import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
@@ -300,30 +300,47 @@ healUsingTick player =
             |> addHp (round <| toFloat tickHealPercentage / 100 * toFloat player.maxHp)
 
 
-addMessage : Message -> SPlayer -> SPlayer
-addMessage message player =
-    { player | messages = message :: player.messages }
+addMessage : { read : Bool } -> Posix -> Message.Content -> SPlayer -> SPlayer
+addMessage { read } currentTime messageContent player =
+    let
+        lastMessageId : Int
+        lastMessageId =
+            player.messages
+                |> Dict.keys
+                |> List.maximum
+                |> Maybe.withDefault 0
+
+        createMessage =
+            if read then
+                Message.newRead
+
+            else
+                Message.new
+
+        message : Message
+        message =
+            createMessage
+                (lastMessageId + 1)
+                currentTime
+                messageContent
+    in
+    { player | messages = Dict.insert message.id message player.messages }
 
 
-readMessage : Message -> SPlayer -> SPlayer
-readMessage messageToRead player =
+readMessage : Message.Id -> SPlayer -> SPlayer
+readMessage messageIdToRead player =
     { player
         | messages =
-            List.map
-                (\message ->
-                    if message == messageToRead then
-                        { message | hasBeenRead = True }
-
-                    else
-                        message
-                )
+            Dict.update
+                messageIdToRead
+                (Maybe.map (\message -> { message | hasBeenRead = True }))
                 player.messages
     }
 
 
-removeMessage : Message -> SPlayer -> SPlayer
-removeMessage messageToRemove player =
-    { player | messages = List.filter ((/=) messageToRemove) player.messages }
+removeMessage : Message.Id -> SPlayer -> SPlayer
+removeMessage messageIdToRemove player =
+    { player | messages = Dict.remove messageIdToRemove player.messages }
 
 
 addItems : List Item -> SPlayer -> SPlayer
@@ -509,11 +526,7 @@ levelUpConsequences { newLevel, levelsDiff, currentTime } =
     recalculateHp
         >> addSkillPointsOnLevelup levelsDiff
         >> addPerksOnLevelup newLevel
-        >> addMessage
-            (Message.new
-                currentTime
-                (YouAdvancedLevel { newLevel = newLevel })
-            )
+        >> addMessage { read = False } currentTime (YouAdvancedLevel { newLevel = newLevel })
 
 
 incSpecial : Special.Type -> SPlayer -> SPlayer

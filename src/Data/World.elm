@@ -1,6 +1,7 @@
 module Data.World exposing (Info, Name, World, decoder, encode)
 
 import AssocList as Dict_
+import Data.Message as Message
 import Data.Player as Player
     exposing
         ( Player
@@ -64,6 +65,29 @@ encode world =
         ]
 
 
+lastItemId : Dict PlayerName (Player SPlayer) -> Dict_.Dict Vendor.Name Vendor -> Int
+lastItemId players vendors =
+    let
+        lastPlayersItemId : Int
+        lastPlayersItemId =
+            players
+                |> Dict.values
+                |> List.filterMap Player.getPlayerData
+                |> List.fastConcatMap (.items >> Dict.keys)
+                |> List.maximum
+                |> Maybe.withDefault 0
+
+        lastVendorsItemId : Int
+        lastVendorsItemId =
+            vendors
+                |> Dict_.values
+                |> List.fastConcatMap (.items >> Dict.keys)
+                |> List.maximum
+                |> Maybe.withDefault 0
+    in
+    max lastPlayersItemId lastVendorsItemId
+
+
 decoder : Decoder World
 decoder =
     JD.oneOf
@@ -79,10 +103,14 @@ decoderV1 : Decoder World
 decoderV1 =
     JD.map2
         (\players nextWantedTick ->
+            let
+                vendors =
+                    Vendor.emptyVendors
+            in
             { players = players
             , nextWantedTick = nextWantedTick
-            , vendors = Vendor.emptyVendors
-            , lastItemId = 0
+            , vendors = vendors
+            , lastItemId = lastItemId players vendors
             , description = ""
             , startedAt = Time.millisToPosix 0
             , tickFrequency = Time.Hour
@@ -107,32 +135,10 @@ decoderV2 : Decoder World
 decoderV2 =
     JD.map3
         (\players nextWantedTick vendors ->
-            let
-                lastPlayersItemId : Int
-                lastPlayersItemId =
-                    players
-                        |> Dict.values
-                        |> List.filterMap Player.getPlayerData
-                        |> List.fastConcatMap (.items >> Dict.keys)
-                        |> List.maximum
-                        |> Maybe.withDefault 0
-
-                lastVendorsItemId : Int
-                lastVendorsItemId =
-                    vendors
-                        |> Dict_.values
-                        |> List.fastConcatMap (.items >> Dict.keys)
-                        |> List.maximum
-                        |> Maybe.withDefault 0
-
-                lastItemId : Int
-                lastItemId =
-                    max lastPlayersItemId lastVendorsItemId
-            in
             { players = players
             , nextWantedTick = nextWantedTick
             , vendors = vendors
-            , lastItemId = lastItemId
+            , lastItemId = lastItemId players vendors
             , description = ""
             , startedAt = Time.millisToPosix 0
             , tickFrequency = Time.Hour
@@ -158,32 +164,10 @@ decoderV3 : Decoder World
 decoderV3 =
     JD.map8
         (\players nextWantedTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency ->
-            let
-                lastPlayersItemId : Int
-                lastPlayersItemId =
-                    players
-                        |> Dict.values
-                        |> List.filterMap Player.getPlayerData
-                        |> List.fastConcatMap (.items >> Dict.keys)
-                        |> List.maximum
-                        |> Maybe.withDefault 0
-
-                lastVendorsItemId : Int
-                lastVendorsItemId =
-                    vendors
-                        |> Dict_.values
-                        |> List.fastConcatMap (.items >> Dict.keys)
-                        |> List.maximum
-                        |> Maybe.withDefault 0
-
-                lastItemId : Int
-                lastItemId =
-                    max lastPlayersItemId lastVendorsItemId
-            in
             { players = players
             , nextWantedTick = nextWantedTick
             , vendors = vendors
-            , lastItemId = lastItemId
+            , lastItemId = lastItemId players vendors
             , description = description
             , startedAt = startedAt
             , tickFrequency = tickFrequency

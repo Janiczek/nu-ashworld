@@ -317,7 +317,10 @@ update msg model =
                                     |> SPlayer.subtractTicks 1
                                     |> SPlayer.setItems fight_.finalAttacker.items
                                     |> (if targetIsPlayer then
-                                            SPlayer.addMessage fight_.messageForAttacker
+                                            SPlayer.addMessage
+                                                { read = True }
+                                                model.time
+                                                fight_.messageForAttacker
 
                                         else
                                             identity
@@ -329,7 +332,10 @@ update msg model =
                                 player
                                     |> SPlayer.setHp fight_.finalTarget.hp
                                     |> SPlayer.setItems fight_.finalTarget.items
-                                    |> SPlayer.addMessage fight_.messageForTarget
+                                    |> SPlayer.addMessage
+                                        { read = False }
+                                        model.time
+                                        fight_.messageForTarget
                             )
                             fight_.finalTarget
                         |> (case fight_.fightInfo.result of
@@ -594,16 +600,16 @@ encodeToBackendMsg msg =
                 , ( "path", Set.encode Map.encodeCoords path )
                 ]
 
-        MessageWasRead message ->
+        MessageWasRead messageId ->
             JE.object
                 [ ( "type", JE.string "MessageWasRead" )
-                , ( "message", Message.encode message )
+                , ( "messageId", JE.int messageId )
                 ]
 
-        RemoveMessage message ->
+        RemoveMessage messageId ->
             JE.object
                 [ ( "type", JE.string "RemoveMessage" )
-                , ( "message", Message.encode message )
+                , ( "messageId", JE.int messageId )
                 ]
 
         Barter barterState ->
@@ -887,11 +893,11 @@ updateFromFrontend sessionId clientId msg model =
         MoveTo newCoords pathTaken ->
             withLoggedInCreatedPlayer (moveTo newCoords pathTaken)
 
-        MessageWasRead message ->
-            withLoggedInCreatedPlayer (readMessage message)
+        MessageWasRead messageId ->
+            withLoggedInCreatedPlayer (readMessage messageId)
 
-        RemoveMessage message ->
-            withLoggedInCreatedPlayer (removeMessage message)
+        RemoveMessage messageId ->
+            withLoggedInCreatedPlayer (removeMessage messageId)
 
         Barter barterState ->
             withLocation (barter barterState)
@@ -1168,17 +1174,17 @@ barterAfterValidation barterState vendor world worldName location player model =
         |> addPlayerItems barterState.vendorItems
 
 
-readMessage : Message -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-readMessage message clientId world worldName player model =
+readMessage : Message.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+readMessage messageId clientId world worldName player model =
     model
-        |> updatePlayer worldName player.name (SPlayer.readMessage message)
+        |> updatePlayer worldName player.name (SPlayer.readMessage messageId)
         |> sendCurrentWorld worldName player.name clientId
 
 
-removeMessage : Message -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-removeMessage message clientId world worldName player model =
+removeMessage : Message.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+removeMessage messageId clientId world worldName player model =
     model
-        |> updatePlayer worldName player.name (SPlayer.removeMessage message)
+        |> updatePlayer worldName player.name (SPlayer.removeMessage messageId)
         |> sendCurrentWorld worldName player.name clientId
 
 

@@ -49,6 +49,7 @@ import DateFormat
 import DateFormat.Relative
 import Dict exposing (Dict)
 import Dict.Extra as Dict
+import Dict.ExtraExtra as Dict
 import File
 import File.Download
 import File.Select
@@ -80,7 +81,7 @@ import Task
 import Time exposing (Posix)
 import Time.Extra as Time
 import Types exposing (..)
-import Url
+import Url exposing (Url)
 
 
 type alias Model =
@@ -99,40 +100,32 @@ app =
         }
 
 
-init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
+init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
-    let
-        worldName : World.Name
-        worldName =
-            Debug.todo "get world name from url"
-
-        ( route, worldRoute ) =
-            Debug.todo "get routes from url"
-    in
     ( { key = key
       , time = Time.millisToPosix 0
-      , route = route
+      , route =
+            -- TODO change URL when changing route
+            Route.fromUrl url
       , zone = Time.utc
       , loginForm = Auth.init
       , worlds = Nothing
       , worldData = NotLoggedIn
-      , worldModel = initWorldModel worldName
+
+      -- mostly player frontend state
+      , newChar = NewChar.init
+      , alertMessage = Nothing
+      , mapMouseCoords = Nothing
+      , hoveredItem = Nothing
+      , barter = Barter.empty
+      , fightInfo = Nothing
+      , fightStrategyText = ""
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
         ]
     )
-
-
-initWorldModel : World.Name -> WorldModel
-initWorldModel worldName =
-    { worldName = worldName
-    , newChar = NewChar.init
-    , alertMessage = Nothing
-    , mapMouseCoords = Nothing
-    , hoveredItem = Nothing
-    }
 
 
 subscriptions : Model -> Sub FrontendMsg
@@ -151,7 +144,7 @@ isAdmin model =
 
 
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
-update msg ({ loginForm, worldModel } as model) =
+update msg ({ loginForm } as model) =
     let
         withLoggedInPlayer : (PlayerData -> ( Model, Cmd FrontendMsg )) -> ( Model, Cmd FrontendMsg )
         withLoggedInPlayer fn =
@@ -173,10 +166,14 @@ update msg ({ loginForm, worldModel } as model) =
               else
                 { model
                     | route = route
-                    , worldModel = { worldModel | alertMessage = Nothing }
+                    , alertMessage = Nothing
                 }
             , Cmd.none
             )
+
+        GoToTownStore ->
+            { model | barter = Barter.empty }
+                |> update (GoToRoute (PlayerRoute Route.TownStore))
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -296,7 +293,7 @@ update msg ({ loginForm, worldModel } as model) =
         SetAuthName newName ->
             ( { model
                 | loginForm = { loginForm | name = newName }
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
@@ -304,64 +301,52 @@ update msg ({ loginForm, worldModel } as model) =
         SetAuthPassword newPassword ->
             ( { model
                 | loginForm = Auth.setPlaintextPassword newPassword model.loginForm
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
 
         CreateChar ->
             ( model
-            , Lamdera.sendToBackend <| CreateNewChar worldModel.newChar
+            , Lamdera.sendToBackend <| CreateNewChar model.newChar
             )
 
         NewCharIncSpecial type_ ->
             ( { model
-                | worldModel =
-                    { worldModel
-                        | newChar =
-                            worldModel.newChar
-                                |> NewChar.incSpecial type_
-                                |> NewChar.dismissError
-                    }
+                | newChar =
+                    model.newChar
+                        |> NewChar.incSpecial type_
+                        |> NewChar.dismissError
               }
             , Cmd.none
             )
 
         NewCharDecSpecial type_ ->
             ( { model
-                | worldModel =
-                    { worldModel
-                        | newChar =
-                            worldModel.newChar
-                                |> NewChar.decSpecial type_
-                                |> NewChar.dismissError
-                    }
+                | newChar =
+                    model.newChar
+                        |> NewChar.decSpecial type_
+                        |> NewChar.dismissError
               }
             , Cmd.none
             )
 
         NewCharToggleTaggedSkill skill ->
             ( { model
-                | worldModel =
-                    { worldModel
-                        | newChar =
-                            worldModel.newChar
-                                |> NewChar.toggleTaggedSkill skill
-                                |> NewChar.dismissError
-                    }
+                | newChar =
+                    model.newChar
+                        |> NewChar.toggleTaggedSkill skill
+                        |> NewChar.dismissError
               }
             , Cmd.none
             )
 
         NewCharToggleTrait trait ->
             ( { model
-                | worldModel =
-                    { worldModel
-                        | newChar =
-                            worldModel.newChar
-                                |> NewChar.toggleTrait trait
-                                |> NewChar.dismissError
-                    }
+                | newChar =
+                    model.newChar
+                        |> NewChar.toggleTrait trait
+                        |> NewChar.dismissError
               }
             , Cmd.none
             )
@@ -383,18 +368,15 @@ update msg ({ loginForm, worldModel } as model) =
                                     Map.toTileCoords cPlayer.location
                             in
                             ( { model
-                                | worldModel =
-                                    { worldModel
-                                        | mapMouseCoords =
-                                            Just
-                                                ( mouseCoords
-                                                , Pathfinding.path
-                                                    perceptionLevel
-                                                    { from = playerCoords
-                                                    , to = mouseCoords
-                                                    }
-                                                )
-                                    }
+                                | mapMouseCoords =
+                                    Just
+                                        ( mouseCoords
+                                        , Pathfinding.path
+                                            perceptionLevel
+                                            { from = playerCoords
+                                            , to = mouseCoords
+                                            }
+                                        )
                               }
                             , Cmd.none
                             )
@@ -403,15 +385,12 @@ update msg ({ loginForm, worldModel } as model) =
                             Debug.todo "what was here before?"
 
         MapMouseOut ->
-            ( { model
-                | worldModel =
-                    { worldModel | mapMouseCoords = Nothing }
-              }
+            ( { model | mapMouseCoords = Nothing }
             , Cmd.none
             )
 
         MapMouseClick ->
-            case worldModel.mapMouseCoords of
+            case model.mapMouseCoords of
                 Nothing ->
                     ( model, Cmd.none )
 
@@ -420,42 +399,45 @@ update msg ({ loginForm, worldModel } as model) =
                     , Lamdera.sendToBackend <| MoveTo newCoords path
                     )
 
-        OpenMessage message ->
-            ( { model | route = PlayerRoute (Route.Message message) }
-            , Lamdera.sendToBackend <| MessageWasRead message
+        OpenMessage messageId ->
+            ( { model | route = PlayerRoute (Route.Message messageId) }
+            , Lamdera.sendToBackend <| MessageWasRead messageId
             )
 
-        AskToRemoveMessage message ->
+        AskToRemoveMessage messageId ->
             ( model
-            , Lamdera.sendToBackend <| RemoveMessage message
+            , Lamdera.sendToBackend <| RemoveMessage messageId
             )
 
         BarterMsg barterMsg ->
             updateBarter barterMsg model
 
         HoverItem item ->
-            ( { model | worldModel = { worldModel | hoveredItem = Just item } }
+            ( { model | hoveredItem = Just item }
             , Cmd.none
             )
 
         StopHoveringItem ->
-            ( { model | worldModel = { worldModel | hoveredItem = Nothing } }
+            ( { model | hoveredItem = Nothing }
             , Cmd.none
             )
 
         SetFightStrategyText text ->
-            ( { model
-                | route =
-                    model.route
-                        |> Route.mapSettings (\r -> { r | fightStrategyText = text })
-              }
+            ( { model | fightStrategyText = text }
             , Cmd.none
             )
 
 
+resetBarter : Model -> ( Model, Cmd FrontendMsg )
+resetBarter model =
+    ( { model | barter = Barter.empty }
+    , Cmd.none
+    )
+
+
 mapBarter_ : (Barter.State -> Barter.State) -> Model -> Model
 mapBarter_ fn model =
-    { model | route = Route.mapBarterState fn model.route }
+    { model | barter = fn model.barter }
 
 
 mapBarter : (Barter.State -> Barter.State) -> Model -> ( Model, Cmd FrontendMsg )
@@ -465,27 +447,17 @@ mapBarter fn model =
     )
 
 
-resetBarter : Model -> ( Model, Cmd FrontendMsg )
-resetBarter model =
-    mapBarter (always Barter.empty) model
-
-
 updateBarter : BarterMsg -> Model -> ( Model, Cmd FrontendMsg )
 updateBarter msg model =
-    Tuple.mapFirst (mapBarter_ Barter.dismissMessage) <|
+    Tuple.mapFirst (\model_ -> { model_ | barter = Barter.dismissMessage model_.barter }) <|
         case msg of
             ResetBarter ->
                 resetBarter model
 
             ConfirmBarter ->
-                Route.barterState model.route
-                    |> Maybe.map
-                        (\barterState ->
-                            ( model
-                            , Lamdera.sendToBackend <| Barter barterState
-                            )
-                        )
-                    |> Maybe.withDefault ( model, Cmd.none )
+                ( model
+                , Lamdera.sendToBackend <| Barter model.barter
+                )
 
             AddPlayerItem itemId count ->
                 mapBarter (Barter.addPlayerItem itemId count) model
@@ -532,12 +504,12 @@ updateLoggedInWorld data model =
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
-updateFromBackend msg ({ worldModel } as model) =
+updateFromBackend msg model =
     case msg of
         YoureLoggedIn data ->
             ( { model
                 | worldData = IsPlayer data
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
                 , route =
                     case data.player of
                         NeedsCharCreated _ ->
@@ -553,7 +525,7 @@ updateFromBackend msg ({ worldModel } as model) =
             ( { model
                 | worldData = IsAdmin data
                 , route = AdminRoute AdminWorldsList
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
@@ -562,16 +534,13 @@ updateFromBackend msg ({ worldModel } as model) =
             ( { model
                 | worldData = IsPlayer data
                 , route = PlayerRoute Route.CharCreation
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
               }
             , Cmd.none
             )
 
         CharCreationError error ->
-            ( { model
-                | worldModel =
-                    { worldModel | newChar = NewChar.setError error worldModel.newChar }
-              }
+            ( { model | newChar = NewChar.setError error model.newChar }
             , Cmd.none
             )
 
@@ -579,11 +548,8 @@ updateFromBackend msg ({ worldModel } as model) =
             ( { model
                 | worldData = IsPlayer data
                 , route = PlayerRoute Route.Ladder
-                , worldModel =
-                    { worldModel
-                        | alertMessage = Nothing
-                        , newChar = NewChar.init
-                    }
+                , alertMessage = Nothing
+                , newChar = NewChar.init
               }
             , Cmd.none
             )
@@ -591,7 +557,7 @@ updateFromBackend msg ({ worldModel } as model) =
         YoureLoggedOut worlds ->
             ( { model
                 | loginForm = Auth.init
-                , worldModel = { worldModel | alertMessage = Nothing }
+                , alertMessage = Nothing
                 , route = Route.loggedOut model.route
                 , worlds = Just worlds
               }
@@ -624,15 +590,13 @@ updateFromBackend msg ({ worldModel } as model) =
             )
 
         YourFightResult ( fightInfo, world ) ->
-            ( { model | route = PlayerRoute (Route.Fight fightInfo) }
+            ( { model | route = PlayerRoute Route.Fight }
                 |> updateLoggedInWorld world
             , Cmd.none
             )
 
         AlertMessage message ->
-            ( { model
-                | worldModel = { worldModel | alertMessage = Just message }
-              }
+            ( { model | alertMessage = Just message }
             , Cmd.none
             )
 
@@ -758,7 +722,7 @@ nextTickView tickFrequency zone time =
 
 
 contentView : Model -> Html FrontendMsg
-contentView ({ worldModel } as model) =
+contentView model =
     let
         withCreatedPlayer :
             PlayerData
@@ -808,8 +772,11 @@ contentView ({ worldModel } as model) =
             ( News, _ ) ->
                 newsView model.zone
 
+            ( NotFound url, _ ) ->
+                notFoundView url
+
             ( Map, IsPlayer data ) ->
-                withCreatedPlayer data (mapView model.worldModel.mapMouseCoords)
+                withCreatedPlayer data (mapView model.mapMouseCoords)
 
             ( Map, _ ) ->
                 mapLoggedOutView
@@ -833,7 +800,7 @@ contentView ({ worldModel } as model) =
                         Debug.todo "route about world"
 
                     Route.Character ->
-                        withCreatedPlayer_ (characterView worldModel.hoveredItem)
+                        withCreatedPlayer_ (characterView model.hoveredItem)
 
                     Route.Inventory ->
                         withCreatedPlayer_ inventoryView
@@ -841,35 +808,33 @@ contentView ({ worldModel } as model) =
                     Route.Ladder ->
                         withCreatedPlayer_ ladderView
 
-                    Route.Town Route.MainSquare ->
+                    Route.TownMainSquare ->
                         withLocation_ townMainSquareView
 
-                    Route.Town (Route.Store { barter }) ->
-                        withLocation_ (townStoreView barter)
+                    Route.TownStore ->
+                        withLocation_ (townStoreView model.barter)
 
-                    Route.Fight fightInfo ->
-                        withCreatedPlayer_ (fightView fightInfo)
+                    Route.Fight ->
+                        withCreatedPlayer_ (fightView model.fightInfo)
 
                     Route.Messages ->
                         withCreatedPlayer_ (messagesView model.time model.zone)
 
-                    Route.Message message ->
-                        withCreatedPlayer_ (messageView model.zone message)
+                    Route.Message messageId ->
+                        withCreatedPlayer_ (messageView model.zone messageId)
 
                     Route.CharCreation ->
-                        newCharView worldModel.hoveredItem worldModel.newChar
+                        newCharView model.hoveredItem model.newChar
 
-                    Route.Settings r ->
-                        case r.subroute of
-                            Route.FightStrategy ->
-                                withCreatedPlayer_ <|
-                                    settingsFightStrategyView
-                                        r.fightStrategyText
+                    Route.SettingsFightStrategy ->
+                        withCreatedPlayer_ <|
+                            settingsFightStrategyView
+                                model.fightStrategyText
 
-                            Route.FightStrategySyntaxHelp ->
-                                settingsFightStrategySyntaxHelpView
-                                    worldModel.hoveredItem
-                                    r.fightStrategyText
+                    Route.SettingsFightStrategySyntaxHelp ->
+                        settingsFightStrategySyntaxHelpView
+                            model.hoveredItem
+                            model.fightStrategyText
 
             ( PlayerRoute _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -900,6 +865,17 @@ What more, **can you stand up to the Enclave?**
 Many thanks to Patreons:
 * DJetelina (iScrE4m)
 """
+    ]
+
+
+notFoundView : Url -> List (Html FrontendMsg)
+notFoundView url =
+    [ pageTitleView "Not found"
+    , """
+Page `{URL}` not found.
+"""
+        |> String.replace "{URL}" (Url.toString url)
+        |> Markdown.toHtml [ HA.id "not-found-content" ]
     ]
 
 
@@ -1264,13 +1240,7 @@ townMainSquareView location _ _ =
     , if Vendor.isInLocation location then
         H.div []
             [ H.button
-                [ HE.onClick
-                    (GoToRoute
-                        (PlayerRoute
-                            (Route.Town (Route.Store { barter = Barter.empty }))
-                        )
-                    )
-                ]
+                [ HE.onClick GoToTownStore ]
                 [ H.text "[Visit store]" ]
             ]
 
@@ -1787,11 +1757,7 @@ townStoreView barter location world player =
             in
             [ pageTitleView <| "Store: " ++ Location.name location
             , H.button
-                [ HE.onClick
-                    (GoToRoute
-                        (PlayerRoute (Route.Town Route.MainSquare))
-                    )
-                ]
+                [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
                 [ H.text "[Back]" ]
             , H.div [ HA.id "town-store-grid" ] gridContents
             , H.viewMaybe
@@ -2748,6 +2714,8 @@ messagesView currentTime zone _ player =
             ]
         , H.tbody []
             (player.messages
+                |> Dict.values
+                |> List.sortBy (.id >> negate)
                 |> List.map
                     (\message ->
                         let
@@ -2767,7 +2735,7 @@ messagesView currentTime zone _ player =
                         in
                         H.tr
                             [ HA.classList [ ( "is-unread", isUnread ) ]
-                            , HE.onClick <| OpenMessage message
+                            , HE.onClick <| OpenMessage message.id
                             ]
                             [ if isUnread then
                                 H.td
@@ -2791,46 +2759,54 @@ messagesView currentTime zone _ player =
                             , H.td
                                 [ HA.class "messages-remove"
                                 , HA.title "Remove"
-                                , HE.onClickStopPropagation <| AskToRemoveMessage message
+                                , HE.onClickStopPropagation <| AskToRemoveMessage message.id
                                 ]
                                 [ H.text "✗" ]
                             ]
                     )
             )
         ]
-    , H.viewIf (List.isEmpty player.messages) <|
+    , H.viewIf (Dict.isEmpty player.messages) <|
         H.div
             [ HA.id "messages-empty-note" ]
             [ H.text "No messages right now!" ]
     ]
 
 
-messageView : Time.Zone -> Message -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-messageView zone message _ player =
-    let
-        perceptionLevel =
-            Perception.level
-                { perception = player.special.perception
-                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
-                }
-    in
-    [ pageTitleView "Message"
-    , H.h3
-        [ HA.id "message-summary" ]
-        [ H.text <| Message.summary message ]
-    , H.div
-        [ HA.id "message-date" ]
-        [ H.text <| Message.fullDate zone message ]
-    , Message.content
-        [ HA.id "message-content" ]
-        perceptionLevel
-        message
-    , H.button
-        [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages)
-        , HA.id "message-back-button"
-        ]
-        [ H.text "[Back]" ]
-    ]
+messageView : Time.Zone -> Message.Id -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+messageView zone messageId _ player =
+    case Dict.get messageId player.messages of
+        Nothing ->
+            contentUnavailableView <|
+                "Message #"
+                    ++ String.fromInt messageId
+                    ++ " not found"
+
+        Just message ->
+            let
+                perceptionLevel =
+                    Perception.level
+                        { perception = player.special.perception
+                        , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                        }
+            in
+            [ pageTitleView "Message"
+            , H.h3
+                [ HA.id "message-summary" ]
+                [ H.text <| Message.summary message ]
+            , H.div
+                [ HA.id "message-date" ]
+                [ H.text <| Message.fullDate zone message ]
+            , Message.content
+                [ HA.id "message-content" ]
+                perceptionLevel
+                message
+            , H.button
+                [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages)
+                , HA.id "message-back-button"
+                ]
+                [ H.text "[Back]" ]
+            ]
 
 
 settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> String -> List (Html FrontendMsg)
@@ -2862,17 +2838,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
     in
     [ pageTitleView "Fight Strategy syntax help"
     , H.button
-        [ HE.onClick
-            (GoToRoute
-                (PlayerRoute
-                    (Route.Settings
-                        { subroute = Route.FightStrategy
-                        , fightStrategyText = fightStrategyText
-                        }
-                    )
-                )
-            )
-        ]
+        [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
         [ H.text "[Back]" ]
     , H.div
         [ HA.class "fight-strategy-syntax-help-grid" ]
@@ -2988,16 +2954,7 @@ settingsFightStrategyView fightStrategyText _ player =
         helpBtn =
             H.button
                 [ HA.class "fight-strategy-help-btn"
-                , HE.onClick
-                    (GoToRoute
-                        (PlayerRoute
-                            (Route.Settings
-                                { subroute = Route.FightStrategySyntaxHelp
-                                , fightStrategyText = fightStrategyText
-                                }
-                            )
-                        )
-                    )
+                , HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategySyntaxHelp))
                 ]
                 [ H.text "[Syntax cheatsheet]" ]
 
@@ -3174,53 +3131,58 @@ newsView zone =
         :: List.map (newsItemView zone) News.items
 
 
-fightView : Fight.Info -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-fightView fight _ player =
-    let
-        youAreAttacker =
-            case fight.attacker of
-                Fight.Player { name } ->
-                    name == player.name
+fightView : Maybe Fight.Info -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+fightView maybeFight _ player =
+    case maybeFight of
+        Nothing ->
+            contentUnavailableView "Fight was `Nothing` in fightView"
 
-                Fight.Npc _ ->
-                    False
+        Just fight ->
+            let
+                youAreAttacker =
+                    case fight.attacker of
+                        Fight.Player { name } ->
+                            name == player.name
 
-        perceptionLevel =
-            Perception.level
-                { perception = player.special.perception
-                , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
-                }
-    in
-    [ pageTitleView "Fight"
-    , H.div []
-        [ H.text <|
-            "Attacker: "
-                ++ Fight.opponentName fight.attacker
-                ++ (if youAreAttacker then
-                        " (you)"
+                        Fight.Npc _ ->
+                            False
 
-                    else
-                        ""
-                   )
-        ]
-    , H.div []
-        [ H.text <|
-            "Target: "
-                ++ Fight.opponentName fight.target
-                ++ (if youAreAttacker then
-                        ""
+                perceptionLevel =
+                    Perception.level
+                        { perception = player.special.perception
+                        , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                        }
+            in
+            [ pageTitleView "Fight"
+            , H.div []
+                [ H.text <|
+                    "Attacker: "
+                        ++ Fight.opponentName fight.attacker
+                        ++ (if youAreAttacker then
+                                " (you)"
 
-                    else
-                        " (you)"
-                   )
-        ]
-    , Data.Fight.View.view perceptionLevel fight player.name
-    , H.button
-        [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder)
-        , HA.id "fight-back-button"
-        ]
-        [ H.text "[Back]" ]
-    ]
+                            else
+                                ""
+                           )
+                ]
+            , H.div []
+                [ H.text <|
+                    "Target: "
+                        ++ Fight.opponentName fight.target
+                        ++ (if youAreAttacker then
+                                ""
+
+                            else
+                                " (you)"
+                           )
+                ]
+            , Data.Fight.View.view perceptionLevel fight player.name
+            , H.button
+                [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder)
+                , HA.id "fight-back-button"
+                ]
+                [ H.text "[Back]" ]
+            ]
 
 
 ladderLoadingView : List (Html FrontendMsg)
@@ -3385,15 +3347,20 @@ contentUnavailableView reason =
         "Content unavailable ("
             ++ reason
             ++ "). This is most likely a bug. We should have redirected you someplace else. Could you report this to the developers please?"
+    , H.button
+        [ HE.onClick <| GoToRoute News
+        , HA.id "message-back-button"
+        ]
+        [ H.text "[Back]" ]
     ]
 
 
 notInitializedView : Model -> Html FrontendMsg
-notInitializedView ({ worldModel } as model) =
+notInitializedView model =
     appView
         { leftNav =
             [ loginFormView model.loginForm
-            , alertMessageView worldModel.alertMessage
+            , alertMessageView model.alertMessage
             , loadingNavView
             ]
         }
@@ -3410,24 +3377,24 @@ loadingNavView =
 
 
 view_ : Model -> Html FrontendMsg
-view_ ({ worldModel } as model) =
+view_ model =
     let
         leftNav =
             case model.worldData of
                 IsAdmin data ->
-                    [ alertMessageView worldModel.alertMessage
+                    [ alertMessageView model.alertMessage
                     , adminLinksView model.route
                     ]
 
                 IsPlayer data ->
-                    [ alertMessageView worldModel.alertMessage
+                    [ alertMessageView model.alertMessage
                     , playerInfoView data.player
                     , loggedInLinksView data.player model.route
                     ]
 
                 NotLoggedIn ->
                     [ loginFormView model.loginForm
-                    , alertMessageView worldModel.alertMessage
+                    , alertMessageView model.alertMessage
                     , loggedOutLinksView model.route
                     ]
     in
@@ -3653,18 +3620,12 @@ loggedInLinksView player currentRoute =
                     , linkIn "Map" Map Nothing False
                     , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
                     , if isInTown then
-                        linkIn "Town" (PlayerRoute (Route.Town Route.MainSquare)) Nothing False
+                        linkIn "Town" (PlayerRoute Route.TownMainSquare) Nothing False
 
                       else
                         linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
                     , linkIn "Settings"
-                        (PlayerRoute
-                            (Route.Settings
-                                { subroute = Route.FightStrategy
-                                , fightStrategyText = p.fightStrategyText
-                                }
-                            )
-                        )
+                        (PlayerRoute Route.SettingsFightStrategy)
                         Nothing
                         False
                     , linkInFull "Messages"
@@ -3672,7 +3633,7 @@ loggedInLinksView player currentRoute =
                         Route.isMessagesRelatedRoute
                         Nothing
                         False
-                        (List.all .hasBeenRead p.messages)
+                        (Dict.all (always .hasBeenRead) p.messages)
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in

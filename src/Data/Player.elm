@@ -71,7 +71,7 @@ type alias SPlayer =
     , losses : Int
     , location : TileNum
     , perks : Dict_.Dict Perk Int
-    , messages : List Message
+    , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
     , traits : Set_.Set Trait
     , -- doesn't contain Special base skill % values:
@@ -97,7 +97,7 @@ type alias CPlayer =
     , losses : Int
     , location : TileNum
     , perks : Dict_.Dict Perk Int
-    , messages : List Message
+    , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
     , traits : Set_.Set Trait
     , -- doesn't contain Special base skill % values:
@@ -152,7 +152,7 @@ encodeSPlayer player =
         , ( "losses", JE.int player.losses )
         , ( "location", JE.int player.location )
         , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
-        , ( "messages", JE.list Message.encode player.messages )
+        , ( "messages", JE.list Message.encode (Dict.values player.messages) )
         , ( "items", Dict.encode JE.int Item.encode player.items )
         , ( "traits", Set_.encode Trait.encode player.traits )
         , ( "addedSkillPercentages", Dict_.encode Skill.encode JE.int player.addedSkillPercentages )
@@ -215,7 +215,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -258,7 +258,7 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -302,7 +302,7 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -332,7 +332,7 @@ sPlayerDecoderV4 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -362,7 +362,7 @@ sPlayerDecoderV5 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -397,7 +397,7 @@ sPlayerDecoderV6 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -427,7 +427,7 @@ sPlayerDecoderV7 =
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
         |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
-        |> JD.andMap (JD.field "messages" (JD.list Message.decoder))
+        |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
         |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
@@ -579,7 +579,10 @@ fromNewChar currentTime auth newChar =
             , losses = 0
             , location = startingTileNum
             , perks = Dict_.empty
-            , messages = [ Message.new currentTime Message.Welcome ]
+            , messages =
+                [ Message.new 0 currentTime Message.Welcome ]
+                    |> List.map (\message -> ( message.id, message ))
+                    |> Dict.fromList
             , items = Dict.empty
             , traits = newChar.traits
             , addedSkillPercentages =

@@ -21,7 +21,7 @@ import Data.FightStrategy as FightStrategy
         , Value(..)
         )
 import Data.Item as Item
-import Data.Message as Message exposing (Message, Type(..))
+import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)
@@ -42,8 +42,8 @@ type alias Fight =
     { finalAttacker : Opponent
     , finalTarget : Opponent
     , fightInfo : Fight.Info
-    , messageForTarget : Message
-    , messageForAttacker : Message
+    , messageForTarget : Message.Content
+    , messageForAttacker : Message.Content
     }
 
 
@@ -552,25 +552,17 @@ generator r =
                     , result = result
                     }
 
-                messageForTarget : Message
                 messageForTarget =
-                    Message.new
-                        r.currentTime
-                        (YouWereAttacked
-                            { attacker = attackerName
-                            , fightInfo = fightInfo
-                            }
-                        )
+                    YouWereAttacked
+                        { attacker = attackerName
+                        , fightInfo = fightInfo
+                        }
 
-                messageForAttacker : Message
                 messageForAttacker =
-                    Message.newRead
-                        r.currentTime
-                        (YouAttacked
-                            { target = targetName
-                            , fightInfo = fightInfo
-                            }
-                        )
+                    YouAttacked
+                        { target = targetName
+                        , fightInfo = fightInfo
+                        }
             in
             { fightInfo = fightInfo
             , messageForTarget = messageForTarget
@@ -1129,38 +1121,38 @@ targetAlreadyDead :
     , currentTime : Posix
     }
     -> Fight
-targetAlreadyDead { attacker, target, currentTime } =
+targetAlreadyDead r =
     let
         attackerName =
-            Fight.opponentName attacker.type_
+            Fight.opponentName r.attacker.type_
 
         targetName =
-            Fight.opponentName target.type_
+            Fight.opponentName r.target.type_
 
         fightInfo =
-            { attacker = attacker.type_
-            , target = target.type_
+            { attacker = r.attacker.type_
+            , target = r.target.type_
             , log = []
             , result = Fight.TargetAlreadyDead
             }
-    in
-    { finalAttacker = attacker
-    , finalTarget = target
-    , fightInfo = fightInfo
-    , messageForTarget =
-        Message.new currentTime
-            (YouWereAttacked
+
+        messageForTarget =
+            YouWereAttacked
                 { attacker = attackerName
                 , fightInfo = fightInfo
                 }
-            )
-    , messageForAttacker =
-        Message.newRead currentTime
-            (YouAttacked
+
+        messageForAttacker =
+            YouAttacked
                 { target = targetName
                 , fightInfo = fightInfo
                 }
-            )
+    in
+    { finalAttacker = r.attacker
+    , finalTarget = r.target
+    , fightInfo = fightInfo
+    , messageForTarget = messageForTarget
+    , messageForAttacker = messageForAttacker
     }
 
 
