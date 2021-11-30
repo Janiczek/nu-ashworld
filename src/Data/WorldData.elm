@@ -52,7 +52,11 @@ type alias AdminData =
 
 type alias PlayerData =
     { worldName : World.Name
+    , description : String
+    , startedAt : Posix
     , tickFrequency : Time.Interval
+    , tickPerIntervalCurve : TickPerIntervalCurve
+    , vendorRestockFrequency : Time.Interval
     , player : Player CPlayer
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`

@@ -80,6 +80,7 @@ import Svg.Attributes as SA
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
+import Time.ExtraExtra as Time
 import Types exposing (..)
 import Url exposing (Url)
 
@@ -382,7 +383,7 @@ update msg ({ loginForm } as model) =
                             )
 
                         NeedsCharCreated _ ->
-                            Debug.todo "what was here before?"
+                            ( model, Cmd.none )
 
         MapMouseOut ->
             ( { model | mapMouseCoords = Nothing }
@@ -797,7 +798,7 @@ contentView model =
                 in
                 case worldRoute of
                     Route.AboutWorld ->
-                        Debug.todo "route about world"
+                        withCreatedPlayer_ (aboutWorldView model.zone)
 
                     Route.Character ->
                         withCreatedPlayer_ (characterView model.hoveredItem)
@@ -3191,6 +3192,46 @@ ladderLoadingView =
     , H.div []
         [ H.text "Ladder is loading..."
         , H.span [ HA.class "loading-cursor" ] []
+        ]
+    ]
+
+
+aboutWorldView : Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+aboutWorldView zone data loggedInPlayer =
+    [ pageTitleView <| "About world: " ++ data.worldName
+    , H.ul []
+        [ H.li [] [ H.text <| "Description: " ++ data.description ]
+        , H.li []
+            [ H.text <|
+                "Started at: "
+                    ++ DateFormat.format
+                        [ DateFormat.yearNumber
+                        , DateFormat.text "-"
+                        , DateFormat.monthFixed
+                        , DateFormat.text "-"
+                        , DateFormat.dayOfMonthFixed
+                        , DateFormat.text " "
+                        , DateFormat.hourMilitaryFixed
+                        , DateFormat.text ":"
+                        , DateFormat.minuteFixed
+                        , DateFormat.text ":"
+                        , DateFormat.secondFixed
+                        ]
+                        zone
+                        data.startedAt
+            ]
+        , H.li []
+            [ H.text <|
+                "Tick frequency: "
+                    ++ Tick.curveToString data.tickPerIntervalCurve
+                    ++ " ticks every "
+                    ++ Time.intervalToString data.tickFrequency
+            ]
+        , H.li []
+            [ H.text <|
+                "Vendor restock frequency: every "
+                    ++ Time.intervalToString data.vendorRestockFrequency
+            ]
         ]
     ]
 

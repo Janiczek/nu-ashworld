@@ -199,7 +199,11 @@ getPlayerData_ worldName world player model =
                 |> Maybe.withDefault 1
     in
     { worldName = worldName
+    , description = world.description
+    , startedAt = world.startedAt
     , tickFrequency = world.tickFrequency
+    , tickPerIntervalCurve = world.tickPerIntervalCurve
+    , vendorRestockFrequency = world.vendorRestockFrequency
     , player = Player.map Player.serverToClient player
     , playerRank = playerRank
     , otherPlayers =

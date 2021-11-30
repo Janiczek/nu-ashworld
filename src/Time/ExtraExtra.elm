@@ -1,4 +1,8 @@
-module Time.ExtraExtra exposing (encodeInterval, intervalDecoder)
+module Time.ExtraExtra exposing
+    ( encodeInterval
+    , intervalDecoder
+    , intervalToString
+    )
 
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
@@ -114,3 +118,55 @@ intervalDecoder =
                     _ ->
                         JD.fail <| "Unknown interval: '" ++ interval ++ "'"
             )
+
+
+intervalToString : Interval -> String
+intervalToString interval =
+    case interval of
+        Year ->
+            "year"
+
+        Quarter ->
+            "quarter"
+
+        Month ->
+            "month"
+
+        Week ->
+            "week"
+
+        Monday ->
+            "Monday"
+
+        Tuesday ->
+            "Tuesday"
+
+        Wednesday ->
+            "Wednesday"
+
+        Thursday ->
+            "Thursday"
+
+        Friday ->
+            "Friday"
+
+        Saturday ->
+            "Saturday"
+
+        Sunday ->
+            "Sunday"
+
+        Day ->
+            "day"
+
+        Hour ->
+            "hour"
+
+        Minute ->
+            "minute"
+
+        Second ->
+            "second"
+
+        Millisecond ->
+            "millisecond"
