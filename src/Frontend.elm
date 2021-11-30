@@ -759,7 +759,7 @@ contentView model =
                         adminWorldDetailView worldName data
 
                     AdminPlayersList worldName ->
-                        Debug.todo "admin players list"
+                        adminPlayersListView worldName data
 
             ( AdminRoute _, _ ) ->
                 contentUnavailableToNonAdminView
@@ -3743,10 +3743,16 @@ adminWorldsListView data =
     , data.worlds
         |> Dict.keys
         |> List.map
-            (\name ->
-                H.li
-                    [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail name))) ]
-                    [ H.text name ]
+            (\worldName ->
+                H.li []
+                    [ H.span [] [ H.text worldName ]
+                    , H.button
+                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail worldName))) ]
+                        [ H.text "World detail" ]
+                    , H.button
+                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminPlayersList worldName))) ]
+                        [ H.text "Players list" ]
+                    ]
             )
         |> H.ul []
     ]
@@ -3767,6 +3773,24 @@ adminWorldDetailView worldName data =
             , Dict.get worldName data.loggedInPlayers
                 |> Maybe.withDefault []
                 |> List.map (\name -> H.li [] [ H.text name ])
+                |> H.ul []
+            ]
+
+
+adminPlayersListView : World.Name -> AdminData -> List (Html FrontendMsg)
+adminPlayersListView worldName data =
+    case Dict.get worldName data.worlds of
+        Nothing ->
+            contentUnavailableView <|
+                "World '"
+                    ++ worldName
+                    ++ "' not found"
+
+        Just world ->
+            [ pageTitleView <| "Admin :: Players of world: " ++ worldName
+            , world.players
+                |> Dict.keys
+                |> List.map (\playerName -> H.li [] [ H.text playerName ])
                 |> H.ul []
             ]
 
