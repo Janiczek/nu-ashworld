@@ -166,7 +166,7 @@ adminPasswordChecksOut { password } =
     unwrap password == Env.adminPasswordHash
 
 
-isAdminName : Auth Hashed -> Bool
+isAdminName : Auth a -> Bool
 isAdminName { name } =
     name == adminName
 

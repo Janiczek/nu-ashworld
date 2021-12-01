@@ -54,7 +54,7 @@ type alias FrontendModel =
     , worlds : Maybe (List World.Info)
     , worldData : WorldData
 
-    -- mostly player frontend state:
+    -- player frontend state:
     , alertMessage : Maybe String
     , newChar : NewChar
     , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )

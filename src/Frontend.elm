@@ -222,26 +222,40 @@ update msg ({ loginForm } as model) =
             )
 
         Login ->
-            if String.isEmpty model.loginForm.worldName then
+            let
+                logMeIn =
+                    ( model
+                    , Lamdera.sendToBackend <| LogMeIn <| Auth.hash model.loginForm
+                    )
+            in
+            if Auth.isAdminName model.loginForm then
+                logMeIn
+
+            else if String.isEmpty model.loginForm.worldName then
                 ( { model | alertMessage = Just "Select a world first" }
                 , Cmd.none
                 )
 
             else
-                ( model
-                , Lamdera.sendToBackend <| LogMeIn <| Auth.hash model.loginForm
-                )
+                logMeIn
 
         Register ->
-            if String.isEmpty model.loginForm.worldName then
+            let
+                register =
+                    ( model
+                    , Lamdera.sendToBackend <| RegisterMe <| Auth.hash model.loginForm
+                    )
+            in
+            if Auth.isAdminName model.loginForm then
+                register
+
+            else if String.isEmpty model.loginForm.worldName then
                 ( { model | alertMessage = Just "Select a world first" }
                 , Cmd.none
                 )
 
             else
-                ( model
-                , Lamdera.sendToBackend <| RegisterMe <| Auth.hash model.loginForm
-                )
+                register
 
         GotTime time ->
             ( { model | time = time }
