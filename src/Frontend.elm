@@ -814,7 +814,7 @@ contentView model =
                         adminWorldsListView data
 
                     AdminWorldDetail worldName ->
-                        adminWorldDetailView worldName data
+                        adminWorldDetailView model.zone worldName data
 
                     AdminPlayersList worldName ->
                         adminPlayersListView worldName data
@@ -823,7 +823,7 @@ contentView model =
                 contentUnavailableToNonAdminView
 
             ( WorldsList, _ ) ->
-                Debug.todo "worlds list"
+                worldsListView model.zone model.worlds
 
             ( About, _ ) ->
                 aboutView
@@ -925,6 +925,35 @@ Many thanks to Patreons:
 * DJetelina (iScrE4m)
 """
     ]
+
+
+worldsListView : Time.Zone -> Maybe (List World.Info) -> List (Html FrontendMsg)
+worldsListView zone worlds =
+    case worlds of
+        Nothing ->
+            contentUnavailableView "list of worlds didn't load"
+
+        Just worlds_ ->
+            [ pageTitleView "Worlds"
+            , H.ul []
+                (worlds_
+                    |> List.map
+                        (\world ->
+                            H.li []
+                                [ worldInfoView
+                                    zone
+                                    { name = world.name
+                                    , description = world.description
+                                    , startedAt = world.startedAt
+                                    , tickFrequency = world.tickFrequency
+                                    , tickPerIntervalCurve = world.tickPerIntervalCurve
+                                    , vendorRestockFrequency = world.vendorRestockFrequency
+                                    , playersCount = world.playersCount
+                                    }
+                                ]
+                        )
+                )
+            ]
 
 
 notFoundView : Url -> List (Html FrontendMsg)
@@ -3254,11 +3283,16 @@ ladderLoadingView =
     ]
 
 
-aboutWorldView : Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-aboutWorldView zone data loggedInPlayer =
-    [ pageTitleView <| "About world: " ++ data.worldName
-    , H.ul []
-        [ H.li [] [ H.text <| "Description: " ++ data.description ]
+worldInfoView : Time.Zone -> World.Info -> Html FrontendMsg
+worldInfoView zone data =
+    H.ul []
+        [ H.li [] [ H.text <| "Name: " ++ data.name ]
+        , H.li [] [ H.text <| "Description: " ++ data.description ]
+        , H.li []
+            [ H.text <|
+                "Players: "
+                    ++ String.fromInt data.playersCount
+            ]
         , H.li []
             [ H.text <|
                 "Started at: "
@@ -3291,6 +3325,21 @@ aboutWorldView zone data loggedInPlayer =
                     ++ Time.intervalToString data.vendorRestockFrequency
             ]
         ]
+
+
+aboutWorldView : Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+aboutWorldView zone data loggedInPlayer =
+    [ pageTitleView <| "About world: " ++ data.worldName
+    , worldInfoView
+        zone
+        { name = data.worldName
+        , description = data.description
+        , startedAt = data.startedAt
+        , tickFrequency = data.tickFrequency
+        , tickPerIntervalCurve = data.tickPerIntervalCurve
+        , vendorRestockFrequency = data.vendorRestockFrequency
+        , playersCount = List.length data.otherPlayers + 1
+        }
     ]
 
 
@@ -3772,6 +3821,7 @@ loggedInLinksView player currentRoute =
                         False
                         (Dict.all (always .hasBeenRead) p.messages)
                     , linkIn "World" (PlayerRoute Route.AboutWorld) Nothing False
+                    , linkIn "Worlds" WorldsList Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in
@@ -3809,6 +3859,7 @@ loggedOutLinksView currentRoute =
         ([ linkMsg "Refresh" Refresh Nothing False
          , linkIn "Map" Map Nothing False
          , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
+         , linkIn "Worlds" WorldsList Nothing False
          ]
             |> List.map (linkView currentRoute)
         )
@@ -3854,8 +3905,8 @@ adminWorldsListView data =
     ]
 
 
-adminWorldDetailView : World.Name -> AdminData -> List (Html FrontendMsg)
-adminWorldDetailView worldName data =
+adminWorldDetailView : Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldDetailView zone worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
             contentUnavailableView <|
@@ -3865,6 +3916,16 @@ adminWorldDetailView worldName data =
 
         Just world ->
             [ pageTitleView <| "Admin :: World: " ++ worldName
+            , worldInfoView
+                zone
+                { name = worldName
+                , description = world.description
+                , startedAt = world.startedAt
+                , tickFrequency = world.tickFrequency
+                , tickPerIntervalCurve = world.tickPerIntervalCurve
+                , vendorRestockFrequency = world.vendorRestockFrequency
+                , playersCount = Dict.size world.players
+                }
             , H.div [] [ H.text "Logged in players" ]
             , Dict.get worldName data.loggedInPlayers
                 |> Maybe.withDefault []

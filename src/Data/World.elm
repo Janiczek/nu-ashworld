@@ -32,6 +32,9 @@ type alias Info =
     , description : String
     , playersCount : Int
     , startedAt : Posix
+    , tickFrequency : Time.Interval
+    , tickPerIntervalCurve : TickPerIntervalCurve
+    , vendorRestockFrequency : Time.Interval
     }
 
 

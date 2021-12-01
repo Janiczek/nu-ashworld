@@ -153,6 +153,9 @@ getWorlds model =
                 , description = world.description
                 , playersCount = Dict.size world.players
                 , startedAt = world.startedAt
+                , tickFrequency = world.tickFrequency
+                , tickPerIntervalCurve = world.tickPerIntervalCurve
+                , vendorRestockFrequency = world.vendorRestockFrequency
                 }
             )
 
