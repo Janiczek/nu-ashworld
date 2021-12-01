@@ -661,6 +661,19 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        CurrentAdminLoggedInPlayers players ->
+            ( case model.worldData of
+                IsAdmin data ->
+                    { model
+                        | worldData =
+                            IsAdmin { data | loggedInPlayers = players }
+                    }
+
+                _ ->
+                    model
+            , Cmd.none
+            )
+
         YourFightResult ( fightInfo, world ) ->
             { model
                 | -- TODO clear it once you go away
@@ -3614,27 +3627,23 @@ loginFormView worlds auth =
             ]
             []
         , H.div
+            [ HA.class "login-world-select-label" ]
+            [ H.text "World: " ]
+        , H.div
             [ HA.class "login-world-select-wrapper" ]
             [ H.select
                 [ HE.onChange SetAuthWorld
                 , HA.class "login-world-select"
                 ]
-                (H.option
-                    [ HA.disabled True
-                    , HA.hidden True
-                    , HA.selected False
-                    ]
-                    [ H.text "Select a world" ]
-                    :: (worlds
-                            |> List.map
-                                (\worldName ->
-                                    H.option
-                                        [ HA.value worldName
-                                        , HA.selected (auth.worldName == worldName)
-                                        ]
-                                        [ H.text worldName ]
-                                )
-                       )
+                (("" :: worlds)
+                    |> List.map
+                        (\worldName ->
+                            H.option
+                                [ HA.value worldName
+                                , HA.selected (auth.worldName == worldName)
+                                ]
+                                [ H.text worldName ]
+                        )
                 )
             , H.span [ HA.class "login-world-select-focus" ] []
             ]
@@ -3902,21 +3911,24 @@ commonLinksView currentRoute =
 adminWorldsListView : AdminData -> List (Html FrontendMsg)
 adminWorldsListView data =
     [ pageTitleView <| "Admin :: Worlds"
-    , data.worlds
-        |> Dict.keys
-        |> List.map
-            (\worldName ->
-                H.li []
-                    [ H.span [] [ H.text worldName ]
-                    , H.button
-                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail worldName))) ]
-                        [ H.text "World detail" ]
-                    , H.button
-                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminPlayersList worldName))) ]
-                        [ H.text "Players list" ]
-                    ]
-            )
-        |> H.ul []
+    , H.div
+        [ HA.id "admin-worlds-list" ]
+        [ data.worlds
+            |> Dict.keys
+            |> List.map
+                (\worldName ->
+                    H.li [ HA.class "world" ]
+                        [ H.span [] [ H.text worldName ]
+                        , H.button
+                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail worldName))) ]
+                            [ H.text "[ Detail ]" ]
+                        , H.button
+                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminPlayersList worldName))) ]
+                            [ H.text "[ Players ]" ]
+                        ]
+                )
+            |> H.ul []
+        ]
     ]
 
 
@@ -3930,6 +3942,11 @@ adminWorldDetailView zone worldName data =
                     ++ "' not found"
 
         Just world ->
+            let
+                loggedInPlayers =
+                    Dict.get worldName data.loggedInPlayers
+                        |> Maybe.withDefault []
+            in
             [ pageTitleView <| "Admin :: World: " ++ worldName
             , worldInfoView
                 zone
@@ -3941,11 +3958,14 @@ adminWorldDetailView zone worldName data =
                 , vendorRestockFrequency = world.vendorRestockFrequency
                 , playersCount = Dict.size world.players
                 }
-            , H.div [] [ H.text "Logged in players" ]
-            , Dict.get worldName data.loggedInPlayers
-                |> Maybe.withDefault []
-                |> List.map (\name -> H.li [] [ H.text name ])
-                |> H.ul []
+            , H.h3 [] [ H.text "Logged in players: " ]
+            , if List.isEmpty loggedInPlayers then
+                H.text "None!"
+
+              else
+                loggedInPlayers
+                    |> List.map (\name -> H.li [] [ H.text name ])
+                    |> H.ul []
             ]
 
 

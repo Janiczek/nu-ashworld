@@ -128,19 +128,23 @@ getAdminData model =
                     , vendorRestockFrequency = world.vendorRestockFrequency
                     }
                 )
-    , loggedInPlayers =
-        model.loggedInPlayers
-            |> Dict.values
-            |> List.gatherEqualsBy .worldName
-            |> List.map
-                (\( first, rest ) ->
-                    ( first.worldName
-                    , (first :: rest)
-                        |> List.map .playerName
-                    )
-                )
-            |> Dict.fromList
+    , loggedInPlayers = getLoggedInPlayers model
     }
+
+
+getLoggedInPlayers : Model -> Dict World.Name (List PlayerName)
+getLoggedInPlayers model =
+    model.loggedInPlayers
+        |> Dict.values
+        |> List.gatherEqualsBy .worldName
+        |> List.map
+            (\( first, rest ) ->
+                ( first.worldName
+                , (first :: rest)
+                    |> List.map .playerName
+                )
+            )
+        |> Dict.fromList
 
 
 getWorlds : Model -> List World.Info
@@ -675,6 +679,16 @@ encodeToBackendMsg msg =
                 ]
 
 
+refreshAdminLoggedInPlayers : Model -> Cmd BackendMsg
+refreshAdminLoggedInPlayers model =
+    case model.adminLoggedIn of
+        Nothing ->
+            Cmd.none
+
+        Just ( adminClientId, _ ) ->
+            Lamdera.sendToFrontend adminClientId (CurrentAdminLoggedInPlayers (getLoggedInPlayers model))
+
+
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend sessionId clientId msg model =
     let
@@ -769,24 +783,29 @@ updateFromFrontend sessionId clientId msg model =
                                             (\data ->
                                                 let
                                                     ( loggedOutPlayers, otherPlayers ) =
+                                                        -- We log this clientId in, but we log their other browser out.
                                                         Dict.partition
                                                             (\_ names -> names.worldName == auth.worldName && names.playerName == auth.name)
                                                             model.loggedInPlayers
 
                                                     loggedOutData =
                                                         getWorlds model
+
+                                                    newModel =
+                                                        { model
+                                                            | loggedInPlayers =
+                                                                Dict.insert
+                                                                    clientId
+                                                                    { worldName = auth.worldName
+                                                                    , playerName = auth.name
+                                                                    }
+                                                                    otherPlayers
+                                                        }
                                                 in
-                                                ( { model
-                                                    | loggedInPlayers =
-                                                        Dict.insert
-                                                            clientId
-                                                            { worldName = auth.worldName
-                                                            , playerName = auth.name
-                                                            }
-                                                            otherPlayers
-                                                  }
+                                                ( newModel
                                                 , Cmd.batch <|
                                                     (Lamdera.sendToFrontend clientId <| YoureLoggedIn data)
+                                                        :: refreshAdminLoggedInPlayers newModel
                                                         :: (loggedOutPlayers
                                                                 |> Dict.keys
                                                                 |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut loggedOutData)
@@ -851,13 +870,19 @@ updateFromFrontend sessionId clientId msg model =
                                             getPlayerData_ auth.worldName newWorld player model
                                     in
                                     ( newModel
-                                    , Lamdera.sendToFrontend clientId <| YoureRegistered data
+                                    , Cmd.batch
+                                        [ Lamdera.sendToFrontend clientId <| YoureRegistered data
+                                        , refreshAdminLoggedInPlayers newModel
+                                        ]
                                     )
 
         LogMeOut ->
             let
+                isAdmin_ =
+                    isAdmin sessionId clientId model
+
                 newModel =
-                    if isAdmin sessionId clientId model then
+                    if isAdmin_ then
                         { model | adminLoggedIn = Nothing }
 
                     else
@@ -867,7 +892,14 @@ updateFromFrontend sessionId clientId msg model =
                     getWorlds newModel
             in
             ( newModel
-            , Lamdera.sendToFrontend clientId <| YoureLoggedOut world
+            , Cmd.batch
+                [ Lamdera.sendToFrontend clientId <| YoureLoggedOut world
+                , if isAdmin_ then
+                    Cmd.none
+
+                  else
+                    refreshAdminLoggedInPlayers newModel
+                ]
             )
 
         Fight otherPlayerName ->

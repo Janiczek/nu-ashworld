@@ -180,6 +180,7 @@ type ToFrontend
     = CurrentPlayer PlayerData
     | CurrentWorlds (List World.Info)
     | CurrentAdmin AdminData
+    | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))
     | YoureLoggedOut (List World.Info)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedIn PlayerData
