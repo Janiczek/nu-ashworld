@@ -104,15 +104,22 @@ app =
 
 init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
+    let
+        worldData =
+            NotLoggedIn
+
+        route =
+            url
+                |> Route.fromUrl
+                |> sanitizeRoute worldData
+    in
     ( { key = key
       , time = Time.millisToPosix 0
-      , route =
-            -- TODO change URL when changing route
-            Route.fromUrl url
+      , route = route
       , zone = Time.utc
       , loginForm = Auth.init
       , worlds = Nothing
-      , worldData = NotLoggedIn
+      , worldData = worldData
 
       -- mostly player frontend state
       , newChar = NewChar.init
@@ -126,6 +133,7 @@ init url key =
     , Cmd.batch
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
+        , Nav.pushUrl key (Route.toString route)
         ]
     )
 
@@ -145,6 +153,18 @@ isAdmin model =
     WorldData.isAdmin model.worldData
 
 
+sanitizeRoute : WorldData -> Route -> Route
+sanitizeRoute worldData route =
+    if Route.needsAdmin route && not (WorldData.isAdmin worldData) then
+        News
+
+    else if Route.needsPlayer route && not (WorldData.isPlayer worldData) then
+        News
+
+    else
+        route
+
+
 update : FrontendMsg -> Model -> ( Model, Cmd FrontendMsg )
 update msg ({ loginForm } as model) =
     let
@@ -159,19 +179,16 @@ update msg ({ loginForm } as model) =
     in
     case msg of
         GoToRoute route ->
-            if Route.needsAdmin route && not (isAdmin model) then
-                ( model, Cmd.none )
-
-            else if Route.needsPlayer route && not (isPlayer model) then
-                ( model, Cmd.none )
-
-            else
-                ( { model
-                    | route = route
-                    , alertMessage = Nothing
-                  }
-                , Nav.pushUrl model.key (Route.toString route)
-                )
+            let
+                finalRoute =
+                    sanitizeRoute model.worldData route
+            in
+            ( { model
+                | route = finalRoute
+                , alertMessage = Nothing
+              }
+            , Nav.pushUrl model.key (Route.toString finalRoute)
+            )
 
         GoToTownStore ->
             { model | barter = Barter.empty }
@@ -183,10 +200,12 @@ update msg ({ loginForm } as model) =
                     let
                         route : Route
                         route =
-                            Route.fromUrl url
+                            url
+                                |> Route.fromUrl
+                                |> sanitizeRoute model.worldData
                     in
                     ( { model | route = route }
-                    , Nav.pushUrl model.key (Url.toString url)
+                    , Nav.pushUrl model.key (Route.toString route)
                     )
 
                 External url ->
