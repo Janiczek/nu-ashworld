@@ -3496,7 +3496,6 @@ view_ model =
                 IsAdmin data ->
                     [ alertMessageView model.alertMessage
                     , adminLinksView model.route
-                    , Debug.todo "remember to show new routes"
                     ]
 
                 IsPlayer data ->
@@ -3772,6 +3771,7 @@ loggedInLinksView player currentRoute =
                         Nothing
                         False
                         (Dict.all (always .hasBeenRead) p.messages)
+                    , linkIn "World" (PlayerRoute Route.AboutWorld) Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in
@@ -3790,7 +3790,6 @@ adminLinksView currentRoute =
             , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
             , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
-            , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]
     in
