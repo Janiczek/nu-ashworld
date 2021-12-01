@@ -25,7 +25,8 @@ import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player as Player
     exposing
-        ( Player(..)
+        ( CPlayer
+        , Player(..)
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
@@ -76,7 +77,19 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { worlds = Dict.empty
+    ( { worlds =
+            Dict.singleton Logic.mainWorldName
+                { players = Dict.empty
+                , nextWantedTick = Nothing
+                , nextVendorRestockTick = Nothing
+                , vendors = Vendor.emptyVendors
+                , lastItemId = 0
+                , description = "The main world."
+                , startedAt = Time.millisToPosix 0
+                , tickFrequency = Time.Hour
+                , tickPerIntervalCurve = Tick.QuarterAndRest { quarter = 4, rest = 2 }
+                , vendorRestockFrequency = Time.Hour
+                }
       , time = Time.millisToPosix 0
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
@@ -1297,6 +1310,10 @@ createNewCharWithTime newChar currentTime clientId world worldName player model 
                         newPlayer =
                             Player sPlayer
 
+                        newCPlayer : CPlayer
+                        newCPlayer =
+                            Player.serverToClient sPlayer
+
                         newModel : Model
                         newModel =
                             updateWorld
@@ -1309,7 +1326,7 @@ createNewCharWithTime newChar currentTime clientId world worldName player model 
                             getPlayerData_ worldName world newPlayer newModel
                     in
                     ( newModel
-                    , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar data
+                    , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar newCPlayer data
                     )
 
 

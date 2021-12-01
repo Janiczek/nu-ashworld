@@ -204,7 +204,7 @@ sPlayerDecoderV1 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -247,7 +247,7 @@ sPlayerDecoderV2 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -291,7 +291,7 @@ sPlayerDecoderV3 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -321,7 +321,7 @@ sPlayerDecoderV4 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -351,7 +351,7 @@ sPlayerDecoderV5 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)
@@ -386,7 +386,7 @@ sPlayerDecoderV6 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed "")
+        |> JD.andMap (JD.succeed Logic.mainWorldName)
         |> JD.andMap (JD.field "hp" JD.int)
         |> JD.andMap (JD.field "maxHp" JD.int)
         |> JD.andMap (JD.field "xp" JD.int)

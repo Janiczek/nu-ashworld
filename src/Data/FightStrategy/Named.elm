@@ -15,17 +15,22 @@ import Data.FightStrategy
 import Data.Item exposing (Kind(..))
 
 
+default : ( String, FightStrategy )
+default =
+    yolo
+
+
 all : List ( String, FightStrategy )
 all =
-    [ default
+    [ dontCare
     , conservative
     , yolo
     ]
 
 
-default : ( String, FightStrategy )
-default =
-    ( "Default"
+dontCare : ( String, FightStrategy )
+dontCare =
+    ( "Don't care"
     , Command DoWhatever
     )
 

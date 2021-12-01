@@ -197,14 +197,26 @@ update msg ({ loginForm } as model) =
             )
 
         Login ->
-            ( model
-            , Lamdera.sendToBackend <| LogMeIn <| Auth.hash model.loginForm
-            )
+            if String.isEmpty model.loginForm.worldName then
+                ( { model | alertMessage = Just "Select a world first" }
+                , Cmd.none
+                )
+
+            else
+                ( model
+                , Lamdera.sendToBackend <| LogMeIn <| Auth.hash model.loginForm
+                )
 
         Register ->
-            ( model
-            , Lamdera.sendToBackend <| RegisterMe <| Auth.hash model.loginForm
-            )
+            if String.isEmpty model.loginForm.worldName then
+                ( { model | alertMessage = Just "Select a world first" }
+                , Cmd.none
+                )
+
+            else
+                ( model
+                , Lamdera.sendToBackend <| RegisterMe <| Auth.hash model.loginForm
+                )
 
         GotTime time ->
             ( { model | time = time }
@@ -306,6 +318,23 @@ update msg ({ loginForm } as model) =
               }
             , Cmd.none
             )
+
+        SetAuthWorld worldName ->
+            case model.worlds of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just worlds ->
+                    if List.any (.name >> (==) worldName) worlds then
+                        ( { model
+                            | loginForm = { loginForm | worldName = worldName }
+                            , alertMessage = Nothing
+                          }
+                        , Cmd.none
+                        )
+
+                    else
+                        ( model, Cmd.none )
 
         CreateChar ->
             ( model
@@ -511,6 +540,13 @@ updateFromBackend msg model =
             ( { model
                 | worldData = IsPlayer data
                 , alertMessage = Nothing
+                , fightStrategyText =
+                    case data.player of
+                        NeedsCharCreated _ ->
+                            ""
+
+                        Player playerData ->
+                            playerData.fightStrategyText
                 , route =
                     case data.player of
                         NeedsCharCreated _ ->
@@ -545,12 +581,13 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
-        YouHaveCreatedChar data ->
+        YouHaveCreatedChar cPlayer data ->
             ( { model
                 | worldData = IsPlayer data
                 , route = PlayerRoute Route.Ladder
                 , alertMessage = Nothing
                 , newChar = NewChar.init
+                , fightStrategyText = cPlayer.fightStrategyText
               }
             , Cmd.none
             )
@@ -591,7 +628,11 @@ updateFromBackend msg model =
             )
 
         YourFightResult ( fightInfo, world ) ->
-            ( { model | route = PlayerRoute Route.Fight }
+            ( { model
+                | route = PlayerRoute Route.Fight
+                , -- TODO clear it once you go away
+                  fightInfo = Just fightInfo
+              }
                 |> updateLoggedInWorld world
             , Cmd.none
             )
@@ -3398,9 +3439,16 @@ contentUnavailableView reason =
 
 notInitializedView : Model -> Html FrontendMsg
 notInitializedView model =
+    let
+        worldNames : List World.Name
+        worldNames =
+            model.worlds
+                |> Maybe.withDefault []
+                |> List.map .name
+    in
     appView
         { leftNav =
-            [ loginFormView model.loginForm
+            [ loginFormView worldNames model.loginForm
             , alertMessageView model.alertMessage
             , loadingNavView
             ]
@@ -3420,6 +3468,12 @@ loadingNavView =
 view_ : Model -> Html FrontendMsg
 view_ model =
     let
+        worldNames : List World.Name
+        worldNames =
+            model.worlds
+                |> Maybe.withDefault []
+                |> List.map .name
+
         leftNav =
             case model.worldData of
                 IsAdmin data ->
@@ -3434,7 +3488,7 @@ view_ model =
                     ]
 
                 NotLoggedIn ->
-                    [ loginFormView model.loginForm
+                    [ loginFormView worldNames model.loginForm
                     , alertMessageView model.alertMessage
                     , loggedOutLinksView model.route
                     ]
@@ -3453,8 +3507,8 @@ alertMessageView maybeMessage =
             )
 
 
-loginFormView : Auth Plaintext -> Html FrontendMsg
-loginFormView auth =
+loginFormView : List World.Name -> Auth Plaintext -> Html FrontendMsg
+loginFormView worlds auth =
     let
         formId =
             "login-form"
@@ -3478,6 +3532,31 @@ loginFormView auth =
             , HE.onInput SetAuthPassword
             ]
             []
+        , H.div
+            [ HA.class "login-world-select-wrapper" ]
+            [ H.select
+                [ HE.onChange SetAuthWorld
+                , HA.class "login-world-select"
+                ]
+                (H.option
+                    [ HA.disabled True
+                    , HA.hidden True
+                    , HA.selected False
+                    ]
+                    [ H.text "Select a world" ]
+                    :: (worlds
+                            |> List.map
+                                (\worldName ->
+                                    H.option
+                                        [ HA.value worldName
+                                        , HA.selected (auth.worldName == worldName)
+                                        ]
+                                        [ H.text worldName ]
+                                )
+                       )
+                )
+            , H.span [ HA.class "login-world-select-focus" ] []
+            ]
         , H.div
             [ HA.id "login-form-buttons" ]
             [ H.button

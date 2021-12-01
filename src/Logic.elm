@@ -13,6 +13,7 @@ module Logic exposing
     , healApCost
     , healPerTick
     , hitpoints
+    , mainWorldName
     , maxTraits
     , naturalArmorClass
     , newCharSpecial
@@ -772,3 +773,8 @@ damageResistanceNormal r =
             r.toughnessPerkRanks * 10
     in
     r.naturalDamageResistanceNormal + fromArmor + fromToughnessPerk
+
+
+mainWorldName : String
+mainWorldName =
+    "main"

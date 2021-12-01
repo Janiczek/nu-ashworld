@@ -15,7 +15,8 @@ import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player
     exposing
-        ( Player
+        ( CPlayer
+        , Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
@@ -104,6 +105,7 @@ type FrontendMsg
     | AskToUseSkillPoints Skill
     | SetAuthName String
     | SetAuthPassword String
+    | SetAuthWorld String
     | CreateChar
     | NewCharIncSpecial Special.Type
     | NewCharDecSpecial Special.Type
@@ -183,7 +185,7 @@ type ToFrontend
     | YoureLoggedIn PlayerData
     | YoureRegistered PlayerData
     | CharCreationError NewChar.CreationError
-    | YouHaveCreatedChar PlayerData
+    | YouHaveCreatedChar CPlayer PlayerData
     | AlertMessage String
     | YoureLoggedInAsAdmin AdminData
     | JsonExportDone String
