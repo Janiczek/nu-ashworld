@@ -4,6 +4,7 @@ import AssocList as Dict_
 import AssocSet as Set_
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Cmd.Extra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
@@ -158,19 +159,19 @@ update msg ({ loginForm } as model) =
     in
     case msg of
         GoToRoute route ->
-            ( if Route.needsAdmin route && not (isAdmin model) then
-                model
+            if Route.needsAdmin route && not (isAdmin model) then
+                ( model, Cmd.none )
 
-              else if Route.needsPlayer route && not (isPlayer model) then
-                model
+            else if Route.needsPlayer route && not (isPlayer model) then
+                ( model, Cmd.none )
 
-              else
-                { model
+            else
+                ( { model
                     | route = route
                     , alertMessage = Nothing
-                }
-            , Cmd.none
-            )
+                  }
+                , Nav.pushUrl model.key (Route.toString route)
+                )
 
         GoToTownStore ->
             { model | barter = Barter.empty }
@@ -179,8 +180,13 @@ update msg ({ loginForm } as model) =
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
-                    ( model
-                    , Cmd.batch [ Nav.pushUrl model.key (Url.toString url) ]
+                    let
+                        route : Route
+                        route =
+                            Route.fromUrl url
+                    in
+                    ( { model | route = route }
+                    , Nav.pushUrl model.key (Url.toString url)
                     )
 
                 External url ->
@@ -430,9 +436,10 @@ update msg ({ loginForm } as model) =
                     )
 
         OpenMessage messageId ->
-            ( { model | route = PlayerRoute (Route.Message messageId) }
+            ( model
             , Lamdera.sendToBackend <| MessageWasRead messageId
             )
+                |> Cmd.andThen (update (GoToRoute (PlayerRoute (Route.Message messageId))))
 
         AskToRemoveMessage messageId ->
             ( model
@@ -537,7 +544,16 @@ updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
         YoureLoggedIn data ->
-            ( { model
+            let
+                newRoute =
+                    case data.player of
+                        NeedsCharCreated _ ->
+                            PlayerRoute Route.CharCreation
+
+                        Player _ ->
+                            PlayerRoute Route.Ladder
+            in
+            { model
                 | worldData = IsPlayer data
                 , alertMessage = Nothing
                 , fightStrategyText =
@@ -547,34 +563,22 @@ updateFromBackend msg model =
 
                         Player playerData ->
                             playerData.fightStrategyText
-                , route =
-                    case data.player of
-                        NeedsCharCreated _ ->
-                            PlayerRoute Route.CharCreation
-
-                        Player _ ->
-                            PlayerRoute Route.Ladder
-              }
-            , Cmd.none
-            )
+            }
+                |> update (GoToRoute newRoute)
 
         YoureLoggedInAsAdmin data ->
-            ( { model
+            { model
                 | worldData = IsAdmin data
-                , route = AdminRoute AdminWorldsList
                 , alertMessage = Nothing
-              }
-            , Cmd.none
-            )
+            }
+                |> update (GoToRoute (AdminRoute AdminWorldsList))
 
         YoureRegistered data ->
-            ( { model
+            { model
                 | worldData = IsPlayer data
-                , route = PlayerRoute Route.CharCreation
                 , alertMessage = Nothing
-              }
-            , Cmd.none
-            )
+            }
+                |> update (GoToRoute (PlayerRoute Route.CharCreation))
 
         CharCreationError error ->
             ( { model | newChar = NewChar.setError error model.newChar }
@@ -582,25 +586,21 @@ updateFromBackend msg model =
             )
 
         YouHaveCreatedChar cPlayer data ->
-            ( { model
+            { model
                 | worldData = IsPlayer data
-                , route = PlayerRoute Route.Ladder
                 , alertMessage = Nothing
                 , newChar = NewChar.init
                 , fightStrategyText = cPlayer.fightStrategyText
-              }
-            , Cmd.none
-            )
+            }
+                |> update (GoToRoute (PlayerRoute Route.Ladder))
 
         YoureLoggedOut worlds ->
-            ( { model
+            { model
                 | loginForm = Auth.init
                 , alertMessage = Nothing
-                , route = Route.loggedOut model.route
                 , worlds = Just worlds
-              }
-            , Cmd.none
-            )
+            }
+                |> update (GoToRoute (Route.loggedOut model.route))
 
         CurrentWorlds worlds ->
             ( { model | worlds = Just worlds }
@@ -628,14 +628,12 @@ updateFromBackend msg model =
             )
 
         YourFightResult ( fightInfo, world ) ->
-            ( { model
-                | route = PlayerRoute Route.Fight
-                , -- TODO clear it once you go away
+            { model
+                | -- TODO clear it once you go away
                   fightInfo = Just fightInfo
-              }
+            }
                 |> updateLoggedInWorld world
-            , Cmd.none
-            )
+                |> update (GoToRoute (PlayerRoute Route.Fight))
 
         AlertMessage message ->
             ( { model | alertMessage = Just message }
@@ -3479,6 +3477,7 @@ view_ model =
                 IsAdmin data ->
                     [ alertMessageView model.alertMessage
                     , adminLinksView model.route
+                    , Debug.todo "remember to show new routes"
                     ]
 
                 IsPlayer data ->

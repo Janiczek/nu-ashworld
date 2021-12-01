@@ -7,6 +7,7 @@ module Frontend.Route exposing
     , loggedOut
     , needsAdmin
     , needsPlayer
+    , toString
     )
 
 import Data.Barter as Barter
@@ -196,3 +197,78 @@ playerParser =
         , P.map SettingsFightStrategy <| P.s "settings" </> P.s "fight-strategy"
         , P.map SettingsFightStrategySyntaxHelp <| P.s "settings" </> P.s "fight-strategy" </> P.s "help"
         ]
+
+
+toString : Route -> String
+toString route =
+    "/"
+        ++ (case route of
+                About ->
+                    "about"
+
+                News ->
+                    "news"
+
+                Map ->
+                    "maps"
+
+                WorldsList ->
+                    "worlds"
+
+                NotFound url ->
+                    Url.toString url
+
+                -- TODO is this OK?
+                PlayerRoute proute ->
+                    "game/"
+                        ++ (case proute of
+                                AboutWorld ->
+                                    "about"
+
+                                Character ->
+                                    "character"
+
+                                Inventory ->
+                                    "inventory"
+
+                                Ladder ->
+                                    "ladder"
+
+                                TownMainSquare ->
+                                    "town"
+
+                                TownStore ->
+                                    "town/store"
+
+                                Fight ->
+                                    "fight"
+
+                                Messages ->
+                                    "messages"
+
+                                Message messageId ->
+                                    "messages/" ++ String.fromInt messageId
+
+                                CharCreation ->
+                                    "character-creation"
+
+                                SettingsFightStrategy ->
+                                    "settings/fight-strategy"
+
+                                SettingsFightStrategySyntaxHelp ->
+                                    "settings/fight-strategy/help"
+                           )
+
+                AdminRoute aroute ->
+                    "admin/"
+                        ++ (case aroute of
+                                AdminWorldsList ->
+                                    "worlds"
+
+                                AdminWorldDetail world ->
+                                    "world/" ++ world
+
+                                AdminPlayersList world ->
+                                    "world/" ++ world ++ "/players"
+                           )
+           )
