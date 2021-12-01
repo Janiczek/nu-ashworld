@@ -618,6 +618,7 @@ updateFromBackend msg model =
                 | loginForm = Auth.init
                 , alertMessage = Nothing
                 , worlds = Just worlds
+                , worldData = NotLoggedIn
             }
                 |> update (GoToRoute (Route.loggedOut model.route))
 
