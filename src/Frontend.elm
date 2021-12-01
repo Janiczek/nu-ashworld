@@ -1244,7 +1244,7 @@ mapMarkerView ( x, y ) =
             [ ( "--player-coord-x", String.fromInt x )
             , ( "--player-coord-y", String.fromInt y )
             ]
-        , HA.src "images/map_marker.png"
+        , HA.src "/images/map_marker.png"
         , HA.width 25
         , HA.height 13
         ]
@@ -3932,36 +3932,53 @@ stylesLinkView : Html msg
 stylesLinkView =
     H.node "link"
         [ HA.rel "stylesheet"
-        , HA.href <| "styles/app.css?v=" ++ Version.version
+        , HA.href <| "/styles/app.css?v=" ++ Version.version
         ]
         []
 
 
 favicon16View : Html msg
 favicon16View =
-    H.node "link" [ HA.rel "icon", HA.href "images/favicon-16.png" ] []
+    H.node "link"
+        [ HA.rel "icon"
+        , HA.href "/images/favicon-16.png"
+        ]
+        []
 
 
 favicon32View : Html msg
 favicon32View =
-    H.node "link" [ HA.rel "icon", HA.href "images/favicon-32.png" ] []
+    H.node "link"
+        [ HA.rel "icon"
+        , HA.href "/images/favicon-32.png"
+        ]
+        []
 
 
 genericFaviconView : Html msg
 genericFaviconView =
-    H.node "link" [ HA.rel "shortcut icon", HA.type_ "image/png", HA.href "images/favicon-392.png" ] []
+    H.node "link"
+        [ HA.rel "shortcut icon"
+        , HA.type_ "image/png"
+        , HA.href "/images/favicon-392.png"
+        ]
+        []
 
 
 genericFavicon2View : Html msg
 genericFavicon2View =
-    H.node "link" [ HA.rel "apple-touch-icon", HA.href "images/favicon-392.png" ] []
+    H.node "link"
+        [ HA.rel "apple-touch-icon"
+        , HA.href "/images/favicon-392.png"
+        ]
+        []
 
 
 logoView : Html msg
 logoView =
     H.div [ HA.id "logo-wrapper" ]
         [ H.img
-            [ HA.src "images/logo-black-small.png"
+            [ HA.src "/images/logo-black-small.png"
             , HA.alt "NuAshworld Logo"
             , HA.title "NuAshworld - go to homepage"
             , HA.id "logo"

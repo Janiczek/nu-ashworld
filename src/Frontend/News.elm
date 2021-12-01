@@ -32,6 +32,8 @@ after the conference.
 A bug was fixed related to being in the middle of a trade while the vendor
 restocks.
 
+Pages in the game now each have their URL.
+
 (Vendor restock frequency is separate from the tick frequency; 1x per hour on
 the main world, 1x per minute for the NDC Oslo world.)
 
