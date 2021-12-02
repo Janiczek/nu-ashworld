@@ -45,8 +45,8 @@ type PlayerRoute
 
 type AdminRoute
     = AdminWorldsList
-    | AdminWorldDetail World.Name
-    | AdminPlayersList World.Name
+    | AdminWorldActivity World.Name
+    | AdminWorldHiscores World.Name
 
 
 needsPlayer : Route -> Bool
@@ -176,8 +176,8 @@ adminParser : Parser (AdminRoute -> a) a
 adminParser =
     P.oneOf
         [ P.map AdminWorldsList <| P.s "worlds"
-        , P.map AdminWorldDetail <| P.s "world" </> P.string
-        , P.map AdminPlayersList <| P.s "world" </> P.string </> P.s "players"
+        , P.map AdminWorldActivity <| P.s "world" </> P.string </> P.s "activity"
+        , P.map AdminWorldHiscores <| P.s "world" </> P.string </> P.s "hiscores"
         ]
 
 
@@ -265,10 +265,10 @@ toString route =
                                 AdminWorldsList ->
                                     "worlds"
 
-                                AdminWorldDetail world ->
-                                    "world/" ++ world
+                                AdminWorldActivity world ->
+                                    "world/" ++ world ++ "/activity"
 
-                                AdminPlayersList world ->
-                                    "world/" ++ world ++ "/players"
+                                AdminWorldHiscores world ->
+                                    "world/" ++ world ++ "/hiscores"
                            )
            )

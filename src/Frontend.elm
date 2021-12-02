@@ -30,7 +30,9 @@ import Data.Player as Player
         ( COtherPlayer
         , CPlayer
         , Player(..)
+        , SPlayer
         )
+import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -843,11 +845,11 @@ contentView model =
                     AdminWorldsList ->
                         adminWorldsListView data
 
-                    AdminWorldDetail worldName ->
-                        adminWorldDetailView model.zone worldName data
+                    AdminWorldActivity worldName ->
+                        adminWorldActivityView model.zone worldName data
 
-                    AdminPlayersList worldName ->
-                        adminPlayersListView worldName data
+                    AdminWorldHiscores worldName ->
+                        adminWorldHiscoresView worldName data
 
             ( AdminRoute _, _ ) ->
                 contentUnavailableToNonAdminView
@@ -3922,11 +3924,11 @@ adminWorldsListView data =
                     H.li [ HA.class "world" ]
                         [ H.span [] [ H.text worldName ]
                         , H.button
-                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldDetail worldName))) ]
-                            [ H.text "[ Detail ]" ]
+                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldActivity worldName))) ]
+                            [ H.text "[ Activity ]" ]
                         , H.button
-                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminPlayersList worldName))) ]
-                            [ H.text "[ Players ]" ]
+                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldHiscores worldName))) ]
+                            [ H.text "[ Hiscores ]" ]
                         ]
                 )
             |> H.ul []
@@ -3934,8 +3936,24 @@ adminWorldsListView data =
     ]
 
 
-adminWorldDetailView : Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
-adminWorldDetailView zone worldName data =
+adminWorldActivityView : Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView zone worldName data =
+    case Dict.get worldName data.worlds of
+        Nothing ->
+            contentUnavailableView <|
+                "World '"
+                    ++ worldName
+                    ++ "' not found"
+
+        Just world ->
+            [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
+            , Debug.todo "map with names"
+            , Debug.todo "last 10 toFrontend msgs"
+            ]
+
+
+adminWorldHiscoresView : World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldHiscoresView worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
             contentUnavailableView <|
@@ -3945,47 +3963,28 @@ adminWorldDetailView zone worldName data =
 
         Just world ->
             let
-                loggedInPlayers =
-                    Dict.get worldName data.loggedInPlayers
-                        |> Maybe.withDefault []
+                players : List SPlayer
+                players =
+                    world.players
+                        |> Dict.values
+                        |> List.filterMap Player.getPlayerData
+                        |> List.filter (\p -> p.worldName == worldName)
+
+                maxBy : (SPlayer -> Int) -> PlayerName
+                maxBy fn =
+                    players
+                        |> List.sortBy (negate << fn)
+                        |> List.head
+                        |> Maybe.map .name
+                        |> Maybe.withDefault "nobody???"
             in
-            [ pageTitleView <| "Admin :: World: " ++ worldName
-            , worldInfoView
-                zone
-                { name = worldName
-                , description = world.description
-                , startedAt = world.startedAt
-                , tickFrequency = world.tickFrequency
-                , tickPerIntervalCurve = world.tickPerIntervalCurve
-                , vendorRestockFrequency = world.vendorRestockFrequency
-                , playersCount = Dict.size world.players
-                }
-            , H.h3 [] [ H.text "Logged in players: " ]
-            , if List.isEmpty loggedInPlayers then
-                H.text "None!"
-
-              else
-                loggedInPlayers
-                    |> List.map (\name -> H.li [] [ H.text name ])
-                    |> H.ul []
-            ]
-
-
-adminPlayersListView : World.Name -> AdminData -> List (Html FrontendMsg)
-adminPlayersListView worldName data =
-    case Dict.get worldName data.worlds of
-        Nothing ->
-            contentUnavailableView <|
-                "World '"
-                    ++ worldName
-                    ++ "' not found"
-
-        Just world ->
-            [ pageTitleView <| "Admin :: Players of world: " ++ worldName
-            , world.players
-                |> Dict.keys
-                |> List.map (\playerName -> H.li [] [ H.text playerName ])
-                |> H.ul []
+            [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
+            , Debug.todo "most money"
+            , Debug.todo "most items"
+            , Debug.todo "most books (why)"
+            , Debug.todo "most skill %"
+            , Debug.todo "most perks"
+            , Debug.todo "ladder"
             ]
 
 
