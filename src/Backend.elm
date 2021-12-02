@@ -78,19 +78,7 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { worlds =
-            Dict.singleton Logic.mainWorldName
-                { players = Dict.empty
-                , nextWantedTick = Nothing
-                , nextVendorRestockTick = Nothing
-                , vendors = Vendor.emptyVendors
-                , lastItemId = 0
-                , description = "The main world."
-                , startedAt = Time.millisToPosix 0
-                , tickFrequency = Time.Hour
-                , tickPerIntervalCurve = Tick.QuarterAndRest { quarter = 4, rest = 2 }
-                , vendorRestockFrequency = Time.Hour
-                }
+    ( { worlds = Dict.singleton Logic.mainWorldName (World.init { fast = False })
       , time = Time.millisToPosix 0
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
@@ -937,6 +925,25 @@ updateAdmin clientId msg model =
                     ( model
                     , Lamdera.sendToFrontend clientId <| AlertMessage <| JD.errorToString error
                     )
+
+        CreateNewWorld name fast ->
+            if Dict.member name model.worlds then
+                ( model, Cmd.none )
+
+            else
+                let
+                    newModel =
+                        { model
+                            | worlds =
+                                Dict.insert
+                                    name
+                                    (World.init { fast = fast })
+                                    model.worlds
+                        }
+                in
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
+                )
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool

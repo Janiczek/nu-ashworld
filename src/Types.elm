@@ -66,6 +66,8 @@ type alias FrontendModel =
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
+    , adminNewWorldName : String
+    , adminNewWorldFast : Bool
     }
 
 
@@ -125,6 +127,9 @@ type FrontendMsg
     | HoverItem HoveredItem
     | StopHoveringItem
     | SetFightStrategyText String
+    | SetAdminNewWorldName String
+    | ToggleAdminNewWorldFast
+    | AskToCreateNewWorld
 
 
 type BarterMsg
@@ -169,6 +174,7 @@ type ToBackend
 type AdminToBackend
     = ExportJson
     | ImportJson String
+    | CreateNewWorld String Bool
 
 
 type BackendMsg

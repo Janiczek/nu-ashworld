@@ -166,3 +166,10 @@ encodeToBackendMsg msg =
                 [ ( "type", JE.string "AdminToBackend ImportJson" )
                 , ( "json", JE.string "<omitted>" )
                 ]
+
+        AdminToBackend (CreateNewWorld name fast) ->
+            JE.object
+                [ ( "type", JE.string "AdminToBackend CreateNewWorld" )
+                , ( "name", JE.string name )
+                , ( "fast", JE.bool fast )
+                ]

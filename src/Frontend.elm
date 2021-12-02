@@ -136,6 +136,8 @@ init url key =
 
       -- backend state
       , lastTenToBackendMsgs = []
+      , adminNewWorldName = ""
+      , adminNewWorldFast = False
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -506,6 +508,30 @@ update msg ({ loginForm } as model) =
             , Cmd.none
             )
 
+        SetAdminNewWorldName text ->
+            ( { model | adminNewWorldName = text }
+            , Cmd.none
+            )
+
+        ToggleAdminNewWorldFast ->
+            ( { model | adminNewWorldFast = not model.adminNewWorldFast }
+            , Cmd.none
+            )
+
+        AskToCreateNewWorld ->
+            ( { model
+                | adminNewWorldName = ""
+                , adminNewWorldFast = False
+              }
+            , Lamdera.sendToBackend
+                (AdminToBackend
+                    (CreateNewWorld
+                        model.adminNewWorldName
+                        model.adminNewWorldFast
+                    )
+                )
+            )
+
 
 resetBarter : Model -> ( Model, Cmd FrontendMsg )
 resetBarter model =
@@ -853,7 +879,7 @@ contentView model =
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
                     AdminWorldsList ->
-                        adminWorldsListView data
+                        adminWorldsListView model.adminNewWorldName model.adminNewWorldFast data
 
                     AdminWorldActivity worldName ->
                         adminWorldActivityView model.lastTenToBackendMsgs model.zone worldName data
@@ -1049,6 +1075,7 @@ adminMapView worldName adminData =
             in
             H.div
                 [ HA.id "map"
+                , HA.class "admin-map"
                 , cssVars
                     [ ( "--map-columns", String.fromInt Map.columns )
                     , ( "--map-rows", String.fromInt Map.rows )
@@ -3357,31 +3384,33 @@ worldInfoView : Time.Zone -> World.Info -> Html FrontendMsg
 worldInfoView zone data =
     H.ul []
         [ H.li [] [ H.text <| "Name: " ++ data.name ]
-        , H.li [] [ H.text <| "Description: " ++ data.description ]
+
+        --, H.li [] [ H.text <| "Description: " ++ data.description ]
         , H.li []
             [ H.text <|
                 "Players: "
                     ++ String.fromInt data.playersCount
             ]
-        , H.li []
-            [ H.text <|
-                "Started at: "
-                    ++ DateFormat.format
-                        [ DateFormat.yearNumber
-                        , DateFormat.text "-"
-                        , DateFormat.monthFixed
-                        , DateFormat.text "-"
-                        , DateFormat.dayOfMonthFixed
-                        , DateFormat.text " "
-                        , DateFormat.hourMilitaryFixed
-                        , DateFormat.text ":"
-                        , DateFormat.minuteFixed
-                        , DateFormat.text ":"
-                        , DateFormat.secondFixed
-                        ]
-                        zone
-                        data.startedAt
-            ]
+
+        --, H.li []
+        --    [ H.text <|
+        --        "Started at: "
+        --            ++ DateFormat.format
+        --                [ DateFormat.yearNumber
+        --                , DateFormat.text "-"
+        --                , DateFormat.monthFixed
+        --                , DateFormat.text "-"
+        --                , DateFormat.dayOfMonthFixed
+        --                , DateFormat.text " "
+        --                , DateFormat.hourMilitaryFixed
+        --                , DateFormat.text ":"
+        --                , DateFormat.minuteFixed
+        --                , DateFormat.text ":"
+        --                , DateFormat.secondFixed
+        --                ]
+        --                zone
+        --                data.startedAt
+        --    ]
         , H.li []
             [ H.text <|
                 "Tick frequency: "
@@ -4025,26 +4054,62 @@ commonLinksView currentRoute =
         )
 
 
-adminWorldsListView : AdminData -> List (Html FrontendMsg)
-adminWorldsListView data =
+adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)
+adminWorldsListView newWorldName newWorldFast data =
     [ pageTitleView <| "Admin :: Worlds"
     , H.div
         [ HA.id "admin-worlds-list" ]
-        [ data.worlds
-            |> Dict.keys
-            |> List.map
-                (\worldName ->
-                    H.li [ HA.class "world" ]
-                        [ H.span [] [ H.text worldName ]
-                        , H.button
-                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldActivity worldName))) ]
-                            [ H.text "[ Activity ]" ]
-                        , H.button
-                            [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldHiscores worldName))) ]
-                            [ H.text "[ Hiscores ]" ]
-                        ]
+        [ H.table []
+            [ H.thead []
+                [ H.tr []
+                    [ H.th [] [ H.text "World" ]
+                    , H.th [] [ H.text "Actions" ]
+                    ]
+                ]
+            , H.tbody []
+                (data.worlds
+                    |> Dict.keys
+                    |> List.map
+                        (\worldName ->
+                            H.tr [ HA.class "world" ]
+                                [ H.td [] [ H.text worldName ]
+                                , H.td []
+                                    [ H.button
+                                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldActivity worldName))) ]
+                                        [ H.text "[Activity]" ]
+                                    , H.button
+                                        [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldHiscores worldName))) ]
+                                        [ H.text "[Hiscores]" ]
+                                    ]
+                                ]
+                        )
                 )
-            |> H.ul []
+            ]
+        ]
+    , H.div [ HA.id "admin-new-world-form" ]
+        [ H.input
+            [ HE.onInput SetAdminNewWorldName
+            , HA.placeholder "New world name"
+            , HA.value newWorldName
+            ]
+            []
+        , H.label
+            [ HA.for "admin-new-world-fast-checkbox"
+            , HE.onClick <| ToggleAdminNewWorldFast
+            ]
+            [ H.input
+                [ HA.type_ "checkbox"
+                , HA.id "admin-new-world-fast-checkbox"
+                , HA.checked newWorldFast
+                ]
+                []
+            , H.text "Fast?"
+            ]
+        , H.button
+            [ HE.onClick AskToCreateNewWorld
+            , HA.disabled (Dict.member newWorldName data.worlds)
+            ]
+            [ H.text "[Create]" ]
         ]
     ]
 
@@ -4061,7 +4126,7 @@ adminWorldActivityView lastTenToBackendMsgs zone worldName data =
         Just world ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
-            , H.table []
+            , H.table [ HA.id "admin-last-ten-msgs-table" ]
                 (H.thead []
                     [ H.tr []
                         [ H.th [] [ H.text "World" ]

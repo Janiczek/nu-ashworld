@@ -353,7 +353,10 @@ arrow have the same color */
   }
 }
 
-#admin-worlds-list .world button {
+#admin-worlds-list table { 
+  white-space: nowrap;
+}
+#admin-worlds-list button+button {
   margin-left: 1ch;
 }
 
@@ -589,6 +592,14 @@ table tbody tr:hover td {
   background-position: 0 0;
   background-repeat: no-repeat;
   user-select: none;
+}
+#map.admin-map {
+  margin-top: 1em;
+}
+
+#admin-last-ten-msgs-table td {
+  white-space: nowrap;
+  padding-right: 2ch;
 }
 
 #map-cost-info {
@@ -1176,4 +1187,13 @@ table tbody tr:hover td {
 }
 .fight-strategy-syntax-help-hover-description {
   white-space: pre-wrap;
+}
+#admin-new-world-form {
+  margin-top: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+#admin-new-world-form label input[type="checkbox"] {
+  margin-right: 1ch;
 }

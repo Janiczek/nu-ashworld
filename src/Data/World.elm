@@ -1,4 +1,11 @@
-module Data.World exposing (Info, Name, World, decoder, encode)
+module Data.World exposing
+    ( Info
+    , Name
+    , World
+    , decoder
+    , encode
+    , init
+    )
 
 import AssocList as Dict_
 import Data.Message as Message
@@ -49,6 +56,35 @@ type alias World =
     , tickFrequency : Time.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
     , vendorRestockFrequency : Time.Interval
+    }
+
+
+init : { fast : Bool } -> World
+init { fast } =
+    let
+        ( tickFrequency, tickPerIntervalCurve, vendorRestockFrequency ) =
+            if fast then
+                ( Time.Second
+                , Tick.QuarterAndRest { quarter = 2, rest = 1 }
+                , Time.Minute
+                )
+
+            else
+                ( Time.Hour
+                , Tick.QuarterAndRest { quarter = 4, rest = 2 }
+                , Time.Hour
+                )
+    in
+    { players = Dict.empty
+    , nextWantedTick = Nothing
+    , nextVendorRestockTick = Nothing
+    , vendors = Vendor.emptyVendors
+    , lastItemId = 0
+    , description = ""
+    , startedAt = Time.millisToPosix 0
+    , tickFrequency = tickFrequency
+    , tickPerIntervalCurve = tickPerIntervalCurve
+    , vendorRestockFrequency = vendorRestockFrequency
     }
 
 
