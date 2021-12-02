@@ -536,6 +536,16 @@ logAndUpdateFromFrontend =
         logAndUpdateFromFrontend_
 
 
+isAdminMsg : ToBackend -> Bool
+isAdminMsg msg =
+    case msg of
+        AdminToBackend _ ->
+            True
+
+        _ ->
+            False
+
+
 logAndUpdateFromFrontend_ : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 logAndUpdateFromFrontend_ sessionId clientId msg model =
     let
@@ -573,17 +583,21 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                 |> Maybe.withDefault "-"
 
         modelWithLoggedMsg =
-            { model
-                | lastTenToBackendMsgs =
-                    model.lastTenToBackendMsgs
-                        |> (if Queue.size model.lastTenToBackendMsgs >= 10 then
-                                Queue.dequeue >> Tuple.second
+            if isAdminMsg msg then
+                model
 
-                            else
-                                identity
-                           )
-                        |> Queue.enqueue ( playerName_, worldName_, msg )
-            }
+            else
+                { model
+                    | lastTenToBackendMsgs =
+                        model.lastTenToBackendMsgs
+                            |> (if Queue.size model.lastTenToBackendMsgs >= 10 then
+                                    Queue.dequeue >> Tuple.second
+
+                                else
+                                    identity
+                               )
+                            |> Queue.enqueue ( playerName_, worldName_, msg )
+                }
 
         ( newModel, normalCmd ) =
             updateFromFrontend sessionId clientId msg modelWithLoggedMsg

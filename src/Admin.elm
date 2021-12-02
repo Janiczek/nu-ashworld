@@ -22,6 +22,7 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import List.ExtraExtra as List
+import Logic
 import Queue
 import Set.ExtraExtra as Set
 import Time
@@ -36,6 +37,29 @@ encodeBackendModel model =
 
 backendModelDecoder : Decoder BackendModel
 backendModelDecoder =
+    JD.oneOf
+        [ backendModelDecoderV2
+        , backendModelDecoderV1
+        ]
+
+
+backendModelDecoderV1 : Decoder BackendModel
+backendModelDecoderV1 =
+    JD.map
+        (\world ->
+            { worlds = Dict.singleton Logic.mainWorldName world
+            , loggedInPlayers = Dict.empty
+            , time = Time.millisToPosix 0
+            , adminLoggedIn = Nothing
+            , lastTenToBackendMsgs = Queue.empty
+            }
+        )
+        World.decoder
+
+
+backendModelDecoderV2 : Decoder BackendModel
+backendModelDecoderV2 =
+    -- adds support for multiple worlds
     JD.map
         (\worlds ->
             { worlds = worlds
