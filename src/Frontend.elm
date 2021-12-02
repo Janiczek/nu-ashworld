@@ -197,15 +197,8 @@ update msg ({ loginForm } as model) =
         UrlClicked urlRequest ->
             case urlRequest of
                 Internal url ->
-                    let
-                        route : Route
-                        route =
-                            url
-                                |> Route.fromUrl
-                                |> sanitizeRoute model.worldData
-                    in
-                    ( { model | route = route }
-                    , Nav.pushUrl model.key (Route.toString route)
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url)
                     )
 
                 External url ->
@@ -213,8 +206,17 @@ update msg ({ loginForm } as model) =
                     , Nav.load url
                     )
 
-        UrlChanged _ ->
-            ( model, Cmd.none )
+        UrlChanged url ->
+            let
+                route : Route
+                route =
+                    url
+                        |> Route.fromUrl
+                        |> sanitizeRoute model.worldData
+            in
+            ( { model | route = route }
+            , Cmd.none
+            )
 
         Logout ->
             ( model
