@@ -3383,12 +3383,12 @@ ladderView data loggedInPlayer =
             WorldData.allPlayers data
     in
     [ pageTitleView "Ladder"
-    , ladderTableView players loggedInPlayer
+    , playerLadderTableView players loggedInPlayer
     ]
 
 
-ladderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
-ladderTableView players loggedInPlayer =
+playerLadderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
+playerLadderTableView players loggedInPlayer =
     let
         cantFight : String -> Html FrontendMsg
         cantFight message =
@@ -3480,6 +3480,81 @@ ladderTableView players loggedInPlayer =
                                 , HA.title "Level"
                                 ]
                                 [ H.text <| String.fromInt player.level ]
+                            , H.td
+                                [ HA.class "ladder-wins"
+                                , HA.title "Wins"
+                                ]
+                                [ H.text <| String.fromInt player.wins ]
+                            , H.td
+                                [ HA.class "ladder-losses"
+                                , HA.title "Losses"
+                                ]
+                                [ H.text <| String.fromInt player.losses ]
+                            ]
+                    )
+            )
+        ]
+
+
+adminLadderTableView : List SPlayer -> Html FrontendMsg
+adminLadderTableView players =
+    H.table [ HA.id "ladder-table" ]
+        [ H.thead []
+            [ H.tr []
+                [ H.th
+                    [ HA.class "ladder-rank"
+                    , HA.title "Rank"
+                    ]
+                    [ H.text "#" ]
+                , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
+                , H.th
+                    [ HA.class "ladder-status"
+                    , HA.title "Health status"
+                    ]
+                    [ H.text "Status" ]
+                , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
+                , H.th
+                    [ HA.class "ladder-wins"
+                    , HA.title "Wins"
+                    ]
+                    [ H.text "W" ]
+                , H.th
+                    [ HA.class "ladder-losses"
+                    , HA.title "Losses"
+                    ]
+                    [ H.text "L" ]
+                ]
+            ]
+        , H.tbody []
+            (players
+                |> List.indexedMap
+                    (\i player ->
+                        H.tr
+                            []
+                            [ H.td
+                                [ HA.class "ladder-rank"
+                                , HA.title "Rank"
+                                ]
+                                [ H.text <| String.fromInt <| i + 1 ]
+                            , H.td
+                                [ HA.class "ladder-name"
+                                , HA.title "Name"
+                                ]
+                                [ H.text player.name ]
+                            , H.td
+                                [ HA.class "ladder-status"
+                                , HA.title <| "Health status"
+                                ]
+                                [ player
+                                    |> HealthStatus.check Perception.Perfect
+                                    |> HealthStatus.label
+                                    |> H.text
+                                ]
+                            , H.td
+                                [ HA.class "ladder-lvl"
+                                , HA.title "Level"
+                                ]
+                                [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
                             , H.td
                                 [ HA.class "ladder-wins"
                                 , HA.title "Wins"
@@ -4029,7 +4104,7 @@ adminWorldHiscoresView worldName data =
                       )
                     ]
                 )
-            , Debug.todo "ladder"
+            , adminLadderTableView players
             ]
 
 
