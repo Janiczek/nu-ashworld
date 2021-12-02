@@ -552,10 +552,25 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                             , timeout = Nothing
                             }
 
+                    modelWithLoggedMsg =
+                        { model
+                            | lastTenToBackendMsgs =
+                                model.lastTenToBackendMsgs
+                                    |> Fifo.remove
+                                    |> Tuple.second
+                                    |> Fifo.insert msg
+                        }
+
                     ( newModel, normalCmd ) =
-                        updateFromFrontend sessionId clientId msg model
+                        updateFromFrontend sessionId clientId msg modelWithLoggedMsg
                 in
-                ( newModel, Cmd.batch [ logMsgCmd, normalCmd ] )
+                ( newModel
+                , Cmd.batch
+                    [ logMsgCmd
+                    , refreshAdminLastTenToBackendMsgs newModel
+                    , normalCmd
+                    ]
+                )
             )
         |> Maybe.withDefault ( model, Cmd.none )
 
@@ -568,6 +583,16 @@ refreshAdminLoggedInPlayers model =
 
         Just ( adminClientId, _ ) ->
             Lamdera.sendToFrontend adminClientId (CurrentAdminLoggedInPlayers (getLoggedInPlayers model))
+
+
+refreshAdminLastTenToBackendMsgs : Model -> Cmd BackendMsg
+refreshAdminLastTenToBackendMsgs model =
+    case model.adminLoggedIn of
+        Nothing ->
+            Cmd.none
+
+        Just ( adminClientId, _ ) ->
+            Lamdera.sendToFrontend adminClientId (CurrentAdminLastTenToBackendMsgs model.lastTenToBackendMsgs)
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )

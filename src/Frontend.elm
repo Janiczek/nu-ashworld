@@ -4021,7 +4021,7 @@ adminWorldsListView data =
     ]
 
 
-adminWorldActivityView : List ToBackend -> Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView : List ( PlayerName, World.Name, ToBackend ) -> Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
 adminWorldActivityView lastTenToBackendMsgs zone worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
@@ -4033,13 +4033,17 @@ adminWorldActivityView lastTenToBackendMsgs zone worldName data =
         Just world ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
-            , H.ul []
+            , H.table []
                 (List.map
-                    (\msg ->
-                        H.li []
-                            [ Admin.encodeToBackendMsg msg
-                                |> JE.encode 0
-                                |> H.text
+                    (\( playerName, msgWorldName, msg ) ->
+                        H.tr []
+                            [ H.td [] [ H.text msgWorldName ]
+                            , H.td [] [ H.text playerName ]
+                            , H.td []
+                                [ Admin.encodeToBackendMsg msg
+                                    |> JE.encode 0
+                                    |> H.text
+                                ]
                             ]
                     )
                     lastTenToBackendMsgs
