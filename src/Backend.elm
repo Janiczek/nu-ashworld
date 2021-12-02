@@ -46,6 +46,7 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Env
+import Fifo
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
@@ -93,7 +94,7 @@ init =
       , time = Time.millisToPosix 0
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
-      , lastTenToBackendMsgs = []
+      , lastTenToBackendMsgs = Fifo.empty
       }
     , Task.perform Tick Time.now
     )
@@ -592,7 +593,7 @@ refreshAdminLastTenToBackendMsgs model =
             Cmd.none
 
         Just ( adminClientId, _ ) ->
-            Lamdera.sendToFrontend adminClientId (CurrentAdminLastTenToBackendMsgs model.lastTenToBackendMsgs)
+            Lamdera.sendToFrontend adminClientId (CurrentAdminLastTenToBackendMsgs (Fifo.toList model.lastTenToBackendMsgs))
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )

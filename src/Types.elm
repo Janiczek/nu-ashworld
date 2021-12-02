@@ -32,6 +32,7 @@ import Data.WorldData
         , WorldData
         )
 import Dict exposing (Dict)
+import Fifo exposing (Fifo)
 import File exposing (File)
 import Frontend.HoveredItem exposing (HoveredItem)
 import Frontend.Route
@@ -78,7 +79,7 @@ type alias BackendModel =
             , playerName : PlayerName
             }
     , adminLoggedIn : Maybe ( ClientId, SessionId )
-    , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
+    , lastTenToBackendMsgs : Fifo ( PlayerName, World.Name, ToBackend )
     }
 
 
