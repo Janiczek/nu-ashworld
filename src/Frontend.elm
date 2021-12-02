@@ -4169,6 +4169,7 @@ adminWorldHiscoresView worldName data =
                         |> Dict.values
                         |> List.filterMap Player.getPlayerData
                         |> List.filter (\p -> p.worldName == worldName)
+                        |> Ladder.sort
 
                 maxBy : (SPlayer -> Int) -> ( PlayerName, Int )
                 maxBy fn =
