@@ -4070,41 +4070,44 @@ adminWorldHiscoresView worldName data =
                         ]
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
-            , H.ul []
-                (List.map viewMaxBy
-                    [ ( "Most money", .caps )
-                    , ( "Most items value"
-                      , \p ->
-                            p.caps
-                                + (p.items
+            , H.div
+                [ HA.id "admin-hiscores-content" ]
+                [ H.ul []
+                    (List.map viewMaxBy
+                        [ ( "Most money", .caps )
+                        , ( "Most items value"
+                          , \p ->
+                                p.caps
+                                    + (p.items
+                                        |> Dict.values
+                                        |> List.map (\{ count, kind } -> Item.baseValue kind * count)
+                                        |> List.sum
+                                      )
+                          )
+                        , ( "Most books (why)"
+                          , \p ->
+                                p.items
                                     |> Dict.values
-                                    |> List.map (\{ count, kind } -> Item.baseValue kind * count)
+                                    |> List.filter (\{ kind } -> Item.isBook kind)
+                                    |> List.map .count
                                     |> List.sum
-                                  )
-                      )
-                    , ( "Most books (why)"
-                      , \p ->
-                            p.items
-                                |> Dict.values
-                                |> List.filter (\{ kind } -> Item.isBook kind)
-                                |> List.map .count
-                                |> List.sum
-                      )
-                    , ( "Most skill %"
-                      , \p ->
-                            p.addedSkillPercentages
-                                |> Dict_.values
-                                |> List.sum
-                      )
-                    , ( "Most perks"
-                      , \p ->
-                            p.perks
-                                |> Dict_.values
-                                |> List.sum
-                      )
-                    ]
-                )
-            , adminLadderTableView players
+                          )
+                        , ( "Most skill %"
+                          , \p ->
+                                Skill.all
+                                    |> List.map (Skill.get p.special p.addedSkillPercentages)
+                                    |> List.sum
+                          )
+                        , ( "Most perks"
+                          , \p ->
+                                p.perks
+                                    |> Dict_.values
+                                    |> List.sum
+                          )
+                        ]
+                    )
+                , adminLadderTableView players
+                ]
             ]
 
 
