@@ -46,13 +46,13 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Env
-import Fifo
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
 import List.Extra as List
 import Logic
+import Queue
 import Random exposing (Generator)
 import Random.List
 import Set exposing (Set)
@@ -94,7 +94,7 @@ init =
       , time = Time.millisToPosix 0
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
-      , lastTenToBackendMsgs = Fifo.empty
+      , lastTenToBackendMsgs = Queue.empty
       }
     , Task.perform Tick Time.now
     )
@@ -530,12 +530,11 @@ logAndUpdateFromFrontend =
 
 logAndUpdateFromFrontend_ : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 logAndUpdateFromFrontend_ sessionId clientId msg model =
-    Dict.get clientId model.loggedInPlayers
-        |> Maybe.map
-            (\{ playerName, worldName } ->
-                let
-                    logMsgCmd : Cmd BackendMsg
-                    logMsgCmd =
+    let
+        logMsgCmd =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.map
+                    (\{ playerName, worldName } ->
                         Http.request
                             { method = "POST"
                             , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
@@ -552,28 +551,42 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                             , tracker = Nothing
                             , timeout = Nothing
                             }
+                    )
+                |> Maybe.withDefault Cmd.none
 
-                    modelWithLoggedMsg =
-                        { model
-                            | lastTenToBackendMsgs =
-                                model.lastTenToBackendMsgs
-                                    |> Fifo.remove
-                                    |> Tuple.second
-                                    |> Fifo.insert msg
-                        }
+        playerName_ =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.map .playerName
+                |> Maybe.withDefault "anonymous"
 
-                    ( newModel, normalCmd ) =
-                        updateFromFrontend sessionId clientId msg modelWithLoggedMsg
-                in
-                ( newModel
-                , Cmd.batch
-                    [ logMsgCmd
-                    , refreshAdminLastTenToBackendMsgs newModel
-                    , normalCmd
-                    ]
-                )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+        worldName_ =
+            Dict.get clientId model.loggedInPlayers
+                |> Maybe.map .worldName
+                |> Maybe.withDefault "-"
+
+        modelWithLoggedMsg =
+            { model
+                | lastTenToBackendMsgs =
+                    model.lastTenToBackendMsgs
+                        |> (if Queue.size model.lastTenToBackendMsgs >= 10 then
+                                Queue.dequeue >> Tuple.second
+
+                            else
+                                identity
+                           )
+                        |> Queue.enqueue ( playerName_, worldName_, msg )
+            }
+
+        ( newModel, normalCmd ) =
+            updateFromFrontend sessionId clientId msg modelWithLoggedMsg
+    in
+    ( newModel
+    , Cmd.batch
+        [ logMsgCmd
+        , refreshAdminLastTenToBackendMsgs newModel
+        , normalCmd
+        ]
+    )
 
 
 refreshAdminLoggedInPlayers : Model -> Cmd BackendMsg
@@ -593,7 +606,7 @@ refreshAdminLastTenToBackendMsgs model =
             Cmd.none
 
         Just ( adminClientId, _ ) ->
-            Lamdera.sendToFrontend adminClientId (CurrentAdminLastTenToBackendMsgs (Fifo.toList model.lastTenToBackendMsgs))
+            Lamdera.sendToFrontend adminClientId (CurrentAdminLastTenToBackendMsgs (Queue.toList model.lastTenToBackendMsgs))
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )

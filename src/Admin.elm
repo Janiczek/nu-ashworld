@@ -22,6 +22,7 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import List.ExtraExtra as List
+import Queue
 import Set.ExtraExtra as Set
 import Time
 import Types exposing (AdminToBackend(..), BackendModel, ToBackend(..))
@@ -41,7 +42,7 @@ backendModelDecoder =
             , loggedInPlayers = Dict.empty
             , time = Time.millisToPosix 0
             , adminLoggedIn = Nothing
-            , lastTenToBackendMsgs = []
+            , lastTenToBackendMsgs = Queue.empty
             }
         )
         (JD.field "worlds" (Dict.decoder JD.string World.decoder))
@@ -53,13 +54,13 @@ encodeToBackendMsg msg =
         LogMeIn auth ->
             JE.object
                 [ ( "type", JE.string "LogMeIn" )
-                , ( "auth", Auth.encode auth )
+                , ( "auth", Auth.encodeSanitized auth )
                 ]
 
         RegisterMe auth ->
             JE.object
                 [ ( "type", JE.string "RegisterMe" )
-                , ( "auth", Auth.encode auth )
+                , ( "auth", Auth.encodeSanitized auth )
                 ]
 
         CreateNewChar newChar ->

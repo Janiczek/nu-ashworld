@@ -4034,21 +4034,27 @@ adminWorldActivityView lastTenToBackendMsgs zone worldName data =
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
             , H.table []
-                (List.map
-                    (\( playerName, msgWorldName, msg ) ->
-                        H.tr []
-                            [ H.td [] [ H.text msgWorldName ]
-                            , H.td [] [ H.text playerName ]
-                            , H.td []
-                                [ Admin.encodeToBackendMsg msg
-                                    |> JE.encode 0
-                                    |> H.text
+                (H.thead []
+                    [ H.tr []
+                        [ H.th [] [ H.text "World" ]
+                        , H.th [] [ H.text "Player" ]
+                        , H.th [] [ H.text "Msg" ]
+                        ]
+                    ]
+                    :: List.map
+                        (\( playerName, msgWorldName, msg ) ->
+                            H.tr []
+                                [ H.td [] [ H.text msgWorldName ]
+                                , H.td [] [ H.text playerName ]
+                                , H.td []
+                                    [ Admin.encodeToBackendMsg msg
+                                        |> JE.encode 0
+                                        |> H.text
+                                    ]
                                 ]
-                            ]
-                    )
-                    lastTenToBackendMsgs
+                        )
+                        lastTenToBackendMsgs
                 )
-            , Debug.todo "map with names"
             ]
 
 

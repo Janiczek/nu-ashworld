@@ -32,7 +32,6 @@ import Data.WorldData
         , WorldData
         )
 import Dict exposing (Dict)
-import Fifo exposing (Fifo)
 import File exposing (File)
 import Frontend.HoveredItem exposing (HoveredItem)
 import Frontend.Route
@@ -41,6 +40,7 @@ import Frontend.Route
         , Route
         )
 import Lamdera exposing (ClientId, SessionId)
+import Queue exposing (Queue)
 import Set exposing (Set)
 import Time exposing (Posix)
 import Url exposing (Url)
@@ -79,7 +79,7 @@ type alias BackendModel =
             , playerName : PlayerName
             }
     , adminLoggedIn : Maybe ( ClientId, SessionId )
-    , lastTenToBackendMsgs : Fifo ( PlayerName, World.Name, ToBackend )
+    , lastTenToBackendMsgs : Queue ( PlayerName, World.Name, ToBackend )
     }
 
 

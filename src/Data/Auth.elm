@@ -8,6 +8,7 @@ module Data.Auth exposing
     , adminPasswordChecksOut
     , encode
     , encodePassword
+    , encodeSanitized
     , hash
     , init
     , isAdminName
@@ -47,6 +48,15 @@ encode auth =
     JE.object
         [ ( "name", JE.string auth.name )
         , ( "password", encodePassword auth.password )
+        , ( "worldName", JE.string auth.worldName )
+        ]
+
+
+encodeSanitized : Auth a -> JE.Value
+encodeSanitized auth =
+    JE.object
+        [ ( "name", JE.string auth.name )
+        , ( "password", JE.string "<omitted>" )
         , ( "worldName", JE.string auth.worldName )
         ]
 

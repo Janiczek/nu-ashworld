@@ -12,4 +12,4 @@ adminPasswordHash =
 
 loggingApiKey : String
 loggingApiKey =
-    ""
+    "make this string empty again"

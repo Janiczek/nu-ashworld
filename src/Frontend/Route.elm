@@ -210,7 +210,7 @@ toString route =
                     "news"
 
                 Map ->
-                    "maps"
+                    "map"
 
                 WorldsList ->
                     "worlds"
