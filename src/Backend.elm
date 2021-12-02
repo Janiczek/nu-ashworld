@@ -324,6 +324,20 @@ update msg model =
                                                     (\nextTick world_ -> { world_ | nextVendorRestockTick = Just nextTick })
                                                     restockVendors
                                                 )
+                                            |> Cmd.andThen
+                                                (\m ->
+                                                    ( m
+                                                    , model.loggedInPlayers
+                                                        |> Dict.toList
+                                                        |> List.filter (\( _, r ) -> r.worldName == worldName)
+                                                        |> List.filterMap
+                                                            (\( clientId, { playerName } ) ->
+                                                                getPlayerData worldName playerName m
+                                                                    |> Maybe.map (Lamdera.sendToFrontend clientId << CurrentPlayer)
+                                                            )
+                                                        |> Cmd.batch
+                                                    )
+                                                )
                         in
                         ( newModel, Cmd.batch [ cmd, newCmd ] )
                     )
