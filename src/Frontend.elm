@@ -1032,6 +1032,34 @@ adminPlayerData data =
     ]
 
 
+adminMapView : World.Name -> AdminData -> Html FrontendMsg
+adminMapView worldName adminData =
+    case Dict.get worldName adminData.worlds of
+        Nothing ->
+            H.text <| "Error: World '" ++ worldName ++ "' was not found"
+
+        Just world ->
+            let
+                playerCoords : List TileCoords
+                playerCoords =
+                    world.players
+                        |> Dict.values
+                        |> List.filterMap Player.getPlayerData
+                        |> List.map (.location >> Map.toTileCoords)
+            in
+            H.div
+                [ HA.id "map"
+                , cssVars
+                    [ ( "--map-columns", String.fromInt Map.columns )
+                    , ( "--map-rows", String.fromInt Map.rows )
+                    , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+                    ]
+                ]
+                (locationsView Nothing
+                    :: List.map mapMarkerView playerCoords
+                )
+
+
 mapView :
     Maybe ( TileCoords, Set TileCoords )
     -> PlayerData
@@ -1329,7 +1357,7 @@ changedCoordsDecoder mouseCoords =
 mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
-        [ HA.id "map-marker"
+        [ HA.class "map-marker"
         , cssVars
             [ ( "--player-coord-x", String.fromInt x )
             , ( "--player-coord-y", String.fromInt y )
@@ -4055,6 +4083,7 @@ adminWorldActivityView lastTenToBackendMsgs zone worldName data =
                         )
                         lastTenToBackendMsgs
                 )
+            , adminMapView worldName data
             ]
 
 

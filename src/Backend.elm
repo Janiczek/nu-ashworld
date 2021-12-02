@@ -589,6 +589,16 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
     )
 
 
+refreshAdminData : Model -> Cmd BackendMsg
+refreshAdminData model =
+    case model.adminLoggedIn of
+        Nothing ->
+            Cmd.none
+
+        Just ( adminClientId, _ ) ->
+            Lamdera.sendToFrontend adminClientId (CurrentAdmin (getAdminData model))
+
+
 refreshAdminLoggedInPlayers : Model -> Cmd BackendMsg
 refreshAdminLoggedInPlayers model =
     case model.adminLoggedIn of
@@ -1232,6 +1242,7 @@ moveTo newCoords pathTaken clientId _ worldName player model =
                     >> SPlayer.setLocation (Map.toTileNum newCoords)
                 )
             |> sendCurrentWorld worldName player.name clientId
+            |> Cmd.andThen (\m -> ( m, refreshAdminData m ))
 
 
 createNewChar : NewChar -> ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )

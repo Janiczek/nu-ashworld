@@ -735,7 +735,7 @@ table tbody tr:hover td {
 }
 
 
-#map-marker {
+.map-marker {
   position: absolute;
   left: 0;
   top: 0;
