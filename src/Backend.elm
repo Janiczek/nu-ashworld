@@ -271,17 +271,23 @@ update msg model =
 
                                     Just world ->
                                         let
-                                            processTick : Time.Interval -> Maybe Posix -> (Posix -> World -> World) -> (World.Name -> Model -> ( Model, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
+                                            processTick :
+                                                Time.Interval
+                                                -> Maybe Posix
+                                                -> (Posix -> World -> World)
+                                                -> (World.Name -> Model -> ( Model, Cmd BackendMsg ))
+                                                -> Model
+                                                -> ( Model, Cmd BackendMsg )
                                             processTick tickFrequency nextWantedTick updateNextWantedTick postprocess model_ =
                                                 case nextWantedTick of
                                                     Nothing ->
                                                         let
-                                                            { nextTick } =
+                                                            nextTick =
                                                                 Tick.nextTick tickFrequency currentTime
                                                         in
-                                                        ( { accModel
+                                                        ( { model_
                                                             | worlds =
-                                                                accModel.worlds
+                                                                model_.worlds
                                                                     |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
                                                           }
                                                         , Cmd.none
@@ -290,18 +296,18 @@ update msg model =
                                                     Just nextWantedTick_ ->
                                                         if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick_ then
                                                             let
-                                                                { nextTick } =
+                                                                nextTick =
                                                                     Tick.nextTick tickFrequency currentTime
                                                             in
-                                                            { accModel
+                                                            { model_
                                                                 | worlds =
-                                                                    accModel.worlds
+                                                                    model_.worlds
                                                                         |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
                                                             }
                                                                 |> postprocess worldName
 
                                                         else
-                                                            ( accModel
+                                                            ( model_
                                                             , Cmd.none
                                                             )
                                         in

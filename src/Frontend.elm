@@ -827,7 +827,7 @@ nextTickView tickFrequency zone time =
 
         else
             let
-                { nextTick } =
+                nextTick =
                     Tick.nextTick tickFrequency time
 
                 nextTickString =

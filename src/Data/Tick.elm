@@ -14,15 +14,9 @@ import Time exposing (Posix)
 import Time.Extra as Time
 
 
-nextTick : Time.Interval -> Posix -> { nextTick : Posix, millisTillNextTick : Int }
+nextTick : Time.Interval -> Posix -> Posix
 nextTick tickFrequency time =
-    let
-        nextTick_ =
-            Time.ceiling tickFrequency Time.utc time
-    in
-    { nextTick = nextTick_
-    , millisTillNextTick = Time.diff Time.Millisecond Time.utc time nextTick_
-    }
+    Time.ceiling tickFrequency Time.utc time
 
 
 limit : Int
