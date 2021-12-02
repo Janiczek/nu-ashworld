@@ -3970,20 +3970,65 @@ adminWorldHiscoresView worldName data =
                         |> List.filterMap Player.getPlayerData
                         |> List.filter (\p -> p.worldName == worldName)
 
-                maxBy : (SPlayer -> Int) -> PlayerName
+                maxBy : (SPlayer -> Int) -> ( PlayerName, Int )
                 maxBy fn =
                     players
                         |> List.sortBy (negate << fn)
                         |> List.head
-                        |> Maybe.map .name
-                        |> Maybe.withDefault "nobody???"
+                        |> Maybe.map (\p -> ( p.name, fn p ))
+                        |> Maybe.withDefault ( "nobody???", 0 )
+
+                viewMaxBy : ( String, SPlayer -> Int ) -> Html FrontendMsg
+                viewMaxBy ( what, fn ) =
+                    let
+                        ( winner, amount ) =
+                            maxBy fn
+                    in
+                    H.li []
+                        [ H.text <|
+                            what
+                                ++ ": "
+                                ++ winner
+                                ++ " ("
+                                ++ String.fromInt amount
+                                ++ ")"
+                        ]
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
-            , Debug.todo "most money"
-            , Debug.todo "most items"
-            , Debug.todo "most books (why)"
-            , Debug.todo "most skill %"
-            , Debug.todo "most perks"
+            , H.ul []
+                (List.map viewMaxBy
+                    [ ( "Most money", .caps )
+                    , ( "Most items value"
+                      , \p ->
+                            p.caps
+                                + (p.items
+                                    |> Dict.values
+                                    |> List.map (\{ count, kind } -> Item.baseValue kind * count)
+                                    |> List.sum
+                                  )
+                      )
+                    , ( "Most books (why)"
+                      , \p ->
+                            p.items
+                                |> Dict.values
+                                |> List.filter (\{ kind } -> Item.isBook kind)
+                                |> List.map .count
+                                |> List.sum
+                      )
+                    , ( "Most skill %"
+                      , \p ->
+                            p.addedSkillPercentages
+                                |> Dict_.values
+                                |> List.sum
+                      )
+                    , ( "Most perks"
+                      , \p ->
+                            p.perks
+                                |> Dict_.values
+                                |> List.sum
+                      )
+                    ]
+                )
             , Debug.todo "ladder"
             ]
 

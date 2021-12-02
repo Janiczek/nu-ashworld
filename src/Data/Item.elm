@@ -19,6 +19,7 @@ module Data.Item exposing
     , findMergeableId
     , getUniqueKey
     , healAmount
+    , isBook
     , isEquippable
     , isHealing
     , kindDecoder
@@ -521,3 +522,43 @@ equippableType kind =
 isEquippable : Kind -> Bool
 isEquippable kind =
     equippableType kind /= Nothing
+
+
+isBook : Kind -> Bool
+isBook kind =
+    case kind of
+        Fruit ->
+            False
+
+        HealingPowder ->
+            False
+
+        Stimpak ->
+            False
+
+        BigBookOfScience ->
+            True
+
+        DeansElectronics ->
+            True
+
+        FirstAidBook ->
+            True
+
+        GunsAndBullets ->
+            True
+
+        ScoutHandbook ->
+            True
+
+        Robes ->
+            False
+
+        LeatherJacket ->
+            False
+
+        LeatherArmor ->
+            False
+
+        MetalArmor ->
+            False
