@@ -1,5 +1,6 @@
 module Frontend exposing (..)
 
+import Admin
 import AssocList as Dict_
 import AssocSet as Set_
 import Browser exposing (UrlRequest(..))
@@ -72,6 +73,7 @@ import Html.Events.Extra as HE
 import Html.Extra as H
 import Iso8601
 import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 import Lamdera
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
@@ -131,6 +133,9 @@ init url key =
       , barter = Barter.empty
       , fightInfo = Nothing
       , fightStrategyText = ""
+
+      -- backend state
+      , lastTenToBackendMsgs = []
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -678,6 +683,11 @@ updateFromBackend msg model =
             , Cmd.none
             )
 
+        CurrentAdminLastTenToBackendMsgs msgs ->
+            ( { model | lastTenToBackendMsgs = msgs }
+            , Cmd.none
+            )
+
         YourFightResult ( fightInfo, world ) ->
             { model
                 | -- TODO clear it once you go away
@@ -846,7 +856,7 @@ contentView model =
                         adminWorldsListView data
 
                     AdminWorldActivity worldName ->
-                        adminWorldActivityView model.zone worldName data
+                        adminWorldActivityView model.lastTenToBackendMsgs model.zone worldName data
 
                     AdminWorldHiscores worldName ->
                         adminWorldHiscoresView worldName data
@@ -4011,8 +4021,8 @@ adminWorldsListView data =
     ]
 
 
-adminWorldActivityView : Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
-adminWorldActivityView zone worldName data =
+adminWorldActivityView : List ToBackend -> Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView lastTenToBackendMsgs zone worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
             contentUnavailableView <|
@@ -4022,8 +4032,19 @@ adminWorldActivityView zone worldName data =
 
         Just world ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
+            , H.h3 [] [ H.text "Last 10 messages" ]
+            , H.ul []
+                (List.map
+                    (\msg ->
+                        H.li []
+                            [ Admin.encodeToBackendMsg msg
+                                |> JE.encode 0
+                                |> H.text
+                            ]
+                    )
+                    lastTenToBackendMsgs
+                )
             , Debug.todo "map with names"
-            , Debug.todo "last 10 toFrontend msgs"
             ]
 
 

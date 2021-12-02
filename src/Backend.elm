@@ -93,6 +93,7 @@ init =
       , time = Time.millisToPosix 0
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
+      , lastTenToBackendMsgs = []
       }
     , Task.perform Tick Time.now
     )
@@ -544,7 +545,7 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                                         [ ( "session-id", JE.string sessionId )
                                         , ( "client-id", JE.string clientId )
                                         , ( "player-name", JE.string playerName )
-                                        , ( "to-backend-msg", JE.string <| JE.encode 0 <| encodeToBackendMsg msg )
+                                        , ( "to-backend-msg", JE.string <| JE.encode 0 <| Admin.encodeToBackendMsg msg )
                                         ]
                             , expect = Http.expectWhatever (always LoggedToBackendMsg)
                             , tracker = Nothing
@@ -557,126 +558,6 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                 ( newModel, Cmd.batch [ logMsgCmd, normalCmd ] )
             )
         |> Maybe.withDefault ( model, Cmd.none )
-
-
-encodeToBackendMsg : ToBackend -> JE.Value
-encodeToBackendMsg msg =
-    case msg of
-        LogMeIn auth ->
-            JE.object
-                [ ( "type", JE.string "LogMeIn" )
-                , ( "auth", Auth.encode auth )
-                ]
-
-        RegisterMe auth ->
-            JE.object
-                [ ( "type", JE.string "RegisterMe" )
-                , ( "auth", Auth.encode auth )
-                ]
-
-        CreateNewChar newChar ->
-            JE.object
-                [ ( "type", JE.string "CreateNewChar" )
-                , ( "newChar", NewChar.encode newChar )
-                ]
-
-        LogMeOut ->
-            JE.object
-                [ ( "type", JE.string "LogMeOut" ) ]
-
-        Fight playerName ->
-            JE.object
-                [ ( "type", JE.string "Fight" )
-                , ( "playerName", JE.string playerName )
-                ]
-
-        HealMe ->
-            JE.object
-                [ ( "type", JE.string "HealMe" ) ]
-
-        UseItem itemId ->
-            JE.object
-                [ ( "type", JE.string "UseItem" )
-                , ( "itemId", JE.int itemId )
-                ]
-
-        Wander ->
-            JE.object
-                [ ( "type", JE.string "Wander" ) ]
-
-        EquipItem itemId ->
-            JE.object
-                [ ( "type", JE.string "EquipItem" )
-                , ( "itemId", JE.int itemId )
-                ]
-
-        UnequipArmor ->
-            JE.object
-                [ ( "type", JE.string "UnequipArmor" ) ]
-
-        SetFightStrategy ( strategy, text ) ->
-            JE.object
-                [ ( "type", JE.string "SetFightStrategy" )
-                , ( "strategy", FightStrategy.encode strategy )
-                , ( "text", JE.string text )
-                ]
-
-        RefreshPlease ->
-            JE.object
-                [ ( "type", JE.string "RefreshPlease" ) ]
-
-        TagSkill skill ->
-            JE.object
-                [ ( "type", JE.string "TagSkill" )
-                , ( "skill", Skill.encode skill )
-                ]
-
-        UseSkillPoints skill ->
-            JE.object
-                [ ( "type", JE.string "UseSkillPoints" )
-                , ( "skill", Skill.encode skill )
-                ]
-
-        MoveTo coords path ->
-            JE.object
-                [ ( "type", JE.string "MoveTo" )
-                , ( "coords", Map.encodeCoords coords )
-                , ( "path", Set.encode Map.encodeCoords path )
-                ]
-
-        MessageWasRead messageId ->
-            JE.object
-                [ ( "type", JE.string "MessageWasRead" )
-                , ( "messageId", JE.int messageId )
-                ]
-
-        RemoveMessage messageId ->
-            JE.object
-                [ ( "type", JE.string "RemoveMessage" )
-                , ( "messageId", JE.int messageId )
-                ]
-
-        Barter barterState ->
-            JE.object
-                [ ( "type", JE.string "Barter" )
-                , ( "barterState", Barter.encode barterState )
-                ]
-
-        ChoosePerk perk ->
-            JE.object
-                [ ( "type", JE.string "ChoosePerk" )
-                , ( "perk", Perk.encode perk )
-                ]
-
-        AdminToBackend ExportJson ->
-            JE.object
-                [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
-
-        AdminToBackend (ImportJson _) ->
-            JE.object
-                [ ( "type", JE.string "AdminToBackend ImportJson" )
-                , ( "json", JE.string "<omitted>" )
-                ]
 
 
 refreshAdminLoggedInPlayers : Model -> Cmd BackendMsg

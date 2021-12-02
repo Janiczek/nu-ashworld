@@ -62,6 +62,9 @@ type alias FrontendModel =
     , fightInfo : Maybe Fight.Info
     , barter : Barter.State
     , fightStrategyText : String
+
+    -- admin state
+    , lastTenToBackendMsgs : List ToBackend
     }
 
 
@@ -75,6 +78,7 @@ type alias BackendModel =
             , playerName : PlayerName
             }
     , adminLoggedIn : Maybe ( ClientId, SessionId )
+    , lastTenToBackendMsgs : List ToBackend
     }
 
 
@@ -181,6 +185,7 @@ type ToFrontend
     | CurrentWorlds (List World.Info)
     | CurrentAdmin AdminData
     | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))
+    | CurrentAdminLastTenToBackendMsgs (List ToBackend)
     | YoureLoggedOut (List World.Info)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedIn PlayerData
