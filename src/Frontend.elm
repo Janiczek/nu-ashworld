@@ -4028,7 +4028,6 @@ loggedOutLinksView currentRoute =
         ]
         ([ linkMsg "Refresh" Refresh Nothing False
          , linkIn "Map" Map Nothing False
-         , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
          , linkIn "Worlds" WorldsList Nothing False
          ]
             |> List.map (linkView currentRoute)
