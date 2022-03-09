@@ -1,8 +1,0 @@
-{
-  "checks": {
-    "SingleFieldRecord": false
-  },
-  "excludedPaths": [
-    "src/Evergreen"
-  ]
-}

@@ -16,6 +16,7 @@ function run {
 
   clear;
   tput reset;
+  echo -en "\033c\033[3J";
 
   echo -en "${DIM}";
   date -R;

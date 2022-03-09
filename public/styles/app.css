@@ -20,15 +20,9 @@
 }
 
 @font-face {
-  font-family: BQN386;
+  font-family: ApricotXenC;
   font-weight: normal;
-  src: url('../fonts/BQN386.ttf'); /* Taken from https://dzaima.github.io/BQN386/BQN386.ttf */
-}
-
-@font-face {
-  font-family: BQN386;
-  font-weight: bold;
-  src: url('../fonts/BQN386.ttf'); /* Taken from https://dzaima.github.io/BQN386/BQN386.ttf */
+  src: url('../fonts/Web437_ApricotXenC.woff');
 }
 
 html {
@@ -38,12 +32,30 @@ html {
 
 body {
   display: flex;
-  font-family: BQN386;
-  font-size: 18px;
+  font-size: 14px;
+  line-height: 19px;
   color: var(--fg02);
   margin: 0;
   position: relative;
   min-height: 100%;
+}
+
+* {
+  font-family: ApricotXenC;
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 19px;
+
+  -ms-interpolation-mode: nearest-neighbor;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -o-pixelated;
+  image-rendering: pixelated;
+
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: none;
+  /* -webkit-font-smoothing: antialiased; */
 }
 
 body:after {
@@ -66,15 +78,10 @@ p {
   max-width: 60ch;
 }
 
-pre {
-  font-family: BQN386;
-}
-
 button, input, textarea {
-  font-family: BQN386;
   border: none;
   background: transparent;
-  font-size: 18px;
+  font-size: 14px;
   color: var(--fg02);
   padding: 0;
   margin: 0;
@@ -199,10 +206,9 @@ _::-webkit-full-page-media, _:future, :root #app.admin #logo {
   grid-template-areas: "select";
   align-items: center;
   position: relative;
-  font-family: BQN386;
   width: 18ch;
   border-radius: 4px;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   background-color: var(--fg02);
   margin-top: 8px;
@@ -224,7 +230,6 @@ arrow have the same color */
   margin: 0;
   padding: 4px 32px 4px 8px;
   width: 100%;
-  font-family: BQN386;
   font-size: inherit;
   cursor: inherit;
   line-height: inherit;
@@ -485,8 +490,7 @@ table tbody tr:hover td {
   padding-left: 32px;
 }
 .news-item-text pre code {
-  font-family: BQN386;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--fg01);
 }
 
@@ -535,7 +539,7 @@ table tbody tr:hover td {
   border: none;
   background: transparent;
   color: var(--fg01);
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .character-special-attribute-dec button:not(:disabled):hover,
@@ -732,7 +736,7 @@ table tbody tr:hover td {
 .map-location:after {
   content: attr(data-location-name);
   display: block;
-  font-size: 16px;
+  font-size: 14px;
   top: var(--location-name-top);
   left: 50%;
   transform: translate(-50%, 0);
@@ -1000,7 +1004,7 @@ table tbody tr:hover td {
 .new-character-section-title,
 .character-section-title {
   color: var(--fg03);
-  font-size: 18px;
+  font-size: 14px;
   margin-top: 0;
 }
 .new-character-section-available-number,
@@ -1083,7 +1087,7 @@ table tbody tr:hover td {
     "textarea info";
   --textarea-margin-top: 16px;
   --textarea-padding: 16px;
-  --textarea-font-size: 16px;
+  --textarea-font-size: 14px;
   --textarea-line-height: 18px;
 }
 .fight-strategy-examples {
@@ -1169,7 +1173,7 @@ table tbody tr:hover td {
   color: var(--fg01);
 }
 .fight-strategy-syntax-help {
-  font-size: 16px;
+  font-size: 14px;
 }
 .fight-strategy-syntax-help-reference {
   color: var(--fg-highlight);
