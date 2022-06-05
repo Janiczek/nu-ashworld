@@ -33,25 +33,17 @@ html {
 
 body {
   display: flex;
-  font-size: 14px;
-  line-height: 19px;
   color: var(--fg02);
   margin: 0;
   position: relative;
   min-height: 100%;
 }
 
-* {
+#app * {
   font-family: ApricotXenC;
   font-size: 14px;
   font-weight: normal;
   line-height: 19px;
-
-  -ms-interpolation-mode: nearest-neighbor;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: -o-pixelated;
-  image-rendering: pixelated;
 
   font-smooth: never;
   -webkit-font-smoothing: none;
