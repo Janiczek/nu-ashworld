@@ -4,26 +4,19 @@ module Admin exposing
     , encodeToBackendMsg
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
 import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.FightStrategy as FightStrategy
 import Data.Map as Map
 import Data.NewChar as NewChar
 import Data.Perk as Perk
-import Data.Player as Player
 import Data.Quest as Quest
 import Data.Skill as Skill
-import Data.Vendor as Vendor
 import Data.World as World
 import Dict
 import Dict.ExtraExtra as Dict
-import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-import Json.Encode.Extra as JEE
-import List.ExtraExtra as List
 import Logic
 import Queue
 import Set.ExtraExtra as Set

@@ -13,15 +13,15 @@ import Data.Barter as Barter
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.Generator as FightGen
-import Data.FightStrategy as FightStrategy exposing (FightStrategy)
+import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.SmallChunk as SmallChunk
-import Data.Message as Message exposing (Message)
-import Data.NewChar as NewChar exposing (NewChar)
+import Data.Message as Message
+import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player as Player
     exposing
@@ -43,6 +43,7 @@ import Data.WorldData
         ( AdminData
         , PlayerData
         )
+import Data.WorldInfo exposing (WorldInfo)
 import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
@@ -57,7 +58,6 @@ import Queue
 import Random exposing (Generator)
 import Random.List
 import Set exposing (Set)
-import Set.ExtraExtra as Set
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -138,7 +138,7 @@ getLoggedInPlayers model =
         |> Dict.fromList
 
 
-getWorlds : Model -> List World.Info
+getWorlds : Model -> List WorldInfo
 getWorlds model =
     model.worlds
         |> Dict.toList
@@ -162,22 +162,15 @@ getPlayerData worldName playerName model =
         |> Maybe.andThen
             (\world ->
                 Dict.get playerName world.players
-                    |> Maybe.map
-                        (\player ->
-                            getPlayerData_
-                                worldName
-                                world
-                                player
-                                model
-                        )
+                    |> Maybe.map (getPlayerData_ worldName world)
             )
 
 
 {-| A "child" helper of getPlayerData for when you already have
 the `Player SPlayer` value fetched.
 -}
-getPlayerData_ : World.Name -> World -> Player SPlayer -> Model -> PlayerData
-getPlayerData_ worldName world player model =
+getPlayerData_ : World.Name -> World -> Player SPlayer -> PlayerData
+getPlayerData_ worldName world player =
     let
         auth : Auth Verified
         auth =
@@ -657,6 +650,7 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                                         [ ( "session-id", JE.string sessionId )
                                         , ( "client-id", JE.string clientId )
                                         , ( "player-name", JE.string playerName )
+                                        , ( "world-name", JE.string worldName )
                                         , ( "to-backend-msg", JE.string <| JE.encode 0 <| Admin.encodeToBackendMsg msg )
                                         ]
                             , expect = Http.expectWhatever (always LoggedToBackendMsg)
@@ -913,7 +907,7 @@ updateFromFrontend sessionId clientId msg model =
                                             }
 
                                         data =
-                                            getPlayerData_ auth.worldName newWorld player model
+                                            getPlayerData_ auth.worldName newWorld player
                                     in
                                     ( newModel
                                     , Cmd.batch
@@ -1216,7 +1210,7 @@ barter barterState clientId world worldName location player model =
 
 
 barterAfterValidation : Barter.State -> Vendor -> World -> World.Name -> Location -> SPlayer -> Model -> Model
-barterAfterValidation barterState vendor world worldName location player model =
+barterAfterValidation barterState vendor _ worldName location player model =
     let
         removePlayerCaps : Int -> Model -> Model
         removePlayerCaps amount =
@@ -1318,14 +1312,14 @@ barterAfterValidation barterState vendor world worldName location player model =
 
 
 readMessage : Message.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-readMessage messageId clientId world worldName player model =
+readMessage messageId clientId _ worldName player model =
     model
         |> updatePlayer worldName player.name (SPlayer.readMessage messageId)
         |> sendCurrentWorld worldName player.name clientId
 
 
 removeMessage : Message.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-removeMessage messageId clientId world worldName player model =
+removeMessage messageId clientId _ worldName player model =
     model
         |> updatePlayer worldName player.name (SPlayer.removeMessage messageId)
         |> sendCurrentWorld worldName player.name clientId
@@ -1387,7 +1381,7 @@ moveTo newCoords pathTaken clientId _ worldName player model =
 
 
 createNewChar : NewChar -> ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
-createNewChar newChar clientId world worldName player model =
+createNewChar newChar clientId _ _ player model =
     case player of
         Player _ ->
             ( model, Cmd.none )
@@ -1430,7 +1424,7 @@ createNewCharWithTime newChar currentTime clientId world worldName player model 
 
                         data : PlayerData
                         data =
-                            getPlayerData_ worldName world newPlayer newModel
+                            getPlayerData_ worldName world newPlayer
                     in
                     ( newModel
                     , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar newCPlayer data
@@ -1463,7 +1457,7 @@ tagSkill skill clientId _ worldName player model =
 
 
 useSkillPoints : Skill -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-useSkillPoints skill clientId world worldName player model =
+useSkillPoints skill clientId _ worldName player model =
     model
         |> updatePlayer worldName player.name (SPlayer.useSkillPoints skill)
         |> sendCurrentWorld worldName player.name clientId
@@ -1477,7 +1471,7 @@ healMe clientId _ worldName player model =
 
 
 equipItem : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-equipItem itemId clientId world worldName player model =
+equipItem itemId clientId _ worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
@@ -1500,7 +1494,7 @@ setFightStrategy ( strategy, text ) clientId _ worldName player model =
 
 
 useItem : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-useItem itemId clientId world worldName player model =
+useItem itemId clientId _ worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
@@ -1565,7 +1559,7 @@ useItem itemId clientId world worldName player model =
 
 
 unequipArmor : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-unequipArmor clientId world worldName player model =
+unequipArmor clientId _ worldName player model =
     case player.equippedArmor of
         Nothing ->
             ( model, Cmd.none )
@@ -1794,7 +1788,7 @@ oneTimePerkEffects currentTime =
 
 
 choosePerk : Perk -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-choosePerk perk clientId world worldName player model =
+choosePerk perk clientId _ worldName player model =
     let
         level =
             Xp.currentLevel player.xp

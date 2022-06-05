@@ -191,7 +191,8 @@ decoder innerDecoder =
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
     JD.oneOf
-        [ sPlayerDecoderV7
+        [ sPlayerDecoderV8
+        , sPlayerDecoderV7
         , sPlayerDecoderV6
         , sPlayerDecoderV5
         , sPlayerDecoderV4

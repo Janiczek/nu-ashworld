@@ -21,7 +21,7 @@ import Data.FightStrategy as FightStrategy
         , Value(..)
         )
 import Data.Item as Item
-import Data.Message as Message exposing (Content(..), Message)
+import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk
 import Data.Player exposing (SPlayer)
 import Data.Skill as Skill exposing (Skill)

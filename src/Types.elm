@@ -32,6 +32,7 @@ import Data.WorldData
         , PlayerData
         , WorldData
         )
+import Data.WorldInfo exposing (WorldInfo)
 import Dict exposing (Dict)
 import File exposing (File)
 import Frontend.HoveredItem exposing (HoveredItem)
@@ -49,7 +50,7 @@ type alias FrontendModel =
     , time : Posix
     , zone : Time.Zone
     , loginForm : Auth Plaintext
-    , worlds : Maybe (List World.Info)
+    , worlds : Maybe (List WorldInfo)
     , worldData : WorldData
 
     -- player frontend state:
@@ -193,11 +194,11 @@ type BackendMsg
 
 type ToFrontend
     = CurrentPlayer PlayerData
-    | CurrentWorlds (List World.Info)
+    | CurrentWorlds (List WorldInfo)
     | CurrentAdmin AdminData
     | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))
     | CurrentAdminLastTenToBackendMsgs (List ( PlayerName, World.Name, ToBackend ))
-    | YoureLoggedOut (List World.Info)
+    | YoureLoggedOut (List WorldInfo)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedIn PlayerData
     | YoureRegistered PlayerData

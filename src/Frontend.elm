@@ -23,7 +23,7 @@ import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.Terrain as Terrain
-import Data.Message as Message exposing (Message)
+import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player as Player
@@ -49,6 +49,7 @@ import Data.WorldData as WorldData
         , PlayerData
         , WorldData(..)
         )
+import Data.WorldInfo exposing (WorldInfo)
 import Data.Xp as Xp
 import DateFormat
 import DateFormat.Relative
@@ -63,7 +64,6 @@ import Frontend.News as News
 import Frontend.Route as Route
     exposing
         ( AdminRoute(..)
-        , PlayerRoute
         , Route(..)
         )
 import Html as H exposing (Attribute, Html)
@@ -72,7 +72,6 @@ import Html.Attributes.Extra as HA
 import Html.Events as HE
 import Html.Events.Extra as HE
 import Html.Extra as H
-import Iso8601
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
@@ -694,7 +693,10 @@ updateFromBackend msg model =
                 |> update (GoToRoute (Route.loggedOut model.route))
 
         CurrentWorlds worlds ->
-            ( { model | worlds = Just worlds }
+            ( { model
+                | worlds = Just worlds
+                , loginForm = Auth.selectDefaultWorld worlds model.loginForm
+              }
             , Cmd.none
             )
 
@@ -809,7 +811,7 @@ appView { leftNav } model =
         tickFrequency : Maybe Time.Interval
         tickFrequency =
             case model.worldData of
-                IsAdmin data ->
+                IsAdmin _ ->
                     Nothing
 
                 IsPlayer data ->
@@ -919,7 +921,7 @@ contentView model =
                 newsView model.zone
 
             ( WorldsList, _ ) ->
-                worldsListView model.zone model.worlds
+                worldsListView model.worlds
 
             ( NotFound url, _ ) ->
                 notFoundView url
@@ -946,7 +948,7 @@ contentView model =
                 in
                 case worldRoute of
                     Route.AboutWorld ->
-                        withCreatedPlayer_ (aboutWorldView model.zone)
+                        withCreatedPlayer_ aboutWorldView
 
                     Route.Character ->
                         withCreatedPlayer_ (characterView model.hoveredItem)
@@ -981,9 +983,7 @@ contentView model =
                                 model.fightStrategyText
 
                     Route.SettingsFightStrategySyntaxHelp ->
-                        settingsFightStrategySyntaxHelpView
-                            model.hoveredItem
-                            model.fightStrategyText
+                        settingsFightStrategySyntaxHelpView model.hoveredItem
 
             ( PlayerRoute _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -1017,8 +1017,8 @@ Many thanks to Patreons:
     ]
 
 
-worldsListView : Time.Zone -> Maybe (List World.Info) -> List (Html FrontendMsg)
-worldsListView zone worlds =
+worldsListView : Maybe (List WorldInfo) -> List (Html FrontendMsg)
+worldsListView worlds =
     case worlds of
         Nothing ->
             contentUnavailableView "list of worlds didn't load"
@@ -1031,7 +1031,6 @@ worldsListView zone worlds =
                         (\world ->
                             H.li []
                                 [ worldInfoView
-                                    zone
                                     { name = world.name
                                     , description = world.description
                                     , startedAt = world.startedAt
@@ -3273,8 +3272,8 @@ messageView zone messageId _ player =
             ]
 
 
-settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> String -> List (Html FrontendMsg)
-settingsFightStrategySyntaxHelpView maybeHoveredItem fightStrategyText =
+settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> List (Html FrontendMsg)
+settingsFightStrategySyntaxHelpView maybeHoveredItem =
     let
         viewMarkup : FightStrategyHelp.Markup -> Html FrontendMsg
         viewMarkup markup =
@@ -3659,37 +3658,15 @@ ladderLoadingView =
     ]
 
 
-worldInfoView : Time.Zone -> World.Info -> Html FrontendMsg
-worldInfoView zone data =
+worldInfoView : WorldInfo -> Html FrontendMsg
+worldInfoView data =
     H.ul []
         [ H.li [] [ H.text <| "Name: " ++ data.name ]
-
-        --, H.li [] [ H.text <| "Description: " ++ data.description ]
         , H.li []
             [ H.text <|
                 "Players: "
                     ++ String.fromInt data.playersCount
             ]
-
-        --, H.li []
-        --    [ H.text <|
-        --        "Started at: "
-        --            ++ DateFormat.format
-        --                [ DateFormat.yearNumber
-        --                , DateFormat.text "-"
-        --                , DateFormat.monthFixed
-        --                , DateFormat.text "-"
-        --                , DateFormat.dayOfMonthFixed
-        --                , DateFormat.text " "
-        --                , DateFormat.hourMilitaryFixed
-        --                , DateFormat.text ":"
-        --                , DateFormat.minuteFixed
-        --                , DateFormat.text ":"
-        --                , DateFormat.secondFixed
-        --                ]
-        --                zone
-        --                data.startedAt
-        --    ]
         , H.li []
             [ H.text <|
                 "Tick frequency: "
@@ -3705,11 +3682,10 @@ worldInfoView zone data =
         ]
 
 
-aboutWorldView : Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-aboutWorldView zone data loggedInPlayer =
+aboutWorldView : PlayerData -> CPlayer -> List (Html FrontendMsg)
+aboutWorldView data _ =
     [ pageTitleView <| "About world: " ++ data.worldName
     , worldInfoView
-        zone
         { name = data.worldName
         , description = data.description
         , startedAt = data.startedAt
@@ -3889,7 +3865,7 @@ adminLadderTableView players =
                                 [ H.text player.name ]
                             , H.td
                                 [ HA.class "ladder-status"
-                                , HA.title <| "Health status"
+                                , HA.title "Health status"
                                 ]
                                 [ player
                                     |> HealthStatus.check Perception.Perfect
@@ -3995,7 +3971,7 @@ view_ model =
 
         leftNav =
             case model.worldData of
-                IsAdmin data ->
+                IsAdmin _ ->
                     [ alertMessageView model.alertMessage
                     , adminLinksView model.route
                     ]
@@ -4335,7 +4311,7 @@ commonLinksView currentRoute =
 
 adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)
 adminWorldsListView newWorldName newWorldFast data =
-    [ pageTitleView <| "Admin :: Worlds"
+    [ pageTitleView "Admin :: Worlds"
     , H.div
         [ HA.id "admin-worlds-list" ]
         [ H.table []
@@ -4374,7 +4350,7 @@ adminWorldsListView newWorldName newWorldFast data =
             []
         , H.label
             [ HA.for "admin-new-world-fast-checkbox"
-            , HE.onClick <| ToggleAdminNewWorldFast
+            , HE.onClick ToggleAdminNewWorldFast
             ]
             [ H.input
                 [ HA.type_ "checkbox"

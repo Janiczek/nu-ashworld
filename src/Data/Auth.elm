@@ -14,6 +14,7 @@ module Data.Auth exposing
     , isAdminName
     , isEmpty
     , promote
+    , selectDefaultWorld
     , setPlaintextPassword
     , unwrap
     , verifiedDecoder
@@ -21,6 +22,7 @@ module Data.Auth exposing
     , verify
     )
 
+import Data.WorldInfo exposing (WorldInfo)
 import Env
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
@@ -201,3 +203,14 @@ isAdminName { name } =
 adminName : String
 adminName =
     "admin"
+
+
+selectDefaultWorld : List WorldInfo -> Auth a -> Auth a
+selectDefaultWorld worlds auth =
+    { auth
+        | worldName =
+            worlds
+                |> List.head
+                |> Maybe.map .name
+                |> Maybe.withDefault auth.worldName
+    }

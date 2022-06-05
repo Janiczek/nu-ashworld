@@ -8,7 +8,6 @@ module Data.WorldData exposing
     )
 
 import AssocList as Dict_
-import Data.Auth exposing (Auth, Plaintext)
 import Data.Ladder as Ladder
 import Data.Player
     exposing
@@ -21,7 +20,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
 import Data.Tick exposing (TickPerIntervalCurve)
 import Data.Vendor as Vendor exposing (Vendor)
-import Data.World as World exposing (World)
+import Data.World as World
 import Dict exposing (Dict)
 import Time exposing (Posix)
 import Time.Extra as Time

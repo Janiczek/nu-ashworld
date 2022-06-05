@@ -1,6 +1,5 @@
 module Data.World exposing
-    ( Info
-    , Name
+    ( Name
     , World
     , decoder
     , encode
@@ -9,12 +8,9 @@ module Data.World exposing
 
 import AssocList as Dict_
 import AssocList.ExtraExtra as Dict_
-import Data.Message as Message
 import Data.Player as Player
     exposing
-        ( COtherPlayer
-        , CPlayer
-        , Player
+        ( Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
@@ -28,7 +24,6 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
-import Lamdera exposing (ClientId, SessionId)
 import List.ExtraExtra as List
 import Time exposing (Posix)
 import Time.Extra as Time
@@ -37,17 +32,6 @@ import Time.ExtraExtra as Time
 
 type alias Name =
     String
-
-
-type alias Info =
-    { name : String
-    , description : String
-    , playersCount : Int
-    , startedAt : Posix
-    , tickFrequency : Time.Interval
-    , tickPerIntervalCurve : TickPerIntervalCurve
-    , vendorRestockFrequency : Time.Interval
-    }
 
 
 type alias World =
