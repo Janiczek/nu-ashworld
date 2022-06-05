@@ -904,7 +904,7 @@ contentView model =
                         adminWorldsListView model.adminNewWorldName model.adminNewWorldFast data
 
                     AdminWorldActivity worldName ->
-                        adminWorldActivityView model.lastTenToBackendMsgs model.zone worldName data
+                        adminWorldActivityView model.lastTenToBackendMsgs worldName data
 
                     AdminWorldHiscores worldName ->
                         adminWorldHiscoresView worldName data
@@ -4393,8 +4393,8 @@ adminWorldsListView newWorldName newWorldFast data =
     ]
 
 
-adminWorldActivityView : List ( PlayerName, World.Name, ToBackend ) -> Time.Zone -> World.Name -> AdminData -> List (Html FrontendMsg)
-adminWorldActivityView lastTenToBackendMsgs zone worldName data =
+adminWorldActivityView : List ( PlayerName, World.Name, ToBackend ) -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView lastTenToBackendMsgs worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
             contentUnavailableView <|
@@ -4402,7 +4402,7 @@ adminWorldActivityView lastTenToBackendMsgs zone worldName data =
                     ++ worldName
                     ++ "' not found"
 
-        Just world ->
+        Just _ ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
             , H.table [ HA.id "admin-last-ten-msgs-table" ]

@@ -11,13 +11,12 @@ import Data.Fight.Generator exposing (Fight)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
-import Data.Message as Message exposing (Message)
+import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player
     exposing
         ( CPlayer
-        , Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
@@ -36,11 +35,7 @@ import Data.WorldData
 import Dict exposing (Dict)
 import File exposing (File)
 import Frontend.HoveredItem exposing (HoveredItem)
-import Frontend.Route
-    exposing
-        ( PlayerRoute
-        , Route
-        )
+import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Queue exposing (Queue)
 import Set exposing (Set)

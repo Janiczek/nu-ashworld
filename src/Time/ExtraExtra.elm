@@ -6,7 +6,7 @@ module Time.ExtraExtra exposing
 
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-import Time.Extra as Time exposing (Interval(..))
+import Time.Extra exposing (Interval(..))
 
 
 encodeInterval : Interval -> JE.Value

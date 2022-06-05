@@ -10,9 +10,7 @@ module Frontend.Route exposing
     , toString
     )
 
-import Data.Barter as Barter
-import Data.Fight as Fight
-import Data.Message as Message exposing (Message)
+import Data.Message as Message
 import Data.World as World
 import Url exposing (Url)
 import Url.Parser as P exposing ((</>), Parser)
