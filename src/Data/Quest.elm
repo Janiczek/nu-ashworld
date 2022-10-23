@@ -1766,6 +1766,7 @@ type PlayerReward
     = ItemReward { what : Item.Kind, amount : Int }
     | SkillUpgrade { skill : Skill, percentage : Int }
     | PerkReward Perk
+    | CarReward
 
 
 playerRewardTitle : PlayerReward -> String
@@ -1814,10 +1815,251 @@ playerRewards name =
             []
 
         KlamathSearchForSmileyTrapper ->
+            [ ItemReward { what = Stimpak, amount = 5 } ]
+
+        ToxicCavesRescueSmileyTrapper ->
             [ PerkReward GeckoSkinning ]
 
-        _ ->
-            -- TODO
+        ToxicCavesRepairTheGenerator ->
+            [ ItemReward { what = SmallEnergyCell, amount = 100 } ]
+
+        ToxicCavesLootTheBunker ->
+            [ ItemReward { what = TeslaArmor, amount = 1 }
+            , ItemReward { what = Bozar, amount = 1 }
+            , ItemReward { what = Fmj223, amount = 50 }
+            ]
+
+        DenFreeVicByPayingMetzger ->
+            [ ItemReward { what = SawedOffShotgun, amount = 1 }
+            , ItemReward { what = ShotgunShell, amount = 40 }
+            ]
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            [ ItemReward { what = SawedOffShotgun, amount = 1 }
+            , ItemReward { what = ShotgunShell, amount = 40 }
+            ]
+
+        DenDeliverMealToSmitty ->
+            [ ItemReward { what = Tool, amount = 1 } ]
+
+        DenFindCarParts ->
+            [ ItemReward { what = SmallEnergyCell, amount = 60 } ]
+
+        DenFixTheCar ->
+            [ CarReward ]
+
+        ModocInvestigateGhostFarm ->
+            []
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            [ ItemReward { what = Lockpick, amount = 1 } ]
+
+        ModocMediateBetweenSlagsAndJo ->
+            []
+
+        ModocFindGoldWatchForCornelius ->
+            [ ItemReward { what = Smg10mm, amount = 1 }
+            , ItemReward { what = Jhp10mm, amount = 24 }
+            ]
+
+        ModocFindGoldWatchForFarrel ->
+            [ ItemReward { what = Supersledge, amount = 1 } ]
+
+        VaultCityGetPlowForMrSmith ->
+            [ ItemReward { what = Stimpak, amount = 10 } ]
+
+        VaultCityRescueAmandasHusband ->
+            []
+
+        GeckoOptimizePowerPlant ->
+            [ ItemReward { what = SmallEnergyCell, amount = 150 } ]
+
+        ReddingClearWanamingoMine ->
+            [ ItemReward { what = HunterRifle { isScoped = True }, amount = 1 }
+            , ItemReward { what = Fmj223, amount = 50 }
+            ]
+
+        ReddingFindExcavatorChip ->
+            [ ItemReward { what = ScoutHandbook, amount = 5 } ]
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            [ ItemReward { what = Grenade, amount = 20 }
+            , ItemReward { what = SuperStimpak, amount = 10 }
+            ]
+
+        NewRenoHelpGuardSecretTransaction ->
+            [ ItemReward { what = SniperRifle, amount = 1 }
+            , ItemReward { what = Fmj223, amount = 50 }
+            ]
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            []
+
+        NewRenoWinBoxingTournament ->
+            [ ItemReward { what = PowerFist, amount = 1 }
+            , ItemReward { what = SmallEnergyCell, amount = 50 }
+            ]
+
+        NewRenoAcquireElectronicLockpick ->
+            [ ItemReward { what = ElectronicLockpick, amount = 1 } ]
+
+        NCRGuardBrahminCaravan ->
+            [ ItemReward { what = AssaultRifle { isExpaneded = True }, amount = 1 }
+            , ItemReward { what = Jhp5mm, amount = 50 }
+            ]
+
+        NCRTestMutagenicSerum ->
+            [ ItemReward { what = BigBookOfScience, amount = 2 } ]
+
+        NCRRetrieveComputerParts ->
+            [ ItemReward { what = DeansElectronics, amount = 2 } ]
+
+        NCRFreeSlaves ->
+            [ ItemReward { what = PancorJackhammer, amount = 1 }
+            , ItemReward { what = ShotgunShell, amount = 40 }
+            ]
+
+        NCRInvestigateBrahminRaids ->
+            []
+
+        V15RescueChrissy ->
+            [ ItemReward { what = HkP90c, amount = 3 }
+            , ItemReward { what = Jhp10mm, amount = 24 }
+            ]
+
+        V15CompleteDealWithNCR ->
+            [ ItemReward { what = LaserPistol, amount = 2 }
+            , ItemReward { what = SmallEnergyCell, amount = 80 }
+            ]
+
+        V13FixVaultComputer ->
+            [ ItemReward { what = Stimpak, amount = 20 }
+            , ItemReward { what = SuperStimpak, amount = 10 }
+            , ItemReward { what = Fmj223, amount = 200 }
+            , ItemReward { what = SmallEnergyCell, amount = 150 }
+            ]
+
+        V13FindTheGeck ->
+            [ ItemReward { what = GECK, amount = 1 } ]
+
+        BrokenHillsFixMineAirPurifier ->
+            [ ItemReward { what = CombatArmorMk2, amount = 1 } ]
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            [ ItemReward { what = PlasmaRifle, amount = 1 }
+            , ItemReward { what = MicrofusionCell, amount = 50 }
+            ]
+
+        BrokenHillsFindMissingPeople ->
+            []
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            [ ItemReward { what = MegaPowerFist, amount = 1 }
+            , ItemReward { what = SmallEnergyCell, amount = 40 }
+            ]
+
+        RaidersFindEvidenceOfBishopTampering ->
+            [ ItemReward { what = Stimpak, amount = 20 } ]
+
+        RaidersKillEverybody ->
+            [ ItemReward { what = CombatArmorMk2, amount = 1 }
+            , ItemReward { what = AssaultRifle { isExpanded = True }, amount = 1 }
+            , ItemReward { what = Jhp5mm, amount = 50 }
+            ]
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            [ ItemReward { what = AbnormalBrain, amount = 1 } ]
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            [ ItemReward { what = ChimpanzeeBrain, amount = 1 } ]
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            [ ItemReward { what = HumanBrain, amount = 1 } ]
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            [ ItemReward { what = CyberneticBrain, amount = 1 } ]
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            [ ItemReward { what = SkynetAim, amount = 1 } ]
+
+        MilitaryBaseExcavateTheEntrance ->
+            [ ItemReward { what = Grenade, amount = 20 }
+            , ItemReward { what = SuperStimpak, amount = 10 }
+            ]
+
+        MilitaryBaseKillMelchior ->
+            [ ItemReward { what = GatlingLaser, amount = 1 }
+            , ItemReward { what = MicrofusionCell, amount = 50 }
+            ]
+
+        SanFranciscoFindFuelForTanker ->
+            [ ItemReward { what = SmallEnergyCell, amount = 100 } ]
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            [ ItemReward { what = MotionSensor, amount = 1 } ]
+
+        SanFranciscoFindNavCompPartForTanker ->
+            []
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            [ ItemReward { what = TurboPlasmaRifle, amount = 1 }
+            , ItemReward { what = MicrofusionCell, amount = 50 }
+            ]
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            [ ItemReward { what = GaussRifle, amount = 1 }
+            , ItemReward { what = Ec2mm, amount = 100 }
+            ]
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            [ ItemReward { what = PowerArmor, amount = 1 } ]
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            [ ItemReward { what = GaussPistol, amount = 1 }
+            , ItemReward { what = Ec2mm, amount = 200 }
+            ]
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            []
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            []
+
+        SanFranciscoEmbarkForEnclave ->
+            []
+
+        NavarroFixK9 ->
+            [ ItemReward { what = K9, amount = 1 } ]
+
+        NavarroRetrieveFobForTanker ->
+            []
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            [ ItemReward { what = PulseRifle, amount = 2 }
+            , ItemReward { what = MicrofusionCell, amount = 100 }
+            ]
+
+        EnclaveKillThePresidentStealthily ->
+            []
+
+        EnclaveKillThePresidentTheUsualWay ->
+            []
+
+        EnclaveFindTheGeck ->
+            [ ItemReward { what = GECK, amount = 1 } ]
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            [ ItemReward { what = GaussRifle, amount = 3 }
+            , ItemReward { what = Ec2mm, amount = 200 }
+            ]
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            []
+
+        EnclaveKillFrankHorrigan ->
+            []
+
+        EnclaveReturnToMainland ->
             []
 
 

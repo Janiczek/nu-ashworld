@@ -6,7 +6,6 @@ module Data.Item exposing
     , Type(..)
     , UniqueKey
     , all
-    , allHealing
     , armorClass
     , baseValue
     , create
@@ -54,24 +53,70 @@ type Kind
     = Fruit
     | HealingPowder
     | MeatJerky
+    | Beer
+      --
     | Stimpak
+    | SuperStimpak
+      --
     | BigBookOfScience
     | DeansElectronics
     | FirstAidBook
     | GunsAndBullets
     | ScoutHandbook
+      --
     | Robes
     | LeatherJacket
     | LeatherArmor
     | MetalArmor
-    | Beer
+    | TeslaArmor
+    | CombatArmorMk2
+    | PowerArmor
+      --
+      -- TODO knives? crowbar? etc
+    | Supersledge
+    | PowerFist
+    | MegaPowerFist
+      --
+    | Grenade
+      --
     | BBGun
+    | HuntingRifle
+    | ScopedHuntingRifle
+    | Bozar
+    | SawedOffShotgun
+    | SniperRifle
+    | AssaultRifle
+    | ExpandedAssaultRifle
+    | PancorJackhammer
+    | HkP90c
+    | LaserPistol
+    | PlasmaRifle
+    | GatlingLaser
+    | TurboPlasmaRifle
+    | GaussRifle
+    | GaussPistol
+    | PulseRifle
+      --
     | BBAmmo
+    | SmallEnergyCell
+    | Fmj223
+    | ShotgunShell
+    | Smg10mm
+    | Jhp10mm
+    | Jhp5mm
+    | MicrofusionCell
+    | Ec2mm
+      --
+    | Tool
     | ElectronicLockpick
     | AbnormalBrain
     | ChimpanzeeBrain
     | HumanBrain
     | CyberneticBrain
+    | GECK
+    | SkynetAim
+    | MotionSensor
+    | K9
 
 
 all : List Kind
@@ -97,6 +142,8 @@ all =
     , ChimpanzeeBrain
     , HumanBrain
     , CyberneticBrain
+    , HuntingRifle
+    , ScopedHuntingRifle
     ]
 
 
@@ -104,11 +151,6 @@ isHealing : Kind -> Bool
 isHealing kind =
     (healAmount kind /= 0)
         && List.member Heal (usageEffects kind)
-
-
-allHealing : List Kind
-allHealing =
-    List.filter isHealing all
 
 
 type Effect
@@ -183,6 +225,12 @@ baseValue kind =
 
         CyberneticBrain ->
             1000
+
+        HuntingRifle ->
+            1000
+
+        ScopedHuntingRifle ->
+            1500
 
 
 armorClass : Kind -> Int
@@ -344,6 +392,12 @@ encodeKind kind =
         CyberneticBrain ->
             JE.string "cybernetic-brain"
 
+        HuntingRifle ->
+            JE.string "hunting-rifle"
+
+        ScopedHuntingRifle ->
+            JE.string "scoped-hunting-rifle"
+
 
 kindDecoder : Decoder Kind
 kindDecoder =
@@ -470,6 +524,12 @@ name kind =
         CyberneticBrain ->
             "Cybernetic Brain"
 
+        HuntingRifle ->
+            "Hunting Rifle"
+
+        ScopedHuntingRifle ->
+            "Scoped Hunting Rifle"
+
 
 create :
     { lastId : Int
@@ -493,7 +553,11 @@ create { lastId, uniqueKey, count } =
     ( item, newLastId )
 
 
-{-| This identifies item. Right now this is just the item Kind (eg.
+{-| This identifies item.
+
+---- the below written before we tried to do mods a bit differently ----
+
+Right now this is just the item Kind (eg.
 HuntingRifle) but later when we add Mods, UniqueKey will also contain them and
 so you will be able to differentiate between (HuntingRifle, []) and
 (HuntingRifle, [HuntingRifleUpgrade]) or
@@ -505,7 +569,8 @@ non-upgraded one and it becoming automatically (wrongly) upgraded too.
 -}
 type alias UniqueKey =
     -- TODO mods
-    { kind : Kind }
+    { kind : Kind
+    }
 
 
 getUniqueKey : Item -> UniqueKey
@@ -616,6 +681,12 @@ usageEffects kind =
         CyberneticBrain ->
             []
 
+        HuntingRifle ->
+            []
+
+        ScopedHuntingRifle ->
+            []
+
 
 type Type
     = Food
@@ -713,6 +784,12 @@ type_ kind =
 
         CyberneticBrain ->
             Misc
+
+        HuntingRifle ->
+            SmallGun
+
+        ScopedHuntingRifle ->
+            SmallGun
 
 
 isEquippable : Kind -> Bool
