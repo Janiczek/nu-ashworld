@@ -470,9 +470,200 @@ ticksNeeded name =
         KlamathSearchForSmileyTrapper ->
             40
 
-        _ ->
-            -- TODO
-            0
+        ToxicCavesRescueSmileyTrapper ->
+            75
+
+        ToxicCavesRepairTheGenerator ->
+            40
+
+        ToxicCavesLootTheBunker ->
+            100
+
+        DenFreeVicByPayingMetzger ->
+            200
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            200
+
+        DenDeliverMealToSmitty ->
+            50
+
+        DenFindCarParts ->
+            300
+
+        DenFixTheCar ->
+            100
+
+        ModocInvestigateGhostFarm ->
+            100
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            75
+
+        ModocMediateBetweenSlagsAndJo ->
+            50
+
+        ModocFindGoldWatchForCornelius ->
+            75
+
+        ModocFindGoldWatchForFarrel ->
+            75
+
+        VaultCityGetPlowForMrSmith ->
+            50
+
+        VaultCityRescueAmandasHusband ->
+            100
+
+        GeckoOptimizePowerPlant ->
+            100
+
+        ReddingClearWanamingoMine ->
+            200
+
+        ReddingFindExcavatorChip ->
+            100
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            100
+
+        NewRenoHelpGuardSecretTransaction ->
+            75
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            75
+
+        NewRenoWinBoxingTournament ->
+            150
+
+        NewRenoAcquireElectronicLockpick ->
+            50
+
+        NCRGuardBrahminCaravan ->
+            75
+
+        NCRTestMutagenicSerum ->
+            60
+
+        NCRRetrieveComputerParts ->
+            150
+
+        NCRFreeSlaves ->
+            80
+
+        NCRInvestigateBrahminRaids ->
+            75
+
+        V15RescueChrissy ->
+            100
+
+        V15CompleteDealWithNCR ->
+            200
+
+        V13FixVaultComputer ->
+            75
+
+        V13FindTheGeck ->
+            50
+
+        BrokenHillsFixMineAirPurifier ->
+            100
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            100
+
+        BrokenHillsFindMissingPeople ->
+            100
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            50
+
+        RaidersFindEvidenceOfBishopTampering ->
+            100
+
+        RaidersKillEverybody ->
+            200
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            100
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            100
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            100
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            100
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            200
+
+        MilitaryBaseExcavateTheEntrance ->
+            100
+
+        MilitaryBaseKillMelchior ->
+            75
+
+        SanFranciscoFindFuelForTanker ->
+            120
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            50
+
+        SanFranciscoFindNavCompPartForTanker ->
+            75
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            150
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            150
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            150
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            200
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            100
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            100
+
+        SanFranciscoEmbarkForEnclave ->
+            100
+
+        NavarroFixK9 ->
+            150
+
+        NavarroRetrieveFobForTanker ->
+            100
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            100
+
+        EnclaveKillThePresidentStealthily ->
+            150
+
+        EnclaveKillThePresidentTheUsualWay ->
+            150
+
+        EnclaveFindTheGeck ->
+            150
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            150
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            100
+
+        EnclaveKillFrankHorrigan ->
+            300
+
+        EnclaveReturnToMainland ->
+            100
 
 
 xpPerTickGiven : Name -> Int
