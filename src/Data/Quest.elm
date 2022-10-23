@@ -1904,8 +1904,199 @@ ticksNeededForPlayerReward name =
         KlamathSearchForSmileyTrapper ->
             4
 
-        _ ->
-            -- TODO
+        ToxicCavesRescueSmileyTrapper ->
+            5
+
+        ToxicCavesRepairTheGenerator ->
+            5
+
+        ToxicCavesLootTheBunker ->
+            20
+
+        DenFreeVicByPayingMetzger ->
+            20
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            20
+
+        DenDeliverMealToSmitty ->
+            10
+
+        DenFindCarParts ->
+            20
+
+        DenFixTheCar ->
+            5
+
+        ModocInvestigateGhostFarm ->
+            0
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            15
+
+        ModocMediateBetweenSlagsAndJo ->
+            0
+
+        ModocFindGoldWatchForCornelius ->
+            15
+
+        ModocFindGoldWatchForFarrel ->
+            15
+
+        VaultCityGetPlowForMrSmith ->
+            10
+
+        VaultCityRescueAmandasHusband ->
+            0
+
+        GeckoOptimizePowerPlant ->
+            10
+
+        ReddingClearWanamingoMine ->
+            20
+
+        ReddingFindExcavatorChip ->
+            10
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            20
+
+        NewRenoHelpGuardSecretTransaction ->
+            15
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            0
+
+        NewRenoWinBoxingTournament ->
+            30
+
+        NewRenoAcquireElectronicLockpick ->
+            10
+
+        NCRGuardBrahminCaravan ->
+            15
+
+        NCRTestMutagenicSerum ->
+            10
+
+        NCRRetrieveComputerParts ->
+            15
+
+        NCRFreeSlaves ->
+            10
+
+        NCRInvestigateBrahminRaids ->
+            0
+
+        V15RescueChrissy ->
+            20
+
+        V15CompleteDealWithNCR ->
+            20
+
+        V13FixVaultComputer ->
+            15
+
+        V13FindTheGeck ->
+            10
+
+        BrokenHillsFixMineAirPurifier ->
+            10
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            10
+
+        BrokenHillsFindMissingPeople ->
+            0
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            10
+
+        RaidersFindEvidenceOfBishopTampering ->
+            10
+
+        RaidersKillEverybody ->
+            20
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            10
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            10
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            10
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            10
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            20
+
+        MilitaryBaseExcavateTheEntrance ->
+            20
+
+        MilitaryBaseKillMelchior ->
+            15
+
+        SanFranciscoFindFuelForTanker ->
+            20
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            10
+
+        SanFranciscoFindNavCompPartForTanker ->
+            0
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            30
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            30
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            30
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            20
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            0
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            0
+
+        SanFranciscoEmbarkForEnclave ->
+            0
+
+        NavarroFixK9 ->
+            30
+
+        NavarroRetrieveFobForTanker ->
+            0
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            10
+
+        EnclaveKillThePresidentStealthily ->
+            0
+
+        EnclaveKillThePresidentTheUsualWay ->
+            0
+
+        EnclaveFindTheGeck ->
+            10
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            30
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            0
+
+        EnclaveKillFrankHorrigan ->
+            0
+
+        EnclaveReturnToMainland ->
             0
 
 
