@@ -4469,7 +4469,7 @@ adminWorldHiscoresView worldName data =
                           , \p ->
                                 p.items
                                     |> Dict.values
-                                    |> List.filter (\{ kind } -> Item.isBook kind)
+                                    |> List.filter (\{ kind } -> Item.type_ kind == Item.Book)
                                     |> List.map .count
                                     |> List.sum
                           )
