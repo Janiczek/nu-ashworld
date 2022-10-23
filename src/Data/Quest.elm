@@ -696,9 +696,200 @@ xpPerTickGiven name =
         KlamathSearchForSmileyTrapper ->
             75
 
-        _ ->
-            -- TODO
-            0
+        ToxicCavesRescueSmileyTrapper ->
+            150
+
+        ToxicCavesRepairTheGenerator ->
+            200
+
+        ToxicCavesLootTheBunker ->
+            500
+
+        DenFreeVicByPayingMetzger ->
+            200
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            200
+
+        DenDeliverMealToSmitty ->
+            100
+
+        DenFindCarParts ->
+            150
+
+        DenFixTheCar ->
+            200
+
+        ModocInvestigateGhostFarm ->
+            250
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            200
+
+        ModocMediateBetweenSlagsAndJo ->
+            250
+
+        ModocFindGoldWatchForCornelius ->
+            200
+
+        ModocFindGoldWatchForFarrel ->
+            200
+
+        VaultCityGetPlowForMrSmith ->
+            250
+
+        VaultCityRescueAmandasHusband ->
+            300
+
+        GeckoOptimizePowerPlant ->
+            350
+
+        ReddingClearWanamingoMine ->
+            400
+
+        ReddingFindExcavatorChip ->
+            350
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            300
+
+        NewRenoHelpGuardSecretTransaction ->
+            400
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            300
+
+        NewRenoWinBoxingTournament ->
+            400
+
+        NewRenoAcquireElectronicLockpick ->
+            200
+
+        NCRGuardBrahminCaravan ->
+            350
+
+        NCRTestMutagenicSerum ->
+            300
+
+        NCRRetrieveComputerParts ->
+            500
+
+        NCRFreeSlaves ->
+            450
+
+        NCRInvestigateBrahminRaids ->
+            350
+
+        V15RescueChrissy ->
+            400
+
+        V15CompleteDealWithNCR ->
+            500
+
+        V13FixVaultComputer ->
+            700
+
+        V13FindTheGeck ->
+            800
+
+        BrokenHillsFixMineAirPurifier ->
+            600
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            600
+
+        BrokenHillsFindMissingPeople ->
+            500
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            600
+
+        RaidersFindEvidenceOfBishopTampering ->
+            600
+
+        RaidersKillEverybody ->
+            700
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            300
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            400
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            500
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            600
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            800
+
+        MilitaryBaseExcavateTheEntrance ->
+            700
+
+        MilitaryBaseKillMelchior ->
+            800
+
+        SanFranciscoFindFuelForTanker ->
+            600
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            500
+
+        SanFranciscoFindNavCompPartForTanker ->
+            700
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            750
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            750
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            750
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            700
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            700
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            700
+
+        SanFranciscoEmbarkForEnclave ->
+            800
+
+        NavarroFixK9 ->
+            750
+
+        NavarroRetrieveFobForTanker ->
+            850
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            800
+
+        EnclaveKillThePresidentStealthily ->
+            850
+
+        EnclaveKillThePresidentTheUsualWay ->
+            850
+
+        EnclaveFindTheGeck ->
+            800
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            850
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            900
+
+        EnclaveKillFrankHorrigan ->
+            1000
+
+        EnclaveReturnToMainland ->
+            1000
 
 
 location : Name -> Location
