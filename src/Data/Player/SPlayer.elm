@@ -663,6 +663,22 @@ questEngagement player quest =
 
                         Specific skill_ ->
                             oneSkill percentage skill_
+
+                ItemRequirementOneOf items ->
+                    -- TODO consume the items once adding the quest? Only in some of these cases (chimpanzee brain) and not in others (lockpick)?
+                    let
+                        playerItemKinds : Set_.Set Item.Kind
+                        playerItemKinds =
+                            player.items
+                                |> Dict.values
+                                |> List.map .kind
+                                |> Set_.fromList
+                    in
+                    List.all (\kind -> Set_.member kind playerItemKinds) items
+
+                CapsRequirement amount ->
+                    -- TODO remove the caps once adding the quest?
+                    player.caps >= amount
     in
     if Set_.member quest player.questsActive then
         if List.isEmpty reqs then
@@ -672,6 +688,9 @@ questEngagement player quest =
             Progressing
 
         else
+            {- TODO only allow this if the reqs not met are the skill ones!
+               We can't allow the user to progress if they don't meet the caps / items reqs!
+            -}
             ProgressingSlowly
 
     else

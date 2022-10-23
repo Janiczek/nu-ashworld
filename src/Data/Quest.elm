@@ -36,6 +36,13 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 
 
+
+{- TODO quest in NCR about the suicidal guy: time attack - the first time
+   somebody starts that quest, a global time limit for everybody starts; if the
+   quest isn't finished by then, it fails and something in the world changes
+-}
+
+
 type Name
     = ArroyoKillEvilPlants
     | ArroyoFixWellForFeargus
@@ -1816,6 +1823,8 @@ playerRewards name =
 
 type PlayerRequirement
     = SkillRequirement { skill : SkillRequirement, percentage : Int }
+    | ItemRequirementOneOf (List Item.Kind)
+    | CapsRequirement Int
 
 
 type SkillRequirement
@@ -1837,6 +1846,17 @@ playerRequirementTitle req =
                 ++ " "
                 ++ String.fromInt percentage
                 ++ "%"
+
+        ItemRequirementOneOf items ->
+            case items of
+                [ single ] ->
+                    "Item: " ++ Item.name single
+
+                _ ->
+                    "Items: " ++ String.join ", " (List.map Item.name items)
+
+        CapsRequirement amount ->
+            "Caps: $" ++ String.fromInt amount
 
 
 playerRequirements : Name -> List PlayerRequirement
@@ -1869,8 +1889,210 @@ playerRequirements name =
         KlamathSearchForSmileyTrapper ->
             [ SkillRequirement { skill = Specific Outdoorsman, percentage = 20 } ]
 
-        _ ->
-            -- TODO
+        ToxicCavesRescueSmileyTrapper ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 40 } ]
+
+        ToxicCavesRepairTheGenerator ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 90 } ]
+
+        ToxicCavesLootTheBunker ->
+            [ SkillRequirement { skill = Combat, percentage = 120 }
+            , ItemRequirementOneOf [ ElectronicLockpick ]
+            ]
+
+        DenFreeVicByPayingMetzger ->
+            [ CapsRequirement 5000 ]
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            [ SkillRequirement { skill = Combat, percentage = 70 } ]
+
+        DenDeliverMealToSmitty ->
+            []
+
+        DenFindCarParts ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 50 } ]
+
+        DenFixTheCar ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 70 } ]
+
+        ModocInvestigateGhostFarm ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 70 } ]
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            [ SkillRequirement { skill = Combat, percentage = 50 } ]
+
+        ModocMediateBetweenSlagsAndJo ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 60 } ]
+
+        ModocFindGoldWatchForCornelius ->
+            [ SkillRequirement { skill = Specific Lockpick, percentage = 70 } ]
+
+        ModocFindGoldWatchForFarrel ->
+            [ SkillRequirement { skill = Specific Lockpick, percentage = 70 } ]
+
+        VaultCityGetPlowForMrSmith ->
+            [ SkillRequirement { skill = Specific Science, percentage = 60 } ]
+
+        VaultCityRescueAmandasHusband ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 80 } ]
+
+        GeckoOptimizePowerPlant ->
+            [ SkillRequirement { skill = Specific Science, percentage = 100 } ]
+
+        ReddingClearWanamingoMine ->
+            [ SkillRequirement { skill = Combat, percentage = 150 } ]
+
+        ReddingFindExcavatorChip ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 80 } ]
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 110 } ]
+
+        NewRenoHelpGuardSecretTransaction ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 90 } ]
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 100 } ]
+
+        NewRenoWinBoxingTournament ->
+            [ SkillRequirement { skill = Specific Unarmed, percentage = 100 } ]
+
+        NewRenoAcquireElectronicLockpick ->
+            [ SkillRequirement { skill = Specific Steal, percentage = 90 } ]
+
+        NCRGuardBrahminCaravan ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 80 } ]
+
+        NCRTestMutagenicSerum ->
+            [ SkillRequirement { skill = Specific Science, percentage = 80 } ]
+
+        NCRRetrieveComputerParts ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 120 } ]
+
+        NCRFreeSlaves ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 110 } ]
+
+        NCRInvestigateBrahminRaids ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 100 } ]
+
+        V15RescueChrissy ->
+            [ SkillRequirement { skill = Specific Traps, percentage = 100 } ]
+
+        V15CompleteDealWithNCR ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 120 } ]
+
+        V13FixVaultComputer ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 120 } ]
+
+        V13FindTheGeck ->
+            [ SkillRequirement { skill = Specific Lockpick, percentage = 150 } ]
+
+        BrokenHillsFixMineAirPurifier ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 100 } ]
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            [ SkillRequirement { skill = Specific Traps, percentage = 100 } ]
+
+        BrokenHillsFindMissingPeople ->
+            []
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            [ SkillRequirement { skill = Specific Unarmed, percentage = 150 } ]
+
+        RaidersFindEvidenceOfBishopTampering ->
+            [ SkillRequirement { skill = Specific Traps, percentage = 130 } ]
+
+        RaidersKillEverybody ->
+            [ SkillRequirement { skill = Combat, percentage = 200 } ]
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            [ SkillRequirement { skill = Specific Science, percentage = 60 } ]
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            [ SkillRequirement { skill = Specific Science, percentage = 100 } ]
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            [ SkillRequirement { skill = Specific Science, percentage = 150 } ]
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            [ SkillRequirement { skill = Specific Science, percentage = 200 } ]
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 150 }
+            , ItemRequirementOneOf
+                [ AbnormalBrain
+                , ChimpanzeeBrain
+                , HumanBrain
+                , CyberneticBrain
+                ]
+            ]
+
+        MilitaryBaseExcavateTheEntrance ->
+            [ SkillRequirement { skill = Specific Traps, percentage = 180 } ]
+
+        MilitaryBaseKillMelchior ->
+            [ SkillRequirement { skill = Combat, percentage = 220 } ]
+
+        SanFranciscoFindFuelForTanker ->
+            [ SkillRequirement { skill = Specific Barter, percentage = 150 } ]
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 150 } ]
+
+        SanFranciscoFindNavCompPartForTanker ->
+            [ SkillRequirement { skill = Specific Lockpick, percentage = 180 } ]
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            [ SkillRequirement { skill = Combat, percentage = 200 } ]
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            [ SkillRequirement { skill = Specific Unarmed, percentage = 200 } ]
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            [ SkillRequirement { skill = Specific Unarmed, percentage = 200 } ]
+
+        SanFranciscoEmbarkForEnclave ->
+            []
+
+        NavarroFixK9 ->
+            [ SkillRequirement { skill = Specific Repair, percentage = 200 } ]
+
+        NavarroRetrieveFobForTanker ->
+            [ SkillRequirement { skill = Specific Steal, percentage = 180 } ]
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 200 } ]
+
+        EnclaveKillThePresidentStealthily ->
+            [ SkillRequirement { skill = Specific Sneak, percentage = 220 } ]
+
+        EnclaveKillThePresidentTheUsualWay ->
+            [ SkillRequirement { skill = Combat, percentage = 220 } ]
+
+        EnclaveFindTheGeck ->
+            [ SkillRequirement { skill = Specific Traps, percentage = 150 }
+            , SkillRequirement { skill = Specific Sneak, percentage = 150 }
+            ]
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            [ SkillRequirement { skill = Specific Science, percentage = 250 } ]
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            [ SkillRequirement { skill = Specific Speech, percentage = 250 } ]
+
+        EnclaveKillFrankHorrigan ->
+            [ SkillRequirement { skill = Combat, percentage = 250 } ]
+
+        EnclaveReturnToMainland ->
             []
 
 
