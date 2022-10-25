@@ -1016,7 +1016,11 @@ usageEffects kind =
 type Type
     = Food
     | Armor
+    | UnarmedWeapon
+    | ThrownWeapon
     | SmallGun
+    | BigGun
+    | EnergyWeapon
     | Book
     | Misc
     | Ammo
