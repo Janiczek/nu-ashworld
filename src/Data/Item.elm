@@ -16,8 +16,8 @@ module Data.Item exposing
     , encodeKind
     , findMergeableId
     , getUniqueKey
-    , healAmount
     , healAmountGenerator
+    , healAmountGenerator_
     , isEquippable
     , isHealing
     , kindDecoder
@@ -33,7 +33,6 @@ import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
-import List.Extra as List
 import Random exposing (Generator)
 
 
@@ -1572,8 +1571,13 @@ healAmount kind =
 healAmountGenerator : Kind -> Generator Int
 healAmountGenerator kind =
     case healAmount kind of
-        Just { min, max } ->
-            Random.int min max
+        Just r ->
+            healAmountGenerator_ r
 
         Nothing ->
             Random.constant 0
+
+
+healAmountGenerator_ : { min : Int, max : Int } -> Generator Int
+healAmountGenerator_ { min, max } =
+    Random.int min max

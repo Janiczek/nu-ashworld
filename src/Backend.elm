@@ -1409,7 +1409,7 @@ useItem itemId clientId _ worldName player model =
                             handleEffect effect =
                                 case effect of
                                     Item.Heal r ->
-                                        Item.healAmountGenerator item.kind
+                                        Item.healAmountGenerator_ r
                                             |> Random.map SPlayer.addHp
 
                                     Item.RemoveAfterUse ->

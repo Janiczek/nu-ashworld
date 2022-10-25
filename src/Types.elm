@@ -1,30 +1,23 @@
 module Types exposing (..)
 
-import AssocList as Dict_
 import AssocSet as Set_
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
-import Data.Fight.Generator exposing (Fight)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Map exposing (TileCoords)
 import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
-import Data.Player
-    exposing
-        ( CPlayer
-        , SPlayer
-        )
+import Data.Player exposing (CPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
-import Data.Vendor as Vendor exposing (Vendor)
 import Data.World as World exposing (World)
 import Data.WorldData
     exposing
