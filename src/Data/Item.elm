@@ -1261,8 +1261,20 @@ typeName type__ =
         Misc ->
             "Miscellaneous"
 
+        UnarmedWeapon ->
+            "Unarmed Weapon"
+
+        ThrownWeapon ->
+            "Thrown Weapon"
+
         SmallGun ->
             "Small Gun"
+
+        BigGun ->
+            "Big Gun"
+
+        EnergyWeapon ->
+            "Energy Weapon"
 
         Ammo ->
             "Ammo"
