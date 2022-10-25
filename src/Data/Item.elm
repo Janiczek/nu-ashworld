@@ -1035,7 +1035,19 @@ isEquippableType type__ =
         Armor ->
             True
 
+        UnarmedWeapon ->
+            True
+
+        ThrownWeapon ->
+            True
+
         SmallGun ->
+            True
+
+        BigGun ->
+            True
+
+        EnergyWeapon ->
             True
 
         Book ->
