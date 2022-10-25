@@ -655,6 +655,138 @@ kindDecoder =
                     "bb-ammo" ->
                         JD.succeed BBAmmo
 
+                    "electronic-lockpick" ->
+                        JD.succeed ElectronicLockpick
+
+                    "abnormal-brain" ->
+                        JD.succeed AbnormalBrain
+
+                    "chimpanzee-brain" ->
+                        JD.succeed ChimpanzeeBrain
+
+                    "human-brain" ->
+                        JD.succeed HumanBrain
+
+                    "cybernetic-brain" ->
+                        JD.succeed CyberneticBrain
+
+                    "hunting-rifle" ->
+                        JD.succeed HuntingRifle
+
+                    "scoped-hunting-rifle" ->
+                        JD.succeed ScopedHuntingRifle
+
+                    "super-stimpak" ->
+                        JD.succeed SuperStimpak
+
+                    "tesla-armor" ->
+                        JD.succeed TeslaArmor
+
+                    "combat-armor" ->
+                        JD.succeed CombatArmor
+
+                    "combat-armor-mk2" ->
+                        JD.succeed CombatArmorMk2
+
+                    "power-armor" ->
+                        JD.succeed PowerArmor
+
+                    "super-sledge" ->
+                        JD.succeed SuperSledge
+
+                    "power-fist" ->
+                        JD.succeed PowerFist
+
+                    "mega-power-fist" ->
+                        JD.succeed MegaPowerFist
+
+                    "grenade" ->
+                        JD.succeed Grenade
+
+                    "bozar" ->
+                        JD.succeed Bozar
+
+                    "sawed-off-shotgun" ->
+                        JD.succeed SawedOffShotgun
+
+                    "sniper-rifle" ->
+                        JD.succeed SniperRifle
+
+                    "assault-rifle" ->
+                        JD.succeed AssaultRifle
+
+                    "expanded-assault-rifle" ->
+                        JD.succeed ExpandedAssaultRifle
+
+                    "pancor-jackhammer" ->
+                        JD.succeed PancorJackhammer
+
+                    "hk-p90c" ->
+                        JD.succeed HkP90c
+
+                    "laser-pistol" ->
+                        JD.succeed LaserPistol
+
+                    "plasma-rifle" ->
+                        JD.succeed PlasmaRifle
+
+                    "gatling-laser" ->
+                        JD.succeed GatlingLaser
+
+                    "turbo-plasma-rifle" ->
+                        JD.succeed TurboPlasmaRifle
+
+                    "gauss-rifle" ->
+                        JD.succeed GaussRifle
+
+                    "gauss-pistol" ->
+                        JD.succeed GaussPistol
+
+                    "pulse-rifle" ->
+                        JD.succeed PulseRifle
+
+                    "small-energy-cell" ->
+                        JD.succeed SmallEnergyCell
+
+                    "fmj-223" ->
+                        JD.succeed Fmj223
+
+                    "shotgun-shell" ->
+                        JD.succeed ShotgunShell
+
+                    "smg-10mm" ->
+                        JD.succeed Smg10mm
+
+                    "jhp-10mm" ->
+                        JD.succeed Jhp10mm
+
+                    "jhp-5mm" ->
+                        JD.succeed Jhp5mm
+
+                    "microfusion-cell" ->
+                        JD.succeed MicrofusionCell
+
+                    "ec-2mm" ->
+                        JD.succeed Ec2mm
+
+                    "tool" ->
+                        JD.succeed Tool
+
+                    "geck" ->
+                        JD.succeed GECK
+
+                    "skynet-aim" ->
+                        JD.succeed SkynetAim
+
+                    "motion-sensor" ->
+                        JD.succeed MotionSensor
+
+                    "k9" ->
+                        JD.succeed K9
+
+                    "lock-picks" ->
+                        JD.succeed LockPicks
+
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
             )
