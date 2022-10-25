@@ -507,6 +507,114 @@ encodeKind kind =
         ScopedHuntingRifle ->
             JE.string "scoped-hunting-rifle"
 
+        SuperStimpak ->
+            JE.string "super-stimpak"
+
+        TeslaArmor ->
+            JE.string "tesla-armor"
+
+        CombatArmor ->
+            JE.string "combat-armor"
+
+        CombatArmorMk2 ->
+            JE.string "combat-armor-mk2"
+
+        PowerArmor ->
+            JE.string "power-armor"
+
+        SuperSledge ->
+            JE.string "super-sledge"
+
+        PowerFist ->
+            JE.string "power-fist"
+
+        MegaPowerFist ->
+            JE.string "mega-power-fist"
+
+        Grenade ->
+            JE.string "grenade"
+
+        Bozar ->
+            JE.string "bozar"
+
+        SawedOffShotgun ->
+            JE.string "sawed-off-shotgun"
+
+        SniperRifle ->
+            JE.string "sniper-rifle"
+
+        AssaultRifle ->
+            JE.string "assault-rifle"
+
+        ExpandedAssaultRifle ->
+            JE.string "expanded-assault-rifle"
+
+        PancorJackhammer ->
+            JE.string "pancor-jackhammer"
+
+        HkP90c ->
+            JE.string "hk-p90c"
+
+        LaserPistol ->
+            JE.string "laser-pistol"
+
+        PlasmaRifle ->
+            JE.string "plasma-rifle"
+
+        GatlingLaser ->
+            JE.string "gatling-laser"
+
+        TurboPlasmaRifle ->
+            JE.string "turbo-plasma-rifle"
+
+        GaussRifle ->
+            JE.string "gauss-rifle"
+
+        GaussPistol ->
+            JE.string "gauss-pistol"
+
+        PulseRifle ->
+            JE.string "pulse-rifle"
+
+        SmallEnergyCell ->
+            JE.string "small-energy-cell"
+
+        Fmj223 ->
+            JE.string "fmj-223"
+
+        ShotgunShell ->
+            JE.string "shotgun-shell"
+
+        Smg10mm ->
+            JE.string "smg-10mm"
+
+        Jhp10mm ->
+            JE.string "jhp-10mm"
+
+        Jhp5mm ->
+            JE.string "jhp-5mm"
+
+        MicrofusionCell ->
+            JE.string "microfusion-cell"
+
+        Ec2mm ->
+            JE.string "ec-2mm"
+
+        Tool ->
+            JE.string "tool"
+
+        GECK ->
+            JE.string "geck"
+
+        SkynetAim ->
+            JE.string "skynet-aim"
+
+        MotionSensor ->
+            JE.string "motion-sensor"
+
+        K9 ->
+            JE.string "k9"
+
 
 kindDecoder : Decoder Kind
 kindDecoder =
