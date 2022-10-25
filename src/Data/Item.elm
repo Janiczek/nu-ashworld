@@ -1116,6 +1116,114 @@ type_ kind =
         ScopedHuntingRifle ->
             SmallGun
 
+        SuperStimpak ->
+            Food
+
+        TeslaArmor ->
+            Armor
+
+        CombatArmor ->
+            Armor
+
+        CombatArmorMk2 ->
+            Armor
+
+        PowerArmor ->
+            Armor
+
+        SuperSledge ->
+            UnarmedWeapon
+
+        PowerFist ->
+            UnarmedWeapon
+
+        MegaPowerFist ->
+            UnarmedWeapon
+
+        Grenade ->
+            ThrownWeapon
+
+        Bozar ->
+            BigGun
+
+        SawedOffShotgun ->
+            SmallGun
+
+        SniperRifle ->
+            SmallGun
+
+        AssaultRifle ->
+            SmallGun
+
+        ExpandedAssaultRifle ->
+            SmallGun
+
+        PancorJackhammer ->
+            SmallGun
+
+        HkP90c ->
+            SmallGun
+
+        LaserPistol ->
+            EnergyWeapon
+
+        PlasmaRifle ->
+            EnergyWeapon
+
+        GatlingLaser ->
+            EnergyWeapon
+
+        TurboPlasmaRifle ->
+            EnergyWeapon
+
+        GaussRifle ->
+            SmallGun
+
+        GaussPistol ->
+            SmallGun
+
+        PulseRifle ->
+            EnergyWeapon
+
+        SmallEnergyCell ->
+            Ammo
+
+        Fmj223 ->
+            Ammo
+
+        ShotgunShell ->
+            Ammo
+
+        Smg10mm ->
+            SmallGun
+
+        Jhp10mm ->
+            Ammo
+
+        Jhp5mm ->
+            Ammo
+
+        MicrofusionCell ->
+            Ammo
+
+        Ec2mm ->
+            Ammo
+
+        Tool ->
+            Misc
+
+        GECK ->
+            Misc
+
+        SkynetAim ->
+            Misc
+
+        MotionSensor ->
+            Misc
+
+        K9 ->
+            Misc
+
 
 isEquippable : Kind -> Bool
 isEquippable kind =
