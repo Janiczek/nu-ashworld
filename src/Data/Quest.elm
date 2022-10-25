@@ -1943,7 +1943,7 @@ playerRewards name =
             [ ItemReward { what = GECK, amount = 1 } ]
 
         BrokenHillsFixMineAirPurifier ->
-            [ ItemReward { what = CombatArmorMk2, amount = 1 } ]
+            [ ItemReward { what = CombatArmor, amount = 1 } ]
 
         BrokenHillsBlowUpMineAirPurifier ->
             [ ItemReward { what = PlasmaRifle, amount = 1 }

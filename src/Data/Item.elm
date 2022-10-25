@@ -69,11 +69,12 @@ type Kind
     | LeatherArmor
     | MetalArmor
     | TeslaArmor
+    | CombatArmor
     | CombatArmorMk2
     | PowerArmor
       --
       -- TODO knives? crowbar? etc
-    | Supersledge
+    | SuperSledge
     | PowerFist
     | MegaPowerFist
       --
@@ -231,6 +232,114 @@ baseValue kind =
 
         ScopedHuntingRifle ->
             1500
+
+        SuperStimpak ->
+            225
+
+        TeslaArmor ->
+            4500
+
+        CombatArmor ->
+            6500
+
+        CombatArmorMk2 ->
+            8000
+
+        PowerArmor ->
+            12500
+
+        SuperSledge ->
+            3750
+
+        PowerFist ->
+            2200
+
+        MegaPowerFist ->
+            3200
+
+        Grenade ->
+            150
+
+        Bozar ->
+            5250
+
+        SawedOffShotgun ->
+            800
+
+        SniperRifle ->
+            2200
+
+        AssaultRifle ->
+            1300
+
+        ExpandedAssaultRifle ->
+            2300
+
+        PancorJackhammer ->
+            5500
+
+        HkP90c ->
+            2500
+
+        LaserPistol ->
+            1400
+
+        PlasmaRifle ->
+            4000
+
+        GatlingLaser ->
+            7500
+
+        TurboPlasmaRifle ->
+            10000
+
+        GaussRifle ->
+            8250
+
+        GaussPistol ->
+            5250
+
+        PulseRifle ->
+            17500
+
+        SmallEnergyCell ->
+            400
+
+        Fmj223 ->
+            200
+
+        ShotgunShell ->
+            225
+
+        Smg10mm ->
+            1000
+
+        Jhp10mm ->
+            75
+
+        Jhp5mm ->
+            100
+
+        MicrofusionCell ->
+            1000
+
+        Ec2mm ->
+            400
+
+        Tool ->
+            200
+
+        GECK ->
+            30000
+
+        SkynetAim ->
+            10000
+
+        MotionSensor ->
+            800
+
+        K9 ->
+            5000
 
 
 armorClass : Kind -> Int
