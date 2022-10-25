@@ -710,29 +710,29 @@ heal who ongoing itemKind =
         rejectCommand ongoing
 
     else
-        let
-            healedHp : Int
-            healedHp =
-                Item.healAmount itemKind
+        Item.healAmountGenerator itemKind
+            |> Random.andThen
+                (\healedHp ->
+                    let
+                        newHp : Int
+                        newHp =
+                            opponent.hp + healedHp
 
-            newHp : Int
-            newHp =
-                opponent.hp + healedHp
-
-            action : Fight.Action
-            action =
-                Fight.Heal
-                    { itemKind = itemKind
-                    , healedHp = healedHp
-                    , newHp = newHp
-                    }
-        in
-        ongoing
-            |> addLog who action
-            |> updateOpponent who (addHp healedHp >> decItem itemKind)
-            |> subtractAp who action
-            |> incItemsUsed who itemKind
-            |> finalizeCommand
+                        action : Fight.Action
+                        action =
+                            Fight.Heal
+                                { itemKind = itemKind
+                                , healedHp = healedHp
+                                , newHp = newHp
+                                }
+                    in
+                    ongoing
+                        |> addLog who action
+                        |> updateOpponent who (addHp healedHp >> decItem itemKind)
+                        |> subtractAp who action
+                        |> incItemsUsed who itemKind
+                        |> finalizeCommand
+                )
 
 
 decItem : Item.Kind -> Opponent -> Opponent

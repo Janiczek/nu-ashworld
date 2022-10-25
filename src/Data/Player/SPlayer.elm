@@ -606,7 +606,7 @@ equipItem { id } player =
                 Item.Book ->
                     player
 
-                Item.Armor ->
+                Item.Armor _ ->
                     player
                         |> (if player.equippedArmor /= Nothing then
                                 unequipArmor
@@ -623,7 +623,27 @@ equipItem { id } player =
                 Item.Misc ->
                     player
 
+                Item.UnarmedWeapon ->
+                    -- TODO equip weapons
+                    player
+
+                Item.MeleeWeapon ->
+                    -- TODO equip weapons
+                    player
+
+                Item.ThrownWeapon ->
+                    -- TODO equip weapons
+                    player
+
                 Item.SmallGun ->
+                    -- TODO equip weapons
+                    player
+
+                Item.BigGun ->
+                    -- TODO equip weapons
+                    player
+
+                Item.EnergyWeapon ->
                     -- TODO equip weapons
                     player
 

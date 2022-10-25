@@ -19,6 +19,7 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Logic
 import Queue
+import Random
 import Set.ExtraExtra as Set
 import Time
 import Types exposing (AdminToBackend(..), BackendModel, ToBackend(..))
@@ -30,16 +31,16 @@ encodeBackendModel model =
         [ ( "worlds", Dict.encode JE.string World.encode model.worlds ) ]
 
 
-backendModelDecoder : Decoder BackendModel
-backendModelDecoder =
+backendModelDecoder : Random.Seed -> Decoder BackendModel
+backendModelDecoder seed =
     JD.oneOf
-        [ backendModelDecoderV2
-        , backendModelDecoderV1
+        [ backendModelDecoderV2 seed
+        , backendModelDecoderV1 seed
         ]
 
 
-backendModelDecoderV1 : Decoder BackendModel
-backendModelDecoderV1 =
+backendModelDecoderV1 : Random.Seed -> Decoder BackendModel
+backendModelDecoderV1 seed =
     JD.map
         (\world ->
             { worlds = Dict.singleton Logic.mainWorldName world
@@ -47,13 +48,14 @@ backendModelDecoderV1 =
             , time = Time.millisToPosix 0
             , adminLoggedIn = Nothing
             , lastTenToBackendMsgs = Queue.empty
+            , randomSeed = seed
             }
         )
         World.decoder
 
 
-backendModelDecoderV2 : Decoder BackendModel
-backendModelDecoderV2 =
+backendModelDecoderV2 : Random.Seed -> Decoder BackendModel
+backendModelDecoderV2 seed =
     -- adds support for multiple worlds
     JD.map
         (\worlds ->
@@ -62,6 +64,7 @@ backendModelDecoderV2 =
             , time = Time.millisToPosix 0
             , adminLoggedIn = Nothing
             , lastTenToBackendMsgs = Queue.empty
+            , randomSeed = seed
             }
         )
         (JD.field "worlds" (Dict.decoder JD.string World.decoder))

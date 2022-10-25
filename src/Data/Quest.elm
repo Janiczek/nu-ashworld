@@ -1786,6 +1786,9 @@ playerRewardTitle reward =
         PerkReward perk ->
             "Perk: " ++ Perk.name perk
 
+        CarReward ->
+            "A car!"
+
 
 playerRewards : Name -> List PlayerReward
 playerRewards name =
@@ -1852,7 +1855,7 @@ playerRewards name =
             []
 
         ModocRemoveInfestationInFarrelsGarden ->
-            [ ItemReward { what = Lockpick, amount = 1 } ]
+            [ ItemReward { what = LockPicks, amount = 1 } ]
 
         ModocMediateBetweenSlagsAndJo ->
             []
@@ -1863,7 +1866,7 @@ playerRewards name =
             ]
 
         ModocFindGoldWatchForFarrel ->
-            [ ItemReward { what = Supersledge, amount = 1 } ]
+            [ ItemReward { what = SuperSledge, amount = 1 } ]
 
         VaultCityGetPlowForMrSmith ->
             [ ItemReward { what = Stimpak, amount = 10 } ]
@@ -1875,7 +1878,7 @@ playerRewards name =
             [ ItemReward { what = SmallEnergyCell, amount = 150 } ]
 
         ReddingClearWanamingoMine ->
-            [ ItemReward { what = HunterRifle { isScoped = True }, amount = 1 }
+            [ ItemReward { what = ScopedHuntingRifle, amount = 1 }
             , ItemReward { what = Fmj223, amount = 50 }
             ]
 
@@ -1904,7 +1907,7 @@ playerRewards name =
             [ ItemReward { what = ElectronicLockpick, amount = 1 } ]
 
         NCRGuardBrahminCaravan ->
-            [ ItemReward { what = AssaultRifle { isExpaneded = True }, amount = 1 }
+            [ ItemReward { what = ExpandedAssaultRifle, amount = 1 }
             , ItemReward { what = Jhp5mm, amount = 50 }
             ]
 
@@ -1963,7 +1966,7 @@ playerRewards name =
 
         RaidersKillEverybody ->
             [ ItemReward { what = CombatArmorMk2, amount = 1 }
-            , ItemReward { what = AssaultRifle { isExpanded = True }, amount = 1 }
+            , ItemReward { what = ExpandedAssaultRifle, amount = 1 }
             , ItemReward { what = Jhp5mm, amount = 50 }
             ]
 

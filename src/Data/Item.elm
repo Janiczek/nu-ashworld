@@ -17,6 +17,7 @@ module Data.Item exposing
     , findMergeableId
     , getUniqueKey
     , healAmount
+    , healAmountGenerator
     , isEquippable
     , isHealing
     , kindDecoder
@@ -32,6 +33,8 @@ import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import List.Extra as List
+import Random exposing (Generator)
 
 
 
@@ -73,10 +76,11 @@ type Kind
     | CombatArmorMk2
     | PowerArmor
       --
-      -- TODO knives? crowbar? etc
-    | SuperSledge
     | PowerFist
     | MegaPowerFist
+      --
+      -- TODO knives? crowbar? etc
+    | SuperSledge
       --
     | Grenade
       --
@@ -109,6 +113,7 @@ type Kind
     | Ec2mm
       --
     | Tool
+    | LockPicks
     | ElectronicLockpick
     | AbnormalBrain
     | ChimpanzeeBrain
@@ -150,12 +155,32 @@ all =
 
 isHealing : Kind -> Bool
 isHealing kind =
-    (healAmount kind /= 0)
-        && List.member Heal (usageEffects kind)
+    List.any isHealingEffect (usageEffects kind)
+
+
+isHealingEffect : Effect -> Bool
+isHealingEffect effect =
+    getHealingEffect effect /= Nothing
+
+
+getHealingEffect : Effect -> Maybe { min : Int, max : Int }
+getHealingEffect effect =
+    case effect of
+        Heal r ->
+            Just r
+
+        RemoveAfterUse ->
+            Nothing
+
+        BookRemoveTicks ->
+            Nothing
+
+        BookAddSkillPercent _ ->
+            Nothing
 
 
 type Effect
-    = Heal
+    = Heal { min : Int, max : Int }
     | RemoveAfterUse
     | BookRemoveTicks
     | BookAddSkillPercent Skill
@@ -341,40 +366,15 @@ baseValue kind =
         K9 ->
             5000
 
+        LockPicks ->
+            150
+
 
 armorClass : Kind -> Int
 armorClass kind =
-    case kind of
-        Robes ->
-            5
-
-        LeatherJacket ->
-            8
-
-        LeatherArmor ->
-            15
-
-        MetalArmor ->
-            10
-
-        _ ->
-            0
-
-
-healAmount : Kind -> Int
-healAmount kind =
-    case kind of
-        Fruit ->
-            15
-
-        HealingPowder ->
-            30
-
-        MeatJerky ->
-            40
-
-        Stimpak ->
-            80
+    case type_ kind of
+        Armor r ->
+            r.armorClass
 
         _ ->
             0
@@ -382,18 +382,9 @@ healAmount kind =
 
 damageThresholdNormal : Kind -> Int
 damageThresholdNormal kind =
-    case kind of
-        Robes ->
-            0
-
-        LeatherJacket ->
-            0
-
-        LeatherArmor ->
-            2
-
-        MetalArmor ->
-            4
+    case type_ kind of
+        Armor r ->
+            r.damageThresholdNormal
 
         _ ->
             0
@@ -401,18 +392,9 @@ damageThresholdNormal kind =
 
 damageResistanceNormal : Kind -> Int
 damageResistanceNormal kind =
-    case kind of
-        Robes ->
-            20
-
-        LeatherJacket ->
-            20
-
-        LeatherArmor ->
-            25
-
-        MetalArmor ->
-            30
+    case type_ kind of
+        Armor r ->
+            r.damageResistanceNormal
 
         _ ->
             0
@@ -614,6 +596,9 @@ encodeKind kind =
 
         K9 ->
             JE.string "k9"
+
+        LockPicks ->
+            JE.string "lock-picks"
 
 
 kindDecoder : Decoder Kind
@@ -855,6 +840,9 @@ name kind =
         K9 ->
             "K9"
 
+        LockPicks ->
+            "Lock Picks"
+
 
 create :
     { lastId : Int
@@ -920,23 +908,23 @@ usageEffects kind =
     case kind of
         Fruit ->
             -- TODO radiation +1 after some time (2x)
-            [ Heal
+            [ Heal { min = 1, max = 4 }
             , RemoveAfterUse
             ]
 
         HealingPowder ->
             -- TODO temporary perception -1?
-            [ Heal
+            [ Heal { min = 8, max = 18 }
             , RemoveAfterUse
             ]
 
         MeatJerky ->
-            [ Heal
+            [ Heal { min = 5, max = 10 }
             , RemoveAfterUse
             ]
 
         Stimpak ->
-            [ Heal
+            [ Heal { min = 10, max = 20 }
             , RemoveAfterUse
             ]
 
@@ -1012,11 +1000,131 @@ usageEffects kind =
         ScopedHuntingRifle ->
             []
 
+        SuperStimpak ->
+            -- TODO lose HP after some time
+            [ Heal { min = 75, max = 75 }
+            , RemoveAfterUse
+            ]
+
+        TeslaArmor ->
+            []
+
+        CombatArmor ->
+            []
+
+        CombatArmorMk2 ->
+            []
+
+        PowerArmor ->
+            []
+
+        SuperSledge ->
+            []
+
+        PowerFist ->
+            []
+
+        MegaPowerFist ->
+            []
+
+        Grenade ->
+            []
+
+        Bozar ->
+            []
+
+        SawedOffShotgun ->
+            []
+
+        SniperRifle ->
+            []
+
+        AssaultRifle ->
+            []
+
+        ExpandedAssaultRifle ->
+            []
+
+        PancorJackhammer ->
+            []
+
+        HkP90c ->
+            []
+
+        LaserPistol ->
+            []
+
+        PlasmaRifle ->
+            []
+
+        GatlingLaser ->
+            []
+
+        TurboPlasmaRifle ->
+            []
+
+        GaussRifle ->
+            []
+
+        GaussPistol ->
+            []
+
+        PulseRifle ->
+            []
+
+        SmallEnergyCell ->
+            []
+
+        Fmj223 ->
+            []
+
+        ShotgunShell ->
+            []
+
+        Smg10mm ->
+            []
+
+        Jhp10mm ->
+            []
+
+        Jhp5mm ->
+            []
+
+        MicrofusionCell ->
+            []
+
+        Ec2mm ->
+            []
+
+        Tool ->
+            []
+
+        GECK ->
+            -- TODO what do we want to do with this one?
+            []
+
+        SkynetAim ->
+            []
+
+        MotionSensor ->
+            []
+
+        K9 ->
+            []
+
+        LockPicks ->
+            []
+
 
 type Type
     = Food
     | Armor
+        { armorClass : Int
+        , damageThresholdNormal : Int
+        , damageResistanceNormal : Int
+        }
     | UnarmedWeapon
+    | MeleeWeapon
     | ThrownWeapon
     | SmallGun
     | BigGun
@@ -1032,10 +1140,13 @@ isEquippableType type__ =
         Food ->
             False
 
-        Armor ->
+        Armor _ ->
             True
 
         UnarmedWeapon ->
+            True
+
+        MeleeWeapon ->
             True
 
         ThrownWeapon ->
@@ -1092,15 +1203,31 @@ type_ kind =
 
         Robes ->
             Armor
+                { armorClass = 5
+                , damageThresholdNormal = 0
+                , damageResistanceNormal = 20
+                }
 
         LeatherJacket ->
             Armor
+                { armorClass = 8
+                , damageThresholdNormal = 0
+                , damageResistanceNormal = 20
+                }
 
         LeatherArmor ->
             Armor
+                { armorClass = 15
+                , damageThresholdNormal = 2
+                , damageResistanceNormal = 25
+                }
 
         MetalArmor ->
             Armor
+                { armorClass = 10
+                , damageThresholdNormal = 4
+                , damageResistanceNormal = 30
+                }
 
         Beer ->
             Misc
@@ -1137,18 +1264,34 @@ type_ kind =
 
         TeslaArmor ->
             Armor
+                { armorClass = 15
+                , damageThresholdNormal = 4
+                , damageResistanceNormal = 20
+                }
 
         CombatArmor ->
             Armor
+                { armorClass = 20
+                , damageThresholdNormal = 5
+                , damageResistanceNormal = 40
+                }
 
         CombatArmorMk2 ->
             Armor
+                { armorClass = 25
+                , damageThresholdNormal = 6
+                , damageResistanceNormal = 40
+                }
 
         PowerArmor ->
             Armor
+                { armorClass = 25
+                , damageThresholdNormal = 12
+                , damageResistanceNormal = 40
+                }
 
         SuperSledge ->
-            UnarmedWeapon
+            MeleeWeapon
 
         PowerFist ->
             UnarmedWeapon
@@ -1240,6 +1383,9 @@ type_ kind =
         K9 ->
             Misc
 
+        LockPicks ->
+            Misc
+
 
 isEquippable : Kind -> Bool
 isEquippable kind =
@@ -1255,7 +1401,7 @@ typeName type__ =
         Book ->
             "Book"
 
-        Armor ->
+        Armor _ ->
             "Armor"
 
         Misc ->
@@ -1263,6 +1409,9 @@ typeName type__ =
 
         UnarmedWeapon ->
             "Unarmed Weapon"
+
+        MeleeWeapon ->
+            "Melee Weapon"
 
         ThrownWeapon ->
             "Thrown Weapon"
@@ -1278,3 +1427,21 @@ typeName type__ =
 
         Ammo ->
             "Ammo"
+
+
+healAmount : Kind -> Maybe { min : Int, max : Int }
+healAmount kind =
+    kind
+        |> usageEffects
+        |> List.filterMap getHealingEffect
+        |> List.head
+
+
+healAmountGenerator : Kind -> Generator Int
+healAmountGenerator kind =
+    case healAmount kind of
+        Just { min, max } ->
+            Random.int min max
+
+        Nothing ->
+            Random.constant 0

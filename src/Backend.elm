@@ -84,24 +84,36 @@ init =
       , loggedInPlayers = Dict.empty
       , adminLoggedIn = Nothing
       , lastTenToBackendMsgs = Queue.empty
+      , randomSeed = Random.initialSeed 0
       }
-    , Task.perform Tick Time.now
+    , Task.perform FirstTick Time.now
     )
 
 
 restockVendors : World.Name -> Model -> ( Model, Cmd BackendMsg )
 restockVendors worldName model =
     -- TODO don't forget to restock vendors when you create a world
-    ( model
-    , case Dict.get worldName model.worlds of
+    case Dict.get worldName model.worlds of
         Nothing ->
-            Cmd.none
+            ( model, Cmd.none )
 
         Just world ->
-            Random.generate
-                (GeneratedNewVendorsStock worldName)
-                (Vendor.restockVendors world.lastItemId world.vendors)
-    )
+            let
+                ( ( vendors, newLastItemId ), newRandomSeed ) =
+                    Random.step
+                        (Vendor.restockVendors world.lastItemId world.vendors)
+                        model.randomSeed
+            in
+            ( { model | randomSeed = newRandomSeed }
+                |> updateWorld worldName
+                    (\world_ ->
+                        { world_
+                            | vendors = vendors
+                            , lastItemId = newLastItemId
+                        }
+                    )
+            , Cmd.none
+            )
 
 
 getAdminData : Model -> AdminData
@@ -297,6 +309,14 @@ update msg model =
             , Cmd.none
             )
 
+        FirstTick currentTime ->
+            ( { model
+                | time = currentTime
+                , randomSeed = Random.initialSeed (Time.posixToMillis currentTime)
+              }
+            , Cmd.none
+            )
+
         Tick currentTime ->
             let
                 modelWithTime =
@@ -386,147 +406,8 @@ update msg model =
                     )
                     ( modelWithTime, Cmd.none )
 
-        GeneratedFight clientId worldName sPlayer ( fight_, newItemId ) ->
-            let
-                targetIsPlayer : Bool
-                targetIsPlayer =
-                    Fight.isPlayer fight_.finalTarget.type_
-
-                updateIfPlayer : (SPlayer -> SPlayer) -> Opponent -> Model -> Model
-                updateIfPlayer fn opponent =
-                    case opponent.type_ of
-                        Fight.Npc _ ->
-                            identity
-
-                        Fight.Player player ->
-                            updatePlayer worldName player.name fn
-
-                newModel =
-                    { model
-                        | worlds =
-                            model.worlds
-                                |> Dict.update worldName (Maybe.map (\world -> { world | lastItemId = newItemId }))
-                    }
-                        |> updateIfPlayer
-                            (\player ->
-                                player
-                                    |> SPlayer.setHp fight_.finalAttacker.hp
-                                    |> SPlayer.subtractTicks 1
-                                    |> SPlayer.setItems fight_.finalAttacker.items
-                                    |> (if targetIsPlayer then
-                                            SPlayer.addMessage
-                                                { read = True }
-                                                model.time
-                                                fight_.messageForAttacker
-
-                                        else
-                                            identity
-                                       )
-                            )
-                            fight_.finalAttacker
-                        |> updateIfPlayer
-                            (\player ->
-                                player
-                                    |> SPlayer.setHp fight_.finalTarget.hp
-                                    |> SPlayer.setItems fight_.finalTarget.items
-                                    |> SPlayer.addMessage
-                                        { read = False }
-                                        model.time
-                                        fight_.messageForTarget
-                            )
-                            fight_.finalTarget
-                        |> (case fight_.fightInfo.result of
-                                Fight.BothDead ->
-                                    identity
-
-                                Fight.NobodyDead ->
-                                    identity
-
-                                Fight.NobodyDeadGivenUp ->
-                                    identity
-
-                                Fight.TargetAlreadyDead ->
-                                    identity
-
-                                Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
-                                    identity
-                                        >> updateIfPlayer
-                                            (\player ->
-                                                player
-                                                    |> SPlayer.addXp xpGained model.time
-                                                    |> SPlayer.addCaps capsGained
-                                                    |> SPlayer.addItems itemsGained
-                                                    |> (if targetIsPlayer then
-                                                            SPlayer.incWins
-
-                                                        else
-                                                            identity
-                                                       )
-                                            )
-                                            fight_.finalAttacker
-                                        >> updateIfPlayer
-                                            (\player ->
-                                                player
-                                                    |> SPlayer.subtractCaps capsGained
-                                                    |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
-                                                    |> SPlayer.incLosses
-                                            )
-                                            fight_.finalTarget
-
-                                Fight.TargetWon { xpGained, capsGained, itemsGained } ->
-                                    identity
-                                        >> updateIfPlayer
-                                            (\player ->
-                                                player
-                                                    |> SPlayer.subtractCaps capsGained
-                                                    |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
-                                                    |> (if targetIsPlayer then
-                                                            SPlayer.incLosses
-
-                                                        else
-                                                            identity
-                                                       )
-                                            )
-                                            fight_.finalAttacker
-                                        >> updateIfPlayer
-                                            (\player ->
-                                                player
-                                                    |> SPlayer.addXp xpGained model.time
-                                                    |> SPlayer.addCaps capsGained
-                                                    |> SPlayer.addItems itemsGained
-                                                    |> SPlayer.incWins
-                                            )
-                                            fight_.finalTarget
-                           )
-            in
-            getPlayerData worldName sPlayer.name newModel
-                |> Maybe.map
-                    (\world ->
-                        ( newModel
-                        , Lamdera.sendToFrontend clientId <|
-                            YourFightResult
-                                ( fight_.fightInfo
-                                , world
-                                )
-                        )
-                    )
-                -- Shouldn't happen but we don't have a good way of getting rid of the Maybe
-                |> Maybe.withDefault ( newModel, Cmd.none )
-
         CreateNewCharWithTime clientId newChar time ->
             withLoggedInPlayer clientId (createNewCharWithTime newChar time)
-
-        GeneratedNewVendorsStock worldName ( vendors, newLastItemId ) ->
-            ( model
-                |> updateWorld worldName
-                    (\world ->
-                        { world
-                            | vendors = vendors
-                            , lastItemId = newLastItemId
-                        }
-                    )
-            , Cmd.none
-            )
 
         LoggedToBackendMsg ->
             ( model, Cmd.none )
@@ -1040,7 +921,7 @@ updateAdmin clientId msg model =
             )
 
         ImportJson jsonString ->
-            case JD.decodeString Admin.backendModelDecoder jsonString of
+            case JD.decodeString (Admin.backendModelDecoder model.randomSeed) jsonString of
                 Ok newModel ->
                     ( { newModel | adminLoggedIn = model.adminLoggedIn }
                     , Cmd.batch
@@ -1524,19 +1405,21 @@ useItem itemId clientId _ worldName player model =
 
                     Ok () ->
                         let
-                            handleEffect : Item.Effect -> (SPlayer -> SPlayer)
+                            handleEffect : Item.Effect -> Generator (SPlayer -> SPlayer)
                             handleEffect effect =
                                 case effect of
-                                    Item.Heal ->
-                                        SPlayer.addHp (Item.healAmount item.kind)
+                                    Item.Heal r ->
+                                        Item.healAmountGenerator item.kind
+                                            |> Random.map SPlayer.addHp
 
                                     Item.RemoveAfterUse ->
                                         SPlayer.removeItem itemId 1
+                                            |> Random.constant
 
                                     Item.BookRemoveTicks ->
-                                        SPlayer.subtractTicks <|
-                                            Logic.bookUseTickCost
-                                                { intelligence = player.special.intelligence }
+                                        SPlayer.subtractTicks
+                                            (Logic.bookUseTickCost { intelligence = player.special.intelligence })
+                                            |> Random.constant
 
                                     Item.BookAddSkillPercent skill ->
                                         SPlayer.addSkillPercentage
@@ -1546,14 +1429,20 @@ useItem itemId clientId _ worldName player model =
                                                 }
                                             )
                                             skill
+                                            |> Random.constant
 
-                            combinedEffects : SPlayer -> SPlayer
-                            combinedEffects =
+                            combinedEffectsGen : Generator (SPlayer -> SPlayer)
+                            combinedEffectsGen =
                                 effects
                                     |> List.map handleEffect
-                                    |> List.foldl (>>) identity
+                                    |> List.foldl
+                                        (Random.map2 (>>))
+                                        (Random.constant identity)
+
+                            ( combinedEffects, newRandomSeed ) =
+                                Random.step combinedEffectsGen model.randomSeed
                         in
-                        model
+                        { model | randomSeed = newRandomSeed }
                             |> updatePlayer worldName player.name combinedEffects
                             |> sendCurrentWorld worldName player.name clientId
 
@@ -1597,27 +1486,159 @@ wander clientId world worldName player model =
             enemyTypeGenerator =
                 Random.List.choose possibleEnemies
                     |> Random.map (Tuple.first >> Maybe.withDefault Enemy.default)
+
+            fightGen : Generator ( FightGen.Fight, Int )
+            fightGen =
+                enemyTypeGenerator
+                    |> Random.andThen
+                        (FightGen.enemyOpponentGenerator
+                            { hasFortuneFinderPerk = Perk.rank Perk.FortuneFinder player.perks > 0 }
+                            world.lastItemId
+                        )
+                    |> Random.andThen
+                        (\( enemyOpponent, newItemId ) ->
+                            FightGen.generator
+                                { attacker = FightGen.playerOpponent player
+                                , target = enemyOpponent
+                                , currentTime = model.time
+                                }
+                                |> Random.map (\f -> ( f, newItemId ))
+                        )
+
+            ( fight_, newRandomSeed ) =
+                Random.step fightGen model.randomSeed
         in
-        ( model
-        , Random.generate
-            (GeneratedFight clientId worldName player)
-            (enemyTypeGenerator
-                |> Random.andThen
-                    (FightGen.enemyOpponentGenerator
-                        { hasFortuneFinderPerk = Perk.rank Perk.FortuneFinder player.perks > 0 }
-                        world.lastItemId
+        { model | randomSeed = newRandomSeed }
+            |> processFight clientId worldName player fight_
+
+
+processFight : ClientId -> World.Name -> SPlayer -> ( FightGen.Fight, Int ) -> Model -> ( Model, Cmd BackendMsg )
+processFight clientId worldName sPlayer ( fight_, newItemId ) model =
+    let
+        targetIsPlayer : Bool
+        targetIsPlayer =
+            Fight.isPlayer fight_.finalTarget.type_
+
+        updateIfPlayer : (SPlayer -> SPlayer) -> Opponent -> Model -> Model
+        updateIfPlayer fn opponent =
+            case opponent.type_ of
+                Fight.Npc _ ->
+                    identity
+
+                Fight.Player player ->
+                    updatePlayer worldName player.name fn
+
+        newModel =
+            { model
+                | worlds =
+                    model.worlds
+                        |> Dict.update worldName (Maybe.map (\world -> { world | lastItemId = newItemId }))
+            }
+                |> updateIfPlayer
+                    (\player ->
+                        player
+                            |> SPlayer.setHp fight_.finalAttacker.hp
+                            |> SPlayer.subtractTicks 1
+                            |> SPlayer.setItems fight_.finalAttacker.items
+                            |> (if targetIsPlayer then
+                                    SPlayer.addMessage
+                                        { read = True }
+                                        model.time
+                                        fight_.messageForAttacker
+
+                                else
+                                    identity
+                               )
                     )
-                |> Random.andThen
-                    (\( enemyOpponent, newItemId ) ->
-                        FightGen.generator
-                            { attacker = FightGen.playerOpponent player
-                            , target = enemyOpponent
-                            , currentTime = model.time
-                            }
-                            |> Random.map (\fight_ -> ( fight_, newItemId ))
+                    fight_.finalAttacker
+                |> updateIfPlayer
+                    (\player ->
+                        player
+                            |> SPlayer.setHp fight_.finalTarget.hp
+                            |> SPlayer.setItems fight_.finalTarget.items
+                            |> SPlayer.addMessage
+                                { read = False }
+                                model.time
+                                fight_.messageForTarget
                     )
+                    fight_.finalTarget
+                |> (case fight_.fightInfo.result of
+                        Fight.BothDead ->
+                            identity
+
+                        Fight.NobodyDead ->
+                            identity
+
+                        Fight.NobodyDeadGivenUp ->
+                            identity
+
+                        Fight.TargetAlreadyDead ->
+                            identity
+
+                        Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
+                            identity
+                                >> updateIfPlayer
+                                    (\player ->
+                                        player
+                                            |> SPlayer.addXp xpGained model.time
+                                            |> SPlayer.addCaps capsGained
+                                            |> SPlayer.addItems itemsGained
+                                            |> (if targetIsPlayer then
+                                                    SPlayer.incWins
+
+                                                else
+                                                    identity
+                                               )
+                                    )
+                                    fight_.finalAttacker
+                                >> updateIfPlayer
+                                    (\player ->
+                                        player
+                                            |> SPlayer.subtractCaps capsGained
+                                            |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
+                                            |> SPlayer.incLosses
+                                    )
+                                    fight_.finalTarget
+
+                        Fight.TargetWon { xpGained, capsGained, itemsGained } ->
+                            identity
+                                >> updateIfPlayer
+                                    (\player ->
+                                        player
+                                            |> SPlayer.subtractCaps capsGained
+                                            |> SPlayer.removeItems (List.map (\item -> ( item.id, item.count )) itemsGained)
+                                            |> (if targetIsPlayer then
+                                                    SPlayer.incLosses
+
+                                                else
+                                                    identity
+                                               )
+                                    )
+                                    fight_.finalAttacker
+                                >> updateIfPlayer
+                                    (\player ->
+                                        player
+                                            |> SPlayer.addXp xpGained model.time
+                                            |> SPlayer.addCaps capsGained
+                                            |> SPlayer.addItems itemsGained
+                                            |> SPlayer.incWins
+                                    )
+                                    fight_.finalTarget
+                   )
+    in
+    getPlayerData worldName sPlayer.name newModel
+        |> Maybe.map
+            (\world ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <|
+                    YourFightResult
+                        ( fight_.fightInfo
+                        , world
+                        )
+                )
             )
-        )
+        -- Shouldn't happen but we don't have a good way of getting rid of the Maybe
+        |> Maybe.withDefault ( newModel, Cmd.none )
 
 
 oneTimePerkEffects : Posix -> Dict_.Dict Perk (SPlayer -> SPlayer)
@@ -1849,11 +1870,9 @@ fight otherPlayerName clientId world worldName sPlayer model =
             |> Maybe.map
                 (\target ->
                     if target.hp == 0 then
-                        update
-                            (GeneratedFight
-                                clientId
-                                worldName
-                                sPlayer
+                        let
+                            fight_ : ( FightGen.Fight, Int )
+                            fight_ =
                                 ( FightGen.targetAlreadyDead
                                     { attacker = FightGen.playerOpponent sPlayer
                                     , target = FightGen.playerOpponent target
@@ -1861,21 +1880,26 @@ fight otherPlayerName clientId world worldName sPlayer model =
                                     }
                                 , world.lastItemId
                                 )
-                            )
-                            model
+                        in
+                        model
+                            |> processFight clientId worldName sPlayer fight_
 
                     else
-                        ( model
-                        , Random.generate
-                            (GeneratedFight clientId worldName sPlayer)
-                            (FightGen.generator
-                                { attacker = FightGen.playerOpponent sPlayer
-                                , target = FightGen.playerOpponent target
-                                , currentTime = model.time
-                                }
-                                |> Random.map (\fight_ -> ( fight_, world.lastItemId ))
-                            )
-                        )
+                        let
+                            fightGen : Generator ( FightGen.Fight, Int )
+                            fightGen =
+                                FightGen.generator
+                                    { attacker = FightGen.playerOpponent sPlayer
+                                    , target = FightGen.playerOpponent target
+                                    , currentTime = model.time
+                                    }
+                                    |> Random.map (\f -> ( f, world.lastItemId ))
+
+                            ( fight_, newRandomSeed ) =
+                                Random.step fightGen model.randomSeed
+                        in
+                        { model | randomSeed = newRandomSeed }
+                            |> processFight clientId worldName sPlayer fight_
                 )
             |> Maybe.withDefault ( model, Cmd.none )
 

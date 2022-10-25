@@ -39,6 +39,7 @@ import Frontend.HoveredItem exposing (HoveredItem)
 import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Queue exposing (Queue)
+import Random
 import Set exposing (Set)
 import Time exposing (Posix)
 import Url exposing (Url)
@@ -81,6 +82,7 @@ type alias BackendModel =
             }
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , lastTenToBackendMsgs : Queue ( PlayerName, World.Name, ToBackend )
+    , randomSeed : Random.Seed
     }
 
 
@@ -185,8 +187,7 @@ type AdminToBackend
 type BackendMsg
     = Connected SessionId ClientId
     | Disconnected SessionId ClientId
-    | GeneratedFight ClientId World.Name SPlayer ( Fight, Int )
-    | GeneratedNewVendorsStock World.Name ( Dict_.Dict Vendor.Name Vendor, Int )
+    | FirstTick Posix
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
     | LoggedToBackendMsg

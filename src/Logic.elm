@@ -704,7 +704,7 @@ canUseItem p kind =
         checkEffect : Item.Effect -> Result ItemNotUsableReason ()
         checkEffect eff =
             case eff of
-                Item.Heal ->
+                Item.Heal _ ->
                     if p.hp >= p.maxHp then
                         Err YoureAtFullHp
 
