@@ -747,6 +747,114 @@ name kind =
         ScopedHuntingRifle ->
             "Scoped Hunting Rifle"
 
+        SuperStimpak ->
+            "Super Stimpak"
+
+        TeslaArmor ->
+            "Tesla Armor"
+
+        CombatArmor ->
+            "Combat Armor"
+
+        CombatArmorMk2 ->
+            "Combat Armor MK2"
+
+        PowerArmor ->
+            "Power Armor"
+
+        SuperSledge ->
+            "Super Sledge"
+
+        PowerFist ->
+            "Power Fist"
+
+        MegaPowerFist ->
+            "Mega Power Fist"
+
+        Grenade ->
+            "Grenade"
+
+        Bozar ->
+            "Bozar"
+
+        SawedOffShotgun ->
+            "Sawed-off Shotgun"
+
+        SniperRifle ->
+            "Sniper Rifle"
+
+        AssaultRifle ->
+            "Assault Rifle"
+
+        ExpandedAssaultRifle ->
+            "Expanded Assault Rifle"
+
+        PancorJackhammer ->
+            "Pancor Jackhammer"
+
+        HkP90c ->
+            "HK P90c"
+
+        LaserPistol ->
+            "Laser Pistol"
+
+        PlasmaRifle ->
+            "Plasma Rifle"
+
+        GatlingLaser ->
+            "Gatling Laser"
+
+        TurboPlasmaRifle ->
+            "Turbo Plasma Rifle"
+
+        GaussRifle ->
+            "Gauss Rifle"
+
+        GaussPistol ->
+            "Gauss Pistol"
+
+        PulseRifle ->
+            "Pulse Rifle"
+
+        SmallEnergyCell ->
+            "Small Energy Cell"
+
+        Fmj223 ->
+            ".223 FMJ"
+
+        ShotgunShell ->
+            "Shotgun Shell"
+
+        Smg10mm ->
+            "10mm SMG"
+
+        Jhp10mm ->
+            "10mm JHP"
+
+        Jhp5mm ->
+            "5mm JHP"
+
+        MicrofusionCell ->
+            "Microfusion Cell"
+
+        Ec2mm ->
+            "2mm EC"
+
+        Tool ->
+            "Tool"
+
+        GECK ->
+            "GECK"
+
+        SkynetAim ->
+            "Skynet Aim"
+
+        MotionSensor ->
+            "Motion Sensor"
+
+        K9 ->
+            "K9"
+
 
 create :
     { lastId : Int
