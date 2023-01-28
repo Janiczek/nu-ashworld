@@ -828,13 +828,15 @@ appView { leftNav } model =
             ]
         ]
         [ H.div [ HA.id "left-nav" ]
-            (logoView
-                :: (tickFrequency
-                        |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
-                   )
-                :: leftNav
-                ++ [ commonLinksView model.route ]
-            )
+            [ logoView
+            , H.div [ HA.id "left-nav-content" ]
+                ((tickFrequency
+                    |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
+                 )
+                    :: leftNav
+                    ++ [ commonLinksView model.route ]
+                )
+            ]
         , contentView model
         ]
 
@@ -4015,7 +4017,7 @@ loginFormView worlds auth =
         [ H.input
             [ HA.id "login-name-input"
             , HA.value auth.name
-            , HA.placeholder "Username__________"
+            , HA.placeholder "Username_______________"
             , HE.onInput SetAuthName
             ]
             []
@@ -4023,7 +4025,7 @@ loginFormView worlds auth =
             [ HA.id "login-password-input"
             , HA.type_ "password"
             , HA.value <| Auth.unwrap auth.password
-            , HA.placeholder "Password__________"
+            , HA.placeholder "Password_______________"
             , HE.onInput SetAuthPassword
             ]
             []
@@ -4054,12 +4056,12 @@ loginFormView worlds auth =
                 [ HA.id "login-button"
                 , HE.onClickPreventDefault Login
                 ]
-                [ H.text "[Login]" ]
+                [ H.text "[ Login ]" ]
             , H.button
                 [ HA.id "register-button"
                 , HE.onClickPreventDefault Register
                 ]
-                [ H.text "[Register]" ]
+                [ H.text "[ Register ]" ]
             ]
         ]
 
@@ -4298,12 +4300,11 @@ commonLinksView currentRoute =
         ]
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
-         , linkOut "Wiki    →" "https://nu-ashworld.tiddlyhost.com" Nothing False
-         , linkOut "Discord →" "https://discord.gg/SxymXxvehS" Nothing False
-         , linkOut "Twitter →" "https://twitter.com/NuAshworld" Nothing False
-         , linkOut "GitHub  →" "https://github.com/Janiczek/nu-ashworld" Nothing False
-         , linkOut "Reddit  →" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "Donate  →" "https://patreon.com/janiczek" Nothing False
+         , linkOut "Discord" "https://discord.gg/SxymXxvehS" Nothing False
+         , linkOut "Twitter" "https://twitter.com/NuAshworld" Nothing False
+         , linkOut "GitHub" "https://github.com/Janiczek/nu-ashworld" Nothing False
+         , linkOut "Reddit" "https://www.reddit.com/r/NuAshworld/" Nothing False
+         , linkOut "Donate" "https://patreon.com/janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)
         )

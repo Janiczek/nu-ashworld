@@ -5,7 +5,15 @@
   --fg03: #007C00;
   --fg02: #00C000;
   --fg01: #3CF800;
-  --fg-highlight: #FCFD7D;
+  --fg-highlight: #FCFF2F;
+
+  /* Greens:
+     Fallout 2 character select screen: #5BF523
+     Fallout Tactics custom campaign: #4AFC24
+
+     Oranges:
+     Fallout Tactics custom campaign: #FCFF2F
+  */
 
   --bg02-half-transparent: rgba(16,36,12,0.5);
   --bg01-abovehalf-transparent: rgba(17,24,16,0.625);
@@ -20,11 +28,34 @@
   --filter-fg01: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%) drop-shadow(0px 0px 8px var(--fg03));
 }
 
-@font-face {
-  font-family: ApricotXenC;
-  font-weight: normal;
-  src: url('../fonts/Web437_ApricotXenC.woff');
+/* Final choice:
+PixelOperator/16px for body
+PixelOperatorHB/16px for bold
+PixelOperatorHBSC/16px for extra bold / login form / buttons etc?
+PixelOperatorMonoHB/16px for code listing
+*/
+
+@font-face { 
+  font-family: "PixelOperator"; 
+  font-weight: 400;
+  src: url("../fonts/PixelOperator.ttf") format('truetype'); 
 }
+@font-face { 
+  font-family: "PixelOperator";
+  font-weight: 700;
+  src: url("../fonts/PixelOperatorHB.ttf") format('truetype'); 
+}
+@font-face {
+  font-family: "PixelOperator";
+  font-weight: 900;
+  src: url("../fonts/PixelOperatorHBSC.ttf") format('truetype'); 
+}
+@font-face {
+  font-family: "PixelOperatorMono";
+  src: url("../fonts/PixelOperatorMonoHB.ttf") format('truetype'); 
+}
+
+
 
 html {
   width: 100%;
@@ -39,11 +70,11 @@ body {
   min-height: 100%;
 }
 
-#app * {
-  font-family: ApricotXenC;
-  font-size: 14px;
+* {
+  font-family: "PixelOperator";
+  line-height: 17px;
+  font-size: 16px;
   font-weight: normal;
-  line-height: 19px;
 
   font-smooth: never;
   -webkit-font-smoothing: none;
@@ -74,7 +105,6 @@ p {
 button, input, textarea {
   border: none;
   background: transparent;
-  font-size: 14px;
   color: var(--fg02);
   padding: 0;
   margin: 0;
@@ -120,12 +150,18 @@ ul {
 
 #left-nav {
   background-color: var(--bg02);
-  min-width: 285px;
-  width: 285px;
+  min-width: 190px;
+  width: 190px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   padding-bottom: 40px;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+#left-nav-content {
+  padding-left: 27px;
 }
 
 #logo-wrapper {
@@ -142,7 +178,6 @@ ul {
 }
 
 #version {
-  font-size: 14px;
   color: var(--fg03);
 }
 
@@ -173,7 +208,7 @@ _::-webkit-full-page-media, _:future, :root #app.admin #logo {
 
 #login-form {
   margin-top: 40px;
-  width: 18ch;
+  width: 20ch;
 }
 
 #login-form input {
@@ -181,6 +216,7 @@ _::-webkit-full-page-media, _:future, :root #app.admin #logo {
   width: 18ch;
   margin: 0;
   padding: 0;
+  font-weight: 900;
 }
 
 #login-form input:focus {
@@ -192,26 +228,27 @@ _::-webkit-full-page-media, _:future, :root #app.admin #logo {
 }
 /* select+option taken mainly from https://codepen.io/5t3ph/pen/MWyyYNz */
 .login-world-select-label {
-  margin-top: 8px;
+  margin-top: 20px;
 }
 .login-world-select-wrapper {
   display: grid;
   grid-template-areas: "select";
   align-items: center;
   position: relative;
-  width: 18ch;
+  width: 20ch;
   border-radius: 4px;
-  font-size: 14px;
   cursor: pointer;
   background-color: var(--fg02);
   margin-top: 8px;
 }
 .login-world-select-wrapper::after {
   grid-area: select;
-  content: "∨";
+  content: "^";
   justify-self: end;
+  transform: translateY(-2px) rotate(180deg);
   color: #000000; /* we can't affect <option> color, so we give up and make the
 arrow have the same color */
+  padding-left: 8px;
   padding-right: 8px;
 }
 .login-world-select {
@@ -263,6 +300,12 @@ arrow have the same color */
   margin-top: 1em;
 }
 
+#logged-out-links,
+#logged-in-links,
+#common-links {
+  padding-left: 24px;
+}
+
 .link {
   color: var(--fg03);
   cursor: pointer;
@@ -279,6 +322,12 @@ arrow have the same color */
   display: inline-block;
   margin: 0 1ch;
   white-space: pre;
+}
+
+.link[target="_blank"] .link-right-bracket::before {
+  content: "-> ";
+  color: var(--fg03);
+  margin-left: -2ch;
 }
 
 .link.active .link-label,
@@ -300,6 +349,7 @@ arrow have the same color */
 
 #player-info {
   margin-top: 40px;
+  padding-left: 16px;
   display: grid;
   grid-template-columns: min-content min-content;
   grid-auto-rows: auto;
@@ -367,7 +417,9 @@ arrow have the same color */
 }
 
 #page-title {
+  font-size: 24px;
   margin: 0 0 40px;
+  font-weight: 900;
 }
 
 table {
@@ -448,10 +500,10 @@ table tbody tr:hover td {
 #message-summary {
   margin: 0;
   color: var(--fg01);
+  font-weight: 700;
 }
 
 #message-date {
-  font-size: 14px;
   color: var(--fg03);
 }
 
@@ -470,7 +522,6 @@ table tbody tr:hover td {
 }
 
 .news-item-date {
-  font-size: 14px;
   color: var(--fg03);
 }
 
@@ -483,7 +534,6 @@ table tbody tr:hover td {
   padding-left: 32px;
 }
 .news-item-text pre code {
-  font-size: 14px;
   color: var(--fg01);
 }
 
@@ -532,7 +582,6 @@ table tbody tr:hover td {
   border: none;
   background: transparent;
   color: var(--fg01);
-  font-size: 14px;
 }
 
 .character-special-attribute-dec button:not(:disabled):hover,
@@ -567,9 +616,9 @@ table tbody tr:hover td {
 
 #next-tick,
 #server-tick {
-  font-size: 14px;
   color: var(--fg03);
   height: 1em;
+  padding-left: 10px;
 }
 
 #next-tick {
@@ -729,7 +778,6 @@ table tbody tr:hover td {
 .map-location:after {
   content: attr(data-location-name);
   display: block;
-  font-size: 14px;
   top: var(--location-name-top);
   left: 50%;
   transform: translate(-50%, 0);
@@ -997,7 +1045,6 @@ table tbody tr:hover td {
 .new-character-section-title,
 .character-section-title {
   color: var(--fg03);
-  font-size: 14px;
   margin-top: 0;
 }
 .new-character-section-available-number,
@@ -1080,7 +1127,6 @@ table tbody tr:hover td {
     "textarea info";
   --textarea-margin-top: 16px;
   --textarea-padding: 16px;
-  --textarea-font-size: 14px;
   --textarea-line-height: 18px;
 }
 .fight-strategy-examples {
@@ -1104,9 +1150,10 @@ table tbody tr:hover td {
   margin-bottom: 16px;
   padding: var(--textarea-padding);
   border-radius: 4px;
-  font-size: var(--textarea-font-size);
+  font-size: 16px;
   line-height: var(--textarea-line-height);
   white-space: pre;
+  font-family: "PixelOperatorMono";
 }
 .fight-strategy-hovered-error {
   pointer-events: none;
@@ -1121,7 +1168,7 @@ table tbody tr:hover td {
   background: var(--fg-highlight);
   background: linear-gradient(90deg, var(--fg-highlight-transparent) 0%, var(--fg-highlight-fully-transparent) 100%);
   grid-area: textarea;
-  font-size: var(--textarea-font-size);
+  font-size: 16px;
   line-height: var(--textarea-line-height);
   transform: translate(
     calc((var(--error-col) - 1) * 1ch                         + var(--textarea-padding)),
@@ -1166,10 +1213,10 @@ table tbody tr:hover td {
   color: var(--fg01);
 }
 .fight-strategy-syntax-help {
-  font-size: 14px;
 }
 .fight-strategy-syntax-help-reference {
   color: var(--fg-highlight);
+  font-family: "PixelOperatorMono";
 }
 .fight-strategy-syntax-help-grid {
   display: grid;
@@ -1177,6 +1224,7 @@ table tbody tr:hover td {
 }
 .fight-strategy-syntax-help-cheatsheet {
   grid-area: cheatsheet;
+  font-family: "PixelOperatorMono";
 }
 .fight-strategy-syntax-help-hover {
   grid-area: hover;
