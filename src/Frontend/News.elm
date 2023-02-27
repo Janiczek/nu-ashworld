@@ -90,7 +90,7 @@ the main world, 1x per minute for the NDC Oslo world.)
 While experimenting with the editor I found I'd like it to allow me to write eg.
 
 ```
-if    ((opponent is player
+if ((opponent is player
     and my AP < 4)
     and my HP < 100)
 then do whatever

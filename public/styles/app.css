@@ -519,6 +519,7 @@ table tbody tr:hover td {
 .news-item-title {
   margin: 0;
   color: var(--fg01);
+  font-weight: 700;
 }
 
 .news-item-date {
