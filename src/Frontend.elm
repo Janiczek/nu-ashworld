@@ -82,11 +82,13 @@ import Result.Extra as Result
 import Set exposing (Set)
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
+import Tailwind as TW
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
 import Time.ExtraExtra as Time
 import Types exposing (..)
+import UI
 import Url exposing (Url)
 
 
@@ -800,6 +802,14 @@ appView :
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
+    H.div [ HA.class "flex flex-1 flex-row bg-green-900" ]
+        [ leftNavView leftNav model
+        , contentView model
+        ]
+
+
+leftNavView : List (Html FrontendMsg) -> Model -> Html FrontendMsg
+leftNavView leftNav model =
     let
         tickFrequency : Maybe Time.Interval
         tickFrequency =
@@ -813,24 +823,15 @@ appView { leftNav } model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div
-        [ HA.class "flex flex-1 flex-row bg-green-900"
-        , HA.classList
-            [ ( "player", isPlayer model )
-            , ( "admin", isAdmin model )
-            ]
-        ]
-        [ H.div [ HA.class "bg-green-800 min-w-[190px] w-[190px] flex flex-col items-start pb-10 pl-10 pr-10" ]
-            [ logoView
-            , H.div []
-                ((tickFrequency
-                    |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
-                 )
-                    :: leftNav
-                    ++ [ commonLinksView model.route ]
-                )
-            ]
-        , contentView model
+    H.div [ HA.class "bg-green-800 min-w-[270px] w-[270px] flex flex-col items-center pb-10" ]
+        [ logoView model
+        , H.div [ HA.class "flex flex-col items-center" ]
+            ((tickFrequency
+                |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
+             )
+                :: leftNav
+                ++ [ commonLinksView model.route ]
+            )
         ]
 
 
@@ -889,7 +890,7 @@ contentView model =
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
-    H.div [ HA.id "content" ]
+    H.div [ HA.class "pt-8 px-10 pb-10 flex flex-col flex-1 items-start" ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -1001,9 +1002,6 @@ Do you have what it takes to survive in the post-apocalyptic wasteland? Can you
 shape the world for the better?
 
 What more, **can you stand up to the Enclave?**
-
-Many thanks to Patreons:
-* DJetelina (iScrE4m)
 """
     ]
 
@@ -1495,7 +1493,7 @@ townMainSquareView expandedQuests location { questsProgress } player =
     [ pageTitleView <| "Town: " ++ Location.name location
     , if Vendor.isInLocation location then
         H.div []
-            [ H.button
+            [ UI.button
                 [ HE.onClick GoToTownStore ]
                 [ H.text "[Visit store]" ]
             ]
@@ -1588,14 +1586,14 @@ expandedQuestView player progress quest =
                 ]
                 [ H.text <| Quest.title quest ]
             , if Set_.member quest player.questsActive then
-                H.button
+                UI.button
                     [ HA.class "quest-toggle-btn"
                     , HE.onClickStopPropagation <| AskToStopProgressing quest
                     ]
                     [ H.text "[STOP]" ]
 
               else
-                H.button
+                UI.button
                     [ HA.class "quest-toggle-btn"
                     , HE.onClickStopPropagation <| AskToStartProgressing quest
                     ]
@@ -1814,7 +1812,7 @@ townStoreView barter location world player =
 
                 resetBtn : Html FrontendMsg
                 resetBtn =
-                    H.button
+                    UI.button
                         [ HA.id "town-store-reset-btn"
                         , HE.onClick <| BarterMsg ResetBarter
                         ]
@@ -1822,7 +1820,7 @@ townStoreView barter location world player =
 
                 confirmBtn : Html FrontendMsg
                 confirmBtn =
-                    H.button
+                    UI.button
                         [ HA.id "town-store-confirm-btn"
                         , HE.onClick <| BarterMsg ConfirmBarter
                         ]
@@ -1860,13 +1858,13 @@ townStoreView barter location world player =
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ H.button
+                                [ UI.button
                                     [ HA.class "town-store-transfer-btn before-hover"
                                     , HA.disabled <| caps <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
-                                , H.input
+                                , UI.input
                                     [ HA.class "town-store-transfer-n-input after-hover"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
@@ -1875,7 +1873,7 @@ townStoreView barter location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        H.button
+                                        UI.button
                                             [ HA.disabled True
                                             , HA.class "town-store-transfer-btn after-hover"
                                             , HA.title "Transfer N items"
@@ -1883,7 +1881,7 @@ townStoreView barter location world player =
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        H.button
+                                        UI.button
                                             [ HE.onClick <| transfer n
                                             , HA.disabled <| n <= 0 || n > caps
                                             , HA.class "town-store-transfer-btn after-hover"
@@ -1893,7 +1891,7 @@ townStoreView barter location world player =
                                 ]
 
                         transferOneView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer 1
                                 , HA.disabled <| caps <= 0
                                 , HA.classList
@@ -1905,7 +1903,7 @@ townStoreView barter location world player =
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer caps
                                 , HA.disabled <| caps <= 0
                                 , HA.classList
@@ -1982,13 +1980,13 @@ townStoreView barter location world player =
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ H.button
+                                [ UI.button
                                     [ HA.class "town-store-transfer-btn before-hover"
                                     , HA.disabled <| count <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
-                                , H.input
+                                , UI.input
                                     [ HA.class "town-store-transfer-n-input after-hover"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput position
@@ -1997,7 +1995,7 @@ townStoreView barter location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        H.button
+                                        UI.button
                                             [ HA.disabled True
                                             , HA.class "town-store-transfer-btn after-hover"
                                             , HA.title "Transfer N items"
@@ -2005,7 +2003,7 @@ townStoreView barter location world player =
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        H.button
+                                        UI.button
                                             [ HE.onClick <| transfer id n
                                             , HA.disabled <| n <= 0 || n > count
                                             , HA.class "town-store-transfer-btn after-hover"
@@ -2015,7 +2013,7 @@ townStoreView barter location world player =
                                 ]
 
                         transferOneView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer id 1
                                 , HA.disabled <| count <= 0
                                 , HA.classList
@@ -2027,7 +2025,7 @@ townStoreView barter location world player =
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer id count
                                 , HA.disabled <| count <= 0
                                 , HA.classList
@@ -2204,7 +2202,7 @@ townStoreView barter location world player =
                     ]
             in
             [ pageTitleView <| "Store: " ++ Location.name location
-            , H.button
+            , UI.button
                 [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
                 [ H.text "[Back]" ]
             , H.div [ HA.id "town-store-grid" ] gridContents
@@ -2223,7 +2221,7 @@ newCharView hoveredItem newChar =
     let
         createBtnView =
             H.div [ HA.id "new-character-create-btn" ]
-                [ H.button
+                [ UI.button
                     [ HE.onClick CreateChar ]
                     [ H.text "[Create]" ]
                 ]
@@ -2307,7 +2305,7 @@ newCharDerivedStatsView newChar =
                     case tooltip of
                         Just tooltip_ ->
                             ( [ HA.title tooltip_ ]
-                            , [ HA.class "has-tooltip" ]
+                            , [ UI.tooltipAnchor ]
                             )
 
                         Nothing ->
@@ -2391,7 +2389,7 @@ newCharSpecialView newChar =
                 ]
                 [ H.td
                     [ HA.class "character-special-attribute-dec" ]
-                    [ H.button
+                    [ UI.button
                         [ HE.onClick <| NewCharDecSpecial type_
                         , HA.disabled <|
                             not <|
@@ -2413,7 +2411,7 @@ newCharSpecialView newChar =
                     [ H.text <| String.fromInt value ]
                 , H.td
                     [ HA.class "character-special-attribute-inc" ]
-                    [ H.button
+                    [ UI.button
                         [ HE.onClick <| NewCharIncSpecial type_
                         , HA.disabled <|
                             not <|
@@ -2474,7 +2472,7 @@ newCharTraitsView traits =
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.button
+                [ UI.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
                     , HA.class "new-character-trait-tag-btn"
                     ]
@@ -2680,7 +2678,7 @@ charDerivedStatsView player =
                     case tooltip of
                         Just tooltip_ ->
                             ( [ HA.title tooltip_ ]
-                            , [ HA.class "has-tooltip" ]
+                            , [ UI.tooltipAnchor ]
                             )
 
                         Nothing ->
@@ -2858,7 +2856,7 @@ skillsView_ r =
                 [ H.div
                     [ HA.class "character-skill-name" ]
                     [ H.viewIf showTagButton <|
-                        H.button
+                        UI.button
                             [ HE.onClickStopPropagation <| onTag skill
                             , HA.disabled isTaggingDisabled
                             , HA.class "character-skill-tag-btn"
@@ -2872,7 +2870,7 @@ skillsView_ r =
                         [ HA.class "character-skill-percent" ]
                         [ H.text <| String.fromInt percent ++ "%" ]
                     , H.viewIf (not r.isNewChar) <|
-                        H.button
+                        UI.button
                             [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
                             , HA.class "character-skill-inc-btn"
                             , HA.disabled isIncButtonDisabled
@@ -3016,14 +3014,14 @@ inventoryView _ player =
                 [ HA.class "inventory-item"
                 , HA.attributeMaybe HA.title tooltip
                 ]
-                [ H.button
+                [ UI.button
                     [ HA.class "inventory-item-use-btn"
                     , HE.onClick <| AskToUseItem item.id
                     , HA.disabled isDisabled
                     ]
                     [ H.text "[Use]" ]
                 , H.viewIf (Item.isEquippable item.kind) <|
-                    H.button
+                    UI.button
                         [ HA.class "inventory-item-equip-btn"
                         , HE.onClick <| AskToEquipItem item.id
                         ]
@@ -3118,7 +3116,7 @@ inventoryView _ player =
             Just armor ->
                 H.span []
                     [ H.text <| Item.name armor.kind
-                    , H.button
+                    , UI.button
                         [ HE.onClick AskToUnequipArmor
                         , HA.class "inventory-equipment-unequip-btn"
                         ]
@@ -3255,7 +3253,7 @@ messageView zone messageId _ player =
                 [ HA.id "message-content" ]
                 perceptionLevel
                 message
-            , H.button
+            , UI.button
                 [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages)
                 , HA.id "message-back-button"
                 ]
@@ -3291,7 +3289,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
                     HoveredItem.text hoveredItem
     in
     [ pageTitleView "Fight Strategy syntax help"
-    , H.button
+    , UI.button
         [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
         [ H.text "[Back]" ]
     , H.div
@@ -3406,7 +3404,7 @@ settingsFightStrategyView fightStrategyText _ player =
             )
 
         helpBtn =
-            H.button
+            UI.button
                 [ HA.class "fight-strategy-help-btn"
                 , HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategySyntaxHelp))
                 ]
@@ -3440,7 +3438,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 :: (FightStrategy.all
                         |> List.map
                             (\( name, strategy ) ->
-                                H.button
+                                UI.button
                                     [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
                                     , HA.class "fight-strategy-example"
                                     ]
@@ -3449,7 +3447,7 @@ settingsFightStrategyView fightStrategyText _ player =
                         |> List.intersperse (H.text ", ")
                    )
             )
-        , H.textarea
+        , UI.textarea
             [ HE.onInput SetFightStrategyText
             , HA.class "fight-strategy-textarea"
             , HA.value fightStrategyText
@@ -3540,7 +3538,7 @@ settingsFightStrategyView fightStrategyText _ player =
         ]
     , H.div
         [ HA.class "fight-strategy-buttons" ]
-        [ H.button
+        [ UI.button
             [ HA.class "fight-strategy-save-btn"
             , HA.disabled <| not hasTextChanged || Result.isErr parseResult
             , parseResult
@@ -3552,7 +3550,7 @@ settingsFightStrategyView fightStrategyText _ player =
                     )
             ]
             [ H.text "[Save]" ]
-        , H.button
+        , UI.button
             [ HA.class "fight-strategy-reset-btn"
             , HA.disabled <| not hasTextChanged
             , HE.onClick <| SetFightStrategyText player.fightStrategyText
@@ -3632,7 +3630,7 @@ fightView maybeFight _ player =
                            )
                 ]
             , Data.Fight.View.view perceptionLevel fight player.name
-            , H.button
+            , UI.button
                 [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder)
                 , HA.id "fight-back-button"
                 ]
@@ -3916,7 +3914,7 @@ contentUnavailableView reason =
         "Content unavailable ("
             ++ reason
             ++ "). This is most likely a bug. We should have redirected you someplace else. Could you report this to the developers please?"
-    , H.button
+    , UI.button
         [ HE.onClick <| GoToRoute News
         , HA.id "message-back-button"
         ]
@@ -3946,7 +3944,7 @@ notInitializedView model =
 loadingNavView : Html FrontendMsg
 loadingNavView =
     H.div
-        [ HA.id "loading-nav" ]
+        [ HA.class "mt-10" ]
         [ H.text "Loading..."
         , H.span [ HA.class "loading-cursor" ] []
         ]
@@ -3997,21 +3995,26 @@ alertMessageView maybeMessage =
 loginFormView : List World.Name -> Auth Plaintext -> Html FrontendMsg
 loginFormView worlds auth =
     let
-        formId =
-            "login-form"
+        input attrs children =
+            UI.input
+                (HA.class "text-green-100 w-[18ch] font-extraBold"
+                    :: TW.mod "focus" "bg-green-900"
+                    :: attrs
+                )
+                children
     in
     H.form
-        [ HA.id formId
+        [ HA.class "mt-10 w-[20ch]"
         , HE.onSubmit Login
         ]
-        [ H.input
+        [ input
             [ HA.id "login-name-input"
             , HA.value auth.name
             , HA.placeholder "Username_______________"
             , HE.onInput SetAuthName
             ]
             []
-        , H.input
+        , input
             [ HA.id "login-password-input"
             , HA.type_ "password"
             , HA.value <| Auth.unwrap auth.password
@@ -4041,13 +4044,13 @@ loginFormView worlds auth =
             , H.span [ HA.class "login-world-select-focus" ] []
             ]
         , H.div
-            [ HA.id "login-form-buttons" ]
-            [ H.button
+            [ HA.class "mt-4 flex justify-between" ]
+            [ UI.button
                 [ HA.id "login-button"
                 , HE.onClickPreventDefault Login
                 ]
                 [ H.text "[ Login ]" ]
-            , H.button
+            , UI.button
                 [ HA.id "register-button"
                 , HE.onClickPreventDefault Register
                 ]
@@ -4079,7 +4082,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     )
 
                 LinkIn { route, isActive } ->
-                    ( H.button
+                    ( UI.button
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
                       , HA.attributeIf (isActive currentRoute) <| HA.class "active"
@@ -4088,7 +4091,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     )
 
                 LinkMsg msg ->
-                    ( H.button
+                    ( UI.button
                     , [ HE.onClick msg
                       , HA.attributeMaybe HA.title tooltip
                       , HA.disabled disabled
@@ -4097,9 +4100,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
     in
     tag
         (HA.class "link"
-            :: HA.classList
-                [ ( "dimmed", dimmed )
-                ]
+            :: HA.classList [ ( "dimmed", dimmed ) ]
             :: linkAttrs
         )
         [ H.span
@@ -4242,10 +4243,7 @@ loggedInLinksView player currentRoute =
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in
-    H.div
-        [ HA.id "logged-in-links"
-        , HA.class "links"
-        ]
+    H.div [ HA.class "mt-10" ]
         (List.map (linkView currentRoute) links)
 
 
@@ -4261,19 +4259,13 @@ adminLinksView currentRoute =
             , linkMsg "Logout" Logout Nothing False
             ]
     in
-    H.div
-        [ HA.id "logged-in-links"
-        , HA.class "links"
-        ]
+    H.div [ HA.class "mt-10" ]
         (List.map (linkView currentRoute) links)
 
 
 loggedOutLinksView : Route -> Html FrontendMsg
 loggedOutLinksView currentRoute =
-    H.div
-        [ HA.id "logged-out-links"
-        , HA.class "links"
-        ]
+    H.div [ HA.class "mt-10" ]
         ([ linkMsg "Refresh" Refresh Nothing False
          , linkIn "Map" Map Nothing False
          , linkIn "Worlds" WorldsList Nothing False
@@ -4284,10 +4276,7 @@ loggedOutLinksView currentRoute =
 
 commonLinksView : Route -> Html FrontendMsg
 commonLinksView currentRoute =
-    H.div
-        [ HA.id "common-links"
-        , HA.class "links"
-        ]
+    H.div [ HA.class "mt-4" ]
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
          , linkOut "Discord" "https://discord.gg/SxymXxvehS" Nothing False
@@ -4320,10 +4309,10 @@ adminWorldsListView newWorldName newWorldFast data =
                             H.tr [ HA.class "world" ]
                                 [ H.td [] [ H.text worldName ]
                                 , H.td []
-                                    [ H.button
+                                    [ UI.button
                                         [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldActivity worldName))) ]
                                         [ H.text "[Activity]" ]
-                                    , H.button
+                                    , UI.button
                                         [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldHiscores worldName))) ]
                                         [ H.text "[Hiscores]" ]
                                     ]
@@ -4333,7 +4322,7 @@ adminWorldsListView newWorldName newWorldFast data =
             ]
         ]
     , H.div [ HA.id "admin-new-world-form" ]
-        [ H.input
+        [ UI.input
             [ HE.onInput SetAdminNewWorldName
             , HA.placeholder "New world name"
             , HA.value newWorldName
@@ -4343,7 +4332,7 @@ adminWorldsListView newWorldName newWorldFast data =
             [ HA.for "admin-new-world-fast-checkbox"
             , HE.onClick ToggleAdminNewWorldFast
             ]
-            [ H.input
+            [ UI.input
                 [ HA.type_ "checkbox"
                 , HA.id "admin-new-world-fast-checkbox"
                 , HA.checked newWorldFast
@@ -4351,7 +4340,7 @@ adminWorldsListView newWorldName newWorldFast data =
                 []
             , H.text "Fast?"
             ]
-        , H.button
+        , UI.button
             [ HE.onClick AskToCreateNewWorld
             , HA.disabled (Dict.member newWorldName data.worlds)
             ]
@@ -4561,14 +4550,20 @@ createdPlayerInfoView player =
         ]
 
 
-logoView : Html msg
-logoView =
+logoView : Model -> Html msg
+logoView model =
     H.div [ HA.class "flex flex-col items-end mt-[26px]" ]
         [ H.img
             [ HA.src "/images/logo-black-small.png"
             , HA.alt "NuAshworld Logo"
             , HA.title "NuAshworld - go to homepage"
-            , HA.class "filter-logo-inactive"
+            , HA.class
+                (if isPlayer model || isAdmin model then
+                    "filter-logo-active"
+
+                 else
+                    "filter-logo-inactive"
+                )
             , HA.width 190
             , HA.height 36
             ]

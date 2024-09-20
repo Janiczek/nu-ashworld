@@ -21,6 +21,8 @@ body {
     background-color: var(--green-900);
     color: var(--green-200);
     display: flex;
+    height: 100vh;
+    width: 100vw;
 }
 
 * {
@@ -52,10 +54,11 @@ body:after {
 }
 
 ::placeholder {
-    color: var(--green-300);
+    color: var(--green-300) !important;
 }
 
+/* To remove this style we'd have to use Dillon's Markdown package. Too lazy right now */
 strong {
     font-weight: 400 !important;
-    color: var(--orange);
+    color: var(--orange) !important;
 }

@@ -20,11 +20,7 @@ items =
       , title = "Hello!"
       , text =
             """
-This is a test news post. **Highlighted** text and so on.
-
-- List?
-- Another?
-  - Nested?
+This is a test news post. I'll have to **flesh this out.**
 
 ~janiczek
 """

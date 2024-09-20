@@ -11,10 +11,7 @@ doesn't look as nice as in Chrome/Firefox.
 */
 _::-webkit-full-page-media,
 _:future,
-:root #app.player #logo,
-_::-webkit-full-page-media,
-_:future,
-:root #app.admin #logo {
+:root .filter-logo-active {
     animation: none;
 }
 
@@ -30,7 +27,7 @@ _:future,
     87%,
     90%,
     95% {
-        filter: var(--filter-fg02);
+        filter: var(--filter-logo-inactive);
     }
 
     20%,
@@ -43,7 +40,7 @@ _:future,
     89%,
     96%,
     100% {
-        filter: var(--filter-fg01);
+        filter: var(--filter-logo-active);
     }
 }
 

@@ -1,81 +1,15 @@
 :root {
-  --bg02-half-transparent: rgba(16, 36, 12, 0.5);
-  --bg01-abovehalf-transparent: rgba(17, 24, 16, 0.625);
-  --fg01-half-transparent: rgba(60, 248, 0, 0.5);
-  --fg01-fully-transparent: rgba(60, 248, 0, 0);
-  --fg03-half-transparent: rgba(0, 124, 0, 0.5);
-  --fg-highlight-transparent: rgba(252, 253, 125, 0.25);
-  --fg-highlight-fully-transparent: rgba(252, 253, 125, 0);
-}
-
-body {
-  display: flex;
-  margin: 0;
-  position: relative;
-  min-height: 100%;
+  --green-800-half-transparent: rgba(16, 36, 12, 0.5);
+  --green-900-abovehalf-transparent: rgba(17, 24, 16, 0.625);
+  --green-100-half-transparent: rgba(60, 248, 0, 0.5);
+  --green-100-fully-transparent: rgba(60, 248, 0, 0);
+  --green-300-half-transparent: rgba(0, 124, 0, 0.5);
+  --orange-transparent: rgba(252, 253, 125, 0.25);
+  --orange-fully-transparent: rgba(252, 253, 125, 0);
 }
 
 p {
   max-width: 60ch;
-}
-
-button,
-input,
-textarea {
-  border: none;
-  background: transparent;
-  color: var(--fg02);
-  padding: 0;
-  margin: 0;
-}
-
-button:disabled {
-  color: var(--fg03);
-}
-
-input:focus,
-textarea:focus {
-  outline: none;
-}
-
-button {
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.has-tooltip {
-  text-decoration: underline;
-  text-decoration-style: dashed;
-  text-decoration-color: var(--fg03);
-}
-
-button:hover,
-button:active {
-  color: var(--fg01);
-  outline-color: var(--fg01);
-}
-
-#app.player #logo,
-#app.admin #logo {
-  /* TODO */
-}
-
-
-#login-form {
-  margin-top: 40px;
-  width: 20ch;
-}
-
-#login-form input {
-  color: var(--fg01);
-  width: 18ch;
-  margin: 0;
-  padding: 0;
-  font-weight: 900;
-}
-
-#login-form input:focus {
-  background-color: var(--bg01);
 }
 
 #admin-hiscores-content #ladder-table {
@@ -95,7 +29,7 @@ button:active {
   width: 20ch;
   border-radius: 4px;
   cursor: pointer;
-  background-color: var(--fg02);
+  background-color: var(--green-200);
   margin-top: 8px;
 }
 
@@ -138,79 +72,13 @@ arrow have the same color */
   left: -1px;
   right: -1px;
   bottom: -1px;
-  border: 2px solid var(--fg01);
+  border: 2px solid var(--green-100);
   border-radius: inherit;
-}
-
-#login-form-buttons {
-  margin-top: 1em;
-  display: flex;
-  justify-content: space-between;
 }
 
 #alert-message {
   margin-top: 40px;
-  color: var(--fg-highlight);
-}
-
-#logged-out-links,
-#logged-in-links {
-  margin-top: 40px;
-}
-
-#common-links {
-  margin-top: 1em;
-}
-
-#logged-out-links,
-#logged-in-links,
-#common-links {
-  padding-left: 24px;
-}
-
-.link {
-  color: var(--fg03);
-  cursor: pointer;
-  text-decoration: none;
-  display: block;
-  text-align: left;
-}
-
-.link-label {
-  color: var(--fg01);
-  text-transform: uppercase;
-  width: 9ch;
-  min-width: 9ch;
-  display: inline-block;
-  margin: 0 1ch;
-  white-space: pre;
-}
-
-.link[target="_blank"] .link-right-bracket::before {
-  content: "-> ";
-  color: var(--fg03);
-  margin-left: -2ch;
-}
-
-.link.active .link-label,
-.link:hover,
-.link:hover .link-label {
-  color: var(--fg-highlight);
-}
-
-.link.dimmed:not(:hover):not(.active) .link-label {
-  color: var(--fg03);
-}
-
-.link:disabled .link-left-bracket,
-.link:disabled .link-right-bracket,
-.link:disabled .link-label {
-  color: var(--fg03);
-
-}
-
-#loading-nav {
-  margin-top: 40px;
+  color: var(--orange);
 }
 
 .loading-cursor {
@@ -228,7 +96,7 @@ arrow have the same color */
   10%,
   90%,
   100% {
-    background: var(--fg02);
+    background: var(--green-200);
   }
 
   30%,
@@ -245,31 +113,23 @@ arrow have the same color */
   margin-left: 1ch;
 }
 
-#content {
-  padding: 32px 40px 40px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  align-items: flex-start;
-}
-
 table {
   text-align: left;
   border-collapse: collapse;
 }
 
 table tbody td {
-  border-left: 1px solid var(--fg03-half-transparent);
+  border-left: 1px solid var(--green-300-half-transparent);
   padding: 4px 8px;
 }
 
 table thead {
-  color: var(--fg03);
-  border-bottom: 3px solid var(--fg03-half-transparent);
+  color: var(--green-300);
+  border-bottom: 3px solid var(--green-300-half-transparent);
 }
 
 table thead th {
-  border-left: 3px solid var(--fg03-half-transparent);
+  border-left: 3px solid var(--green-300-half-transparent);
   padding: 4px 8px;
   font-weight: normal;
 }
@@ -280,15 +140,15 @@ table thead th:first-child {
 }
 
 table tbody tr:hover td {
-  background: var(--bg02);
+  background: var(--green-800);
 }
 
 #ladder-table tbody tr.is-player {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 #ladder-table tbody tr.is-player td {
-  background: var(--bg02);
+  background: var(--green-800);
 }
 
 #ladder-table tbody .ladder-rank,
@@ -300,16 +160,16 @@ table tbody tr:hover td {
 
 #ladder-table tbody .ladder-fight {
   cursor: pointer;
-  background: var(--bg02);
-  color: var(--fg01);
+  background: var(--green-800);
+  color: var(--green-100);
 }
 
 #ladder-table tbody .ladder-fight:hover {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 #ladder-table tbody tr.is-player .ladder-fight {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 #messages-table tbody .messages-unread {
@@ -317,11 +177,11 @@ table tbody tr:hover td {
 }
 
 #messages-table tbody tr.is-unread {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 #messages-table tbody .messages-remove:hover {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 #messages-empty-note {
@@ -330,12 +190,12 @@ table tbody tr:hover td {
 
 #message-summary {
   margin: 0;
-  color: var(--fg01);
+  color: var(--green-100);
   font-weight: 700;
 }
 
 #message-date {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 #message-content {
@@ -347,11 +207,11 @@ table tbody tr:hover td {
 }
 
 .news-item-text pre code {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .news-item-text a {
-  color: var(--fg-highlight);
+  color: var(--orange);
   position: relative;
   text-decoration: none;
 }
@@ -359,7 +219,7 @@ table tbody tr:hover td {
 .news-item-text a:after {
   position: absolute;
   content: '';
-  background: var(--fg-highlight-transparent);
+  background: var(--orange-transparent);
   left: -3px;
   right: -3px;
   bottom: -2px;
@@ -383,20 +243,20 @@ table tbody tr:hover td {
 }
 
 .character-special-attribute-value.out-of-range {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .character-special-attribute-dec button,
 .character-special-attribute-inc button {
   border: none;
   background: transparent;
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .character-special-attribute-dec button:not(:disabled):hover,
 .character-special-attribute-inc button:not(:disabled):hover {
-  color: var(--fg-highlight);
-  background: var(--bg02);
+  color: var(--orange);
+  background: var(--green-800);
 }
 
 .character-special-attribute-dec {
@@ -425,7 +285,7 @@ table tbody tr:hover td {
 
 #next-tick,
 #server-tick {
-  color: var(--fg03);
+  color: var(--green-300);
   height: 1em;
   padding-left: 10px;
 }
@@ -464,8 +324,8 @@ table tbody tr:hover td {
   width: min-content;
   white-space: nowrap;
   padding: 20px;
-  background-color: var(--bg01);
-  color: var(--bad-path-color, var(--fg02));
+  background-color: var(--green-900);
+  color: var(--bad-path-color, var(--green-200));
   position: relative;
   z-index: 3;
 }
@@ -480,7 +340,7 @@ table tbody tr:hover td {
 
 #map-mouse-layer.too-distant,
 #map-mouse-layer.not-all-passable {
-  --bad-path-color: var(--fg-highlight);
+  --bad-path-color: var(--orange);
 }
 
 #map-tiles {
@@ -517,14 +377,14 @@ table tbody tr:hover td {
 }
 
 .map-path-tile {
-  background: var(--bad-path-color, var(--fg03));
+  background: var(--bad-path-color, var(--green-300));
   opacity: 0.5;
   pointer-events: none;
   z-index: 1;
 }
 
 #map-mouse-tile {
-  background: var(--bad-path-color, var(--fg03));
+  background: var(--bad-path-color, var(--green-300));
   opacity: 0.75;
   pointer-events: none;
   z-index: 1;
@@ -540,7 +400,7 @@ table tbody tr:hover td {
 }
 
 .map-location {
-  color: var(--fg01);
+  color: var(--green-100);
   opacity: 0.5;
 }
 
@@ -582,11 +442,11 @@ table tbody tr:hover td {
   display: block;
   width: var(--location-size);
   height: var(--location-size);
-  border: var(--location-border-width) solid var(--fg01);
+  border: var(--location-border-width) solid var(--green-100);
   border-radius: 50%;
   background: radial-gradient(circle,
-      var(--fg01-fully-transparent) 0%,
-      var(--fg01-half-transparent) 100%);
+      var(--green-100-fully-transparent) 0%,
+      var(--green-100-half-transparent) 100%);
   transform: translate(-50%, -50%);
 }
 
@@ -621,7 +481,7 @@ table tbody tr:hover td {
 
 #import-textarea {
   border: none;
-  background-color: var(--bg02);
+  background-color: var(--green-800);
   width: 80ch;
   height: 20em;
   margin-bottom: 1em;
@@ -660,37 +520,37 @@ table tbody tr:hover td {
 
 #town-store-player-name,
 #town-store-vendor-name {
-  border-bottom: 2px solid var(--bg02);
+  border-bottom: 2px solid var(--green-800);
 }
 
 #town-store-player-traded-value {
   grid-area: player-traded-value;
-  color: var(--fg01);
+  color: var(--green-100);
   text-align: center;
 }
 
 #town-store-vendor-traded-value {
   grid-area: vendor-traded-value;
-  color: var(--fg01);
+  color: var(--green-100);
   text-align: center;
 }
 
 .town-store-transfer-btn {
   padding: 2px 4px;
   margin: 0 4px;
-  background: var(--bg02);
-  color: var(--fg02);
+  background: var(--green-800);
+  color: var(--green-200);
 }
 
 .town-store-transfer-btn:disabled {
-  color: var(--fg03);
+  color: var(--green-300);
   opacity: 0.5;
   pointer-events: none;
 }
 
 .town-store-transfer-btn:not(:disabled):hover {
-  background: var(--fg03);
-  color: var(--fg01);
+  background: var(--green-300);
+  color: var(--green-100);
 }
 
 .town-store-transfer-btn.hidden {
@@ -721,14 +581,14 @@ table tbody tr:hover td {
 
 #town-store-player-traded-bg {
   grid-area: 2 / 2 / 5 / 3;
-  background-color: var(--bg02-half-transparent);
-  border-right: 1px solid var(--bg02);
+  background-color: var(--green-800-half-transparent);
+  border-right: 1px solid var(--green-800);
 }
 
 #town-store-vendor-traded-bg {
   grid-area: 2 / 3 / 5 / 4;
-  background-color: var(--bg02-half-transparent);
-  border-left: 1px solid var(--bg02);
+  background-color: var(--green-800-half-transparent);
+  border-left: 1px solid var(--green-800);
 }
 
 .town-store-item.player-kept-caps {
@@ -753,7 +613,7 @@ table tbody tr:hover td {
 }
 
 .town-store-caps[data-caps="0"] {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 #town-store-player-kept-items {
@@ -782,7 +642,7 @@ table tbody tr:hover td {
 
 #town-store-barter-message {
   margin-top: 40px;
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .town-store-transfer-n-area {
@@ -807,7 +667,7 @@ table tbody tr:hover td {
 
 .town-store-transfer-n-input {
   width: 5.5ch;
-  background-color: var(--bg02);
+  background-color: var(--green-800);
   padding-left: 6px;
 }
 
@@ -820,7 +680,7 @@ table tbody tr:hover td {
 .character-skills-skill:hover,
 .character-skills-skill:hover .character-skill-tag-btn,
 .character-skills-skill:hover .character-skill-inc-btn {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .character-skills-skill.is-taggable {
@@ -834,7 +694,7 @@ table tbody tr:hover td {
 .character-skills-skill.is-tagged,
 .character-skills-skill.is-tagged .character-skill-tag-btn,
 .character-skills-skill.is-tagged .character-skill-inc-btn {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .character-skill-tag-btn {
@@ -875,12 +735,12 @@ table tbody tr:hover td {
 
 .new-character-traits-trait:hover,
 .new-character-traits-trait:hover .new-character-trait-tag-btn {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .new-character-traits-trait.is-toggled,
 .new-character-traits-trait.is-toggled .new-character-trait-tag-btn {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .new-character-trait-tag-btn {
@@ -910,7 +770,7 @@ table tbody tr:hover td {
 
 #new-character-notes p {
   max-width: none;
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 #new-character-create-btn {
@@ -919,23 +779,23 @@ table tbody tr:hover td {
 
 .new-character-section-title,
 .character-section-title {
-  color: var(--fg03);
+  color: var(--green-300);
   margin-top: 0;
 }
 
 .new-character-section-available-number,
 .character-section-available-number {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 #new-character-special p,
 #new-character-traits p,
 #new-character-skills p {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 #new-character-error {
-  color: var(--fg-highlight);
+  color: var(--orange);
   margin-top: 20px;
 }
 
@@ -953,7 +813,7 @@ table tbody tr:hover td {
 }
 
 .inventory-item-use-btn:disabled {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 .inventory-equipment-unequip-btn {
@@ -965,7 +825,7 @@ table tbody tr:hover td {
 }
 
 .character-choose-perk-item:hover {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 #character-choose-perk {
@@ -983,7 +843,7 @@ table tbody tr:hover td {
 
 .hovered-item-title {
   margin-top: 0;
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 #about-content p {
@@ -1022,7 +882,7 @@ table tbody tr:hover td {
 }
 
 .fight-strategy-textarea {
-  background-color: var(--bg02);
+  background-color: var(--green-800);
   grid-area: textarea;
   width: 70ch;
   height: 25em;
@@ -1042,12 +902,12 @@ table tbody tr:hover td {
   border-bottom: 2px;
   width: 3ch;
   height: 1em;
-  background-color: var(--fg-highlight-transparent);
+  background-color: var(--orange-transparent);
   margin-left: -2px;
   padding-left: 2px;
-  border-left: 2px solid var(--fg-highlight);
-  background: var(--fg-highlight);
-  background: linear-gradient(90deg, var(--fg-highlight-transparent) 0%, var(--fg-highlight-fully-transparent) 100%);
+  border-left: 2px solid var(--orange);
+  background: var(--orange);
+  background: linear-gradient(90deg, var(--orange-transparent) 0%, var(--orange-fully-transparent) 100%);
   grid-area: textarea;
   font-size: 16px;
   line-height: var(--textarea-line-height);
@@ -1066,11 +926,11 @@ table tbody tr:hover td {
 }
 
 .fight-strategy-info-link {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .fight-strategy-info-link:hover {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .fight-strategy-help-btn {
@@ -1088,7 +948,7 @@ table tbody tr:hover td {
 }
 
 .fight-strategy-dead-end:hover {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .fight-strategy-warnings {
@@ -1098,13 +958,13 @@ table tbody tr:hover td {
 }
 
 .fight-strategy-warning:hover {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .fight-strategy-syntax-help {}
 
 .fight-strategy-syntax-help-reference {
-  color: var(--fg-highlight);
+  color: var(--orange);
   font-family: "PixelOperatorMono";
 }
 
@@ -1149,7 +1009,7 @@ table tbody tr:hover td {
 .quest:before {
   content: '[+]';
   padding-right: 8px;
-  color: var(--fg02);
+  color: var(--green-200);
 }
 
 .quest:not(.expanded) {
@@ -1158,7 +1018,7 @@ table tbody tr:hover td {
 
 .quest:not(.expanded):hover,
 .quest:not(.expanded):hover:before {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .quest.expanded:before {
@@ -1175,11 +1035,11 @@ table tbody tr:hover td {
 }
 
 .quest-players {
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 .quest-number {
-  color: var(--fg02);
+  color: var(--green-200);
 }
 
 .quest-name {
@@ -1187,11 +1047,11 @@ table tbody tr:hover td {
 }
 
 .quest-name:hover {
-  color: var(--fg01);
+  color: var(--green-100);
 }
 
 .quest-progressbar {
-  color: var(--fg03);
+  color: var(--green-300);
   margin-top: 20px;
 }
 
@@ -1204,7 +1064,7 @@ table tbody tr:hover td {
 }
 
 .quest-toggle-btn:hover {
-  color: var(--fg-highlight);
+  color: var(--orange);
 }
 
 .quest-requirements-title {
@@ -1217,9 +1077,9 @@ table tbody tr:hover td {
 
 .quest-requirements-none {
   margin-left: 4ch;
-  color: var(--fg03);
+  color: var(--green-300);
 }
 
 .quest-xp-per-tick {
-  color: var(--fg03);
+  color: var(--green-300);
 }
