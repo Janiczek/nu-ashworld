@@ -1,0 +1,22 @@
+@font-face {
+  font-family: "PixelOperator";
+  font-weight: 400;
+  src: url("../fonts/PixelOperator.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: "PixelOperator";
+  font-weight: 700;
+  src: url("../fonts/PixelOperatorHB.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: "PixelOperator";
+  font-weight: 900;
+  src: url("../fonts/PixelOperatorHBSC.ttf") format('truetype');
+}
+
+@font-face {
+  font-family: "PixelOperatorMono";
+  src: url("../fonts/PixelOperatorMonoHB.ttf") format('truetype');
+}

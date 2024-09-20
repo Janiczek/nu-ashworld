@@ -139,7 +139,9 @@ view model =
                     , H.text "Do you have the Master Trader perk?"
                     ]
                 , H.div [ HA.id "final-price" ]
-                    [ H.strong [] [ H.text "Final price: " ]
+                    [ H.span
+                        [ HA.class "text-orange" ]
+                        [ H.text "Final price: " ]
                     , H.text <|
                         case maybePrice of
                             Nothing ->

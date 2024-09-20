@@ -791,14 +791,7 @@ updateFromBackend msg model =
 view : Model -> Browser.Document FrontendMsg
 view model =
     { title = "NuAshworld " ++ Version.version
-    , body =
-        [ stylesLinkView
-        , favicon16View
-        , favicon32View
-        , genericFaviconView
-        , genericFavicon2View
-        , view_ model
-        ]
+    , body = [ view_ model ]
     }
 
 
@@ -821,15 +814,15 @@ appView { leftNav } model =
                     Nothing
     in
     H.div
-        [ HA.id "app"
+        [ HA.class "flex flex-1 flex-row bg-green-900"
         , HA.classList
             [ ( "player", isPlayer model )
             , ( "admin", isAdmin model )
             ]
         ]
-        [ H.div [ HA.id "left-nav" ]
+        [ H.div [ HA.class "bg-green-800 min-w-[190px] w-[190px] flex flex-col items-start pb-10 pl-10 pr-10" ]
             [ logoView
-            , H.div [ HA.id "left-nav-content" ]
+            , H.div []
                 ((tickFrequency
                     |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
                  )
@@ -867,11 +860,7 @@ nextTickView tickFrequency zone time =
                         zone
                         nextTick
             in
-            [ H.text "Next tick: "
-            , H.span
-                [ HA.class "slightly-emphasized" ]
-                [ H.text nextTickString ]
-            ]
+            [ H.text <| "Next tick: " ++ nextTickString ]
 
 
 contentView : Model -> Html FrontendMsg
@@ -995,7 +984,7 @@ contentView model =
 pageTitleView : String -> Html FrontendMsg
 pageTitleView title =
     H.h2
-        [ HA.id "page-title" ]
+        [ HA.class "text-lg font-extraBold mb-10" ]
         [ H.text title ]
 
 
@@ -1650,7 +1639,7 @@ expandedQuestView player progress quest =
             [ HA.class "quest-requirements-title" ]
             [ H.text "Player Requirements"
             , H.span
-                [ HA.class "deemphasized" ]
+                [ HA.class "text-green-300" ]
                 [ H.text " (affect ticks/hour)" ]
             ]
         , if List.isEmpty playerRequirements then
@@ -1682,7 +1671,7 @@ expandedQuestView player progress quest =
              else
                 [ H.text "Player Rewards"
                 , H.span
-                    [ HA.class "deemphasized" ]
+                    [ HA.class "text-green-300" ]
                     [ H.text " (if you give " ]
                 , H.span
                     [ HA.class "quest-number" ]
@@ -1691,7 +1680,7 @@ expandedQuestView player progress quest =
                             ++ "+"
                     ]
                 , H.span
-                    [ HA.class "deemphasized" ]
+                    [ HA.class "text-green-300" ]
                     [ H.text " ticks)" ]
                 ]
             )
@@ -3575,25 +3564,26 @@ settingsFightStrategyView fightStrategyText _ player =
 
 newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
 newsItemView zone { date, title, text } =
-    H.div
-        [ HA.class "news-item" ]
+    H.div []
         [ H.h3
-            [ HA.class "news-item-title" ]
+            [ HA.class "text-green-100 font-bold" ]
             [ H.text title ]
         , H.time
-            [ HA.class "news-item-date" ]
+            [ HA.class "text-green-300" ]
             [ date
                 |> News.formatDate zone
                 |> H.text
             ]
-        , News.formatText "news-item-text" text
+        , News.formatText "max-w-[60ch]" text
         ]
 
 
 newsView : Time.Zone -> List (Html FrontendMsg)
 newsView zone =
-    pageTitleView "News"
-        :: List.map (newsItemView zone) News.items
+    [ pageTitleView "News"
+    , H.div [ HA.class "flex flex-col gap-15" ]
+        (List.map (newsItemView zone) News.items)
+    ]
 
 
 fightView : Maybe Fight.Info -> PlayerData -> CPlayer -> List (Html FrontendMsg)
@@ -3999,7 +3989,7 @@ alertMessageView maybeMessage =
         |> H.viewMaybe
             (\message ->
                 H.div
-                    [ HA.id "alert-message" ]
+                    [ HA.class "mt-10 text-orange" ]
                     [ H.text message ]
             )
 
@@ -4503,111 +4493,88 @@ playerInfoView player =
 createdPlayerInfoView : CPlayer -> Html FrontendMsg
 createdPlayerInfoView player =
     H.div
-        [ HA.id "player-info" ]
-        [ H.div [ HA.class "player-stat-label" ] [ H.text "Name:" ]
+        [ HA.class "mt-10 pl-4 grid grid-cols-[repeat(2,min-content)] auto-rows-auto" ]
+        [ H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Name:" ]
         , H.div
-            [ HA.classList
-                [ ( "player-stat-value", True )
-                , ( "emphasized", True )
-                ]
-            ]
+            [ HA.class "col-start-2 text-green-100" ]
             [ H.text player.name ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Hitpoints"
             ]
             [ H.text "HP:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-2" ]
+            [ "{HP}/{MAXHP}"
+                |> String.replace "{HP}" (String.fromInt player.hp)
+                |> String.replace "{MAXHP}" (String.fromInt player.maxHp)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Experience points"
             ]
             [ H.text "XP:" ]
-        , H.div [ HA.class "player-stat-value" ]
+        , H.div [ HA.class "col-start-2" ]
             [ H.span [] [ H.text <| String.fromInt player.xp ]
             , H.span
-                [ HA.class "deemphasized" ]
+                [ HA.class "text-green-300" ]
                 [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
             ]
-        , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Level:" ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Wins/Losses"
             ]
             [ H.text "W/L:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.wins ++ "/" ++ String.fromInt player.losses ]
-        , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-2" ]
+            [ "{WINS}/{LOSSES}"
+                |> String.replace "{WINS}" (String.fromInt player.wins)
+                |> String.replace "{LOSSES}" (String.fromInt player.losses)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Caps:" ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ "${CAPS}"
+                |> String.replace "{CAPS}" (String.fromInt player.caps)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Ticks"
             ]
             [ H.text "Ticks:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ticks ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ H.text <| String.fromInt player.ticks ]
         ]
-
-
-stylesLinkView : Html msg
-stylesLinkView =
-    H.node "link"
-        [ HA.rel "stylesheet"
-        , HA.href <| "/styles/app.css?v=" ++ Version.version
-        ]
-        []
-
-
-favicon16View : Html msg
-favicon16View =
-    H.node "link"
-        [ HA.rel "icon"
-        , HA.href "/images/favicon-16.png"
-        ]
-        []
-
-
-favicon32View : Html msg
-favicon32View =
-    H.node "link"
-        [ HA.rel "icon"
-        , HA.href "/images/favicon-32.png"
-        ]
-        []
-
-
-genericFaviconView : Html msg
-genericFaviconView =
-    H.node "link"
-        [ HA.rel "shortcut icon"
-        , HA.type_ "image/png"
-        , HA.href "/images/favicon-392.png"
-        ]
-        []
-
-
-genericFavicon2View : Html msg
-genericFavicon2View =
-    H.node "link"
-        [ HA.rel "apple-touch-icon"
-        , HA.href "/images/favicon-392.png"
-        ]
-        []
 
 
 logoView : Html msg
 logoView =
-    H.div [ HA.id "logo-wrapper" ]
+    H.div [ HA.class "flex flex-col items-end mt-[26px]" ]
         [ H.img
             [ HA.src "/images/logo-black-small.png"
             , HA.alt "NuAshworld Logo"
             , HA.title "NuAshworld - go to homepage"
-            , HA.id "logo"
+            , HA.class "filter-logo-inactive"
             , HA.width 190
             , HA.height 36
             ]
             []
         , H.div
-            [ HA.id "version"
+            [ HA.class "text-green-300"
             , HA.title "Game version"
             ]
             [ H.text Version.version ]

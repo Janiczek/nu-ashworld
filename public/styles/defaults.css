@@ -1,0 +1,61 @@
+:root {
+    --green-900: #111810;
+    --green-800: #10240C;
+
+    --green-300: #007C00;
+    --green-200: #00C000;
+    --green-100: #3CF800;
+
+    --orange: #FCFF2F;
+    /*
+    Greens:
+    Fallout 2 character select screen: #5BF523
+    Fallout Tactics custom campaign: #4AFC24
+
+    Oranges:
+    Fallout Tactics custom campaign: #FCFF2F
+    */
+}
+
+body {
+    background-color: var(--green-900);
+    color: var(--green-200);
+    display: flex;
+}
+
+* {
+    font-family: "PixelOperator";
+    line-height: 17px;
+    font-size: 16px;
+    font-weight: normal;
+
+    font-smooth: never;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: none;
+}
+
+/* VIGNETTE CORNERS */
+body:after {
+    position: absolute;
+    content: '';
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    border-style: solid;
+    border-width: 128px;
+    border-color: transparent;
+    border-image: url('../images/border-image.png') 50% repeat;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+::placeholder {
+    color: var(--green-300);
+}
+
+strong {
+    font-weight: 400 !important;
+    color: var(--orange);
+}
