@@ -1,4 +1,12 @@
-module UI exposing (bold, button, input, liBullet, textarea, tooltipAnchor)
+module UI exposing
+    ( bold
+    , button
+    , checkboxLabel
+    , input
+    , liBullet
+    , textarea
+    , tooltipAnchor
+    )
 
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
@@ -56,3 +64,13 @@ liBullet =
     H.span
         [ HA.class "text-green-300 pl-[1ch]" ]
         [ H.text "- " ]
+
+
+checkboxLabel : Bool -> String
+checkboxLabel isOn =
+    if isOn then
+        "[X]"
+
+    else
+        -- Space the width of one 'X' (in the font PixelOperator)
+        "[\u{2007}]"

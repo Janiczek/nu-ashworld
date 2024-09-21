@@ -561,33 +561,9 @@ table tbody tr:hover td {
   padding: 0;
 }
 
-.new-character-traits-trait {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  cursor: pointer;
-}
-
-.new-character-traits-trait:hover,
-.new-character-traits-trait:hover .new-character-trait-tag-btn {
-  color: var(--green-100);
-}
-
-.new-character-traits-trait.is-toggled,
-.new-character-traits-trait.is-toggled .new-character-trait-tag-btn {
-  color: var(--orange);
-}
-
 .new-character-trait-tag-btn {
   white-space: pre;
   margin-right: 1ch;
-}
-
-#new-character-traits-list {
-  width: max-content;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
 }
 
 #character-grid {
@@ -596,7 +572,6 @@ table tbody tr:hover td {
   grid-gap: 20px;
 }
 
-#new-character-traits,
 #character-traits,
 #character-perks {
   margin-top: 40px;

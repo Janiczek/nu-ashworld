@@ -2499,34 +2499,26 @@ newCharTraitsView traits =
                 isToggled : Bool
                 isToggled =
                     Set_.member trait traits
-
-                buttonLabel : String
-                buttonLabel =
-                    if isToggled then
-                        "[*]"
-
-                    else
-                        "[ ]"
             in
             H.li
-                [ HA.classList
-                    [ ( "new-character-traits-trait", True )
-                    , ( "is-toggled", isToggled )
-                    ]
+                [ HA.class "flex flex-row gap-[1ch] justify-start cursor-pointer group"
+                , TW.mod "hover" "text-orange"
+                , HA.classList [ ( "text-orange", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ UI.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
-                    , HA.class "new-character-trait-tag-btn"
+                    , HA.classList [ ( "text-orange", isToggled ) ]
+                    , TW.mod "group-hover" "text-orange"
                     ]
-                    [ H.text buttonLabel ]
+                    [ H.text <| UI.checkboxLabel isToggled ]
                 , H.div [] [ H.text <| Trait.name trait ]
                 ]
     in
     H.div
-        [ HA.id "new-character-traits" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "Traits ("
@@ -2536,9 +2528,11 @@ newCharTraitsView traits =
             , H.text " available)"
             ]
         , H.ul
-            [ HA.id "new-character-traits-list" ]
+            [ HA.class "w-max grid grid-cols-2" ]
             (List.map traitView Trait.all)
-        , H.p [] [ H.text "Select up to two traits." ]
+        , H.p
+            [ HA.class "text-green-300" ]
+            [ H.text "Select up to two traits." ]
         ]
 
 
