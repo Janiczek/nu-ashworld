@@ -3,6 +3,7 @@ tailwind.config = {
         colors: {
             transparent: "transparent",
             current: "currentColor",
+            black: "#000000",
             green: {
                 900: "#111810",
                 800: "#10240C",

@@ -792,8 +792,34 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document FrontendMsg
 view model =
+    let
+        worldNames : List World.Name
+        worldNames =
+            model.worlds
+                |> Maybe.withDefault []
+                |> List.map .name
+
+        leftNav =
+            case model.worldData of
+                IsAdmin _ ->
+                    [ alertMessageView model.alertMessage
+                    , adminLinksView model.route
+                    ]
+
+                IsPlayer data ->
+                    [ alertMessageView model.alertMessage
+                    , playerInfoView data.player
+                    , loggedInLinksView data.player model.route
+                    ]
+
+                NotLoggedIn ->
+                    [ loginFormView worldNames model.loginForm
+                    , alertMessageView model.alertMessage
+                    , loggedOutLinksView model.route
+                    ]
+    in
     { title = "NuAshworld " ++ Version.version
-    , body = [ view_ model ]
+    , body = [ appView { leftNav = leftNav } model ]
     }
 
 
@@ -841,7 +867,7 @@ nextTickView tickFrequency zone time =
         millis =
             Time.posixToMillis time
     in
-    H.div [ HA.id "next-tick" ] <|
+    H.div [ HA.class "mt-5 text-green-200" ] <|
         if millis == 0 then
             []
 
@@ -2220,7 +2246,7 @@ newCharView : Maybe HoveredItem -> NewChar -> List (Html FrontendMsg)
 newCharView hoveredItem newChar =
     let
         createBtnView =
-            H.div [ HA.id "new-character-create-btn" ]
+            H.div [ HA.class "mt-10" ]
                 [ UI.button
                     [ HE.onClick CreateChar ]
                     [ H.text "[Create]" ]
@@ -2229,27 +2255,24 @@ newCharView hoveredItem newChar =
         errorView =
             H.viewMaybe
                 (\error ->
-                    H.div [ HA.id "new-character-error" ]
+                    H.div [ HA.class "text-orange mt-5" ]
                         [ H.text <| NewChar.error error ]
                 )
                 newChar.error
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.id "new-character-grid" ]
-        [ H.div
-            [ HA.class "new-character-column" ]
+        [ HA.class "grid grid-cols-3 gap-5" ]
+        [ H.div []
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
             , createBtnView
             , errorView
             ]
-        , H.div
-            [ HA.class "new-character-column" ]
+        , H.div []
             [ newCharSkillsView newChar
             ]
-        , H.div
-            [ HA.class "new-character-column" ]
+        , H.div []
             [ newCharDerivedStatsView newChar
             , newCharHelpView hoveredItem
             ]
@@ -2273,15 +2296,15 @@ newCharHelpView maybeHoveredItem =
                     in
                     H.div []
                         [ H.h4
-                            [ HA.class "hovered-item-title" ]
+                            [ HA.class "mt-0 text-orange" ]
                             [ H.text title ]
                         , Markdown.toHtml [] description
                         ]
     in
     H.div
-        [ HA.id "new-character-help" ]
+        [ HA.class "mt-5" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2298,23 +2321,21 @@ newCharDerivedStatsView newChar =
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
                 }
 
-        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
-        itemView ( label, value, tooltip ) =
+        itemView : ( String, String, Maybe HoveredItem ) -> Html FrontendMsg
+        itemView ( label, value, hoveredItem ) =
             let
-                ( liAttrs, valueAttrs ) =
-                    case tooltip of
-                        Just tooltip_ ->
-                            ( [ HA.title tooltip_ ]
-                            , [ UI.tooltipAnchor ]
-                            )
+                liAttrs =
+                    case hoveredItem of
+                        Just hoveredItem_ ->
+                            [ HE.onMouseOver <| HoverItem hoveredItem_
+                            , HE.onMouseOut StopHoveringItem
+                            ]
 
                         Nothing ->
-                            ( [], [] )
+                            []
             in
             H.li liAttrs
-                [ H.text <| label ++ ": "
-                , H.span valueAttrs [ H.text value ]
-                ]
+                [ H.text <| label ++ ": " ++ value ]
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -2326,7 +2347,7 @@ newCharDerivedStatsView newChar =
     H.div
         [ HA.id "new-character-derived-stats" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Derived stats" ]
         , H.ul [ HA.id "new-character-derived-stats-list" ] <|
             List.map itemView
@@ -2351,7 +2372,7 @@ newCharDerivedStatsView newChar =
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| Perception.tooltip perceptionLevel
+                  , Just <| HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -2427,7 +2448,7 @@ newCharSpecialView newChar =
     H.div
         [ HA.id "new-character-special" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "SPECIAL ("
             , H.span
                 [ HA.class "new-character-section-available-number" ]
@@ -2483,7 +2504,7 @@ newCharTraitsView traits =
     H.div
         [ HA.id "new-character-traits" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Traits ("
             , H.span
                 [ HA.class "new-character-section-available-number" ]
@@ -2626,7 +2647,7 @@ charTraitsView traits =
     H.div
         [ HA.id "character-traits" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Traits" ]
         , if Set_.isEmpty traits then
             H.p [] [ H.text "You have no traits." ]
@@ -2662,7 +2683,7 @@ charHelpView maybeHoveredItem =
     H.div
         [ HA.id "character-help" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2699,7 +2720,7 @@ charDerivedStatsView player =
     H.div
         [ HA.id "character-derived-stats" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Derived stats" ]
         , H.ul [ HA.id "character-derived-stats-list" ] <|
             List.map itemView
@@ -2773,7 +2794,7 @@ charSpecialView player =
     H.div
         [ HA.id "character-special" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "SPECIAL" ]
         , H.table
             [ HA.id "character-special-table" ]
@@ -2885,7 +2906,7 @@ skillsView_ r =
         H.div
             [ HA.id r.id ]
             [ H.h3
-                [ HA.class "new-character-section-title" ]
+                [ HA.class "text-green-300 mt-0" ]
                 [ H.text "Skills ("
                 , H.span
                     [ HA.class "new-character-section-available-number" ]
@@ -2904,7 +2925,7 @@ skillsView_ r =
             , HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ]
             ]
             [ H.h3
-                [ HA.class "character-section-title" ]
+                [ HA.class "text-green-300 mt-0" ]
                 [ H.text "Skills ("
                 , H.span
                     [ HA.class "character-section-available-number" ]
@@ -2958,7 +2979,7 @@ charPerksView perks =
     H.div
         [ HA.id "character-perks" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300 mt-0" ]
             [ H.text "Perks" ]
         , if Dict_.isEmpty perks then
             H.p [] [ H.text "No perks yet!" ]
@@ -3950,37 +3971,6 @@ loadingNavView =
         ]
 
 
-view_ : Model -> Html FrontendMsg
-view_ model =
-    let
-        worldNames : List World.Name
-        worldNames =
-            model.worlds
-                |> Maybe.withDefault []
-                |> List.map .name
-
-        leftNav =
-            case model.worldData of
-                IsAdmin _ ->
-                    [ alertMessageView model.alertMessage
-                    , adminLinksView model.route
-                    ]
-
-                IsPlayer data ->
-                    [ alertMessageView model.alertMessage
-                    , playerInfoView data.player
-                    , loggedInLinksView data.player model.route
-                    ]
-
-                NotLoggedIn ->
-                    [ loginFormView worldNames model.loginForm
-                    , alertMessageView model.alertMessage
-                    , loggedOutLinksView model.route
-                    ]
-    in
-    appView { leftNav = leftNav } model
-
-
 alertMessageView : Maybe String -> Html FrontendMsg
 alertMessageView maybeMessage =
     maybeMessage
@@ -4008,28 +3998,30 @@ loginFormView worlds auth =
         , HE.onSubmit Login
         ]
         [ input
-            [ HA.id "login-name-input"
-            , HA.value auth.name
+            [ HA.value auth.name
             , HA.placeholder "Username_______________"
             , HE.onInput SetAuthName
             ]
             []
         , input
-            [ HA.id "login-password-input"
-            , HA.type_ "password"
+            [ HA.type_ "password"
             , HA.value <| Auth.unwrap auth.password
             , HA.placeholder "Password_______________"
             , HE.onInput SetAuthPassword
             ]
             []
         , H.div
-            [ HA.class "login-world-select-label" ]
+            [ HA.class "mt-5" ]
             [ H.text "World: " ]
         , H.div
-            [ HA.class "login-world-select-wrapper" ]
+            [ HA.class "select-wrapper"
+            , HA.class "grid items-center relative w-[20ch] rounded cursor-pointer bg-green-200 mt-2  text-black"
+            , TW.mod "after" "justify-self-end -translate-y-0.5 rotate-180 px-2 text-black"
+            ]
             [ H.select
                 [ HE.onChange SetAuthWorld
-                , HA.class "login-world-select"
+                , HA.class "select"
+                , HA.class "peer appearance-none bg-transparent border-0 m-0 py-1 pl-2 pr-8 w-full z-[1] outline-none"
                 ]
                 (("" :: worlds)
                     |> List.map
@@ -4041,7 +4033,9 @@ loginFormView worlds auth =
                                 [ H.text worldName ]
                         )
                 )
-            , H.span [ HA.class "login-world-select-focus" ] []
+            , H.span
+                [ TW.mod "peer-focus" "absolute inset-[-1px] border-2 border-green-100 rounded-[inherit]" ]
+                []
             ]
         , H.div
             [ HA.class "mt-4 flex justify-between" ]
