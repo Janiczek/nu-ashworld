@@ -702,7 +702,9 @@ updateFromBackend msg model =
 
         YoureLoggedOut worlds ->
             { model
-                | loginForm = Auth.init
+                | loginForm =
+                    Auth.init
+                        |> Auth.selectDefaultWorld worlds
                 , alertMessage = Nothing
                 , worlds = Just worlds
                 , worldData = NotLoggedIn
@@ -712,7 +714,9 @@ updateFromBackend msg model =
         CurrentWorlds worlds ->
             ( { model
                 | worlds = Just worlds
-                , loginForm = Auth.selectDefaultWorld worlds model.loginForm
+                , loginForm =
+                    model.loginForm
+                        |> Auth.selectDefaultWorld worlds
               }
             , Cmd.none
             )
@@ -2382,9 +2386,15 @@ newCharDerivedStatsView newChar =
                         Nothing ->
                             []
             in
-            H.li liAttrs
+            H.li
+                (TW.mod "hover" "bg-green-800"
+                    :: liAttrs
+                )
                 [ UI.liBullet
-                , H.text <| label ++ ": " ++ value
+                , H.text <| label ++ ": "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text value ]
                 ]
 
         perceptionLevel : PerceptionLevel
@@ -2760,7 +2770,10 @@ charDerivedStatsView player =
                         Nothing ->
                             []
             in
-            H.li (TW.mod "hover" "bg-green-800" :: liAttrs)
+            H.li
+                (TW.mod "hover" "bg-green-800"
+                    :: liAttrs
+                )
                 [ UI.liBullet
                 , H.text <| label ++ ": "
                 , H.span
