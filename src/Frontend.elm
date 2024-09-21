@@ -2267,7 +2267,7 @@ newCharView hoveredItem newChar =
             H.div [ HA.class "mt-10" ]
                 [ UI.button
                     [ HE.onClick CreateChar ]
-                    [ H.text "[Create]" ]
+                    [ H.text "[ Create ]" ]
                 ]
 
         errorView =
@@ -2280,7 +2280,7 @@ newCharView hoveredItem newChar =
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.class "grid grid-cols-[42ch_repeat(2,minmax(0,1fr))] gap-5" ]
+        [ HA.class "grid grid-cols-[42ch_42ch_minmax(0,1fr)] gap-5" ]
         [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
@@ -2305,18 +2305,21 @@ newCharHelpView maybeHoveredItem =
         helpContent =
             case maybeHoveredItem of
                 Nothing ->
-                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
+                    H.p
+                        [ HA.class "max-w-[50ch] text-green-300" ]
+                        [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
                     let
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div []
+                    H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
                             [ HA.class "mt-0 text-orange" ]
                             [ H.text title ]
-                        , Markdown.toHtml [] description
+                        , -- TODO formatting of lists etc.
+                          Markdown.toHtml [] description
                         ]
     in
     H.div
@@ -2560,7 +2563,6 @@ newCharSkillsView newChar =
         , hasTagPerk = False
         , availableSkillPoints = 0
         , isNewChar = True
-        , id = "new-character-skills"
         }
 
 
@@ -2828,7 +2830,6 @@ skillsView_ :
     , hasTagPerk : Bool
     , availableSkillPoints : Int
     , isNewChar : Bool
-    , id : String
     }
     -> Html FrontendMsg
 skillsView_ r =
@@ -2864,50 +2865,60 @@ skillsView_ r =
                 isTagged =
                     Set_.member skill r.taggedSkills
 
-                ( showTagButton, isTaggingDisabled, tagButtonLabel ) =
+                ( showTagButton, isTaggingDisabled ) =
                     case ( r.isNewChar, isTagged ) of
                         ( True, True ) ->
-                            ( True, False, "[*]" )
+                            ( True, False )
 
                         ( True, False ) ->
-                            ( True, availableTags == 0, "[ ]" )
+                            ( True, availableTags == 0 )
 
                         ( False, True ) ->
-                            ( availableTags > 0, True, "[*]" )
+                            ( availableTags > 0, True )
 
                         ( False, False ) ->
-                            ( availableTags > 0, availableTags == 0, "[ ]" )
+                            ( availableTags > 0, availableTags == 0 )
 
                 isIncButtonDisabled : Bool
                 isIncButtonDisabled =
                     r.availableSkillPoints <= 0
+
+                isTaggable : Bool
+                isTaggable =
+                    showTagButton && not isTaggingDisabled
             in
-            H.li
-                [ HA.classList
+            H.div
+                [ HA.class "contents group"
+                , TW.mod "hover" "text-orange"
+                , HA.classList
                     [ ( "character-skills-skill", True )
-                    , ( "not-useful", notUseful )
-                    , ( "is-tagged", isTagged )
-                    , ( "is-taggable", showTagButton && not isTaggingDisabled )
+                    , ( "text-green-300", notUseful )
+                    , ( "text-orange", isTagged )
+                    , ( "cursor-pointer", isTaggable )
                     ]
                 , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
                 , HE.onMouseOver <| HoverItem <| HoveredSkill skill
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.div
-                    [ HA.class "character-skill-name" ]
-                    [ H.viewIf showTagButton <|
-                        UI.button
-                            [ HE.onClickStopPropagation <| onTag skill
-                            , HA.disabled isTaggingDisabled
-                            , HA.class "character-skill-tag-btn"
+                [ H.viewIf showTagButton <|
+                    UI.button
+                        [ HE.onClickStopPropagation <| onTag skill
+                        , HA.disabled isTaggingDisabled
+                        , HA.class "!text-green-100"
+                        , HA.classList
+                            [ ( "!text-orange", isTagged )
+                            , ( "!text-green-300", notUseful )
                             ]
-                            [ H.text tagButtonLabel ]
-                    , H.text <| Skill.name skill
-                    ]
+                        , TW.mod "group-hover" "!text-orange bg-green-800"
+                        ]
+                        [ H.text <| UI.checkboxLabel isTagged ]
+                , H.div [] [ H.text <| Skill.name skill ]
                 , H.div
                     [ HA.class "character-skill-value" ]
                     [ H.div
-                        [ HA.class "character-skill-percent" ]
+                        [ HA.class "character-skill-percent"
+                        , HA.class "text-right"
+                        ]
                         [ H.text <| String.fromInt percent ++ "%" ]
                     , H.viewIf (not r.isNewChar) <|
                         UI.button
@@ -2923,8 +2934,7 @@ skillsView_ r =
     in
     if r.isNewChar then
         H.div
-            [ HA.id r.id
-            , HA.class "flex flex-col gap-4"
+            [ HA.class "flex flex-col gap-4"
             ]
             [ H.h3
                 [ HA.class "text-green-300 mt-0" ]
@@ -2934,17 +2944,17 @@ skillsView_ r =
                     [ H.text <| String.fromInt availableTags ]
                 , H.text " tags left)"
                 ]
-            , H.ul
-                [ HA.id "character-skills-list" ]
+            , H.div [ HA.class "grid grid-cols-[3ch_14ch_5ch] auto-rows-auto gap-x-[1ch]" ]
                 (List.map skillView Skill.all)
-            , H.p [] [ H.text "Tag three skills. Dimmed skills are not yet useful in the game." ]
+            , H.p
+                [ HA.class "text-green-300" ]
+                [ H.text "Tag three skills. Dimmed skills are not yet useful in the game." ]
             ]
 
     else
         H.div
-            [ HA.id r.id
-            , HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ]
-            ]
+            -- TODO cannot-inc: before TW, was making inc buttons opacity:0.5;
+            [ HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ] ]
             [ H.h3
                 [ HA.class "text-green-300 mt-0" ]
                 [ H.text "Skills ("
@@ -2953,9 +2963,7 @@ skillsView_ r =
                     [ H.text <| String.fromInt r.availableSkillPoints ]
                 , H.text " points available)"
                 ]
-            , H.ul
-                [ HA.id "character-skills-list" ]
-                (List.map skillView Skill.all)
+            , H.ul [] (List.map skillView Skill.all)
             , H.viewIf (availableTags > 0) <|
                 H.p [] [ H.text <| "Tags available: " ++ String.fromInt availableTags ]
             ]
@@ -2970,7 +2978,6 @@ charSkillsView player =
         , hasTagPerk = Perk.rank Perk.Tag player.perks > 0
         , availableSkillPoints = player.availableSkillPoints
         , isNewChar = False
-        , id = "character-skills"
         }
 
 

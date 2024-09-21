@@ -506,66 +506,6 @@ table tbody tr:hover td {
   padding-left: 6px;
 }
 
-.character-skills-skill {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.character-skills-skill:hover,
-.character-skills-skill:hover .character-skill-tag-btn,
-.character-skills-skill:hover .character-skill-inc-btn {
-  color: var(--green-100);
-}
-
-.character-skills-skill.is-taggable {
-  cursor: pointer;
-}
-
-.character-skills-skill.not-useful {
-  opacity: 0.5;
-}
-
-.character-skills-skill.is-tagged,
-.character-skills-skill.is-tagged .character-skill-tag-btn,
-.character-skills-skill.is-tagged .character-skill-inc-btn {
-  color: var(--orange);
-}
-
-.character-skill-tag-btn {
-  white-space: pre;
-  margin-right: 1ch;
-}
-
-.character-skill-inc-btn {
-  white-space: pre;
-  margin-left: 1ch;
-}
-
-#character-skills.cannot-inc .character-skill-inc-btn {
-  opacity: 0.5;
-}
-
-.character-skill-value {
-  display: flex;
-}
-
-.character-skill-percent {
-  padding-left: 2ch;
-  width: 4ch;
-  text-align: right;
-}
-
-#character-skills-list {
-  width: max-content;
-  padding: 0;
-}
-
-.new-character-trait-tag-btn {
-  white-space: pre;
-  margin-right: 1ch;
-}
-
 #character-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -575,16 +515,6 @@ table tbody tr:hover td {
 #character-traits,
 #character-perks {
   margin-top: 40px;
-}
-
-#new-character-notes p {
-  max-width: none;
-  color: var(--green-300);
-}
-
-#new-character-traits p,
-#new-character-skills p {
-  color: var(--green-300);
 }
 
 #character-help {
