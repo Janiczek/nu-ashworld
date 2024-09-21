@@ -2280,7 +2280,7 @@ newCharView hoveredItem newChar =
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.class "grid grid-cols-3 gap-5" ]
+        [ HA.class "grid grid-cols-[42ch_repeat(2,minmax(0,1fr))] gap-5" ]
         [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
@@ -2510,8 +2510,9 @@ newCharTraitsView traits =
                 ]
                 [ UI.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
-                    , HA.classList [ ( "text-orange", isToggled ) ]
-                    , TW.mod "group-hover" "text-orange"
+                    , HA.class "!text-green-100"
+                    , HA.classList [ ( "!text-orange", isToggled ) ]
+                    , TW.mod "group-hover" "!text-orange bg-green-800"
                     ]
                     [ H.text <| UI.checkboxLabel isToggled ]
                 , H.div [] [ H.text <| Trait.name trait ]
