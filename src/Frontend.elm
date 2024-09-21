@@ -3810,59 +3810,97 @@ ladderView data loggedInPlayer =
 
 playerLadderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
 playerLadderTableView players loggedInPlayer =
-    let
-        cantFight : String -> Html FrontendMsg
-        cantFight message =
-            H.td
-                [ HA.class "text-green-300 cursor-not-allowed"
-                , HA.title message
-                ]
-                [ H.text "-" ]
-    in
-    H.table [ HA.id "ladder-table" ]
-        [ H.thead []
+    H.table
+        [ HA.class "ladder-table"
+        , HA.class "text-left border-collapse"
+        ]
+        [ let
+            th attrs children =
+                H.th
+                    (HA.class "px-2 py-1 font-normal"
+                        :: attrs
+                    )
+                    children
+
+            border =
+                HA.class "border-l-[3px] border-l-green-300-half-transparent"
+          in
+          H.thead
+            [ HA.class "text-green-300"
+            , HA.class "border-b-[3px] border-b-green-300-half-transparent"
+            ]
             [ H.tr []
-                [ H.th
-                    [ HA.class "ladder-rank"
+                [ th
+                    [ HA.class "text-right"
                     , HA.title "Rank"
                     ]
                     [ H.text "#" ]
-                , H.th [ HA.class "ladder-fight" ] [ H.text "Fight" ]
-                , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
-                , H.th
+                , th [ border ] [ H.text "Fight" ]
+                , th [ border ] [ H.text "Name" ]
+                , th
                     [ HA.class "ladder-status"
+                    , border
                     , HA.title "Health status"
                     ]
                     [ H.text "Status" ]
-                , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
-
-                --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
-                --, H.th [HA.class "ladder-flag"] [] -- flag
-                , H.th
-                    [ HA.class "ladder-wins"
+                , th
+                    [ HA.class "text-right"
+                    , border
+                    ]
+                    [ H.text "Lvl" ]
+                , th
+                    [ HA.class "text-right"
+                    , border
                     , HA.title "Wins"
                     ]
                     [ H.text "W" ]
-                , H.th
-                    [ HA.class "ladder-losses"
+                , th
+                    [ HA.class "text-right"
+                    , border
                     , HA.title "Losses"
                     ]
                     [ H.text "L" ]
                 ]
             ]
-        , H.tbody []
+        , let
+            td attrs children =
+                H.td
+                    (HA.class "px-2 py-1"
+                        :: attrs
+                    )
+                    children
+
+            border =
+                HA.class "border-l border-l-green-300-half-transparent"
+          in
+          H.tbody []
             (players
                 |> List.indexedMap
                     (\i player ->
                         let
                             isYou =
                                 loggedInPlayer.name == player.name
+
+                            cantFight : String -> Html FrontendMsg
+                            cantFight message =
+                                td
+                                    [ HA.class "text-green-300 cursor-not-allowed"
+                                    , border
+                                    , HA.classList [ ( "bg-green-800", isYou ) ]
+                                    , TW.mod "group-hover" "bg-green-800"
+                                    , HA.title message
+                                    ]
+                                    [ H.text "-" ]
                         in
                         H.tr
-                            [ HA.classList [ ( "text-green-100", isYou ) ] ]
-                            [ H.td
-                                [ HA.class "ladder-rank"
+                            [ HA.class "group"
+                            , HA.classList [ ( "text-green-100", isYou ) ]
+                            ]
+                            [ td
+                                [ HA.class "text-right"
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Rank"
+                                , TW.mod "group-hover" "bg-green-800"
                                 ]
                                 [ H.text <| String.fromInt <| i + 1 ]
                             , if loggedInPlayer.name == player.name then
@@ -3878,19 +3916,26 @@ playerLadderTableView players loggedInPlayer =
                                 cantFight "Can't fight: you have no ticks!"
 
                               else
-                                H.td
+                                td
                                     [ HE.onClick <| AskToFight player.name
                                     , HA.class "cursor-pointer bg-green-800 text-green-100"
+                                    , border
+                                    , HA.classList [ ( "bg-green-800", isYou ) ]
+                                    , TW.mod "group-hover" "bg-green-800"
                                     , TW.mod "hover" "text-orange"
                                     ]
                                     [ H.text "Fight" ]
-                            , H.td
-                                [ HA.class "ladder-name"
+                            , td
+                                [ HA.classList [ ( "bg-green-800", isYou ) ]
+                                , border
+                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Name"
                                 ]
                                 [ H.text player.name ]
-                            , H.td
-                                [ HA.class "ladder-status"
+                            , td
+                                [ HA.classList [ ( "bg-green-800", isYou ) ]
+                                , border
+                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title <|
                                     if loggedInPlayer.special.perception <= 1 then
                                         "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
@@ -3899,18 +3944,27 @@ playerLadderTableView players loggedInPlayer =
                                         "Health status"
                                 ]
                                 [ H.text <| HealthStatus.label player.healthStatus ]
-                            , H.td
-                                [ HA.class "ladder-lvl"
+                            , td
+                                [ HA.class "text-right"
+                                , border
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
+                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Level"
                                 ]
                                 [ H.text <| String.fromInt player.level ]
-                            , H.td
-                                [ HA.class "ladder-wins"
+                            , td
+                                [ HA.class "text-right"
+                                , border
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
+                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Wins"
                                 ]
                                 [ H.text <| String.fromInt player.wins ]
-                            , H.td
-                                [ HA.class "ladder-losses"
+                            , td
+                                [ HA.class "text-right"
+                                , border
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
+                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Losses"
                                 ]
                                 [ H.text <| String.fromInt player.losses ]

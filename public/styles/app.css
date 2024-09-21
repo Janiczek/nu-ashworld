@@ -3,7 +3,6 @@
   --green-900-abovehalf-transparent: rgba(17, 24, 16, 0.625);
   --green-100-half-transparent: rgba(60, 248, 0, 0.5);
   --green-100-fully-transparent: rgba(60, 248, 0, 0);
-  --green-300-half-transparent: rgba(0, 124, 0, 0.5);
   --orange-fully-transparent: rgba(252, 253, 125, 0);
 }
 
@@ -26,51 +25,6 @@ p {
 
 #admin-worlds-list button+button {
   margin-left: 1ch;
-}
-
-table {
-  text-align: left;
-  border-collapse: collapse;
-}
-
-table tbody td {
-  border-left: 1px solid var(--green-300-half-transparent);
-  padding: 4px 8px;
-}
-
-table thead {
-  color: var(--green-300);
-  border-bottom: 3px solid var(--green-300-half-transparent);
-}
-
-table thead th {
-  border-left: 3px solid var(--green-300-half-transparent);
-  padding: 4px 8px;
-  font-weight: normal;
-}
-
-table tbody td:first-child,
-table thead th:first-child {
-  border-left: none;
-}
-
-table tbody tr:hover td {
-  background: var(--green-800);
-}
-
-#ladder-table tbody tr.is-player {
-  color: var(--green-100);
-}
-
-#ladder-table tbody tr.is-player td {
-  background: var(--green-800);
-}
-
-#ladder-table tbody .ladder-rank,
-#ladder-table tbody .ladder-lvl,
-#ladder-table tbody .ladder-wins,
-#ladder-table tbody .ladder-losses {
-  text-align: right;
 }
 
 #messages-table tbody .messages-unread {

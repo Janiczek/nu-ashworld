@@ -6,7 +6,11 @@
     --green-200: #00C000;
     --green-100: #3CF800;
 
+
     --orange: #FCFF2F;
+
+    --green-300-half-transparent: rgba(0, 124, 0, 0.5);
+    --orange-transparent: rgba(252, 253, 125, 0.25);
     /*
     Greens:
     Fallout 2 character select screen: #5BF523
