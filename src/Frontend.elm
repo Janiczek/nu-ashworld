@@ -3814,7 +3814,7 @@ playerLadderTableView players loggedInPlayer =
         cantFight : String -> Html FrontendMsg
         cantFight message =
             H.td
-                [ HA.class "ladder-fight"
+                [ HA.class "text-green-300 cursor-not-allowed"
                 , HA.title message
                 ]
                 [ H.text "-" ]
@@ -3854,10 +3854,12 @@ playerLadderTableView players loggedInPlayer =
             (players
                 |> List.indexedMap
                     (\i player ->
+                        let
+                            isYou =
+                                loggedInPlayer.name == player.name
+                        in
                         H.tr
-                            [ HA.classList
-                                [ ( "is-player", loggedInPlayer.name == player.name ) ]
-                            ]
+                            [ HA.classList [ ( "text-green-100", isYou ) ] ]
                             [ H.td
                                 [ HA.class "ladder-rank"
                                 , HA.title "Rank"
@@ -3877,8 +3879,9 @@ playerLadderTableView players loggedInPlayer =
 
                               else
                                 H.td
-                                    [ HA.class "ladder-fight"
-                                    , HE.onClick <| AskToFight player.name
+                                    [ HE.onClick <| AskToFight player.name
+                                    , HA.class "cursor-pointer bg-green-800 text-green-100"
+                                    , TW.mod "hover" "text-orange"
                                     ]
                                     [ H.text "Fight" ]
                             , H.td

@@ -73,20 +73,6 @@ table tbody tr:hover td {
   text-align: right;
 }
 
-#ladder-table tbody .ladder-fight {
-  cursor: pointer;
-  background: var(--green-800);
-  color: var(--green-100);
-}
-
-#ladder-table tbody .ladder-fight:hover {
-  color: var(--orange);
-}
-
-#ladder-table tbody tr.is-player .ladder-fight {
-  color: var(--green-300);
-}
-
 #messages-table tbody .messages-unread {
   text-align: right;
 }
