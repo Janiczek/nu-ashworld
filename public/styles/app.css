@@ -4,7 +4,6 @@
   --green-100-half-transparent: rgba(60, 248, 0, 0.5);
   --green-100-fully-transparent: rgba(60, 248, 0, 0);
   --green-300-half-transparent: rgba(0, 124, 0, 0.5);
-  --orange-transparent: rgba(252, 253, 125, 0.25);
   --orange-fully-transparent: rgba(252, 253, 125, 0);
 }
 
@@ -116,37 +115,6 @@ table tbody tr:hover td {
 
 #message-content {
   max-width: 60ch;
-}
-
-.character-special-attribute-value {
-  padding-left: 2ch;
-  width: 2ch;
-  text-align: right;
-}
-
-.character-special-attribute-value.out-of-range {
-  color: var(--orange);
-}
-
-.character-special-attribute-dec button,
-.character-special-attribute-inc button {
-  border: none;
-  background: transparent;
-  color: var(--green-100);
-}
-
-.character-special-attribute-dec button:not(:disabled):hover,
-.character-special-attribute-inc button:not(:disabled):hover {
-  color: var(--orange);
-  background: var(--green-800);
-}
-
-.character-special-attribute-dec {
-  padding-right: 20px;
-}
-
-.character-special-attribute-inc {
-  padding-left: 20px;
 }
 
 #character-stats-list {
@@ -639,12 +607,6 @@ table tbody tr:hover td {
   color: var(--green-300);
 }
 
-.new-character-section-available-number,
-.character-section-available-number {
-  color: var(--orange);
-}
-
-#new-character-special p,
 #new-character-traits p,
 #new-character-skills p {
   color: var(--green-300);

@@ -146,6 +146,21 @@ init url key =
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
         , Nav.pushUrl key (Route.toString route)
+
+        -- TODO don't push this, only for developing styles
+        , let
+            initAuth =
+                Auth.init
+          in
+          Lamdera.sendToBackend <|
+            LogMeIn <|
+                Auth.hash
+                    ({ initAuth
+                        | name = "janiczek"
+                        , worldName = "main"
+                     }
+                        |> Auth.setPlaintextPassword "janiczek"
+                    )
         ]
     )
 
@@ -2266,16 +2281,16 @@ newCharView hoveredItem newChar =
     [ pageTitleView "New Character"
     , H.div
         [ HA.class "grid grid-cols-3 gap-5" ]
-        [ H.div []
+        [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
             , createBtnView
             , errorView
             ]
-        , H.div []
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSkillsView newChar
             ]
-        , H.div []
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharDerivedStatsView newChar
             , newCharHelpView hoveredItem
             ]
@@ -2305,7 +2320,7 @@ newCharHelpView maybeHoveredItem =
                         ]
     in
     H.div
-        [ HA.class "mt-5" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "Help" ]
@@ -2338,7 +2353,9 @@ newCharDerivedStatsView newChar =
                             []
             in
             H.li liAttrs
-                [ H.text <| label ++ ": " ++ value ]
+                [ UI.liBullet
+                , H.text <| label ++ ": " ++ value
+                ]
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -2347,12 +2364,11 @@ newCharDerivedStatsView newChar =
                 , hasAwarenessPerk = False
                 }
     in
-    H.div
-        [ HA.id "new-character-derived-stats" ]
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "Derived stats" ]
-        , H.ul [ HA.id "new-character-derived-stats-list" ] <|
+        , H.ul [] <|
             List.map itemView
                 [ ( "Hitpoints"
                   , String.fromInt <|
@@ -2406,13 +2422,12 @@ newCharSpecialView newChar =
                 value =
                     Special.get type_ finalSpecial
             in
-            H.tr
-                [ HA.class "character-special-attribute"
-                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+            H.div
+                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "contents group"
                 ]
-                [ H.td
-                    [ HA.class "character-special-attribute-dec" ]
+                [ H.div []
                     [ UI.button
                         [ HE.onClick <| NewCharDecSpecial type_
                         , HA.disabled <|
@@ -2420,21 +2435,23 @@ newCharSpecialView newChar =
                                 Special.canDecrement
                                     type_
                                     finalSpecial
+                        , HA.class "!text-green-100"
+                        , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange bg-green-800"
                         ]
                         [ H.text "[-]" ]
                     ]
-                , H.td
-                    [ HA.class "character-special-attribute-label" ]
+                , H.div
+                    [ TW.mod "group-hover" "text-orange" ]
                     [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.classList
-                        [ ( "character-special-attribute-value", True )
-                        , ( "out-of-range", not <| Special.isValueInRange value )
-                        ]
+                , H.div
+                    [ HA.class "text-right"
+                    , HA.classList [ ( "!text-orange", not <| Special.isValueInRange value ) ]
+                    , TW.mod "group-hover" "text-orange"
                     ]
                     [ H.text <| String.fromInt value ]
-                , H.td
-                    [ HA.class "character-special-attribute-inc" ]
+                , H.div
+                    []
                     [ UI.button
                         [ HE.onClick <| NewCharIncSpecial type_
                         , HA.disabled <|
@@ -2443,25 +2460,29 @@ newCharSpecialView newChar =
                                     newChar.availableSpecial
                                     type_
                                     finalSpecial
+                        , HA.class "!text-green-100"
+                        , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange bg-green-800"
                         ]
                         [ H.text "[+]" ]
                     ]
                 ]
     in
     H.div
-        [ HA.id "new-character-special" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "SPECIAL ("
             , H.span
-                [ HA.class "new-character-section-available-number" ]
+                [ HA.class "text-orange" ]
                 [ H.text <| String.fromInt newChar.availableSpecial ]
             , H.text " points left)"
             ]
-        , H.table
-            [ HA.id "character-special-table" ]
+        , H.div [ HA.class "grid grid-cols-[3ch_12ch_2ch_3ch] auto-rows-auto gap-x-[1ch]" ]
             (List.map specialItemView Special.all)
-        , H.p [] [ H.text "Distribute your SPECIAL points (each attribute can be in range 1..10)." ]
+        , H.p
+            [ HA.class "text-green-300" ]
+            [ H.text "Distribute your SPECIAL points (each attribute can be in range 1..10)." ]
         ]
 
 
@@ -2510,7 +2531,7 @@ newCharTraitsView traits =
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "Traits ("
             , H.span
-                [ HA.class "new-character-section-available-number" ]
+                [ HA.class "text-orange" ]
                 [ H.text <| String.fromInt availableTraits ]
             , H.text " available)"
             ]
@@ -2678,13 +2699,13 @@ charHelpView maybeHoveredItem =
                     in
                     H.div []
                         [ H.h4
-                            [ HA.class "hovered-item-title" ]
+                            [ HA.class "mt-0 text-orange" ]
                             [ H.text title ]
                         , Markdown.toHtml [] description
                         ]
     in
     H.div
-        [ HA.id "character-help" ]
+        [ HA.class "mt-5 flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "Help" ]
@@ -2795,7 +2816,7 @@ charSpecialView player =
                 ]
     in
     H.div
-        [ HA.id "character-special" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300 mt-0" ]
             [ H.text "SPECIAL" ]
@@ -2907,12 +2928,14 @@ skillsView_ r =
     in
     if r.isNewChar then
         H.div
-            [ HA.id r.id ]
+            [ HA.id r.id
+            , HA.class "flex flex-col gap-4"
+            ]
             [ H.h3
                 [ HA.class "text-green-300 mt-0" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "new-character-section-available-number" ]
+                    [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt availableTags ]
                 , H.text " tags left)"
                 ]
@@ -2931,7 +2954,7 @@ skillsView_ r =
                 [ HA.class "text-green-300 mt-0" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "character-section-available-number" ]
+                    [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt r.availableSkillPoints ]
                 , H.text " points available)"
                 ]

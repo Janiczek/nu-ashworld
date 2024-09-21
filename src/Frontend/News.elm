@@ -9,6 +9,7 @@ import Markdown.Parser
 import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Tailwind as TW
 import Time
+import UI
 
 
 type alias Item =
@@ -68,10 +69,7 @@ renderer =
                 list
                     |> List.map
                         (\(Markdown.Block.ListItem _ children) ->
-                            H.li []
-                                (H.span [ HA.class "text-green-300 pl-[1ch]" ] [ H.text "- " ]
-                                    :: children
-                                )
+                            H.li [] (UI.liBullet :: children)
                         )
                     |> H.ul [ HA.class "flex flex-col" ]
     }

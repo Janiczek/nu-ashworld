@@ -1,4 +1,4 @@
-module UI exposing (bold, button, input, textarea, tooltipAnchor)
+module UI exposing (bold, button, input, liBullet, textarea, tooltipAnchor)
 
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
@@ -37,6 +37,8 @@ textarea attrs content =
         content
 
 
+{-| TODO remove, replace with HoveredItem stuff?
+-}
 tooltipAnchor : Attribute msg
 tooltipAnchor =
     HA.class "underline decoration-dashed decoration-green-300"
@@ -47,3 +49,10 @@ bold text =
     H.span
         [ HA.class "font-bold" ]
         [ H.text text ]
+
+
+liBullet : Html msg
+liBullet =
+    H.span
+        [ HA.class "text-green-300 pl-[1ch]" ]
+        [ H.text "- " ]
