@@ -3257,7 +3257,7 @@ messagesView currentTime zone _ player =
                     [ HA.class "messages-remove"
                     , HA.title "Remove"
                     ]
-                    [ H.text "✗" ]
+                    [ H.text "X" ]
                 ]
             ]
         , H.tbody []
@@ -3309,7 +3309,7 @@ messagesView currentTime zone _ player =
                                 , HA.title "Remove"
                                 , HE.onClickStopPropagation <| AskToRemoveMessage message.id
                                 ]
-                                [ H.text "✗" ]
+                                [ H.text "X" ]
                             ]
                     )
             )
@@ -4102,7 +4102,7 @@ loginFormView worlds auth =
                 , HA.class "select"
                 , HA.class "peer appearance-none bg-transparent border-0 m-0 py-1 pl-2 pr-8 w-full z-[1] outline-none"
                 ]
-                (("" :: worlds)
+                (worlds
                     |> List.map
                         (\worldName ->
                             H.option
