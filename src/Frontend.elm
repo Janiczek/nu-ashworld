@@ -1018,17 +1018,20 @@ pageTitleView title =
 aboutView : List (Html FrontendMsg)
 aboutView =
     [ pageTitleView "About"
-    , Markdown.toHtml
-        [ HA.id "about-content" ]
-        """
-Welcome to **NuAshworld** - a multiplayer turn-based browser game set in the
-universe of Fallout 2.
-
-Do you have what it takes to survive in the post-apocalyptic wasteland? Can you
-shape the world for the better?
-
-What more, **can you stand up to the Enclave?**
-"""
+    , H.div []
+        [ H.p []
+            [ H.text "Welcome to "
+            , UI.bold "NuAshworld"
+            , H.text " - a multiplayer turn-based browser game set in the universe of Fallout 2."
+            ]
+        , H.p []
+            [ H.text "Do you have what it takes to survive in the post-apocalyptic wasteland? Can you shape the world for the better?"
+            ]
+        , H.p []
+            [ H.text "What more, "
+            , UI.bold "can you stand up to the Enclave?"
+            ]
+        ]
     ]
 
 
@@ -3967,7 +3970,11 @@ loadingNavView =
     H.div
         [ HA.class "mt-10" ]
         [ H.text "Loading..."
-        , H.span [ HA.class "loading-cursor" ] []
+        , H.span
+            [ HA.class "loading-cursor"
+            , HA.class "inline-block w-[1ch] h-4 -mb-0.5 ml-0.5"
+            ]
+            []
         ]
 
 
@@ -4277,7 +4284,7 @@ commonLinksView currentRoute =
          , linkOut "Twitter" "https://twitter.com/NuAshworld" Nothing False
          , linkOut "GitHub" "https://github.com/Janiczek/nu-ashworld" Nothing False
          , linkOut "Reddit" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "Donate" "https://patreon.com/janiczek" Nothing False
+         , linkOut "Donate" "https://github.com/sponsors/Janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)
         )

@@ -21,30 +21,6 @@ p {
   color: var(--orange);
 }
 
-.loading-cursor {
-  display: inline-block;
-  animation: cursor-blink 1.5s linear infinite;
-  width: 1ch;
-  height: 1em;
-  margin-bottom: -2px;
-  margin-left: 2px;
-}
-
-@keyframes cursor-blink {
-
-  0%,
-  10%,
-  90%,
-  100% {
-    background: var(--green-200);
-  }
-
-  30%,
-  70% {
-    background: transparent;
-  }
-}
-
 #admin-worlds-list table {
   white-space: nowrap;
 }
@@ -140,40 +116,6 @@ table tbody tr:hover td {
 
 #message-content {
   max-width: 60ch;
-}
-
-.news-item-text pre {
-  padding-left: 32px;
-}
-
-.news-item-text pre code {
-  color: var(--green-100);
-}
-
-.news-item-text a {
-  color: var(--orange);
-  position: relative;
-  text-decoration: none;
-}
-
-.news-item-text a:after {
-  position: absolute;
-  content: '';
-  background: var(--orange-transparent);
-  left: -3px;
-  right: -3px;
-  bottom: -2px;
-  height: 4px;
-  transition: bottom 0.25s ease, height 0.25s ease;
-}
-
-.news-item-text a:hover:after {
-  bottom: 0px;
-  height: 100%;
-}
-
-.news-item-text li:not(first-child) {
-  margin-top: 1em;
 }
 
 .character-special-attribute-value {
@@ -747,10 +689,6 @@ table tbody tr:hover td {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-}
-
-#about-content p {
-  margin-top: 0;
 }
 
 #fight-stats-table th,

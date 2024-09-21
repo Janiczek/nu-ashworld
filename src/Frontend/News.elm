@@ -1,9 +1,13 @@
 module Frontend.News exposing (Item, formatDate, formatText, items)
 
 import DateFormat
-import Html exposing (Html)
+import Html as H exposing (Html)
 import Html.Attributes as HA
-import Markdown
+import Html.Attributes.Extra as HAE
+import Markdown.Block
+import Markdown.Parser
+import Markdown.Renderer exposing (defaultHtmlRenderer)
+import Tailwind as TW
 import Time
 
 
@@ -22,6 +26,14 @@ items =
             """
 This is a test news post. I'll have to **flesh this out.**
 
+Check out this [link](https://google.com)!
+
+Some list:
+
+- one
+- second
+- 3!
+
 ~janiczek
 """
       }
@@ -30,9 +42,39 @@ This is a test news post. I'll have to **flesh this out.**
 
 formatText : String -> String -> Html a
 formatText class markdown =
-    Markdown.toHtml
-        [ HA.class class ]
-        markdown
+    markdown
+        |> Markdown.Parser.parse
+        |> Result.mapError (\_ -> "")
+        |> Result.andThen (Markdown.Renderer.render renderer)
+        |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+        |> H.div [ HA.class ("flex flex-col gap-4 mt-4 " ++ class) ]
+
+
+renderer : Markdown.Renderer.Renderer (Html a)
+renderer =
+    { defaultHtmlRenderer
+        | link =
+            \{ title, destination } children ->
+                H.a
+                    [ HA.class "text-orange relative no-underline"
+                    , TW.mod "after" "absolute content-[''] bg-orange-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
+                    , TW.mod "hover:after" "bottom-0 h-full"
+                    , HA.href destination
+                    , HAE.attributeMaybe HA.title title
+                    ]
+                    children
+        , unorderedList =
+            \list ->
+                list
+                    |> List.map
+                        (\(Markdown.Block.ListItem _ children) ->
+                            H.li []
+                                (H.span [ HA.class "text-green-300 pl-[1ch]" ] [ H.text "- " ]
+                                    :: children
+                                )
+                        )
+                    |> H.ul [ HA.class "flex flex-col" ]
+    }
 
 
 formatDate : Time.Zone -> Int -> String

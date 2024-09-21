@@ -10,4 +10,7 @@
 <link rel="stylesheet" href="public/styles/select.css">
 
 <script src="public/scripts/vendor/tailwindcss.3.4.5.min.js"></script>
-<script src="public/scripts/tailwind.config.js"></script>
+<script type="module">
+    import * as tailwindConfig from "./public/scripts/tailwind.config.js";
+    tailwind.config = tailwindConfig;
+</script>

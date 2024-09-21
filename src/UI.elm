@@ -1,4 +1,4 @@
-module UI exposing (button, input, textarea, tooltipAnchor)
+module UI exposing (bold, button, input, textarea, tooltipAnchor)
 
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
@@ -40,3 +40,10 @@ textarea attrs content =
 tooltipAnchor : Attribute msg
 tooltipAnchor =
     HA.class "underline decoration-dashed decoration-green-300"
+
+
+bold : String -> Html msg
+bold text =
+    H.span
+        [ HA.class "font-bold" ]
+        [ H.text text ]
