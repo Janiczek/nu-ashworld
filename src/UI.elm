@@ -5,7 +5,6 @@ module UI exposing
     , input
     , liBullet
     , textarea
-    , tooltipAnchor
     )
 
 import Html as H exposing (Attribute, Html)
@@ -43,13 +42,6 @@ textarea attrs content =
             :: attrs
         )
         content
-
-
-{-| TODO remove, replace with HoveredItem stuff?
--}
-tooltipAnchor : Attribute msg
-tooltipAnchor =
-    HA.class "underline decoration-dashed decoration-green-300"
 
 
 bold : String -> Html msg

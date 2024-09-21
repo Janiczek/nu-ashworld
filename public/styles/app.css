@@ -506,21 +506,6 @@ table tbody tr:hover td {
   padding-left: 6px;
 }
 
-#character-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-gap: 20px;
-}
-
-#character-traits,
-#character-perks {
-  margin-top: 40px;
-}
-
-#character-help {
-  margin-top: 20px;
-}
-
 .inventory-item button {
   margin-right: 1ch;
 }

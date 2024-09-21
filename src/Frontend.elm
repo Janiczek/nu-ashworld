@@ -156,10 +156,10 @@ init url key =
             LogMeIn <|
                 Auth.hash
                     ({ initAuth
-                        | name = "janiczek"
+                        | name = "j2"
                         , worldName = "main"
                      }
-                        |> Auth.setPlaintextPassword "janiczek"
+                        |> Auth.setPlaintextPassword "j2"
                     )
         ]
     )
@@ -852,14 +852,21 @@ appView { leftNav } model =
 leftNavView : List (Html FrontendMsg) -> Model -> Html FrontendMsg
 leftNavView leftNav model =
     let
-        tickFrequency : Maybe Time.Interval
-        tickFrequency =
+        tickData :
+            Maybe
+                { tickFrequency : Time.Interval
+                , worldName : String
+                }
+        tickData =
             case model.worldData of
                 IsAdmin _ ->
                     Nothing
 
                 IsPlayer data ->
-                    Just data.tickFrequency
+                    Just
+                        { tickFrequency = data.tickFrequency
+                        , worldName = data.worldName
+                        }
 
                 NotLoggedIn ->
                     Nothing
@@ -867,8 +874,8 @@ leftNavView leftNav model =
     H.div [ HA.class "bg-green-800 min-w-[270px] w-[270px] flex flex-col items-center pb-10" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center" ]
-            ((tickFrequency
-                |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
+            ((tickData
+                |> H.viewMaybe (nextTickView model.zone model.time)
              )
                 :: leftNav
                 ++ [ commonLinksView model.route ]
@@ -876,33 +883,53 @@ leftNavView leftNav model =
         ]
 
 
-nextTickView : Time.Interval -> Time.Zone -> Posix -> Html FrontendMsg
-nextTickView tickFrequency zone time =
+nextTickView :
+    Time.Zone
+    -> Posix
+    ->
+        { tickFrequency : Time.Interval
+        , worldName : String
+        }
+    -> Html FrontendMsg
+nextTickView zone time { tickFrequency, worldName } =
     let
         millis =
             Time.posixToMillis time
     in
-    H.div [ HA.class "mt-5 text-green-200" ] <|
-        if millis == 0 then
-            []
+    H.div [ HA.class "mt-7 grid grid-cols-2 gap-x-[1ch]" ] <|
+        List.concat
+            [ [ H.span
+                    [ HA.class "text-green-300 text-right" ]
+                    [ H.text "World:" ]
+              , H.span [] [ H.text worldName ]
+              ]
+            , if millis == 0 then
+                []
 
-        else
-            let
-                nextTick =
-                    Tick.nextTick tickFrequency time
+              else
+                let
+                    nextTick =
+                        Tick.nextTick tickFrequency time
 
-                nextTickString =
-                    DateFormat.format
-                        [ DateFormat.hourMilitaryFixed
-                        , DateFormat.text ":"
-                        , DateFormat.minuteFixed
-                        , DateFormat.text ":"
-                        , DateFormat.secondFixed
-                        ]
-                        zone
-                        nextTick
-            in
-            [ H.text <| "Next tick: " ++ nextTickString ]
+                    nextTickString =
+                        DateFormat.format
+                            [ DateFormat.hourMilitaryFixed
+                            , DateFormat.text ":"
+                            , DateFormat.minuteFixed
+                            , DateFormat.text ":"
+                            , DateFormat.secondFixed
+                            ]
+                            zone
+                            nextTick
+                in
+                [ H.span
+                    [ HA.class "text-green-300 text-right" ]
+                    [ H.text "Next tick:" ]
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text nextTickString ]
+                ]
+            ]
 
 
 contentView : Model -> Html FrontendMsg
@@ -2316,7 +2343,7 @@ newCharHelpView maybeHoveredItem =
                     in
                     H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "mt-0 text-orange" ]
+                            [ HA.class "text-orange" ]
                             [ H.text title ]
                         , -- TODO formatting of lists etc.
                           Markdown.toHtml [] description
@@ -2325,7 +2352,7 @@ newCharHelpView maybeHoveredItem =
     H.div
         [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2369,7 +2396,7 @@ newCharDerivedStatsView newChar =
     in
     H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
         , H.ul [] <|
             List.map itemView
@@ -2440,17 +2467,20 @@ newCharSpecialView newChar =
                                     finalSpecial
                         , HA.class "!text-green-100"
                         , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
-                        , TW.mod "[&:not(:disabled):hover]" "!text-orange bg-green-800"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[-]" ]
                     ]
                 , H.div
-                    [ TW.mod "group-hover" "text-orange" ]
+                    [ HA.class "px-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
+                    ]
                     [ H.text <| Special.label type_ ]
                 , H.div
-                    [ HA.class "text-right"
+                    [ HA.class "pr-[1ch] text-right"
                     , HA.classList [ ( "!text-orange", not <| Special.isValueInRange value ) ]
-                    , TW.mod "group-hover" "text-orange"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| String.fromInt value ]
                 , H.div
@@ -2465,7 +2495,8 @@ newCharSpecialView newChar =
                                     finalSpecial
                         , HA.class "!text-green-100"
                         , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
-                        , TW.mod "[&:not(:disabled):hover]" "!text-orange bg-green-800"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[+]" ]
                     ]
@@ -2474,14 +2505,14 @@ newCharSpecialView newChar =
     H.div
         [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "SPECIAL ("
             , H.span
                 [ HA.class "text-orange" ]
                 [ H.text <| String.fromInt newChar.availableSpecial ]
             , H.text " points left)"
             ]
-        , H.div [ HA.class "grid grid-cols-[3ch_12ch_2ch_3ch] auto-rows-auto gap-x-[1ch]" ]
+        , H.div [ HA.class "grid grid-cols-[3ch_13ch_3ch_3ch] auto-rows-auto" ]
             (List.map specialItemView Special.all)
         , H.p
             [ HA.class "text-green-300" ]
@@ -2504,8 +2535,8 @@ newCharTraitsView traits =
                     Set_.member trait traits
             in
             H.li
-                [ HA.class "flex flex-row gap-[1ch] justify-start cursor-pointer group"
-                , TW.mod "hover" "text-orange"
+                [ HA.class "flex flex-row gap-[1ch] pr-[2ch] justify-start cursor-pointer group"
+                , TW.mod "hover" "text-orange bg-green-800"
                 , HA.classList [ ( "text-orange", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
@@ -2524,7 +2555,7 @@ newCharTraitsView traits =
     H.div
         [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Traits ("
             , H.span
                 [ HA.class "text-orange" ]
@@ -2532,7 +2563,7 @@ newCharTraitsView traits =
             , H.text " available)"
             ]
         , H.ul
-            [ HA.class "w-max grid grid-cols-2" ]
+            [ HA.class "w-max grid grid-cols-2 gap-x-[2ch]" ]
             (List.map traitView Trait.all)
         , H.p
             [ HA.class "text-green-300" ]
@@ -2634,19 +2665,16 @@ perkDescriptionView hoveredItem =
 normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
 normalCharacterView maybeHoveredItem player =
     H.div
-        [ HA.id "character-grid" ]
-        [ H.div
-            [ HA.class "character-column" ]
+        [ HA.class "grid grid-cols-[24ch_34ch_minmax(0,1fr)] gap-5" ]
+        [ H.div [ HA.class "flex flex-col gap-8" ]
             [ charSpecialView player
             , charTraitsView player.traits
             , charPerksView player.perks
             ]
-        , H.div
-            [ HA.class "character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ charSkillsView player
             ]
-        , H.div
-            [ HA.class "character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ charDerivedStatsView player
             , charHelpView maybeHoveredItem
             ]
@@ -2659,23 +2687,27 @@ charTraitsView traits =
         itemView : Trait -> Html FrontendMsg
         itemView trait =
             H.li
-                [ HA.class "character-traits-trait"
+                [ HA.class "pr-[2ch]"
+                , TW.mod "hover" "text-green-100 bg-green-800"
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.text <| Trait.name trait ]
+                [ UI.liBullet
+                , H.text <| Trait.name trait
+                ]
     in
     H.div
-        [ HA.id "character-traits" ]
+        [ HA.class "flex flex-col" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
         , if Set_.isEmpty traits then
-            H.p [] [ H.text "You have no traits." ]
+            H.p
+                [ HA.class "text-green-300" ]
+                [ H.text "You have no traits." ]
 
           else
-            H.ul
-                [ HA.id "character-traits-list" ]
+            H.ul [ HA.class "w-fit" ]
                 (List.map itemView <| Set_.toList traits)
         ]
 
@@ -2687,24 +2719,26 @@ charHelpView maybeHoveredItem =
         helpContent =
             case maybeHoveredItem of
                 Nothing ->
-                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
+                    H.p
+                        [ HA.class "max-w-[50ch] text-green-300" ]
+                        [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
                     let
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div []
+                    H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "mt-0 text-orange" ]
+                            [ HA.class "text-orange" ]
                             [ H.text title ]
                         , Markdown.toHtml [] description
                         ]
     in
     H.div
-        [ HA.class "mt-5 flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2713,22 +2747,25 @@ charHelpView maybeHoveredItem =
 charDerivedStatsView : CPlayer -> Html FrontendMsg
 charDerivedStatsView player =
     let
-        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
-        itemView ( label, value, tooltip ) =
+        itemView : ( String, String, Maybe HoveredItem ) -> Html FrontendMsg
+        itemView ( label, value, hoveredItem ) =
             let
-                ( liAttrs, valueAttrs ) =
-                    case tooltip of
-                        Just tooltip_ ->
-                            ( [ HA.title tooltip_ ]
-                            , [ UI.tooltipAnchor ]
-                            )
+                liAttrs =
+                    case hoveredItem of
+                        Just hoveredItem_ ->
+                            [ HE.onMouseOver <| HoverItem hoveredItem_
+                            , HE.onMouseOut StopHoveringItem
+                            ]
 
                         Nothing ->
-                            ( [], [] )
+                            []
             in
-            H.li liAttrs
-                [ H.text <| label ++ ": "
-                , H.span valueAttrs [ H.text value ]
+            H.li (TW.mod "hover" "bg-green-800" :: liAttrs)
+                [ UI.liBullet
+                , H.text <| label ++ ": "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text value ]
                 ]
 
         perceptionLevel : PerceptionLevel
@@ -2738,12 +2775,11 @@ charDerivedStatsView player =
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
-    H.div
-        [ HA.id "character-derived-stats" ]
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
-        , H.ul [ HA.id "character-derived-stats-list" ] <|
+        , H.ul [] <|
             List.map itemView
                 [ ( "Max HP"
                   , String.fromInt <|
@@ -2773,7 +2809,7 @@ charDerivedStatsView player =
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| Perception.tooltip perceptionLevel
+                  , Just <| HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -2796,18 +2832,20 @@ charSpecialView player =
                 value =
                     Special.get type_ player.special
             in
-            H.tr
-                [ HA.class "character-special-attribute"
-                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+            H.div
+                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "contents group"
                 ]
-                [ H.td
-                    [ HA.class "character-special-attribute-label" ]
+                [ H.div
+                    [ HA.class "px-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
+                    ]
                     [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.class "character-special-attribute-value"
-
+                , H.div
                     -- TODO highlighted if addiction etc?
+                    [ HA.class "text-right pr-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| String.fromInt value ]
                 ]
@@ -2815,10 +2853,9 @@ charSpecialView player =
     H.div
         [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "SPECIAL" ]
-        , H.table
-            [ HA.id "character-special-table" ]
+        , H.div [ HA.class "grid grid-cols-[13ch_3ch]" ]
             (List.map specialItemView Special.all)
         ]
 
@@ -2886,13 +2923,20 @@ skillsView_ r =
                 isTaggable : Bool
                 isTaggable =
                     showTagButton && not isTaggingDisabled
+
+                hoverTextColor : String
+                hoverTextColor =
+                    if r.isNewChar then
+                        "text-orange"
+
+                    else
+                        "text-green-100"
             in
             H.div
                 [ HA.class "contents group"
-                , TW.mod "hover" "text-orange"
+                , TW.mod "hover" hoverTextColor
                 , HA.classList
-                    [ ( "character-skills-skill", True )
-                    , ( "text-green-300", notUseful )
+                    [ ( "text-green-300", notUseful )
                     , ( "text-orange", isTagged )
                     , ( "cursor-pointer", isTaggable )
                     ]
@@ -2904,7 +2948,7 @@ skillsView_ r =
                     UI.button
                         [ HE.onClickStopPropagation <| onTag skill
                         , HA.disabled isTaggingDisabled
-                        , HA.class "!text-green-100"
+                        , HA.class "!text-green-100 px-[1ch]"
                         , HA.classList
                             [ ( "!text-orange", isTagged )
                             , ( "!text-green-300", notUseful )
@@ -2912,39 +2956,43 @@ skillsView_ r =
                         , TW.mod "group-hover" "!text-orange bg-green-800"
                         ]
                         [ H.text <| UI.checkboxLabel isTagged ]
-                , H.div [] [ H.text <| Skill.name skill ]
                 , H.div
-                    [ HA.class "character-skill-value" ]
-                    [ H.div
-                        [ HA.class "character-skill-percent"
-                        , HA.class "text-right"
-                        ]
-                        [ H.text <| String.fromInt percent ++ "%" ]
-                    , H.viewIf (not r.isNewChar) <|
-                        UI.button
-                            [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
-                            , HA.class "character-skill-inc-btn"
-                            , HA.disabled isIncButtonDisabled
-                            , HA.attributeIf isIncButtonDisabled <|
-                                HA.title "You have no skill points available."
-                            ]
-                            [ H.text "[+]" ]
+                    [ HA.class "pr-[1ch]"
+                    , HA.classList [ ( "pl-[1ch]", not showTagButton ) ]
+                    , TW.mod "group-hover" "bg-green-800"
                     ]
+                    [ H.text <| Skill.name skill ]
+                , H.div
+                    [ HA.class "text-right"
+                    , TW.mod "group-hover" "bg-green-800"
+                    ]
+                    [ H.text <| String.fromInt percent ++ "%" ]
+                , H.viewIf (not r.isNewChar) <|
+                    UI.button
+                        [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
+                        , HA.disabled isIncButtonDisabled
+                        , HA.attributeIf isIncButtonDisabled <|
+                            HA.title "You have no skill points available."
+                        , HA.class "pl-[1ch]"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-green-100 cursor-pointer"
+                        , TW.mod "disabled" "cursor-not-allowed opacity-50"
+                        , TW.mod "group-hover" "bg-green-800"
+                        ]
+                        [ H.text "[+]" ]
                 ]
     in
     if r.isNewChar then
         H.div
-            [ HA.class "flex flex-col gap-4"
-            ]
+            [ HA.class "flex flex-col gap-4" ]
             [ H.h3
-                [ HA.class "text-green-300 mt-0" ]
+                [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
                     [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt availableTags ]
                 , H.text " tags left)"
                 ]
-            , H.div [ HA.class "grid grid-cols-[3ch_14ch_5ch] auto-rows-auto gap-x-[1ch]" ]
+            , H.div [ HA.class "grid grid-cols-[5ch_16ch_minmax(auto,5ch)]" ]
                 (List.map skillView Skill.all)
             , H.p
                 [ HA.class "text-green-300" ]
@@ -2952,18 +3000,17 @@ skillsView_ r =
             ]
 
     else
-        H.div
-            -- TODO cannot-inc: before TW, was making inc buttons opacity:0.5;
-            [ HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ] ]
+        H.div [ HA.class "flex flex-col gap-4" ]
             [ H.h3
-                [ HA.class "text-green-300 mt-0" ]
+                [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
                     [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt r.availableSkillPoints ]
                 , H.text " points available)"
                 ]
-            , H.ul [] (List.map skillView Skill.all)
+            , H.div [ HA.class "grid grid-cols-[16ch_minmax(auto,5ch)_4ch]" ]
+                (List.map skillView Skill.all)
             , H.viewIf (availableTags > 0) <|
                 H.p [] [ H.text <| "Tags available: " ++ String.fromInt availableTags ]
             ]
@@ -3007,7 +3054,7 @@ charPerksView perks =
     H.div
         [ HA.id "character-perks" ]
         [ H.h3
-            [ HA.class "text-green-300 mt-0" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
         , if Dict_.isEmpty perks then
             H.p [] [ H.text "No perks yet!" ]
@@ -4508,7 +4555,7 @@ playerInfoView player =
 createdPlayerInfoView : CPlayer -> Html FrontendMsg
 createdPlayerInfoView player =
     H.div
-        [ HA.class "mt-10 pl-4 grid grid-cols-[repeat(2,min-content)] auto-rows-auto" ]
+        [ HA.class "mt-4 grid grid-cols-2" ]
         [ H.div
             [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
             [ H.text "Name:" ]
