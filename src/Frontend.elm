@@ -3865,7 +3865,7 @@ playerLadderTableView players loggedInPlayer =
         , let
             td attrs children =
                 H.td
-                    (HA.class "px-2 py-1"
+                    (HA.class "px-2 py-0.5"
                         :: attrs
                     )
                     children
