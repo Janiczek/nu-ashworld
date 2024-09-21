@@ -1341,19 +1341,21 @@ mapView mouseCoords _ player =
             Perception.atLeast Perception.Perfect perceptionLevel
     in
     [ pageTitleView "Map"
-    , H.div
-        [ HA.id "map"
-        , cssVars
-            [ ( "--map-columns", String.fromInt Map.columns )
-            , ( "--map-rows", String.fromInt Map.rows )
-            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+    , H.div [ HA.class "pb-4" ]
+        [ H.div
+            [ HA.id "map"
+            , cssVars
+                [ ( "--map-columns", String.fromInt Map.columns )
+                , ( "--map-rows", String.fromInt Map.rows )
+                , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+                ]
             ]
-        ]
-        [ locationsView (Just playerCoords)
-        , mapMarkerView playerCoords
-        , H.viewIfLazy shouldShowBigChunks bigChunkLayerView
-        , mouseEventCatcherView
-        , H.viewMaybe mouseRelatedView mouseCoords
+            [ locationsView (Just playerCoords)
+            , mapMarkerView playerCoords
+            , H.viewIfLazy shouldShowBigChunks bigChunkLayerView
+            , mouseEventCatcherView
+            , H.viewMaybe mouseRelatedView mouseCoords
+            ]
         ]
     ]
 
