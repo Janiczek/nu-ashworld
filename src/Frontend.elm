@@ -3567,10 +3567,11 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
                 [ H.div []
                     [ H.text "Your strategy needs to be of the shape "
                     , H.span [ HA.class "text-green-100" ] [ H.text "[STRATEGY]" ]
-                    , H.text ", and its goal is to choose which [COMMAND] to do in your current turn. See below for your options:"
+                    , H.text ", and its goal is to choose which "
+                    , H.span [ HA.class "text-green-100" ] [ H.text "[COMMAND]" ]
+                    , H.text " to do in your current turn. See below for your options:"
                     ]
-                , H.pre
-                    [ HA.class "font-mono" ]
+                , H.pre [ HA.class "font-mono" ]
                     (List.map viewMarkup FightStrategyHelp.help)
                 ]
             , H.div [ HA.class "flex-1" ]
@@ -3611,8 +3612,9 @@ settingsFightStrategyView fightStrategyText _ player =
         viewWarning : FightStrategy.ValidationWarning -> Html FrontendMsg
         viewWarning warning =
             H.li
-                [ HA.class "fight-strategy-warning" ]
-                [ H.text <|
+                [ TW.mod "hover" "text-green-100" ]
+                [ UI.liBullet
+                , H.text <|
                     case warning of
                         FightStrategy.ItemDoesntHeal itemKind ->
                             "Item doesn't heal: " ++ Item.name itemKind
@@ -3650,9 +3652,12 @@ settingsFightStrategyView fightStrategyText _ player =
                         _ ->
                             "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>"
             in
+            -- TODO when user clicks the dead end, splice it into the program
             H.li
-                [ HA.class "fight-strategy-dead-end" ]
-                [ H.text <| "- " ++ item ]
+                [ TW.mod "hover" "text-green-100" ]
+                [ UI.liBullet
+                , H.text item
+                ]
 
         deadEndCategorization : Parser.DeadEnd -> ( ( Int, Int ), String, String )
         deadEndCategorization deadEnd =
@@ -3681,7 +3686,7 @@ settingsFightStrategyView fightStrategyText _ player =
 
         helpBtn =
             UI.button
-                [ HA.class "fight-strategy-help-btn"
+                [ HA.class "ml-[1ch]"
                 , HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategySyntaxHelp))
                 ]
                 [ H.text "[Syntax cheatsheet]" ]
@@ -3708,72 +3713,101 @@ settingsFightStrategyView fightStrategyText _ player =
     in
     [ pageTitleView "Settings: Fight Strategy"
     , H.div
-        [ HA.class "fight-strategy-grid" ]
-        [ H.div [ HA.class "fight-strategy-examples" ]
-            (H.text "Examples: "
-                :: (FightStrategy.all
-                        |> List.map
-                            (\( name, strategy ) ->
-                                UI.button
-                                    [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
-                                    , HA.class "fight-strategy-example"
-                                    ]
-                                    [ H.text name ]
-                            )
-                        |> List.intersperse (H.text ", ")
-                   )
-            )
-        , UI.textarea
-            [ HE.onInput SetFightStrategyText
-            , HA.class "fight-strategy-textarea"
-            , HA.value fightStrategyText
-            ]
-            []
-        , firstDeadEnd
-            |> H.viewMaybe
-                (\{ row, col } ->
-                    H.div
-                        [ HA.class "fight-strategy-hovered-error"
-                        , cssVars
-                            [ ( "--error-row", String.fromInt row )
-                            , ( "--error-col", String.fromInt col )
-                            ]
-                        ]
-                        []
+        [ HA.class "flex flex-row gap-4" ]
+        [ H.div [ HA.class "flex flex-col" ]
+            [ H.div []
+                (H.text "Examples: "
+                    :: (FightStrategy.all
+                            |> List.map
+                                (\( name, strategy ) ->
+                                    UI.button
+                                        [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
+                                        , HA.class "normal-case"
+                                        , TW.mod "before" "content-['[']"
+                                        , TW.mod "after" "content-[']']"
+                                        ]
+                                        [ H.text name ]
+                                )
+                            |> List.intersperse (H.text ", ")
+                       )
                 )
-        , H.div
-            [ HA.class "fight-strategy-info" ]
-            (H.div
-                [ HA.class "fight-strategy-info-heading" ]
+            , H.div [ HA.class "relative" ]
+                -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
+                [ UI.textarea
+                    [ HE.onInput SetFightStrategyText
+                    , HA.class "!bg-green-800 w-[70ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre font-mono"
+                    , HA.value fightStrategyText
+                    ]
+                    []
+                , firstDeadEnd
+                    |> H.viewMaybe
+                        (\{ row, col } ->
+                            H.div
+                                [ HA.class "absolute left-4 top-4 pointer-events-none select-none w-[24px] h-4 -ml-0.5 pl-0.5 border-l border-l-orange leading-[18px]"
+                                , HA.class "bg-[linear-gradient(90deg,var(--orange-transparent)_0%,var(--orange-fully-transparent)_100%)]"
+                                , HA.class "translate-x-[calc((var(--error-col)-1)*8px+1px)]"
+                                , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px+1px)]"
+                                , cssVars
+                                    [ ( "--error-row", String.fromInt row )
+                                    , ( "--error-col", String.fromInt col )
+                                    ]
+                                ]
+                                []
+                        )
+                ]
+            , H.div
+                [ HA.class "flex flex-row gap-[1ch]" ]
+                [ UI.button
+                    [ HA.disabled <| not hasTextChanged || Result.isErr parseResult
+                    , parseResult
+                        |> Result.toMaybe
+                        |> HA.attributeMaybe
+                            (\strategy ->
+                                HE.onClick <|
+                                    AskToSetFightStrategy ( strategy, fightStrategyText )
+                            )
+                    ]
+                    [ H.text "[Save]" ]
+                , UI.button
+                    [ HA.disabled <| not hasTextChanged
+                    , HE.onClick <| SetFightStrategyText player.fightStrategyText
+                    ]
+                    [ H.text "[Reset to saved]" ]
+                ]
+            ]
+        , H.div [ HA.class "flex flex-col gap-4 max-w-[50ch]" ]
+            (H.div []
                 [ H.text "Info:"
                 , helpBtn
                 ]
                 :: (if Result.isOk parseResult then
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
-                            [ H.text "Your strategy is OK" ]
+                        [ H.p []
+                            [ H.text "Your strategy is "
+                            , H.span [ HA.class "text-green-100" ] [ H.text "OK" ]
+                            ]
                         ]
 
                     else
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
-                            [ H.text "Your strategy is not finished yet." ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        [ H.p []
+                            [ H.text "Your strategy is "
+                            , H.span
+                                [ HA.class "text-orange" ]
+                                [ H.text "not finished yet." ]
+                            ]
+                        , H.p []
                             [ H.text "See the yellow indicator on the left and the notes below to figure out where the problem is." ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        , H.p []
                             [ H.text "If needed, ask on Discord in the "
                             , H.a
                                 [ HA.href discordFightStrategiesChannelInviteLink
                                 , HA.target "_blank"
-                                , HA.class "fight-strategy-info-link"
+                                , HA.class "text-green-100 whitespace-pre"
+                                , TW.mod "hover" "text-orange"
                                 ]
                                 [ H.text "#fight-strategies" ]
                             , H.text " channel."
                             ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        , H.p []
                             [ H.text <|
                                 if String.isEmpty (String.trim fightStrategyText) then
                                     "Start with:"
@@ -3791,7 +3825,7 @@ settingsFightStrategyView fightStrategyText _ player =
                                                 ":"
                                            )
                             ]
-                        , H.ul [ HA.class "fight-strategy-dead-ends" ]
+                        , H.ul []
                             (deadEnds
                                 |> List.sortBy deadEndCategorization
                                 |> List.map viewDeadEnd
@@ -3802,36 +3836,13 @@ settingsFightStrategyView fightStrategyText _ player =
                         []
 
                     else
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        [ H.p [ HA.class "text-green-300" ]
                             [ H.text "Warnings:" ]
-                        , H.ul
-                            [ HA.class "fight-strategy-warnings" ]
+                        , H.ul []
                             (List.map viewWarning warnings)
                         ]
                    )
             )
-        ]
-    , H.div
-        [ HA.class "fight-strategy-buttons" ]
-        [ UI.button
-            [ HA.class "fight-strategy-save-btn"
-            , HA.disabled <| not hasTextChanged || Result.isErr parseResult
-            , parseResult
-                |> Result.toMaybe
-                |> HA.attributeMaybe
-                    (\strategy ->
-                        HE.onClick <|
-                            AskToSetFightStrategy ( strategy, fightStrategyText )
-                    )
-            ]
-            [ H.text "[Save]" ]
-        , UI.button
-            [ HA.class "fight-strategy-reset-btn"
-            , HA.disabled <| not hasTextChanged
-            , HE.onClick <| SetFightStrategyText player.fightStrategyText
-            ]
-            [ H.text "[Reset to saved]" ]
         ]
     ]
 

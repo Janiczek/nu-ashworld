@@ -21,6 +21,7 @@ export const theme = {
         orange: {
             DEFAULT: "#FCFF2F",
             transparent: "rgba(252, 253, 125, 0.25)",
+            "fully-transparent": "rgba(252, 253, 125, 0)",
         },
         red: "#FC0001",
     },
