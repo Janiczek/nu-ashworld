@@ -80,7 +80,7 @@ checkboxButton { label, isOn, toggle } =
     H.button
         [ HE.onClick (toggle (not isOn))
         , HA.class "cursor-pointer text-green-200 select-none"
-        , TW.mod "hover" "text-green-100"
+        , TW.mod "hover" "text-green-100 bg-green-800"
         , TW.mod "active" "text-orange"
         ]
         [ H.text <| checkboxLabel isOn ++ " " ++ label ]

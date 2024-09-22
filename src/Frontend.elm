@@ -881,7 +881,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-[270px] w-[270px] flex flex-col items-center pb-10" ]
+    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 flex flex-col items-center" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center" ]
             ((tickData
