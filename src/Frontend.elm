@@ -1343,12 +1343,17 @@ mapView mouseCoords _ player =
     [ pageTitleView "Map"
     , H.div [ HA.class "pb-4" ]
         [ H.div
-            [ HA.id "map"
+            [ HA.id "map" -- TODO remove
             , cssVars
                 [ ( "--map-columns", String.fromInt Map.columns )
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                 ]
+            , HA.class "relative bg-black bg-[url('../images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+            , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
             [ locationsView (Just playerCoords)
             , mapMarkerView playerCoords

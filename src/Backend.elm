@@ -3,6 +3,7 @@ module Backend exposing (..)
 import Admin
 import AssocList as Dict_
 import AssocSet as Set_
+import BiDict
 import Cmd.Extra as Cmd
 import Data.Auth as Auth
     exposing
@@ -52,6 +53,7 @@ import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Lamdera exposing (ClientId, SessionId)
+import Lamdera.Hash
 import List.Extra as List
 import Logic
 import Queue
@@ -81,10 +83,11 @@ init : ( Model, Cmd BackendMsg )
 init =
     ( { worlds = Dict.singleton Logic.mainWorldName (World.init { fast = False })
       , time = Time.millisToPosix 0
-      , loggedInPlayers = Dict.empty
+      , loggedInPlayers = BiDict.empty
       , adminLoggedIn = Nothing
       , lastTenToBackendMsgs = Queue.empty
       , randomSeed = Random.initialSeed 0
+      , playerDataCache = Dict.empty
       }
     , Task.perform FirstTick Time.now
     )
@@ -138,13 +141,13 @@ getAdminData model =
 getLoggedInPlayers : Model -> Dict World.Name (List PlayerName)
 getLoggedInPlayers model =
     model.loggedInPlayers
-        |> Dict.values
-        |> List.gatherEqualsBy .worldName
+        |> BiDict.values
+        |> List.gatherEqualsBy Tuple.first
         |> List.map
-            (\( first, rest ) ->
-                ( first.worldName
+            (\( ( worldName, _ ) as first, rest ) ->
+                ( worldName
                 , (first :: rest)
-                    |> List.map .playerName
+                    |> List.map Tuple.second
                 )
             )
         |> Dict.fromList
@@ -305,7 +308,7 @@ update msg model =
             )
 
         Disconnected _ clientId ->
-            ( { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
+            ( { model | loggedInPlayers = BiDict.remove clientId model.loggedInPlayers }
             , Cmd.none
             )
 
@@ -389,17 +392,38 @@ update msg model =
                                                 )
                                             |> Cmd.andThen
                                                 (\m ->
-                                                    ( m
-                                                    , model.loggedInPlayers
-                                                        |> Dict.toList
-                                                        |> List.filter (\( _, r ) -> r.worldName == worldName)
-                                                        |> List.filterMap
-                                                            (\( clientId, { playerName } ) ->
-                                                                getPlayerData worldName playerName m
-                                                                    |> Maybe.map (Lamdera.sendToFrontend clientId << CurrentPlayer)
+                                                    model.loggedInPlayers
+                                                        |> BiDict.toReverseList
+                                                        |> List.filter (\( ( wn, _ ), _ ) -> wn == worldName)
+                                                        |> List.foldl
+                                                            (\( ( wn, pn ), clientIds ) accOuter ->
+                                                                case getPlayerData wn pn m of
+                                                                    Nothing ->
+                                                                        accOuter
+
+                                                                    Just playerData_ ->
+                                                                        let
+                                                                            newHash : Int
+                                                                            newHash =
+                                                                                Lamdera.Hash.hash
+                                                                                    Types.w3_encode_PlayerData_
+                                                                                    playerData_
+                                                                        in
+                                                                        clientIds
+                                                                            |> Set.toList
+                                                                            |> List.foldl
+                                                                                (\clientId accInner ->
+                                                                                    if Lamdera.Hash.hasChanged newHash clientId model.playerDataCache then
+                                                                                        accInner
+                                                                                            |> Tuple.mapFirst (saveToPlayerDataCache clientId newHash)
+                                                                                            |> Cmd.withCmd (Lamdera.sendToFrontend clientId (CurrentPlayer playerData_))
+
+                                                                                    else
+                                                                                        accInner
+                                                                                )
+                                                                                accOuter
                                                             )
-                                                        |> Cmd.batch
-                                                    )
+                                                            ( m, Cmd.none )
                                                 )
                         in
                         ( newModel, Cmd.batch [ cmd, newCmd ] )
@@ -411,6 +435,11 @@ update msg model =
 
         LoggedToBackendMsg ->
             ( model, Cmd.none )
+
+
+saveToPlayerDataCache : ClientId -> Int -> Model -> Model
+saveToPlayerDataCache clientId newHash model =
+    { model | playerDataCache = Dict.insert clientId newHash model.playerDataCache }
 
 
 processGameTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
@@ -480,9 +509,9 @@ withLoggedInPlayer_ :
     -> (ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg ))
     -> ( Model, Cmd BackendMsg )
 withLoggedInPlayer_ model clientId fn =
-    Dict.get clientId model.loggedInPlayers
+    BiDict.get clientId model.loggedInPlayers
         |> Maybe.andThen
-            (\{ worldName, playerName } ->
+            (\( worldName, playerName ) ->
                 Dict.get worldName model.worlds
                     |> Maybe.map (\world -> ( world, worldName, playerName ))
             )
@@ -518,9 +547,10 @@ logAndUpdateFromFrontend_ : SessionId -> ClientId -> ToBackend -> Model -> ( Mod
 logAndUpdateFromFrontend_ sessionId clientId msg model =
     let
         logMsgCmd =
-            Dict.get clientId model.loggedInPlayers
+            -- TODO rethink this, something something Event Sourcing? Or maybe indeed just log all *Msgs somewhere and build tooling on being able to play it back
+            BiDict.get clientId model.loggedInPlayers
                 |> Maybe.map
-                    (\{ playerName, worldName } ->
+                    (\( worldName, playerName ) ->
                         Http.request
                             { method = "POST"
                             , url = "https://janiczek-nuashworld.builtwithdark.com/log-backend"
@@ -541,15 +571,9 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                     )
                 |> Maybe.withDefault Cmd.none
 
-        playerName_ =
-            Dict.get clientId model.loggedInPlayers
-                |> Maybe.map .playerName
-                |> Maybe.withDefault "anonymous"
-
-        worldName_ =
-            Dict.get clientId model.loggedInPlayers
-                |> Maybe.map .worldName
-                |> Maybe.withDefault "-"
+        ( worldName_, playerName_ ) =
+            BiDict.get clientId model.loggedInPlayers
+                |> Maybe.withDefault ( "-", "anonymous" )
 
         modelWithLoggedMsg =
             if isAdminMsg msg then
@@ -623,9 +647,9 @@ updateFromFrontend sessionId clientId msg model =
             (ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg ))
             -> ( Model, Cmd BackendMsg )
         withLoggedInCreatedPlayer fn =
-            Dict.get clientId model.loggedInPlayers
+            BiDict.get clientId model.loggedInPlayers
                 |> Maybe.andThen
-                    (\{ worldName, playerName } ->
+                    (\( worldName, playerName ) ->
                         Dict.get worldName model.worlds
                             |> Maybe.andThen
                                 (\world ->
@@ -703,11 +727,12 @@ updateFromFrontend sessionId clientId msg model =
                                         |> Maybe.map
                                             (\data ->
                                                 let
-                                                    ( loggedOutPlayers, otherPlayers ) =
-                                                        -- We log this clientId in, but we log their other browser out.
-                                                        Dict.partition
-                                                            (\_ names -> names.worldName == auth.worldName && names.playerName == auth.name)
-                                                            model.loggedInPlayers
+                                                    names =
+                                                        ( auth.worldName, auth.name )
+
+                                                    clientIdsToLogout : Set ClientId
+                                                    clientIdsToLogout =
+                                                        BiDict.getReverse names model.loggedInPlayers
 
                                                     loggedOutData =
                                                         getWorlds model
@@ -715,20 +740,18 @@ updateFromFrontend sessionId clientId msg model =
                                                     newModel =
                                                         { model
                                                             | loggedInPlayers =
-                                                                Dict.insert
-                                                                    clientId
-                                                                    { worldName = auth.worldName
-                                                                    , playerName = auth.name
-                                                                    }
-                                                                    otherPlayers
+                                                                model.loggedInPlayers
+                                                                    |> -- TODO: BiDict.removeReverse would be nice
+                                                                       BiDict.filter (\_ names_ -> names_ /= names)
+                                                                    |> BiDict.insert clientId names
                                                         }
                                                 in
                                                 ( newModel
                                                 , Cmd.batch <|
                                                     (Lamdera.sendToFrontend clientId <| YoureLoggedIn data)
                                                         :: refreshAdminLoggedInPlayers newModel
-                                                        :: (loggedOutPlayers
-                                                                |> Dict.keys
+                                                        :: (clientIdsToLogout
+                                                                |> Set.toList
                                                                 |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut loggedOutData)
                                                            )
                                                 )
@@ -777,13 +800,7 @@ updateFromFrontend sessionId clientId msg model =
 
                                         newModel =
                                             { model
-                                                | loggedInPlayers =
-                                                    Dict.insert
-                                                        clientId
-                                                        { worldName = auth.worldName
-                                                        , playerName = auth.name
-                                                        }
-                                                        model.loggedInPlayers
+                                                | loggedInPlayers = BiDict.insert clientId ( auth.worldName, auth.name ) model.loggedInPlayers
                                                 , worlds = model.worlds |> Dict.insert auth.worldName newWorld
                                             }
 
@@ -807,7 +824,7 @@ updateFromFrontend sessionId clientId msg model =
                         { model | adminLoggedIn = Nothing }
 
                     else
-                        { model | loggedInPlayers = Dict.remove clientId model.loggedInPlayers }
+                        { model | loggedInPlayers = BiDict.remove clientId model.loggedInPlayers }
 
                 world =
                     getWorlds newModel
@@ -860,16 +877,24 @@ updateFromFrontend sessionId clientId msg model =
                 )
 
             else
-                case Dict.get clientId model.loggedInPlayers of
+                case BiDict.get clientId model.loggedInPlayers of
                     Nothing ->
                         loggedOut ()
 
-                    Just { worldName, playerName } ->
+                    Just (( worldName, playerName ) as worldAndPlayer) ->
+                        let
+                            clientIds : Set ClientId
+                            clientIds =
+                                BiDict.getReverse worldAndPlayer model.loggedInPlayers
+                        in
                         getPlayerData worldName playerName model
                             |> Maybe.map
                                 (\data ->
                                     ( model
-                                    , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+                                    , clientIds
+                                        |> Set.toList
+                                        |> List.map (\cId -> Lamdera.sendToFrontend cId <| CurrentPlayer data)
+                                        |> Cmd.batch
                                     )
                                 )
                             |> Maybe.withDefault (loggedOut ())

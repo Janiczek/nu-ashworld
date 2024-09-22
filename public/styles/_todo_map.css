@@ -1,19 +1,5 @@
 /* TODO convert these to Tailwind CSS-in-Elm */
 
-#map {
-    position: relative;
-    min-width: calc(var(--map-columns) * var(--map-cell-size));
-    max-width: calc(var(--map-columns) * var(--map-cell-size));
-    min-height: calc(var(--map-rows) * var(--map-cell-size));
-    max-height: calc(var(--map-rows) * var(--map-cell-size));
-    background-color: black;
-    background-image: url('../images/map_whole.webp');
-    background-position: 0 0;
-    background-repeat: no-repeat;
-    user-select: none;
-    margin-bottom: 1em;
-}
-
 #map.admin-map {
     margin-top: 1em;
 }

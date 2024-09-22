@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import AssocSet as Set_
+import BiDict exposing (BiDict)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Data.Auth exposing (Auth, Hashed, Plaintext)
@@ -68,14 +69,16 @@ type alias BackendModel =
     { worlds : Dict World.Name World
     , time : Posix
     , loggedInPlayers :
-        Dict
-            ClientId
-            { worldName : World.Name
-            , playerName : PlayerName
-            }
+        -- Lets multiple browser windows log into the same (WorldName, PlayerName).
+        -- BiDict lets us get all the ClientIds for a certain player, meaning we
+        -- can compute their data just once.
+        BiDict ClientId ( World.Name, PlayerName )
     , adminLoggedIn : Maybe ( ClientId, SessionId )
     , lastTenToBackendMsgs : Queue ( PlayerName, World.Name, ToBackend )
     , randomSeed : Random.Seed
+    , -- We don't want to send the same data to players over and over when
+      -- Tick-ing. This lets us skip that work.
+      playerDataCache : Dict ClientId Int
     }
 
 
@@ -184,6 +187,13 @@ type BackendMsg
     | Tick Posix
     | CreateNewCharWithTime ClientId NewChar Posix
     | LoggedToBackendMsg
+
+
+{-| Only done for getting the automatic `Types.w3_encode_PlayerData_` encoder
+(for hashing a type to Int, for caching purposes)
+-}
+type alias PlayerData_ =
+    PlayerData
 
 
 type ToFrontend
