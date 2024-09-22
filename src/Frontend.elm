@@ -1647,28 +1647,24 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
         emptyCount =
             totalCount - doneCount
     in
-    H.div [ HA.class "text-green-300" ]
-        [ H.span [] [ H.text "[" ]
-        , H.span [] [ H.text <| String.repeat doneCount "=" ++ String.repeat emptyCount "-" ]
-        , H.span [] [ H.text "]" ]
-        , H.span [ HA.class "ml-[1ch]" ]
-            [ H.span
-                []
-                [ H.text <| String.fromInt (round (percentDone * 100)) ++ "%" ]
-            , H.span [] [ H.text " done (" ]
-            , H.span
-                []
-                [ H.text <| String.fromInt ticksGiven ]
-            , H.span [] [ H.text "/" ]
-            , H.span
-                []
-                [ H.text <| String.fromInt ticksNeeded ]
-            , H.span [] [ H.text " ticks, you gave " ]
-            , H.span
-                []
-                [ H.text <| String.fromInt ticksGivenByPlayer ]
-            , H.span [] [ H.text ")" ]
+    H.div [ HA.class "flex flex-row gap-[1ch]" ]
+        [ H.span [ HA.class "text-green-300" ]
+            [ H.text <|
+                "["
+                    ++ String.repeat doneCount "="
+                    ++ String.repeat emptyCount "-"
+                    ++ "]"
             ]
+        , H.text <|
+            String.fromInt (round (percentDone * 100))
+                ++ "%"
+                ++ " done ("
+                ++ String.fromInt ticksGiven
+                ++ "/"
+                ++ String.fromInt ticksNeeded
+                ++ " ticks, you gave "
+                ++ String.fromInt ticksGivenByPlayer
+                ++ ")"
         ]
 
 
@@ -1809,29 +1805,25 @@ expandedQuestView player progress quest =
                 , ticksNeeded = ticksNeeded
                 , ticksGivenByPlayer = progress.ticksGivenByPlayer
                 }
-            , H.div [ HA.class "text-green-300" ]
-                [ H.span [] [ H.text "Players active: " ]
-                , H.span
-                    []
-                    [ H.text <| String.fromInt progress.playersActive ]
-                , H.span [] [ H.text " (" ]
-                , H.span
-                    []
-                    [ H.text <| String.fromInt progress.ticksPerHour ]
-                , H.span [] [ H.text " ticks/hour)" ]
+            , H.div []
+                [ H.text <|
+                    "Players active: "
+                        ++ String.fromInt progress.playersActive
+                        ++ " ("
+                        ++ String.fromInt progress.ticksPerHour
+                        ++ " ticks/hour)"
                 ]
-            , H.div [ HA.class "text-green-300" ]
-                [ H.text "XP per tick: "
-                , H.span
-                    []
-                    [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
+            , H.div []
+                [ H.text <|
+                    "XP per tick: "
+                        ++ String.fromInt (Quest.xpPerTickGiven quest)
                 ]
             , H.div
                 [ HA.class "mt-5" ]
                 [ H.text "Quest Requirements" ]
             , if List.isEmpty questRequirements then
                 H.div
-                    [ HA.class "text-green-300 ml-[4ch]" ]
+                    [ HA.class "ml-[4ch]" ]
                     [ H.text "NONE" ]
 
               else
@@ -1840,14 +1832,10 @@ expandedQuestView player progress quest =
                     (List.map (Quest.title >> liText) questRequirements)
             , H.div
                 [ HA.class "mt-5" ]
-                [ H.text "Player Requirements"
-                , H.span
-                    [ HA.class "text-green-300" ]
-                    [ H.text " (affect ticks/hour)" ]
-                ]
+                [ H.text "Player Requirements (affect ticks/hour)" ]
             , if List.isEmpty playerRequirements then
                 H.div
-                    [ HA.class "text-green-300 ml-[4ch]" ]
+                    [ HA.class "ml-[4ch]" ]
                     [ H.text "NONE" ]
 
               else
@@ -1859,7 +1847,7 @@ expandedQuestView player progress quest =
                 [ H.text "Global Rewards" ]
             , if List.isEmpty globalRewards then
                 H.div
-                    [ HA.class "text-green-300 ml-[4ch]" ]
+                    [ HA.class "ml-[4ch]" ]
                     [ H.text "NONE" ]
 
               else
@@ -1873,23 +1861,19 @@ expandedQuestView player progress quest =
 
                  else
                     [ H.text "Player Rewards"
-                    , H.span
-                        [ HA.class "text-green-300" ]
-                        [ H.text " (if you give " ]
+                    , H.text " (if you give "
                     , H.span
                         []
                         [ H.text <|
                             String.fromInt (Quest.ticksNeededForPlayerReward quest)
                                 ++ "+"
                         ]
-                    , H.span
-                        [ HA.class "text-green-300" ]
-                        [ H.text " ticks)" ]
+                    , H.text " ticks)"
                     ]
                 )
             , if List.isEmpty playerRewards then
                 H.div
-                    [ HA.class "text-green-300 ml-[4ch]" ]
+                    [ HA.class "ml-[4ch]" ]
                     [ H.text "NONE" ]
 
               else
@@ -3504,27 +3488,22 @@ messageView zone messageId _ player =
                         }
             in
             [ pageTitleView "Message"
-            , H.div [ HA.class "flex flex-col gap-10 items-start" ]
-                [ H.div [ HA.class "flex flex-col gap-4" ]
-                    [ H.div [ HA.class "flex flex-col items-start" ]
-                        [ H.h3
-                            [ HA.class "m-0 text-green-100 font-bold" ]
-                            [ H.text <| Message.summary message ]
-                        , H.div
-                            [ HA.class "text-green-300" ]
-                            [ H.text <| Message.fullDate zone message ]
-                        , UI.button
-                            [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
-                            [ H.text "[Back]" ]
-                        ]
-                    , Message.content
-                        [ HA.class "max-w-[70ch]" ]
-                        perceptionLevel
-                        message
+            , H.div [ HA.class "flex flex-col gap-4" ]
+                [ H.div [ HA.class "flex flex-col items-start" ]
+                    [ H.h3
+                        [ HA.class "m-0 text-green-100 font-bold" ]
+                        [ H.text <| Message.summary message ]
+                    , H.div
+                        [ HA.class "text-green-300" ]
+                        [ H.text <| Message.fullDate zone message ]
+                    , UI.button
+                        [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
+                        [ H.text "[Back]" ]
                     ]
-                , UI.button
-                    [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
-                    [ H.text "[Back]" ]
+                , Message.content
+                    [ HA.class "max-w-[70ch]" ]
+                    perceptionLevel
+                    message
                 ]
             ]
 
@@ -3975,15 +3954,17 @@ worldInfoView data =
 aboutWorldView : PlayerData -> CPlayer -> List (Html FrontendMsg)
 aboutWorldView data _ =
     [ pageTitleView <| "About world: " ++ data.worldName
-    , worldInfoView
-        { name = data.worldName
-        , description = data.description
-        , startedAt = data.startedAt
-        , tickFrequency = data.tickFrequency
-        , tickPerIntervalCurve = data.tickPerIntervalCurve
-        , vendorRestockFrequency = data.vendorRestockFrequency
-        , playersCount = List.length data.otherPlayers + 1
-        }
+    , H.div [ HA.class "p-[2ch]" ]
+        [ worldInfoView
+            { name = data.worldName
+            , description = data.description
+            , startedAt = data.startedAt
+            , tickFrequency = data.tickFrequency
+            , tickPerIntervalCurve = data.tickPerIntervalCurve
+            , vendorRestockFrequency = data.vendorRestockFrequency
+            , playersCount = List.length data.otherPlayers + 1
+            }
+        ]
     ]
 
 
