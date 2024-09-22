@@ -3229,21 +3229,20 @@ inventoryView _ player =
                             ( True, Just "You're at full HP." )
             in
             H.li
-                [ HA.class "inventory-item"
-                , HA.attributeMaybe HA.title tooltip
-                ]
-                [ UI.button
-                    [ HA.class "inventory-item-use-btn"
-                    , HE.onClick <| AskToUseItem item.id
-                    , HA.disabled isDisabled
-                    ]
-                    [ H.text "[Use]" ]
-                , H.viewIf (Item.isEquippable item.kind) <|
-                    UI.button
-                        [ HA.class "inventory-item-equip-btn"
-                        , HE.onClick <| AskToEquipItem item.id
+                [ HA.class "flex flex-row gap-[1ch]" ]
+                [ UI.liBullet
+                , H.span
+                    [ HA.class "flex flex-row gap-[2ch]" ]
+                    [ UI.button
+                        [ HE.onClick <| AskToUseItem item.id
+                        , HA.disabled isDisabled
                         ]
-                        [ H.text "[Equip]" ]
+                        [ H.text "[Use]" ]
+                    , H.viewIf (Item.isEquippable item.kind) <|
+                        UI.button
+                            [ HE.onClick <| AskToEquipItem item.id ]
+                            [ H.text "[Equip]" ]
+                    ]
                 , H.span
                     [ HA.class "inventory-item-label" ]
                     [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
@@ -3303,61 +3302,102 @@ inventoryView _ player =
                 }
     in
     [ pageTitleView "Inventory"
-    , H.p [] [ H.text <| "Total value: $" ++ String.fromInt totalValue ]
-    , if Dict.isEmpty player.items then
-        H.p [] [ H.text "You have no items!" ]
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.p []
+            [ H.text <| "Total value: "
+            , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Items" ]
+        , if Dict.isEmpty player.items then
+            H.p [] [ H.text "You have no items!" ]
 
-      else
-        H.ul
-            [ HA.id "inventory-list" ]
-            (player.items
-                |> Dict.values
-                |> List.sortBy
-                    (\{ kind } ->
-                        ( Item.typeName (Item.type_ kind)
-                        , Item.baseValue kind
-                        , Item.name kind
+          else
+            H.ul []
+                (player.items
+                    |> Dict.values
+                    |> List.sortBy
+                        (\{ kind } ->
+                            ( Item.typeName (Item.type_ kind)
+                            , Item.baseValue kind
+                            , Item.name kind
+                            )
                         )
-                    )
-                |> List.map itemView
-            )
-    , H.h3
-        [ HA.id "inventory-equipment" ]
-        [ H.text "Equipment" ]
-    , H.div
-        [ HA.id "inventory-equipment-armor" ]
-        [ H.text "Armor: "
-        , case player.equippedArmor of
-            Nothing ->
-                H.text "None"
+                    |> List.map itemView
+                )
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Equipment" ]
+        , H.div []
+            [ UI.liBullet
+            , H.text "Armor: "
+            , H.span [ HA.class "text-green-100" ] <|
+                case player.equippedArmor of
+                    Nothing ->
+                        [ H.text "None" ]
 
-            Just armor ->
-                H.span []
-                    [ H.text <| Item.name armor.kind
-                    , UI.button
-                        [ HE.onClick AskToUnequipArmor
-                        , HA.class "inventory-equipment-unequip-btn"
+                    Just armor ->
+                        [ H.text <| Item.name armor.kind
+                        , UI.button
+                            [ HE.onClick AskToUnequipArmor
+                            , HA.class "ml-[1ch]"
+                            ]
+                            [ H.text "[Unequip]" ]
                         ]
-                        [ H.text "[Unequip]" ]
-                    ]
-        ]
-    , H.h3
-        [ HA.id "inventory-stats" ]
-        [ H.text "Defence stats" ]
-    , H.ul
-        []
-        [ H.li [] [ H.text <| "Armor Class: " ++ String.fromInt armorClass ]
-        , H.li [] [ H.text <| "Damage Threshold: " ++ String.fromInt damageThreshold ]
-        , H.li [] [ H.text <| "Damage Resistance: " ++ String.fromInt damageResistance ]
-        ]
-    , H.h3
-        [ HA.id "inventory-stats" ]
-        [ H.text "Attack stats" ]
-    , H.ul
-        []
-        [ H.li [] [ H.text <| "Min Damage: " ++ String.fromInt attackStats.minDamage ]
-        , H.li [] [ H.text <| "Max Damage: " ++ String.fromInt attackStats.maxDamage ]
-        , H.li [] [ H.text <| "Chance to hit at target armor class 0: " ++ String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Defence stats" ]
+        , H.ul []
+            [ H.li []
+                [ UI.liBullet
+                , H.text "Armor Class: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt armorClass ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Damage Threshold: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt damageThreshold ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Damage Resistance: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt damageResistance ]
+                ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Attack stats" ]
+        , H.ul []
+            [ H.li []
+                [ UI.liBullet
+                , H.text "Min Damage: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt attackStats.minDamage ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Max Damage: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt attackStats.maxDamage ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Chance to hit at target armor class 0: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
+                ]
+            ]
         ]
     ]
 

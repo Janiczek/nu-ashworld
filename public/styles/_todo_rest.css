@@ -200,24 +200,6 @@
 
 
 
-.inventory-item button {
-  margin-right: 1ch;
-}
-
-.inventory-item button:last-child {
-  margin-right: 2ch;
-}
-
-.inventory-item-use-btn:disabled {
-  color: var(--green-300);
-}
-
-.inventory-equipment-unequip-btn {
-  margin-left: 1ch;
-}
-
-
-
 
 
 
