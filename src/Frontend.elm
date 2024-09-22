@@ -1103,6 +1103,14 @@ worldsListView worlds =
             [ pageTitleView "Worlds"
             , H.div [ HA.class "flex flex-row flex-wrap gap-4" ]
                 (worlds_
+                    |> List.sortBy
+                        (\w ->
+                            if w.name == Logic.mainWorldName then
+                                0
+
+                            else
+                                1
+                        )
                     |> List.map
                         (\world ->
                             H.div [ HA.class "bg-green-800 p-[2ch]" ]
@@ -3922,11 +3930,19 @@ worldInfoView data =
         , H.li []
             [ H.text "Tick frequency: "
             , H.span [ HA.class "text-green-100" ]
-                [ H.text
-                    (Tick.curveToString data.tickPerIntervalCurve
-                        ++ " ticks every "
-                        ++ Time.intervalToString data.tickFrequency
-                    )
+                [ case data.tickPerIntervalCurve of
+                    Tick.Linear n ->
+                        H.text <| String.fromInt n ++ " ticks every " ++ Time.intervalToString data.tickFrequency
+
+                    Tick.QuarterAndRest { quarter, rest } ->
+                        H.text <|
+                            String.fromInt quarter
+                                ++ " ticks every "
+                                ++ Time.intervalToString data.tickFrequency
+                                ++ " until "
+                                ++ String.fromInt (Tick.limit // 4)
+                                ++ " ticks are reached, then "
+                                ++ String.fromInt rest
                 ]
             ]
         , H.li []
