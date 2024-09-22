@@ -828,19 +828,28 @@ view model =
             case model.worldData of
                 IsAdmin _ ->
                     [ alertMessageView model.alertMessage
-                    , adminLinksView model.route
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ adminLinksView model.route
+                        , commonLinksView model.route
+                        ]
                     ]
 
                 IsPlayer data ->
                     [ alertMessageView model.alertMessage
                     , playerInfoView data.player
-                    , loggedInLinksView data.player model.route
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ loggedInLinksView data.player model.route
+                        , commonLinksView model.route
+                        ]
                     ]
 
                 NotLoggedIn ->
                     [ loginFormView worldNames model.loginForm
                     , alertMessageView model.alertMessage
-                    , loggedOutLinksView model.route
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ loggedOutLinksView model.route
+                        , commonLinksView model.route
+                        ]
                     ]
     in
     { title = "NuAshworld " ++ Version.version
@@ -881,14 +890,11 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 flex flex-col items-center max-h-vh overflow-auto" ]
+    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto" ]
         [ logoView model
-        , H.div [ HA.class "flex flex-col items-center" ]
-            ((tickData
-                |> H.viewMaybe (nextTickView model.zone model.time)
-             )
+        , H.div [ HA.class "flex flex-col items-center gap-6" ]
+            ((tickData |> H.viewMaybe (nextTickView model.zone model.time))
                 :: leftNav
-                ++ [ commonLinksView model.route ]
             )
         ]
 
@@ -906,7 +912,7 @@ nextTickView zone time { tickFrequency, worldName } =
         millis =
             Time.posixToMillis time
     in
-    H.div [ HA.class "mt-7 grid grid-cols-2 gap-x-[1ch]" ] <|
+    H.div [ HA.class "grid grid-cols-2 gap-x-[1ch]" ] <|
         List.concat
             [ [ H.span
                     [ HA.class "text-green-300 text-right" ]
@@ -1095,11 +1101,11 @@ worldsListView worlds =
 
         Just worlds_ ->
             [ pageTitleView "Worlds"
-            , H.ul []
+            , H.div [ HA.class "flex flex-row flex-wrap gap-4" ]
                 (worlds_
                     |> List.map
                         (\world ->
-                            H.li []
+                            H.div [ HA.class "bg-green-800 p-[2ch]" ]
                                 [ worldInfoView
                                     { name = world.name
                                     , description = world.description
@@ -1170,6 +1176,11 @@ adminMapView worldName adminData =
                     , ( "--map-rows", String.fromInt Map.rows )
                     , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                     ]
+                , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+                , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+                , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+                , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+                , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
                 ]
                 (locationsView Nothing
                     :: List.map mapMarkerView playerCoords
@@ -1397,7 +1408,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                 ]
-            , HA.class "relative bg-black bg-[url('../images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
             , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
@@ -1489,7 +1500,7 @@ locationView maybePlayer location =
     in
     H.div
         [ tileClass
-        , HA.class "opacity-50 text-green-100 absolute inset-0 bg-black-transparent"
+        , HA.class "opacity-50 text-green-100 absolute inset-0"
         , HA.classList
             [ ( "!opacity-100", hasVendor || isCurrent ) ]
         , HA.attribute "data-location-name" name
@@ -1592,7 +1603,7 @@ mapLoggedOutView =
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                 ]
-            , HA.class "relative bg-black bg-[url('../images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
             , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
@@ -3900,23 +3911,28 @@ ladderLoadingView =
 worldInfoView : WorldInfo -> Html FrontendMsg
 worldInfoView data =
     H.ul []
-        [ H.li [] [ H.text <| "Name: " ++ data.name ]
-        , H.li []
-            [ H.text <|
-                "Players: "
-                    ++ String.fromInt data.playersCount
+        [ H.li []
+            [ H.text "Name: "
+            , H.span [ HA.class "text-green-100" ] [ H.text data.name ]
             ]
         , H.li []
-            [ H.text <|
-                "Tick frequency: "
-                    ++ Tick.curveToString data.tickPerIntervalCurve
-                    ++ " ticks every "
-                    ++ Time.intervalToString data.tickFrequency
+            [ H.text "Players: "
+            , H.span [ HA.class "text-green-100" ] [ H.text (String.fromInt data.playersCount) ]
             ]
         , H.li []
-            [ H.text <|
-                "Vendor restock frequency: every "
-                    ++ Time.intervalToString data.vendorRestockFrequency
+            [ H.text "Tick frequency: "
+            , H.span [ HA.class "text-green-100" ]
+                [ H.text
+                    (Tick.curveToString data.tickPerIntervalCurve
+                        ++ " ticks every "
+                        ++ Time.intervalToString data.tickFrequency
+                    )
+                ]
+            ]
+        , H.li []
+            [ H.text "Vendor restock frequency: "
+            , H.span [ HA.class "text-green-100" ]
+                [ H.text <| "every " ++ Time.intervalToString data.vendorRestockFrequency ]
             ]
         ]
 
@@ -4195,8 +4211,7 @@ notInitializedView model =
 
 loadingNavView : Html FrontendMsg
 loadingNavView =
-    H.div
-        [ HA.class "mt-10" ]
+    H.div []
         [ H.text "Loading..."
         , H.span
             [ HA.class "loading-cursor"
@@ -4212,7 +4227,7 @@ alertMessageView maybeMessage =
         |> H.viewMaybe
             (\message ->
                 H.div
-                    [ HA.class "mt-10 text-orange" ]
+                    [ HA.class "text-orange" ]
                     [ H.text message ]
             )
 
@@ -4229,7 +4244,7 @@ loginFormView worlds auth =
                 children
     in
     H.form
-        [ HA.class "mt-10 w-[20ch]"
+        [ HA.class "w-[20ch]"
         , HE.onSubmit Login
         ]
         [ input
@@ -4468,7 +4483,7 @@ loggedInLinksView player currentRoute =
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in
-    H.div [ HA.class "mt-10" ]
+    H.div []
         (List.map (linkView currentRoute) links)
 
 
@@ -4484,13 +4499,13 @@ adminLinksView currentRoute =
             , linkMsg "Logout" Logout Nothing False
             ]
     in
-    H.div [ HA.class "mt-10" ]
+    H.div []
         (List.map (linkView currentRoute) links)
 
 
 loggedOutLinksView : Route -> Html FrontendMsg
 loggedOutLinksView currentRoute =
-    H.div [ HA.class "mt-10" ]
+    H.div []
         ([ linkMsg "Refresh" Refresh Nothing False
          , linkIn "Map" Map Nothing False
          , linkIn "Worlds" WorldsList Nothing False
@@ -4501,7 +4516,7 @@ loggedOutLinksView currentRoute =
 
 commonLinksView : Route -> Html FrontendMsg
 commonLinksView currentRoute =
-    H.div [ HA.class "mt-4" ]
+    H.div []
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
          , linkOut "Discord" "https://discord.gg/SxymXxvehS" Nothing False
@@ -4706,7 +4721,7 @@ playerInfoView player =
 createdPlayerInfoView : CPlayer -> Html FrontendMsg
 createdPlayerInfoView player =
     H.div
-        [ HA.class "mt-4 grid grid-cols-2" ]
+        [ HA.class "grid grid-cols-2" ]
         [ H.div
             [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
             [ H.text "Name:" ]
@@ -4776,7 +4791,7 @@ createdPlayerInfoView player =
 
 logoView : Model -> Html msg
 logoView model =
-    H.div [ HA.class "flex flex-col items-end mt-[26px]" ]
+    H.div [ HA.class "flex flex-col items-end" ]
         [ H.img
             [ HA.src "/images/logo-black-small.png"
             , HA.alt "NuAshworld Logo"
