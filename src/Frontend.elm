@@ -1076,10 +1076,10 @@ pageTitleView title =
 aboutView : List (Html FrontendMsg)
 aboutView =
     [ pageTitleView "About"
-    , H.div []
+    , H.div [ HA.class "flex flex-col gap-4 max-w-[60ch]" ]
         [ H.p []
             [ H.text "Welcome to "
-            , UI.bold "NuAshworld"
+            , H.span [ HA.class "text-green-100" ] [ H.text "NuAshworld" ]
             , H.text " - a multiplayer turn-based browser game set in the universe of Fallout 2."
             ]
         , H.p []
@@ -1087,7 +1087,7 @@ aboutView =
             ]
         , H.p []
             [ H.text "What more, "
-            , UI.bold "can you stand up to the Enclave?"
+            , H.span [ HA.class "text-green-100" ] [ H.text "can you stand up to the Enclave?" ]
             ]
         ]
     ]
