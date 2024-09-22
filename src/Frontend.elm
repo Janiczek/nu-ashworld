@@ -853,7 +853,7 @@ appView :
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
-    H.div [ HA.class "flex flex-1 flex-row bg-green-900" ]
+    H.div [ HA.class "flex flex-1 flex-row bg-green-900 max-w-vw max-h-vh overflow-hidden" ]
         [ leftNavView leftNav model
         , contentView model
         ]
@@ -881,7 +881,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 flex flex-col items-center" ]
+    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 flex flex-col items-center max-h-vh overflow-auto" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center" ]
             ((tickData
@@ -968,7 +968,7 @@ contentView model =
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
-    H.div [ HA.class "pt-8 px-10 pb-10 flex flex-col flex-1 items-start" ]
+    H.div [ HA.class "pt-8 px-10 pb-10 flex flex-col flex-1 items-start overflow-auto max-h-vh" ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -1361,8 +1361,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
         bigChunkLayerView : () -> Html FrontendMsg
         bigChunkLayerView () =
             S.svg
-                [ HA.id "map-fog"
-                , SA.viewBox <| "0 0 " ++ String.fromInt Map.columns ++ " " ++ String.fromInt Map.rows
+                [ SA.viewBox <| "0 0 " ++ String.fromInt Map.columns ++ " " ++ String.fromInt Map.rows
                 ]
                 (BigChunk.all
                     |> List.map
@@ -1385,7 +1384,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
             canShowAreaDanger && userWantsToShowAreaDanger
     in
     [ pageTitleView "Map"
-    , H.div [ HA.class "flex flex-col items-start gap-4 pb-4" ]
+    , H.div [ HA.class "flex flex-col items-start gap-4" ]
         [ H.viewIf canShowAreaDanger <|
             UI.checkboxButton
                 { isOn = userWantsToShowAreaDanger
@@ -1586,7 +1585,7 @@ cssVars vars =
 mapLoggedOutView : List (Html FrontendMsg)
 mapLoggedOutView =
     [ pageTitleView "Map"
-    , H.div [ HA.class "flex flex-col items-start gap-4 pb-4" ]
+    , H.div [ HA.class "flex flex-col items-start gap-4" ]
         [ H.div
             [ cssVars
                 [ ( "--map-columns", String.fromInt Map.columns )
@@ -1666,7 +1665,7 @@ townMainSquareView expandedQuests location { questsProgress } player =
             not <| List.isEmpty quests
     in
     [ pageTitleView <| "Town: " ++ Location.name location
-    , H.div [ HA.class "flex flex-col gap-4 pb-4" ]
+    , H.div [ HA.class "flex flex-col gap-4" ]
         [ if Vendor.isInLocation location then
             H.div []
                 [ UI.button
@@ -3165,8 +3164,7 @@ charPerksView perks =
                     Perk.maxRank perk
             in
             H.li
-                [ HA.class "character-perks-perk"
-                , HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                [ HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.text <|
@@ -3177,8 +3175,7 @@ charPerksView perks =
                         Perk.name perk ++ " (" ++ String.fromInt rank ++ "x)"
                 ]
     in
-    H.div
-        [ HA.id "character-perks" ]
+    H.div []
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
@@ -3186,8 +3183,7 @@ charPerksView perks =
             H.p [] [ H.text "No perks yet!" ]
 
           else
-            H.ul
-                [ HA.id "character-perks-list" ]
+            H.ul []
                 (List.map itemView <| Dict_.toList perks)
         ]
 
@@ -3369,81 +3365,65 @@ inventoryView _ player =
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 messagesView currentTime zone _ player =
     [ pageTitleView "Messages"
-    , H.table [ HA.id "messages-table" ]
-        [ H.thead []
-            [ H.tr []
-                [ H.th
-                    [ HA.class "messages-unread"
-                    , HA.title "Unread"
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.table [ HA.id "messages-table" ]
+            [ H.thead []
+                [ H.tr []
+                    [ H.th [ HA.title "Unread" ] [ H.text "U" ]
+                    , H.th [] [ H.text "Summary" ]
+                    , H.th [] [ H.text "Date" ]
+                    , H.th [ HA.title "Remove" ] [ H.text "X" ]
                     ]
-                    [ H.text "U" ]
-                , H.th [ HA.class "messages-summary" ] [ H.text "Summary" ]
-                , H.th [ HA.class "messages-date" ] [ H.text "Date" ]
-                , H.th
-                    [ HA.class "messages-remove"
-                    , HA.title "Remove"
-                    ]
-                    [ H.text "X" ]
                 ]
-            ]
-        , H.tbody []
-            (player.messages
-                |> Dict.values
-                |> List.sortBy (.id >> negate)
-                |> List.map
-                    (\message ->
-                        let
-                            isUnread : Bool
-                            isUnread =
-                                not message.hasBeenRead
+            , H.tbody []
+                (player.messages
+                    |> Dict.values
+                    |> List.sortBy (.id >> negate)
+                    |> List.map
+                        (\message ->
+                            let
+                                isUnread : Bool
+                                isUnread =
+                                    not message.hasBeenRead
 
-                            summary : String
-                            summary =
-                                Message.summary message
+                                summary : String
+                                summary =
+                                    Message.summary message
 
-                            relativeDate : String
-                            relativeDate =
-                                DateFormat.Relative.relativeTime
-                                    currentTime
-                                    message.date
-                        in
-                        H.tr
-                            [ HA.classList [ ( "is-unread", isUnread ) ]
-                            , HE.onClick <| OpenMessage message.id
-                            ]
-                            [ if isUnread then
-                                H.td
-                                    [ HA.class "messages-unread"
-                                    , HA.title "Unread"
+                                relativeDate : String
+                                relativeDate =
+                                    DateFormat.Relative.relativeTime
+                                        currentTime
+                                        message.date
+                            in
+                            H.tr
+                                [ HA.classList [ ( "text-green-100", isUnread ) ]
+                                , HE.onClick <| OpenMessage message.id
+                                ]
+                                [ if isUnread then
+                                    H.td [ HA.title "Unread" ] [ H.text "*" ]
+
+                                  else
+                                    H.td [] []
+                                , H.td
+                                    [ HA.title summary ]
+                                    [ H.text summary ]
+                                , H.td
+                                    [ HA.title <| Message.fullDate zone message ]
+                                    [ H.text relativeDate ]
+                                , H.td
+                                    [ TW.mod "hover" "text-orange"
+                                    , HA.title "Remove"
+                                    , HE.onClickStopPropagation <| AskToRemoveMessage message.id
                                     ]
-                                    [ H.text "*" ]
-
-                              else
-                                H.td [ HA.class "messages-unread" ] []
-                            , H.td
-                                [ HA.class "messages-summary"
-                                , HA.title summary
+                                    [ H.text "X" ]
                                 ]
-                                [ H.text summary ]
-                            , H.td
-                                [ HA.class "messages-date"
-                                , HA.title <| Message.fullDate zone message
-                                ]
-                                [ H.text relativeDate ]
-                            , H.td
-                                [ HA.class "messages-remove"
-                                , HA.title "Remove"
-                                , HE.onClickStopPropagation <| AskToRemoveMessage message.id
-                                ]
-                                [ H.text "X" ]
-                            ]
-                    )
-            )
+                        )
+                )
+            ]
+        , H.viewIf (Dict.isEmpty player.messages) <|
+            H.div [] [ H.text "No messages right now!" ]
         ]
-    , H.viewIf (Dict.isEmpty player.messages) <|
-        H.div
-            [ HA.id "messages-empty-note" ]
-            [ H.text "No messages right now!" ]
     ]
 
 
@@ -3465,21 +3445,28 @@ messageView zone messageId _ player =
                         }
             in
             [ pageTitleView "Message"
-            , H.h3
-                [ HA.id "message-summary" ]
-                [ H.text <| Message.summary message ]
-            , H.div
-                [ HA.id "message-date" ]
-                [ H.text <| Message.fullDate zone message ]
-            , Message.content
-                [ HA.id "message-content" ]
-                perceptionLevel
-                message
-            , UI.button
-                [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages)
-                , HA.id "message-back-button"
+            , H.div [ HA.class "flex flex-col gap-10 items-start" ]
+                [ H.div [ HA.class "flex flex-col gap-4" ]
+                    [ H.div [ HA.class "flex flex-col items-start" ]
+                        [ H.h3
+                            [ HA.class "m-0 text-green-100 font-bold" ]
+                            [ H.text <| Message.summary message ]
+                        , H.div
+                            [ HA.class "text-green-300" ]
+                            [ H.text <| Message.fullDate zone message ]
+                        , UI.button
+                            [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
+                            [ H.text "[Back]" ]
+                        ]
+                    , Message.content
+                        [ HA.class "max-w-[70ch]" ]
+                        perceptionLevel
+                        message
+                    ]
+                , UI.button
+                    [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
+                    [ H.text "[Back]" ]
                 ]
-                [ H.text "[Back]" ]
             ]
 
 
@@ -3829,34 +3816,34 @@ fightView maybeFight _ player =
                         }
             in
             [ pageTitleView "Fight"
-            , H.div []
-                [ H.text <|
-                    "Attacker: "
-                        ++ Fight.opponentName fight.attacker
-                        ++ (if youAreAttacker then
-                                " (you)"
+            , H.div [ HA.class "flex flex-col gap-4" ]
+                [ H.div []
+                    [ H.text <|
+                        "Attacker: "
+                            ++ Fight.opponentName fight.attacker
+                            ++ (if youAreAttacker then
+                                    " (you)"
 
-                            else
-                                ""
-                           )
-                ]
-            , H.div []
-                [ H.text <|
-                    "Target: "
-                        ++ Fight.opponentName fight.target
-                        ++ (if youAreAttacker then
-                                ""
+                                else
+                                    ""
+                               )
+                    ]
+                , H.div []
+                    [ H.text <|
+                        "Target: "
+                            ++ Fight.opponentName fight.target
+                            ++ (if youAreAttacker then
+                                    ""
 
-                            else
-                                " (you)"
-                           )
+                                else
+                                    " (you)"
+                               )
+                    ]
+                , Data.Fight.View.view perceptionLevel fight player.name
+                , UI.button
+                    [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder) ]
+                    [ H.text "[Back]" ]
                 ]
-            , Data.Fight.View.view perceptionLevel fight player.name
-            , UI.button
-                [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder)
-                , HA.id "fight-back-button"
-                ]
-                [ H.text "[Back]" ]
             ]
 
 
@@ -3924,69 +3911,31 @@ ladderView data loggedInPlayer =
 playerLadderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
 playerLadderTableView players loggedInPlayer =
     H.table
-        [ HA.class "ladder-table"
-        , HA.class "text-left border-collapse"
-        ]
-        [ let
-            th attrs children =
-                H.th
-                    (HA.class "px-2 py-1 font-normal"
-                        :: attrs
-                    )
-                    children
-
-            border =
-                HA.class "border-l-[3px] border-l-green-300-half-transparent"
-          in
-          H.thead
-            [ HA.class "text-green-300"
-            , HA.class "border-b-[3px] border-b-green-300-half-transparent"
-            ]
+        []
+        [ H.thead []
             [ H.tr []
-                [ th
+                [ H.th
                     [ HA.class "text-right"
                     , HA.title "Rank"
                     ]
                     [ H.text "#" ]
-                , th [ border ] [ H.text "Fight" ]
-                , th [ border ] [ H.text "Name" ]
-                , th
-                    [ HA.class "ladder-status"
-                    , border
-                    , HA.title "Health status"
-                    ]
-                    [ H.text "Status" ]
-                , th
+                , H.th [] [ H.text "Fight" ]
+                , H.th [] [ H.text "Name" ]
+                , H.th [ HA.title "Health status" ] [ H.text "Status" ]
+                , H.th [ HA.class "text-right" ] [ H.text "Lvl" ]
+                , H.th
                     [ HA.class "text-right"
-                    , border
-                    ]
-                    [ H.text "Lvl" ]
-                , th
-                    [ HA.class "text-right"
-                    , border
                     , HA.title "Wins"
                     ]
                     [ H.text "W" ]
-                , th
+                , H.th
                     [ HA.class "text-right"
-                    , border
                     , HA.title "Losses"
                     ]
                     [ H.text "L" ]
                 ]
             ]
-        , let
-            td attrs children =
-                H.td
-                    (HA.class "px-2 py-0.5"
-                        :: attrs
-                    )
-                    children
-
-            border =
-                HA.class "border-l border-l-green-300-half-transparent"
-          in
-          H.tbody []
+        , H.tbody []
             (players
                 |> List.indexedMap
                     (\i player ->
@@ -3996,24 +3945,20 @@ playerLadderTableView players loggedInPlayer =
 
                             cantFight : String -> Html FrontendMsg
                             cantFight message =
-                                td
+                                H.td
                                     [ HA.class "text-green-300 cursor-not-allowed"
-                                    , border
                                     , HA.classList [ ( "bg-green-800", isYou ) ]
-                                    , TW.mod "group-hover" "bg-green-800"
                                     , HA.title message
                                     ]
                                     [ H.text "-" ]
                         in
                         H.tr
-                            [ HA.class "group"
-                            , HA.classList [ ( "text-green-100", isYou ) ]
+                            [ HA.classList [ ( "text-green-100", isYou ) ]
                             ]
-                            [ td
+                            [ H.td
                                 [ HA.class "text-right"
                                 , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Rank"
-                                , TW.mod "group-hover" "bg-green-800"
                                 ]
                                 [ H.text <| String.fromInt <| i + 1 ]
                             , if loggedInPlayer.name == player.name then
@@ -4029,26 +3974,20 @@ playerLadderTableView players loggedInPlayer =
                                 cantFight "Can't fight: you have no ticks!"
 
                               else
-                                td
+                                H.td
                                     [ HE.onClick <| AskToFight player.name
                                     , HA.class "cursor-pointer bg-green-800 text-green-100"
-                                    , border
                                     , HA.classList [ ( "bg-green-800", isYou ) ]
-                                    , TW.mod "group-hover" "bg-green-800"
                                     , TW.mod "hover" "text-orange"
                                     ]
                                     [ H.text "Fight" ]
-                            , td
+                            , H.td
                                 [ HA.classList [ ( "bg-green-800", isYou ) ]
-                                , border
-                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Name"
                                 ]
                                 [ H.text player.name ]
-                            , td
+                            , H.td
                                 [ HA.classList [ ( "bg-green-800", isYou ) ]
-                                , border
-                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title <|
                                     if loggedInPlayer.special.perception <= 1 then
                                         "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
@@ -4057,27 +3996,21 @@ playerLadderTableView players loggedInPlayer =
                                         "Health status"
                                 ]
                                 [ H.text <| HealthStatus.label player.healthStatus ]
-                            , td
+                            , H.td
                                 [ HA.class "text-right"
-                                , border
                                 , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Level"
                                 ]
                                 [ H.text <| String.fromInt player.level ]
-                            , td
+                            , H.td
                                 [ HA.class "text-right"
-                                , border
                                 , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Wins"
                                 ]
                                 [ H.text <| String.fromInt player.wins ]
-                            , td
+                            , H.td
                                 [ HA.class "text-right"
-                                , border
                                 , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , TW.mod "group-hover" "bg-green-800"
                                 , HA.title "Losses"
                                 ]
                                 [ H.text <| String.fromInt player.losses ]
@@ -4089,7 +4022,7 @@ playerLadderTableView players loggedInPlayer =
 
 adminLadderTableView : List SPlayer -> Html FrontendMsg
 adminLadderTableView players =
-    H.table [ HA.id "ladder-table" ]
+    H.table []
         [ H.thead []
             [ H.tr []
                 [ H.th
@@ -4302,14 +4235,10 @@ loginFormView worlds auth =
         , H.div
             [ HA.class "mt-4 flex justify-between" ]
             [ UI.button
-                [ HA.id "login-button"
-                , HE.onClickPreventDefault Login
-                ]
+                [ HE.onClickPreventDefault Login ]
                 [ H.text "[ Login ]" ]
             , UI.button
-                [ HA.id "register-button"
-                , HE.onClickPreventDefault Register
-                ]
+                [ HE.onClickPreventDefault Register ]
                 [ H.text "[ Register ]" ]
             ]
         ]
@@ -4548,8 +4477,7 @@ commonLinksView currentRoute =
 adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)
 adminWorldsListView newWorldName newWorldFast data =
     [ pageTitleView "Admin :: Worlds"
-    , H.div
-        [ HA.id "admin-worlds-list" ]
+    , H.div []
         [ H.table []
             [ H.thead []
                 [ H.tr []

@@ -159,7 +159,7 @@ view perceptionLevel fight yourName =
                 Fight.Npc enemyType ->
                     Enemy.aimedShotName enemyType aimedShot
     in
-    H.div [ HA.class "fight-info" ]
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ fight.log
             |> List.Extra.groupWhile (\( a, _ ) ( b, _ ) -> a == b)
             |> List.map
@@ -169,147 +169,187 @@ view perceptionLevel fight yourName =
                         names_ =
                             getNames who
 
-                        name : String -> String
-                        name n =
-                            -- This is then picked up by the CSS
-                            "**" ++ n ++ "**"
+                        highlight : String -> Html msg
+                        highlight n =
+                            H.span
+                                [ HA.class "text-orange" ]
+                                [ H.text n ]
 
                         other : Who
                         other =
                             Fight.theOther who
                     in
                     H.li []
-                        [ H.text <| names_.subject.namePossCap ++ " turn"
+                        [ H.span
+                            [ HA.class "text-green-300" ]
+                            [ H.text <| names_.subject.namePossCap ++ " turn" ]
                         , (first :: rest)
                             |> List.map
                                 (\( currentActionWho, action ) ->
                                     let
-                                        action_ : String
+                                        action_ : Html msg
                                         action_ =
                                             case action of
                                                 Fight.Start { distanceHexes } ->
                                                     if Perception.atLeast Perception.Great perceptionLevel then
-                                                        names_.subject.verbPresent "initiate"
-                                                            ++ " the fight from "
-                                                            ++ String.fromInt distanceHexes
-                                                            ++ " hexes away."
+                                                        H.span []
+                                                            [ H.text <|
+                                                                names_.subject.verbPresent "initiate"
+                                                                    ++ " the fight from "
+                                                            , highlight <| String.fromInt distanceHexes
+                                                            , H.text " hexes away."
+                                                            ]
 
                                                     else
-                                                        names_.subject.verbPresent "initiate"
-                                                            ++ " the fight."
+                                                        H.text <|
+                                                            names_.subject.verbPresent "initiate"
+                                                                ++ " the fight."
 
                                                 Fight.ComeCloser { hexes, remainingDistanceHexes } ->
                                                     if Perception.atLeast Perception.Great perceptionLevel then
-                                                        names_.subject.verbPresent "come"
-                                                            ++ " closer "
-                                                            ++ String.fromInt hexes
-                                                            ++ " hexes. Remaining distance: "
-                                                            ++ String.fromInt remainingDistanceHexes
-                                                            ++ " hexes."
+                                                        H.span []
+                                                            [ H.text <|
+                                                                names_.subject.verbPresent "come"
+                                                                    ++ " closer "
+                                                            , highlight <| String.fromInt hexes
+                                                            , H.text " hexes. Remaining distance: "
+                                                            , highlight <| String.fromInt remainingDistanceHexes
+                                                            , H.text " hexes."
+                                                            ]
 
                                                     else
-                                                        names_.subject.verbPresent "come"
-                                                            ++ " closer."
+                                                        H.text <|
+                                                            names_.subject.verbPresent "come"
+                                                                ++ " closer."
 
                                                 Fight.Attack { damage, remainingHp, shotType, isCritical } ->
-                                                    (case shotType of
-                                                        NormalShot ->
-                                                            ""
+                                                    H.span []
+                                                        [ H.text <|
+                                                            (case shotType of
+                                                                NormalShot ->
+                                                                    ""
 
-                                                        AimedShot aimed ->
-                                                            names_.subject.verbPresent "aim"
-                                                                ++ " for "
-                                                                ++ aimedShotName other aimed
-                                                                ++ " and "
-                                                    )
-                                                        ++ (if isCritical then
-                                                                "critically "
+                                                                AimedShot aimed ->
+                                                                    names_.subject.verbPresent "aim"
+                                                                        ++ " for "
+                                                                        ++ aimedShotName other aimed
+                                                                        ++ " and "
+                                                            )
+                                                                ++ (if isCritical then
+                                                                        "critically "
 
-                                                            else
-                                                                ""
-                                                           )
-                                                        ++ names_.subject.verbPresent "attack"
-                                                        ++ " "
-                                                        ++ name names_.object.name
-                                                        ++ " for "
-                                                        ++ String.fromInt damage
-                                                        ++ " damage."
-                                                        ++ (if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
-                                                                " Remaining HP: "
-                                                                    ++ String.fromInt remainingHp
-                                                                    ++ "."
+                                                                    else
+                                                                        ""
+                                                                   )
+                                                                ++ names_.subject.verbPresent "attack"
+                                                                ++ " "
+                                                        , highlight names_.object.name
+                                                        , H.text " for "
+                                                        , highlight <| String.fromInt damage
+                                                        , H.text " damage."
+                                                        , if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
+                                                            H.span []
+                                                                [ H.text " Remaining HP: "
+                                                                , highlight <| String.fromInt remainingHp
+                                                                , H.text "."
+                                                                ]
 
-                                                            else
-                                                                ""
-                                                           )
+                                                          else
+                                                            H.text ""
+                                                        ]
 
                                                 Fight.Miss { shotType } ->
-                                                    (case shotType of
-                                                        NormalShot ->
-                                                            ""
+                                                    H.span []
+                                                        [ H.text <|
+                                                            (case shotType of
+                                                                NormalShot ->
+                                                                    ""
 
-                                                        AimedShot aimed ->
-                                                            names_.subject.verbPresent "aim"
-                                                                ++ " for "
-                                                                ++ aimedShotName other aimed
-                                                                ++ " and "
-                                                    )
-                                                        ++ names_.subject.verbPresent "attack"
-                                                        ++ " "
-                                                        ++ name names_.object.name
-                                                        ++ " but "
-                                                        ++ names_.subject.verbPresent "miss"
-                                                        ++ "."
+                                                                AimedShot aimed ->
+                                                                    names_.subject.verbPresent "aim"
+                                                                        ++ " for "
+                                                                        ++ aimedShotName other aimed
+                                                                        ++ " and "
+                                                            )
+                                                                ++ names_.subject.verbPresent "attack"
+                                                                ++ " "
+                                                        , highlight names_.object.name
+                                                        , H.text <|
+                                                            " but "
+                                                                ++ names_.subject.verbPresent "miss"
+                                                                ++ "."
+                                                        ]
 
                                                 Fight.Heal r ->
-                                                    names_.subject.verbPresent "heal"
-                                                        ++ " with "
-                                                        ++ Item.name r.itemKind
-                                                        ++ " for "
-                                                        ++ String.fromInt r.healedHp
-                                                        ++ " HP."
-                                                        ++ (if currentActionWho == you || Perception.atLeast Perception.Great perceptionLevel then
-                                                                " Current HP: "
-                                                                    ++ String.fromInt r.newHp
-                                                                    ++ "."
+                                                    H.text <|
+                                                        names_.subject.verbPresent "heal"
+                                                            ++ " with "
+                                                            ++ Item.name r.itemKind
+                                                            ++ " for "
+                                                            ++ String.fromInt r.healedHp
+                                                            ++ " HP."
+                                                            ++ (if currentActionWho == you || Perception.atLeast Perception.Great perceptionLevel then
+                                                                    " Current HP: "
+                                                                        ++ String.fromInt r.newHp
+                                                                        ++ "."
 
-                                                            else
-                                                                ""
-                                                           )
+                                                                else
+                                                                    ""
+                                                               )
                                     in
-                                    H.li []
-                                        [ Markdown.toHtml [ HA.class "fight-log-action" ] <|
-                                            name names_.subject.nameCap
-                                                ++ " "
-                                                ++ action_
+                                    H.li
+                                        [ HA.class "ps-[2ch]" ]
+                                        [ highlight names_.subject.nameCap
+                                        , H.text " "
+                                        , action_
                                         ]
                                 )
                             |> H.ul []
                         ]
                 )
-            |> H.ul []
+            |> H.ul [ HA.class "flex flex-col gap-4" ]
         , H.div []
-            [ H.text <|
-                "Result: "
-                    ++ (case fight.result of
-                            Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
-                                if youAreAttacker then
-                                    "You won! You gained "
-                                        ++ String.fromInt xpGained
-                                        ++ " XP and looted "
-                                        ++ String.fromInt capsGained
-                                        ++ " caps."
-                                        ++ (if List.isEmpty itemsGained then
-                                                ""
+            [ H.span
+                [ HA.class "text-green-300" ]
+                [ H.text "Result: " ]
+            , H.span [ HA.class "text-green-100" ]
+                [ H.text <|
+                    case fight.result of
+                        Fight.AttackerWon { xpGained, capsGained, itemsGained } ->
+                            if youAreAttacker then
+                                "You won! You gained "
+                                    ++ String.fromInt xpGained
+                                    ++ " XP and looted "
+                                    ++ String.fromInt capsGained
+                                    ++ " caps."
+                                    ++ (if List.isEmpty itemsGained then
+                                            ""
 
-                                            else
-                                                " You also looted "
-                                                    ++ viewLoot itemsGained
-                                                    ++ "."
-                                           )
+                                        else
+                                            " You also looted "
+                                                ++ viewLoot itemsGained
+                                                ++ "."
+                                       )
 
-                                else
-                                    "You lost! Your attacker gained "
+                            else
+                                "You lost! Your attacker gained "
+                                    ++ String.fromInt xpGained
+                                    ++ " XP and looted "
+                                    ++ String.fromInt capsGained
+                                    ++ " caps."
+                                    ++ (if List.isEmpty itemsGained then
+                                            ""
+
+                                        else
+                                            " They also looted "
+                                                ++ viewLoot itemsGained
+                                                ++ "."
+                                       )
+
+                        Fight.TargetWon { xpGained, capsGained, itemsGained } ->
+                            if youAreAttacker then
+                                if Fight.isPlayer fight.target then
+                                    "You lost! Your target gained "
                                         ++ String.fromInt xpGained
                                         ++ " XP and looted "
                                         ++ String.fromInt capsGained
@@ -323,59 +363,42 @@ view perceptionLevel fight yourName =
                                                     ++ "."
                                            )
 
-                            Fight.TargetWon { xpGained, capsGained, itemsGained } ->
-                                if youAreAttacker then
-                                    if Fight.isPlayer fight.target then
-                                        "You lost! Your target gained "
-                                            ++ String.fromInt xpGained
-                                            ++ " XP and looted "
-                                            ++ String.fromInt capsGained
-                                            ++ " caps."
-                                            ++ (if List.isEmpty itemsGained then
-                                                    ""
-
-                                                else
-                                                    " They also looted "
-                                                        ++ viewLoot itemsGained
-                                                        ++ "."
-                                               )
-
-                                    else
-                                        "You lost!"
-
                                 else
-                                    "You won! You gained "
-                                        ++ String.fromInt xpGained
-                                        ++ " XP and looted "
-                                        ++ String.fromInt capsGained
-                                        ++ " caps."
-                                        ++ (if List.isEmpty itemsGained then
-                                                ""
+                                    "You lost!"
 
-                                            else
-                                                " You also looted "
-                                                    ++ viewLoot itemsGained
-                                                    ++ "."
-                                           )
+                            else
+                                "You won! You gained "
+                                    ++ String.fromInt xpGained
+                                    ++ " XP and looted "
+                                    ++ String.fromInt capsGained
+                                    ++ " caps."
+                                    ++ (if List.isEmpty itemsGained then
+                                            ""
 
-                            Fight.TargetAlreadyDead ->
-                                if youAreAttacker then
-                                    "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
+                                        else
+                                            " You also looted "
+                                                ++ viewLoot itemsGained
+                                                ++ "."
+                                       )
 
-                                else
-                                    attackerName ++ " wanted to fight you but due to their low Perception didn't realize you're already dead. Ashamed, they quickly ran away and will deny this ever happened."
+                        Fight.TargetAlreadyDead ->
+                            if youAreAttacker then
+                                "You wanted to fight them but then realized they're already dead. You feel slightly dumb. (Higher Perception will help you see more info about your opponents.)"
 
-                            Fight.BothDead ->
-                                "You both end up dead."
+                            else
+                                attackerName ++ " wanted to fight you but due to their low Perception didn't realize you're already dead. Ashamed, they quickly ran away and will deny this ever happened."
 
-                            Fight.NobodyDead ->
-                                "You both get out of the fight alive."
+                        Fight.BothDead ->
+                            "You both end up dead."
 
-                            Fight.NobodyDeadGivenUp ->
-                                "You're both so exhausted by this long fight that you agree to finish this some other time."
-                       )
+                        Fight.NobodyDead ->
+                            "You both get out of the fight alive."
+
+                        Fight.NobodyDeadGivenUp ->
+                            "You're both so exhausted by this long fight that you agree to finish this some other time."
+                ]
             ]
-        , H.p [] [ H.text "Stats:" ]
+        , H.span [ HA.class "text-green-300" ] [ H.text "Stats:" ]
         , let
             ( yourActions, theirActions ) =
                 List.partition (\( who, _ ) -> who == you) fight.log
@@ -455,40 +478,46 @@ view perceptionLevel fight yourName =
 
                 else
                     (String.fromFloat <| (\x -> x / 100) <| toFloat <| round <| pct * 10000) ++ "%"
+
+            th attrs children =
+                H.th (HA.class "text-right" :: attrs) children
+
+            td attrs children =
+                H.td (HA.class "text-right" :: attrs) children
           in
-          H.table [ HA.id "fight-stats-table" ]
+          H.table [ HA.class "w-max" ]
             [ H.thead []
                 [ H.tr []
-                    [ H.td [] []
-                    , H.th [] [ H.text "You" ]
-                    , H.th [] [ H.text yourOpponentName ]
+                    [ td [] []
+                    , th [] [ H.text "You" ]
+                    , th [] [ H.text yourOpponentName ]
                     ]
                 ]
             , H.tbody []
                 [ H.tr []
-                    [ H.td [] [ H.text "Total damage" ]
-                    , H.td [] [ H.text <| String.fromInt yourTotalDamage ]
-                    , H.td [] [ H.text <| String.fromInt theirTotalDamage ]
+                    [ td [] [ H.text "Total damage" ]
+                    , td [] [ H.text <| String.fromInt yourTotalDamage ]
+                    , td [] [ H.text <| String.fromInt theirTotalDamage ]
                     ]
                 , H.tr []
-                    [ H.td [] [ H.text "Hit rate" ]
-                    , H.td [] [ H.text <| formatPercentage yourHitRate ]
-                    , H.td [] [ H.text <| formatPercentage theirHitRate ]
+                    [ td [] [ H.text "Hit rate" ]
+                    , td [] [ H.text <| formatPercentage yourHitRate ]
+                    , td [] [ H.text <| formatPercentage theirHitRate ]
                     ]
                 , H.tr []
-                    [ H.td [] [ H.text "Critical hit rate" ]
-                    , H.td [] [ H.text <| formatPercentage yourCritRate ]
-                    , H.td [] [ H.text <| formatPercentage theirCritRate ]
+                    [ td [] [ H.text "Critical hit rate" ]
+                    , td [] [ H.text <| formatPercentage yourCritRate ]
+                    , td [] [ H.text <| formatPercentage theirCritRate ]
                     ]
                 , H.tr []
-                    [ H.td [] [ H.text "Average damage" ]
-                    , H.td [] [ H.text <| formatFloat yourAvgDamage ]
-                    , H.td [] [ H.text <| formatFloat theirAvgDamage ]
+                    [ td [] [ H.text "Average damage" ]
+                    , td [] [ H.text <| formatFloat yourAvgDamage ]
+                    , td [] [ H.text <| formatFloat theirAvgDamage ]
                     ]
                 , H.tr []
-                    [ H.td [] [ H.text "Max hit" ]
-                    , H.td [] [ H.text <| String.fromInt yourMaxHit ]
-                    , H.td [] [ H.text <| String.fromInt theirMaxHit ]
+                    [ td [] [ H.text "Max hit" ]
+                    , td [] [ H.text <| String.fromInt yourMaxHit ]
+                    , td [] [ H.text <| String.fromInt theirMaxHit ]
                     ]
                 ]
             ]

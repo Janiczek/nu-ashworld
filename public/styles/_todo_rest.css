@@ -4,80 +4,11 @@
   --orange-fully-transparent: rgba(252, 253, 125, 0);
 }
 
-#admin-hiscores-content #ladder-table {
-  margin-top: 16px;
-}
 
-#alert-message {
-  margin-top: 40px;
-  color: var(--orange);
-}
 
-#admin-worlds-list table {
-  white-space: nowrap;
-}
 
-#admin-worlds-list button+button {
-  margin-left: 1ch;
-}
 
-#messages-table tbody .messages-unread {
-  text-align: right;
-}
 
-#messages-table tbody tr.is-unread {
-  color: var(--green-100);
-}
-
-#messages-table tbody .messages-remove:hover {
-  color: var(--orange);
-}
-
-#messages-empty-note {
-  margin-top: 40px;
-}
-
-#message-summary {
-  margin: 0;
-  color: var(--green-100);
-  font-weight: 700;
-}
-
-#message-date {
-  color: var(--green-300);
-}
-
-#message-content {
-  max-width: 60ch;
-}
-
-#character-stats-list {
-  margin-top: 40px;
-}
-
-#fight-back-button {
-  margin-top: 40px;
-}
-
-#message-back-button {
-  margin-top: 40px;
-}
-
-#create-char-button {
-  margin-top: 40px;
-}
-
-.fight-info {
-  margin-top: 40px;
-}
-
-#import-textarea {
-  border: none;
-  background-color: var(--green-800);
-  width: 80ch;
-  height: 20em;
-  margin-bottom: 1em;
-}
 
 #town-store-grid {
   margin-top: 40px;
@@ -263,6 +194,12 @@
   padding-left: 6px;
 }
 
+
+
+
+
+
+
 .inventory-item button {
   margin-right: 1ch;
 }
@@ -278,6 +215,13 @@
 .inventory-equipment-unequip-btn {
   margin-left: 1ch;
 }
+
+
+
+
+
+
+
 
 .character-choose-perk-item {
   cursor: pointer;
@@ -300,10 +244,9 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
-#fight-stats-table th,
-#fight-stats-table td {
-  text-align: right;
-}
+
+
+
 
 .fight-strategy-grid {
   display: grid;
@@ -433,15 +376,4 @@
 
 .fight-strategy-syntax-help-hover-description {
   white-space: pre-wrap;
-}
-
-#admin-new-world-form {
-  margin-top: 1em;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-#admin-new-world-form label input[type="checkbox"] {
-  margin-right: 1ch;
 }
