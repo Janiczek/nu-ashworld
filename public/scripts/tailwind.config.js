@@ -4,7 +4,10 @@ export const theme = {
     colors: {
         transparent: "transparent",
         current: "currentColor",
-        black: "#000000",
+        black: {
+            DEFAULT: "#000000",
+            transparent: "rgba(0, 0, 0, 0.25)",
+        },
         green: {
             900: "#111810",
             800: "#10240C",

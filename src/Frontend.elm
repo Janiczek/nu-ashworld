@@ -1247,7 +1247,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                 tileUnderCursor =
                     H.div
-                        [ HA.class "tile" -- TODO replace this
+                        [ tileClass
                         , HA.class
                             (if Set.member mouseCoords impassableTiles then
                                 "bg-red"
@@ -1265,7 +1265,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                 pathTiles =
                     H.div
-                        [ HA.id "map-path-tiles" ]
+                        [ HA.class "absolute inset-0" ]
                         (List.map (pathTileView pathBgColor impassableTiles)
                             (Set.toList (Set.remove mouseCoords pathTaken))
                         )
@@ -1295,7 +1295,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                         ]
             in
             H.div
-                [ HA.id "map-mouse-layer" ]
+                [ HA.class "absolute inset-0" ]
                 [ tileUnderCursor
                 , pathTiles
                 , tooltip
@@ -1313,7 +1313,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                         pathBgColor
                     )
                 , HA.class "opacity-50 pointer-events-none z-[1]"
-                , HA.classList [ ( "tile", True ) ] -- TODO replace this one
+                , tileClass
                 , cssVars
                     [ ( "--tile-coord-x", String.fromInt x )
                     , ( "--tile-coord-y", String.fromInt y )
@@ -1328,7 +1328,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
             H.div
-                [ HA.id "map-mouse-event-catcher"
+                [ HA.class "absolute inset-0 z-[4]"
                 , HE.stopPropagationOn "mouseover"
                     (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
                         changedCoordsDecoder mouseCoordsOnly
@@ -1395,8 +1395,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 , label = "Show area danger levels"
                 }
         , H.div
-            [ HA.id "map" -- TODO remove
-            , cssVars
+            [ cssVars
                 [ ( "--map-columns", String.fromInt Map.columns )
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
@@ -1409,7 +1408,8 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
             ]
             [ locationsView (Just playerCoords)
             , mapMarkerView playerCoords
-            , H.viewIfLazy showAreaDanger bigChunkLayerView
+            , bigChunkLayerView
+                |> H.viewIfLazy showAreaDanger
             , mouseEventCatcherView
             , H.viewMaybe mouseRelatedView mapMouseCoords
             ]
@@ -1451,6 +1451,11 @@ svgPolygonForTiles color coords =
         []
 
 
+tileClass : Attribute msg
+tileClass =
+    HA.class "absolute left-0 top-0 w-[var(--map-cell-size)] h-[var(--map-cell-size)] translate-x-[calc(var(--map-cell-size)*var(--tile-coord-x))] translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y))]"
+
+
 locationView : Maybe TileCoords -> Location -> Html FrontendMsg
 locationView maybePlayer location =
     let
@@ -1472,22 +1477,54 @@ locationView maybePlayer location =
         isCurrent : Bool
         isCurrent =
             maybePlayer == Just ( x, y )
+
+        borderWidth : String
+        borderWidth =
+            case size of
+                Location.Small ->
+                    "border"
+
+                Location.Middle ->
+                    "border"
+
+                Location.Large ->
+                    "border-2"
     in
     H.div
         [ HA.classList
-            [ ( "tile", True )
-            , ( "map-location", True )
-            , ( "small", size == Location.Small )
-            , ( "middle", size == Location.Middle )
-            , ( "large", size == Location.Large )
-            , ( "has-vendor", hasVendor )
-            , ( "is-current", isCurrent )
+            [ ( "map-location", True ) -- TODO replace
+            , ( "!opacity-100", hasVendor || isCurrent )
             ]
+        , tileClass
+        , HA.class "opacity-50 text-green-100"
         , HA.attribute "data-location-name" name
-        , cssVars
-            [ ( "--tile-coord-x", String.fromInt x )
-            , ( "--tile-coord-y", String.fromInt y )
-            ]
+        , TW.mod "hover" "opacity-100"
+        , TW.mod "before" <|
+            "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
+                ++ borderWidth
+        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
+        , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
+        , cssVars <|
+            List.concat
+                [ [ ( "--tile-coord-x", String.fromInt x )
+                  , ( "--tile-coord-y", String.fromInt y )
+                  ]
+                , case size of
+                    Location.Small ->
+                        [ ( "--location-size", "11px" )
+                        , ( "--location-name-top", "68%" )
+                        ]
+
+                    Location.Middle ->
+                        [ ( "--location-size", "23px" )
+                        , ( "--location-name-top", "75%" )
+                        ]
+
+                    Location.Large ->
+                        [ ( "--location-size", "45px" )
+                        , ( "--location-name-top", "100%" )
+                        ]
+                ]
         ]
         []
 
@@ -1496,7 +1533,7 @@ locationsView : Maybe TileCoords -> Html FrontendMsg
 locationsView maybePlayer =
     Location.allLocations
         |> List.map (locationView maybePlayer)
-        |> H.div [ HA.id "map-locations" ]
+        |> H.div [ HA.class "absolute inset-0 bg-black-transparent" ]
 
 
 changedCoordsDecoder : Maybe TileCoords -> Decoder TileCoords
@@ -1528,12 +1565,14 @@ changedCoordsDecoder mouseCoords =
 mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
-        [ HA.class "map-marker"
+        [ HA.class "absolute left-0 top-0 z-[2]"
+        , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
+        , HA.class "translate-y-[calc(var(--map-cell-size)*(0.5+var(--player-coord-y))-50%)]"
         , cssVars
             [ ( "--player-coord-x", String.fromInt x )
             , ( "--player-coord-y", String.fromInt y )
             ]
-        , HA.src "/images/map_marker.png"
+        , HA.src "/images/map_marker.webp"
         , HA.width 25
         , HA.height 13
         ]
