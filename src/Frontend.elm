@@ -147,21 +147,22 @@ init url key =
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
         , Nav.pushUrl key (Route.toString route)
+        , Task.perform identity (Task.succeed (GoToRoute Map))
 
-        -- TODO don't push this, only for developing styles
-        , let
-            initAuth =
-                Auth.init
-          in
-          Lamdera.sendToBackend <|
-            LogMeIn <|
-                Auth.hash
-                    ({ initAuth
-                        | name = "j2"
-                        , worldName = "main"
-                     }
-                        |> Auth.setPlaintextPassword "j2"
-                    )
+        ---- TODO don't push this, only for developing styles
+        --, let
+        --    initAuth =
+        --        Auth.init
+        --  in
+        --  Lamdera.sendToBackend <|
+        --    LogMeIn <|
+        --        Auth.hash
+        --            ({ initAuth
+        --                | name = "j2"
+        --                , worldName = "main"
+        --             }
+        --                |> Auth.setPlaintextPassword "j2"
+        --            )
         ]
     )
 
@@ -1165,9 +1166,7 @@ adminMapView worldName adminData =
                         |> List.map (.location >> Map.toTileCoords)
             in
             H.div
-                [ HA.id "map"
-                , HA.class "admin-map"
-                , cssVars
+                [ cssVars
                     [ ( "--map-columns", String.fromInt Map.columns )
                     , ( "--map-rows", String.fromInt Map.rows )
                     , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
@@ -1491,12 +1490,10 @@ locationView maybePlayer location =
                     "border-2"
     in
     H.div
-        [ HA.classList
-            [ ( "map-location", True ) -- TODO replace
-            , ( "!opacity-100", hasVendor || isCurrent )
-            ]
-        , tileClass
-        , HA.class "opacity-50 text-green-100"
+        [ tileClass
+        , HA.class "opacity-50 text-green-100 absolute inset-0 bg-black-transparent"
+        , HA.classList
+            [ ( "!opacity-100", hasVendor || isCurrent ) ]
         , HA.attribute "data-location-name" name
         , TW.mod "hover" "opacity-100"
         , TW.mod "before" <|
@@ -1590,15 +1587,21 @@ cssVars vars =
 mapLoggedOutView : List (Html FrontendMsg)
 mapLoggedOutView =
     [ pageTitleView "Map"
-    , H.div
-        [ HA.id "map"
-        , cssVars
-            [ ( "--map-columns", String.fromInt Map.columns )
-            , ( "--map-rows", String.fromInt Map.rows )
-            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+    , H.div [ HA.class "flex flex-col items-start gap-4 pb-4" ]
+        [ H.div
+            [ cssVars
+                [ ( "--map-columns", String.fromInt Map.columns )
+                , ( "--map-rows", String.fromInt Map.rows )
+                , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+                ]
+            , HA.class "relative bg-black bg-[url('../images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+            , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
+            [ locationsView Nothing ]
         ]
-        [ locationsView Nothing ]
     ]
 
 
