@@ -1244,31 +1244,33 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                     else
                         ( "text-green-200", "bg-green-300" )
-            in
-            H.div
-                [ HA.id "map-mouse-layer" ]
-                [ H.div
-                    [ HA.class "tile" -- TODO replace this
-                    , HA.class
-                        (if Set.member mouseCoords impassableTiles then
-                            "bg-red"
 
-                         else
-                            pathBgColor
-                        )
-                    , HA.class "opacity-75 pointer-events-none z-[1]"
-                    , cssVars
-                        [ ( "--tile-coord-x", String.fromInt x )
-                        , ( "--tile-coord-y", String.fromInt y )
+                tileUnderCursor =
+                    H.div
+                        [ HA.class "tile" -- TODO replace this
+                        , HA.class
+                            (if Set.member mouseCoords impassableTiles then
+                                "bg-red"
+
+                             else
+                                pathBgColor
+                            )
+                        , HA.class "opacity-75 pointer-events-none z-[1]"
+                        , cssVars
+                            [ ( "--tile-coord-x", String.fromInt x )
+                            , ( "--tile-coord-y", String.fromInt y )
+                            ]
                         ]
-                    ]
-                    []
-                , H.div
-                    [ HA.id "map-path-tiles" ]
-                    (List.map (pathTileView pathBgColor impassableTiles)
-                        (Set.toList (Set.remove mouseCoords pathTaken))
-                    )
-                , H.viewIf (Perception.atLeast Perception.Good perceptionLevel) <|
+                        []
+
+                pathTiles =
+                    H.div
+                        [ HA.id "map-path-tiles" ]
+                        (List.map (pathTileView pathBgColor impassableTiles)
+                            (Set.toList (Set.remove mouseCoords pathTaken))
+                        )
+
+                tooltip =
                     H.div
                         [ HA.class "w-fit whitespace-nowrap p-5 bg-green-900 relative z-[3]"
                         , HA.class pathTextColor
@@ -1291,6 +1293,13 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                                     H.div [] [ H.text <| "Map area danger: " ++ BigChunk.difficulty bigChunk ]
                                 ]
                         ]
+            in
+            H.div
+                [ HA.id "map-mouse-layer" ]
+                [ tileUnderCursor
+                , pathTiles
+                , tooltip
+                    |> H.viewIf (Perception.atLeast Perception.Good perceptionLevel)
                 ]
 
         pathTileView : String -> Set TileCoords -> TileCoords -> Html FrontendMsg
