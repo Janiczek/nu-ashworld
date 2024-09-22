@@ -29,6 +29,7 @@ export const theme = {
     },
     fontFamily: {
         mono: "PixelOperatorMono",
+        sans: "PixelOperator",
     },
     fontWeight: {
         normal: 400,

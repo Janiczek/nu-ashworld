@@ -335,27 +335,3 @@
 .fight-strategy-warning:hover {
   color: var(--green-100);
 }
-
-.fight-strategy-syntax-help-reference {
-  color: var(--orange);
-  font-family: "PixelOperatorMono";
-}
-
-.fight-strategy-syntax-help-grid {
-  display: grid;
-  grid-template-areas: 'cheatsheet hover';
-}
-
-.fight-strategy-syntax-help-cheatsheet {
-  grid-area: cheatsheet;
-  font-family: "PixelOperatorMono";
-}
-
-.fight-strategy-syntax-help-hover {
-  grid-area: hover;
-  margin-left: 2ch;
-}
-
-.fight-strategy-syntax-help-hover-description {
-  white-space: pre-wrap;
-}

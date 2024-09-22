@@ -1045,6 +1045,9 @@ evalCondition state condition =
         OpponentIsPlayer ->
             Fight.isPlayer state.them.type_
 
+        OpponentIsNPC ->
+            Fight.isNPC state.them.type_
+
         Operator { op, value, number_ } ->
             operatorFn
                 op

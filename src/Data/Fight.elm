@@ -12,6 +12,7 @@ module Data.Fight exposing
     , isAttack
     , isCriticalAttack
     , isMiss
+    , isNPC
     , isPlayer
     , opponentName
     , opponentXp
@@ -564,6 +565,16 @@ isPlayer opponentType =
 
         Player _ ->
             True
+
+
+isNPC : OpponentType -> Bool
+isNPC opponentType =
+    case opponentType of
+        Npc _ ->
+            True
+
+        Player _ ->
+            False
 
 
 attackDamage : Action -> Int

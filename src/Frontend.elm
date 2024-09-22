@@ -3540,7 +3540,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
 
                 FightStrategyHelp.Reference reference ->
                     H.span
-                        [ HA.class "fight-strategy-syntax-help-reference"
+                        [ HA.class "text-orange font-mono"
                         , HE.onMouseOver <| HoverItem <| HoveredFightStrategyReference reference
                         , HE.onMouseOut StopHoveringItem
                         ]
@@ -3549,7 +3549,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
         hoverInfo =
             case maybeHoveredItem of
                 Nothing ->
-                    { title = "Hover for help"
+                    { title = "Hover a [THING] for help"
                     , description = ""
                     }
 
@@ -3557,20 +3557,28 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
                     HoveredItem.text hoveredItem
     in
     [ pageTitleView "Fight Strategy syntax help"
-    , UI.button
-        [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
-        [ H.text "[Back]" ]
-    , H.div
-        [ HA.class "fight-strategy-syntax-help-grid" ]
-        [ H.pre
-            [ HA.class "fight-strategy-syntax-help-cheatsheet" ]
-            (List.map viewMarkup FightStrategyHelp.help)
+    , H.div [ HA.class "flex flex-col gap-4 items-start" ]
+        [ UI.button
+            [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
+            [ H.text "[Back]" ]
         , H.div
-            [ HA.class "fight-strategy-syntax-help-hover" ]
-            [ H.h3 [] [ H.text hoverInfo.title ]
-            , H.pre
-                [ HA.class "fight-strategy-syntax-help-hover-description" ]
-                [ H.text hoverInfo.description ]
+            [ HA.class "flex flex-row gap-[2ch]" ]
+            [ H.div [ HA.class "w-[80ch]" ]
+                [ H.div []
+                    [ H.text "Your strategy needs to be of the shape "
+                    , H.span [ HA.class "text-green-100" ] [ H.text "[STRATEGY]" ]
+                    , H.text ", and its goal is to choose which [COMMAND] to do in your current turn. See below for your options:"
+                    ]
+                , H.pre
+                    [ HA.class "font-mono" ]
+                    (List.map viewMarkup FightStrategyHelp.help)
+                ]
+            , H.div [ HA.class "flex-1" ]
+                [ H.h3 [ HA.classList [ ( "text-orange pb-4", maybeHoveredItem /= Nothing ) ] ] [ H.text hoverInfo.title ]
+                , H.pre
+                    [ HA.class "font-sans whitespace-pre-wrap max-w-[60ch]" ]
+                    [ H.text hoverInfo.description ]
+                ]
             ]
         ]
     ]

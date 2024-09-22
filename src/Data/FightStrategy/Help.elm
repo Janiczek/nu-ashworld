@@ -18,28 +18,29 @@ help =
   - if [CONDITION] then [STRATEGY] else [STRATEGY]
 
 
-[COMMAND]                           [VALUE]                         
-  - attack randomly                   - my HP                       
-  - attack ([SHOT TYPE])              - my AP                       
-  - heal ([ITEM])                     - number of available [ITEM]  
-  - move forward                      - number of used [ITEM]       
-  - do whatever                       - opponent's level            
-                                      - chance to hit ([SHOT TYPE]) 
-                                      - distance                    
+[COMMAND]                           [VALUE]                        
+  - attack randomly                   - my HP                      
+  - attack ([SHOT TYPE])              - my AP                      
+  - heal ([ITEM])                     - number of available [ITEM] 
+  - move forward                      - number of used [ITEM]      
+  - do whatever                       - opponent's level           
+                                      - chance to hit ([SHOT TYPE])
+                                      - distance                   
 [CONDITION]                         
   - opponent is player              
-  - [VALUE] [OPERATOR] [NUMBER]     [SHOT TYPE]   
-  - ([CONDITION] or [CONDITION])      - unaimed   
-  - ([CONDITION] and [CONDITION])     - head      
-                                      - eyes      
+  - opponent is NPC                 [SHOT TYPE]   
+  - [VALUE] [OPERATOR] [NUMBER]       - unaimed   
+  - ([CONDITION] or [CONDITION])      - head      
+  - ([CONDITION] and [CONDITION])     - eyes      
                                       - torso     
-[OPERATOR]                            - groin     
-  - <                                 - left arm  
-  - <=                                - right arm 
-  - ==                                - left leg  
-  - !=                                - right leg 
-  - >=                             
-  - >      
+                                      - groin     
+[OPERATOR]                            - left arm  
+  - <   (less than)                   - right arm 
+  - <=  (less than or equal)          - left leg  
+  - ==  (equals)                      - right leg 
+  - !=  (doesn't equal)
+  - >=  (greater than or equal)
+  - >   (greater than)
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -148,7 +149,7 @@ referenceDescription : Reference -> String
 referenceDescription ref =
     case ref of
         Strategy ->
-            """The main building block of your strategy.
+            """The entrypoint to your fight strategy.
 
 Examples:
 - do whatever
@@ -157,7 +158,7 @@ Examples:
     else do whatever"""
 
         Command ->
-            """The result of applying your strategy to your current situation.
+            """The end result of applying your strategy to your current situation.
 
 Examples:
 - heal (Stimpak)
@@ -198,9 +199,7 @@ Example usage:
 - number of available Stimpak"""
 
         Operator ->
-            """The != operator means 'is not equal to'.
-
-Example usage:
+            """Example usage:
 - distance > 0
 - my HP <= 80
 - my AP == 3

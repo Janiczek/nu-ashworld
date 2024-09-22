@@ -92,6 +92,7 @@ condition =
         [ ( "op: my HP < 50", "my HP < 50", Just (Operator { value = MyHP, op = LT_, number_ = 50 }) )
         , ( "op: my AP >= 3", "my AP >= 3", Just (Operator { value = MyAP, op = GTE, number_ = 3 }) )
         , ( "opponent is player", "opponent is player", Just OpponentIsPlayer )
+        , ( "opponent is NPC", "opponent is NPC", Just OpponentIsNPC )
         , ( "and"
           , "(my HP < 50 and my AP >= 3)"
           , Just
