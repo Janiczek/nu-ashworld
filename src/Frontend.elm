@@ -147,22 +147,21 @@ init url key =
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
         , Nav.pushUrl key (Route.toString route)
-        , Task.perform identity (Task.succeed (GoToRoute Map))
 
-        ---- TODO don't push this, only for developing styles
-        --, let
-        --    initAuth =
-        --        Auth.init
-        --  in
-        --  Lamdera.sendToBackend <|
-        --    LogMeIn <|
-        --        Auth.hash
-        --            ({ initAuth
-        --                | name = "j2"
-        --                , worldName = "main"
-        --             }
-        --                |> Auth.setPlaintextPassword "j2"
-        --            )
+        -- TODO don't push this, only for developing styles
+        , let
+            initAuth =
+                Auth.init
+          in
+          Lamdera.sendToBackend <|
+            LogMeIn <|
+                Auth.hash
+                    ({ initAuth
+                        | name = "j2"
+                        , worldName = "main"
+                     }
+                        |> Auth.setPlaintextPassword "j2"
+                    )
         ]
     )
 
@@ -1630,25 +1629,25 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
         emptyCount =
             totalCount - doneCount
     in
-    H.div [ HA.class "quest-progressbar" ]
+    H.div [ HA.class "text-green-300 mt-5" ]
         [ H.span [] [ H.text "[" ]
         , H.span [] [ H.text <| String.repeat doneCount "=" ++ String.repeat emptyCount "-" ]
         , H.span [] [ H.text "]" ]
-        , H.span [ HA.class "quest-progressbar-text" ]
+        , H.span [ HA.class "ml-[1ch]" ]
             [ H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt (round (percentDone * 100)) ++ "%" ]
             , H.span [] [ H.text " done (" ]
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt ticksGiven ]
             , H.span [] [ H.text "/" ]
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt ticksNeeded ]
             , H.span [] [ H.text " ticks, you gave " ]
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt ticksGivenByPlayer ]
             , H.span [] [ H.text ")" ]
             ]
@@ -1667,24 +1666,25 @@ townMainSquareView expandedQuests location { questsProgress } player =
             not <| List.isEmpty quests
     in
     [ pageTitleView <| "Town: " ++ Location.name location
-    , if Vendor.isInLocation location then
-        H.div []
-            [ UI.button
-                [ HE.onClick GoToTownStore ]
-                [ H.text "[Visit store]" ]
-            ]
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ if Vendor.isInLocation location then
+            H.div []
+                [ UI.button
+                    [ HE.onClick GoToTownStore ]
+                    [ H.text "[Visit store]" ]
+                ]
 
-      else
-        H.div [] [ H.text "No vendor in this town..." ]
-    , if hasQuests then
-        H.h3 [] [ H.text "Quests" ]
+          else
+            H.div [] [ H.text "No vendor in this town..." ]
+        , if hasQuests then
+            H.h3 [] [ H.text "Quests" ]
 
-      else
-        H.text "No quests in this town..."
-    , H.viewIf hasQuests <|
-        H.ul
-            [ HA.class "quests" ]
-            (List.map (questView player questsProgress expandedQuests) quests)
+          else
+            H.text "No quests in this town..."
+        , H.viewIf hasQuests <|
+            H.ul []
+                (List.map (questView player questsProgress expandedQuests) quests)
+        ]
     ]
 
 
@@ -1709,9 +1709,7 @@ questView player questsProgress expandedQuests quest =
                         ExpandQuestItem quest
                     )
                 , HA.classList
-                    [ ( "quest", True )
-                    , ( "expanded", isExpanded )
-                    ]
+                    [ ( "[&:not(:last-child)]:mb-5", isExpanded ) ]
                 ]
                 (if isExpanded then
                     expandedQuestView player progress quest
@@ -1723,7 +1721,15 @@ questView player questsProgress expandedQuests quest =
 
 collapsedQuestView : Quest.Name -> List (Html FrontendMsg)
 collapsedQuestView quest =
-    [ H.text <| Quest.title quest
+    [ H.span
+        [ HA.class "cursor-pointer"
+        , TW.mod "hover" "text-green-100"
+        ]
+        [ H.span
+            [ HA.class "text-green-100 pr-2" ]
+            [ H.text "[+]" ]
+        , H.text <| Quest.title quest
+        ]
     ]
 
 
@@ -1754,23 +1760,30 @@ expandedQuestView player progress quest =
         ticksNeeded =
             Quest.ticksNeeded quest
     in
-    [ H.div [ HA.class "quest-inner" ]
+    [ H.div [ HA.class "inline-block" ]
         [ H.div []
             [ H.span
-                [ HA.class "quest-name"
-                , HE.onClick <| CollapseQuestItem quest
+                [ HE.onClick <| CollapseQuestItem quest
+                , HA.class "cursor-pointer"
+                , TW.mod "hover" "text-green-100"
                 ]
-                [ H.text <| Quest.title quest ]
+                [ H.span
+                    [ HA.class "text-green-100 pr-2" ]
+                    [ H.text "[-]" ]
+                , H.text <| Quest.title quest
+                ]
             , if Set_.member quest player.questsActive then
                 UI.button
-                    [ HA.class "quest-toggle-btn"
+                    [ HA.class "ml-[1ch] !text-green-100"
+                    , TW.mod "hover" "text-orange"
                     , HE.onClickStopPropagation <| AskToStopProgressing quest
                     ]
                     [ H.text "[STOP]" ]
 
               else
                 UI.button
-                    [ HA.class "quest-toggle-btn"
+                    [ HA.class "ml-[1ch] !text-green-100"
+                    , TW.mod "hover" "text-orange"
                     , HE.onClickStopPropagation <| AskToStartProgressing quest
                     ]
                     [ H.text "[START]" ]
@@ -1780,37 +1793,37 @@ expandedQuestView player progress quest =
             , ticksNeeded = ticksNeeded
             , ticksGivenByPlayer = progress.ticksGivenByPlayer
             }
-        , H.div [ HA.class "quest-players" ]
+        , H.div [ HA.class "text-green-300" ]
             [ H.span [] [ H.text "Players active: " ]
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt progress.playersActive ]
             , H.span [] [ H.text " (" ]
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt progress.ticksPerHour ]
             , H.span [] [ H.text " ticks/hour)" ]
             ]
-        , H.div [ HA.class "quest-xp-per-tick" ]
+        , H.div [ HA.class "text-green-300" ]
             [ H.text "XP per tick: "
             , H.span
-                [ HA.class "quest-number" ]
+                []
                 [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
             ]
         , H.div
-            [ HA.class "quest-requirements-title" ]
+            [ HA.class "mt-5" ]
             [ H.text "Quest Requirements" ]
         , if List.isEmpty questRequirements then
             H.div
-                [ HA.class "quest-requirements-none" ]
+                [ HA.class "text-green-300 ml-[4ch]" ]
                 [ H.text "NONE" ]
 
           else
             H.ul
-                [ HA.class "quest-requirements-list" ]
+                [ HA.class "ps-[4ch]" ]
                 (List.map (Quest.title >> liText) questRequirements)
         , H.div
-            [ HA.class "quest-requirements-title" ]
+            [ HA.class "mt-5" ]
             [ H.text "Player Requirements"
             , H.span
                 [ HA.class "text-green-300" ]
@@ -1818,27 +1831,27 @@ expandedQuestView player progress quest =
             ]
         , if List.isEmpty playerRequirements then
             H.div
-                [ HA.class "quest-requirements-none" ]
+                [ HA.class "text-green-300 ml-[4ch]" ]
                 [ H.text "NONE" ]
 
           else
             H.ul
-                [ HA.class "quest-requirements-list" ]
+                [ HA.class "ps-[4ch]" ]
                 (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
         , H.div
-            [ HA.class "quest-requirements-title" ]
+            [ HA.class "mt-5" ]
             [ H.text "Global Rewards" ]
         , if List.isEmpty globalRewards then
             H.div
-                [ HA.class "quest-requirements-none" ]
+                [ HA.class "text-green-300 ml-[4ch]" ]
                 [ H.text "NONE" ]
 
           else
             H.ul
-                [ HA.class "quest-requirements-list" ]
+                [ HA.class "ps-[4ch]" ]
                 (List.map (Quest.globalRewardTitle >> liText) globalRewards)
         , H.div
-            [ HA.class "quest-requirements-title" ]
+            [ HA.class "mt-5" ]
             (if List.isEmpty playerRewards then
                 [ H.text "Player Rewards" ]
 
@@ -1848,7 +1861,7 @@ expandedQuestView player progress quest =
                     [ HA.class "text-green-300" ]
                     [ H.text " (if you give " ]
                 , H.span
-                    [ HA.class "quest-number" ]
+                    []
                     [ H.text <|
                         String.fromInt (Quest.ticksNeededForPlayerReward quest)
                             ++ "+"
@@ -1860,12 +1873,12 @@ expandedQuestView player progress quest =
             )
         , if List.isEmpty playerRewards then
             H.div
-                [ HA.class "quest-requirements-none" ]
+                [ HA.class "text-green-300 ml-[4ch]" ]
                 [ H.text "NONE" ]
 
           else
             H.ul
-                [ HA.class "quest-requirements-list" ]
+                [ HA.class "ps-[4ch]" ]
                 (List.map (Quest.playerRewardTitle >> liText) playerRewards)
         ]
     ]
