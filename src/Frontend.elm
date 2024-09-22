@@ -1202,11 +1202,14 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
         mouseRelatedView : ( TileCoords, Set TileCoords ) -> Html FrontendMsg
         mouseRelatedView ( ( x, y ) as mouseCoords, pathTaken ) =
             let
+                impassableTiles : Set TileCoords
+                impassableTiles =
+                    pathTaken
+                        |> Set.filter (Terrain.forCoords >> Terrain.isPassable >> not)
+
                 notAllPassable : Bool
                 notAllPassable =
-                    pathTaken
-                        |> Set.toList
-                        |> List.any (Terrain.forCoords >> Terrain.isPassable >> not)
+                    not (Set.isEmpty impassableTiles)
 
                 cost : Int
                 cost =
@@ -1230,17 +1233,30 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 bigChunk : BigChunk
                 bigChunk =
                     BigChunk.forCoords mouseCoords
+
+                impossiblePath : Bool
+                impossiblePath =
+                    tooDistant || notAllPassable
+
+                ( pathTextColor, pathBgColor ) =
+                    if impossiblePath then
+                        ( "text-orange", "bg-orange" )
+
+                    else
+                        ( "text-green-200", "bg-green-300" )
             in
             H.div
-                [ HA.id "map-mouse-layer"
-                , HA.classList
-                    [ ( "too-distant", tooDistant )
-                    , ( "not-all-passable", notAllPassable )
-                    ]
-                ]
+                [ HA.id "map-mouse-layer" ]
                 [ H.div
-                    [ HA.id "map-mouse-tile"
-                    , HA.class "tile"
+                    [ HA.class "tile" -- TODO replace this
+                    , HA.class
+                        (if Set.member mouseCoords impassableTiles then
+                            "bg-red"
+
+                         else
+                            pathBgColor
+                        )
+                    , HA.class "opacity-75 pointer-events-none z-[1]"
                     , cssVars
                         [ ( "--tile-coord-x", String.fromInt x )
                         , ( "--tile-coord-y", String.fromInt y )
@@ -1249,12 +1265,15 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                     []
                 , H.div
                     [ HA.id "map-path-tiles" ]
-                    (List.map pathTileView
+                    (List.map (pathTileView pathBgColor impassableTiles)
                         (Set.toList (Set.remove mouseCoords pathTaken))
                     )
                 , H.viewIf (Perception.atLeast Perception.Good perceptionLevel) <|
                     H.div
-                        [ HA.id "map-cost-info"
+                        [ HA.class "w-fit whitespace-nowrap p-5 bg-green-900 relative z-[3]"
+                        , HA.class pathTextColor
+                        , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--tile-coord-x))-50%)]"
+                        , HA.class "translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y)-100%-10px)]"
                         , cssVars
                             [ ( "--tile-coord-x", String.fromInt x )
                             , ( "--tile-coord-y", String.fromInt y )
@@ -1274,13 +1293,18 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                         ]
                 ]
 
-        pathTileView : TileCoords -> Html FrontendMsg
-        pathTileView ( x, y ) =
+        pathTileView : String -> Set TileCoords -> TileCoords -> Html FrontendMsg
+        pathTileView pathBgColor impassableTiles (( x, y ) as coord) =
             H.div
-                [ HA.classList
-                    [ ( "tile", True )
-                    , ( "map-path-tile", True )
-                    ]
+                [ HA.class
+                    (if Set.member coord impassableTiles then
+                        "bg-red"
+
+                     else
+                        pathBgColor
+                    )
+                , HA.class "opacity-50 pointer-events-none z-[1]"
+                , HA.classList [ ( "tile", True ) ] -- TODO replace this one
                 , cssVars
                     [ ( "--tile-coord-x", String.fromInt x )
                     , ( "--tile-coord-y", String.fromInt y )

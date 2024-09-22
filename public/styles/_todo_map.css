@@ -1,37 +1,11 @@
 /* TODO convert these to Tailwind CSS-in-Elm */
 
-#map.admin-map {
-    margin-top: 1em;
-}
-
-#admin-last-ten-msgs-table td {
-    white-space: nowrap;
-    padding-right: 2ch;
-}
-
-#map-cost-info {
-    transform: translate(calc(var(--map-cell-size) * (0.5 + var(--tile-coord-x)) - 50%),
-            calc(var(--map-cell-size) * var(--tile-coord-y) - 100% - 10px));
-    width: min-content;
-    white-space: nowrap;
-    padding: 20px;
-    background-color: var(--green-900);
-    color: var(--bad-path-color, var(--green-200));
-    position: relative;
-    z-index: 3;
-}
-
 #map-mouse-layer {
     left: 0;
     top: 0;
     right: 0;
     bottom: 0;
     position: absolute;
-}
-
-#map-mouse-layer.too-distant,
-#map-mouse-layer.not-all-passable {
-    --bad-path-color: var(--orange);
 }
 
 #map-tiles {
@@ -65,20 +39,6 @@
     right: 0;
     bottom: 0;
     position: absolute;
-}
-
-.map-path-tile {
-    background: var(--bad-path-color, var(--green-300));
-    opacity: 0.5;
-    pointer-events: none;
-    z-index: 1;
-}
-
-#map-mouse-tile {
-    background: var(--bad-path-color, var(--green-300));
-    opacity: 0.75;
-    pointer-events: none;
-    z-index: 1;
 }
 
 #map-locations {

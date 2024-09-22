@@ -19,6 +19,7 @@ export const theme = {
             DEFAULT: "#FCFF2F",
             transparent: "rgba(252, 253, 125, 0.25)",
         },
+        red: "#FC0001",
     },
     fontSize: {
         lg: "32px",
