@@ -537,8 +537,8 @@ update msg ({ loginForm } as model) =
             , Cmd.none
             )
 
-        ToggleAdminNewWorldFast ->
-            ( { model | adminNewWorldFast = not model.adminNewWorldFast }
+        SetAdminNewWorldFast new ->
+            ( { model | adminNewWorldFast = new }
             , Cmd.none
             )
 
@@ -1405,7 +1405,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
     [ pageTitleView "Map"
     , H.div [ HA.class "flex flex-col items-start gap-4" ]
         [ H.viewIf canShowAreaDanger <|
-            UI.checkboxButton
+            UI.checkbox
                 { isOn = userWantsToShowAreaDanger
                 , toggle = SetShowAreaDanger
                 , label = "Show area danger levels"
@@ -4199,9 +4199,7 @@ contentUnavailableView reason =
             ++ reason
             ++ "). This is most likely a bug. We should have redirected you someplace else. Could you report this to the developers please?"
     , UI.button
-        [ HE.onClick <| GoToRoute News
-        , HA.id "message-back-button"
-        ]
+        [ HE.onClick <| GoToRoute News ]
         [ H.text "[Back]" ]
     ]
 
@@ -4511,7 +4509,6 @@ adminLinksView currentRoute =
             , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
             , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
-            , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]
     in
@@ -4576,25 +4573,18 @@ adminWorldsListView newWorldName newWorldFast data =
                 )
             ]
         ]
-    , H.div [ HA.id "admin-new-world-form" ]
+    , H.div []
         [ UI.input
             [ HE.onInput SetAdminNewWorldName
             , HA.placeholder "New world name"
             , HA.value newWorldName
             ]
             []
-        , H.label
-            [ HA.for "admin-new-world-fast-checkbox"
-            , HE.onClick ToggleAdminNewWorldFast
-            ]
-            [ UI.input
-                [ HA.type_ "checkbox"
-                , HA.id "admin-new-world-fast-checkbox"
-                , HA.checked newWorldFast
-                ]
-                []
-            , H.text "Fast?"
-            ]
+        , UI.checkbox
+            { isOn = newWorldFast
+            , label = "Fast?"
+            , toggle = SetAdminNewWorldFast
+            }
         , UI.button
             [ HE.onClick AskToCreateNewWorld
             , HA.disabled (Dict.member newWorldName data.worlds)
@@ -4616,7 +4606,7 @@ adminWorldActivityView lastTenToBackendMsgs worldName data =
         Just _ ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
-            , H.table [ HA.id "admin-last-ten-msgs-table" ]
+            , H.table []
                 (H.thead []
                     [ H.tr []
                         [ H.th [] [ H.text "World" ]
@@ -4686,8 +4676,7 @@ adminWorldHiscoresView worldName data =
                         ]
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
-            , H.div
-                [ HA.id "admin-hiscores-content" ]
+            , H.div []
                 [ H.ul []
                     (List.map viewMaxBy
                         [ ( "Most money", .caps )

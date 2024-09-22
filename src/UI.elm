@@ -1,7 +1,7 @@
 module UI exposing
     ( bold
     , button
-    , checkboxButton
+    , checkbox
     , checkboxLabel
     , input
     , liBullet
@@ -70,13 +70,13 @@ checkboxLabel isOn =
         "[\u{2007}]"
 
 
-checkboxButton :
+checkbox :
     { label : String
     , isOn : Bool
     , toggle : Bool -> msg
     }
     -> Html msg
-checkboxButton { label, isOn, toggle } =
+checkbox { label, isOn, toggle } =
     H.button
         [ HE.onClick (toggle (not isOn))
         , HA.class "cursor-pointer text-green-200 select-none"

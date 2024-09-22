@@ -127,7 +127,7 @@ type FrontendMsg
     | StopHoveringItem
     | SetFightStrategyText String
     | SetAdminNewWorldName String
-    | ToggleAdminNewWorldFast
+    | SetAdminNewWorldFast Bool
     | AskToCreateNewWorld
     | ExpandQuestItem Quest.Name
     | CollapseQuestItem Quest.Name
