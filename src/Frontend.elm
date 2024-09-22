@@ -136,6 +136,7 @@ init url key =
       , fightInfo = Nothing
       , fightStrategyText = ""
       , expandedQuests = Set_.empty
+      , userWantsToShowAreaDanger = False
 
       -- backend state
       , lastTenToBackendMsgs = []
@@ -496,6 +497,11 @@ update msg ({ loginForm } as model) =
                     ( model
                     , Lamdera.sendToBackend <| MoveTo newCoords path
                     )
+
+        SetShowAreaDanger newShow ->
+            ( { model | userWantsToShowAreaDanger = newShow }
+            , Cmd.none
+            )
 
         OpenMessage messageId ->
             ( model
@@ -991,7 +997,7 @@ contentView model =
                 notFoundView url
 
             ( Map, IsPlayer data ) ->
-                withCreatedPlayer data (mapView model.mapMouseCoords)
+                withCreatedPlayer data (mapView model)
 
             ( Map, _ ) ->
                 mapLoggedOutView
@@ -1173,11 +1179,14 @@ adminMapView worldName adminData =
 
 
 mapView :
-    Maybe ( TileCoords, Set TileCoords )
+    { model
+        | mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
+        , userWantsToShowAreaDanger : Bool
+    }
     -> PlayerData
     -> CPlayer
     -> List (Html FrontendMsg)
-mapView mouseCoords _ player =
+mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
     let
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -1191,7 +1200,7 @@ mapView mouseCoords _ player =
             Map.toTileCoords player.location
 
         mouseRelatedView : ( TileCoords, Set TileCoords ) -> Html FrontendMsg
-        mouseRelatedView ( ( x, y ) as mouseCoords_, pathTaken ) =
+        mouseRelatedView ( ( x, y ) as mouseCoords, pathTaken ) =
             let
                 notAllPassable : Bool
                 notAllPassable =
@@ -1220,7 +1229,7 @@ mapView mouseCoords _ player =
 
                 bigChunk : BigChunk
                 bigChunk =
-                    BigChunk.forCoords mouseCoords_
+                    BigChunk.forCoords mouseCoords
             in
             H.div
                 [ HA.id "map-mouse-layer"
@@ -1241,7 +1250,7 @@ mapView mouseCoords _ player =
                 , H.div
                     [ HA.id "map-path-tiles" ]
                     (List.map pathTileView
-                        (Set.toList (Set.remove mouseCoords_ pathTaken))
+                        (Set.toList (Set.remove mouseCoords pathTaken))
                     )
                 , H.viewIf (Perception.atLeast Perception.Good perceptionLevel) <|
                     H.div
@@ -1259,8 +1268,8 @@ mapView mouseCoords _ player =
                                 [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
-                                , H.viewIf shouldShowBigChunks <|
-                                    H.div [] [ H.text <| "Map tile difficulty: " ++ BigChunk.difficulty bigChunk ]
+                                , H.viewIf canShowAreaDanger <|
+                                    H.div [] [ H.text <| "Map area danger: " ++ BigChunk.difficulty bigChunk ]
                                 ]
                         ]
                 ]
@@ -1281,7 +1290,7 @@ mapView mouseCoords _ player =
 
         mouseCoordsOnly : Maybe TileCoords
         mouseCoordsOnly =
-            Maybe.map Tuple.first mouseCoords
+            Maybe.map Tuple.first mapMouseCoords
 
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
@@ -1336,13 +1345,23 @@ mapView mouseCoords _ player =
                         )
                 )
 
-        shouldShowBigChunks : Bool
-        shouldShowBigChunks =
+        canShowAreaDanger : Bool
+        canShowAreaDanger =
             Perception.atLeast Perception.Perfect perceptionLevel
+
+        showAreaDanger : Bool
+        showAreaDanger =
+            canShowAreaDanger && userWantsToShowAreaDanger
     in
     [ pageTitleView "Map"
-    , H.div [ HA.class "pb-4" ]
-        [ H.div
+    , H.div [ HA.class "flex flex-col items-start gap-4 pb-4" ]
+        [ H.viewIf canShowAreaDanger <|
+            UI.checkboxButton
+                { isOn = userWantsToShowAreaDanger
+                , toggle = SetShowAreaDanger
+                , label = "Show area danger levels"
+                }
+        , H.div
             [ HA.id "map" -- TODO remove
             , cssVars
                 [ ( "--map-columns", String.fromInt Map.columns )
@@ -1357,9 +1376,9 @@ mapView mouseCoords _ player =
             ]
             [ locationsView (Just playerCoords)
             , mapMarkerView playerCoords
-            , H.viewIfLazy shouldShowBigChunks bigChunkLayerView
+            , H.viewIfLazy showAreaDanger bigChunkLayerView
             , mouseEventCatcherView
-            , H.viewMaybe mouseRelatedView mouseCoords
+            , H.viewMaybe mouseRelatedView mapMouseCoords
             ]
         ]
     ]

@@ -1,6 +1,7 @@
 module UI exposing
     ( bold
     , button
+    , checkboxButton
     , checkboxLabel
     , input
     , liBullet
@@ -9,6 +10,7 @@ module UI exposing
 
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
+import Html.Events as HE
 import Tailwind as TW
 
 
@@ -66,3 +68,19 @@ checkboxLabel isOn =
     else
         -- Space the width of one 'X' (in the font PixelOperator)
         "[\u{2007}]"
+
+
+checkboxButton :
+    { label : String
+    , isOn : Bool
+    , toggle : Bool -> msg
+    }
+    -> Html msg
+checkboxButton { label, isOn, toggle } =
+    H.button
+        [ HE.onClick (toggle (not isOn))
+        , HA.class "cursor-pointer text-green-200 select-none"
+        , TW.mod "hover" "text-green-100"
+        , TW.mod "active" "text-orange"
+        ]
+        [ H.text <| checkboxLabel isOn ++ " " ++ label ]

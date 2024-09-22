@@ -57,6 +57,7 @@ type alias FrontendModel =
     , barter : Barter.State
     , fightStrategyText : String
     , expandedQuests : Set_.Set Quest.Name
+    , userWantsToShowAreaDanger : Bool
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
@@ -118,6 +119,7 @@ type FrontendMsg
     | MapMouseAtCoords TileCoords
     | MapMouseOut
     | MapMouseClick
+    | SetShowAreaDanger Bool
     | OpenMessage Message.Id
     | AskToRemoveMessage Message.Id
     | BarterMsg BarterMsg
