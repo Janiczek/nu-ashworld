@@ -2801,21 +2801,24 @@ choosePerkView maybeHoveredItem applicablePerks =
         perkView perk =
             H.li
                 [ HE.onClick <| AskToChoosePerk perk
-                , HA.class "character-choose-perk-item"
+                , HA.class "cursor-pointer group"
                 , HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.text <| Perk.name perk ]
+                [ UI.liBullet
+                , H.span
+                    [ TW.mod "group-hover" "text-orange"
+                    ]
+                    [ H.text <| Perk.name perk ]
+                ]
     in
     H.div
-        [ HA.id "character-choose-perk" ]
+        [ HA.class "flex-1 flex flex-col self-stretch" ]
         [ H.div
-            [ HA.id "character-choose-perk-columns" ]
-            [ H.div []
+            [ HA.class "flex-1 grid grid-cols-[minmax(0,max-content)_minmax(0,60ch)] gap-8" ]
+            [ H.div [ HA.class "flex flex-col gap-4" ]
                 [ H.h3 [] [ H.text "Choose a perk!" ]
-                , H.ul
-                    [ HA.id "character-choose-perk-list" ]
-                    (List.map perkView applicablePerks)
+                , H.ul [] (List.map perkView applicablePerks)
                 ]
             , H.viewMaybe perkDescriptionView maybeHoveredItem
             ]
@@ -3217,8 +3220,11 @@ charPerksView perks =
             H.li
                 [ HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "pr-[2ch]"
+                , TW.mod "hover" "text-green-100 bg-green-800"
                 ]
-                [ H.text <|
+                [ UI.liBullet
+                , H.text <|
                     if maxRank == 1 then
                         Perk.name perk
 
