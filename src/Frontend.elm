@@ -912,7 +912,8 @@ nextTickView zone time { tickFrequency, worldName } =
         millis =
             Time.posixToMillis time
     in
-    H.div [ HA.class "grid grid-cols-2 gap-x-[1ch]" ] <|
+    -- The -0.5px is a hack to prevent text on Windows from being blurry (basically aligning it back to the pixel grid)
+    H.div [ HA.class "grid grid-cols-2 gap-x-[1ch] -translate-x-[0.5px]" ] <|
         List.concat
             [ [ H.span
                     [ HA.class "text-green-300 text-right" ]
