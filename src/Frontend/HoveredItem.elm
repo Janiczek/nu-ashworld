@@ -4,6 +4,7 @@ import Data.FightStrategy.Help as FightStrategyHelp
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
+import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Trait as Trait exposing (Trait)
 
 
@@ -13,6 +14,7 @@ type HoveredItem
     | HoveredSpecial Special.Type
     | HoveredSkill Skill
     | HoveredFightStrategyReference FightStrategyHelp.Reference
+    | HoveredPerceptionLevel PerceptionLevel
 
 
 text : HoveredItem -> { title : String, description : String }
@@ -48,4 +50,9 @@ text hoveredItem =
         HoveredFightStrategyReference reference ->
             { title = FightStrategyHelp.referenceTitle reference
             , description = FightStrategyHelp.referenceDescription reference
+            }
+
+        HoveredPerceptionLevel perceptionLevel ->
+            { title = "Perception Level: " ++ Perception.label perceptionLevel
+            , description = Perception.tooltip perceptionLevel
             }

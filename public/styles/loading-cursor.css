@@ -1,0 +1,18 @@
+.loading-cursor {
+    animation: cursor-blink 1.5s linear infinite;
+}
+
+@keyframes cursor-blink {
+
+    0%,
+    10%,
+    90%,
+    100% {
+        background: var(--green-200);
+    }
+
+    30%,
+    70% {
+        background: transparent;
+    }
+}

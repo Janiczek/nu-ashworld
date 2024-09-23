@@ -164,6 +164,7 @@ conditionFuzzer r =
             , Fuzz.map2 And conditionFuzzer_ conditionFuzzer_
             , Fuzz.map Operator operatorDataFuzzer
             , Fuzz.constant OpponentIsPlayer
+            , Fuzz.constant OpponentIsNPC
             ]
 
 

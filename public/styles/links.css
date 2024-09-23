@@ -1,0 +1,39 @@
+.link {
+    color: var(--green-300);
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+.link-label {
+    color: var(--green-100);
+    text-transform: uppercase;
+    width: 9ch;
+    min-width: 9ch;
+    display: inline-block;
+    margin: 0 1ch;
+    white-space: pre;
+}
+
+.link[target="_blank"] .link-right-bracket::before {
+    content: "-> ";
+    color: var(--green-300);
+    margin-left: -2ch;
+}
+
+.link.active .link-label,
+.link:hover,
+.link:hover .link-label {
+    color: var(--orange);
+}
+
+.link.dimmed:not(:hover):not(.active) .link-label {
+    color: var(--green-300);
+}
+
+.link:disabled .link-left-bracket,
+.link:disabled .link-right-bracket,
+.link:disabled .link-label {
+    color: var(--green-300);
+}

@@ -1,0 +1,116 @@
+:root {
+    --green-900: #111810;
+    --green-800: #10240C;
+
+    --green-300: #007C00;
+    --green-200: #00C000;
+    --green-100: #3CF800;
+
+
+    --orange: #FCFF2F;
+    --red: #FC0001;
+
+    --green-800-half-transparent: rgba(16, 36, 12, 0.5);
+    --green-300-half-transparent: rgba(0, 124, 0, 0.5);
+
+    --green-100-half-transparent: rgba(60, 248, 0, 0.5);
+    --green-100-fully-transparent: rgba(60, 248, 0, 0);
+
+    --orange-transparent: rgba(252, 253, 125, 0.25);
+    --orange-fully-transparent: rgba(252, 253, 125, 0);
+    --black-transparent: rgba(0, 0, 0, 0.25);
+    /*
+    Greens:
+    Fallout 2 character select screen: #5BF523
+    Fallout Tactics custom campaign: #4AFC24
+
+    Oranges:
+    Fallout Tactics custom campaign: #FCFF2F
+    */
+}
+
+body {
+    background-color: var(--green-900);
+    color: var(--green-200);
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+* {
+    font-family: "PixelOperator";
+    line-height: 17px;
+    font-size: 16px;
+    font-weight: normal;
+
+    font-smooth: never;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: none;
+
+    text-wrap: pretty;
+}
+
+/* VIGNETTE CORNERS */
+body:after {
+    position: fixed;
+    content: '';
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    border-style: solid;
+    border-width: 128px;
+    border-color: transparent;
+    border-image: url('../images/border-image.webp') 50% repeat;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+::placeholder {
+    color: var(--green-300) !important;
+}
+
+/* To remove this style we'd have to use Dillon's Markdown package. Too lazy right now */
+strong {
+    font-weight: 400 !important;
+    color: var(--orange) !important;
+}
+
+/* Tables */
+table {
+    text-align: left;
+    border-collapse: collapse;
+}
+
+thead {
+    border-bottom: 3px solid var(--green-300-half-transparent);
+    color: var(--green-300);
+}
+
+th {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-weight: 400;
+}
+
+th:not(:first-child) {
+    border-left: 3px solid var(--green-300-half-transparent);
+}
+
+td {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+td:not(:first-child) {
+    border-left: 1px solid var(--green-300-half-transparent);
+}
+
+tr:hover td {
+    background-color: var(--green-800);
+}

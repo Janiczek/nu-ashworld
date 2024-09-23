@@ -123,6 +123,7 @@ condition =
     P.oneOf
         [ binary
         , P.map (\_ -> OpponentIsPlayer) (P.keyword "opponent is player")
+        , P.map (\_ -> OpponentIsNPC) (P.keyword "opponent is NPC")
         , operatorCondition
         ]
 

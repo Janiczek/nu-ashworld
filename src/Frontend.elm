@@ -82,11 +82,13 @@ import Result.Extra as Result
 import Set exposing (Set)
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
+import Tailwind as TW
 import Task
 import Time exposing (Posix)
 import Time.Extra as Time
 import Time.ExtraExtra as Time
 import Types exposing (..)
+import UI
 import Url exposing (Url)
 
 
@@ -134,6 +136,7 @@ init url key =
       , fightInfo = Nothing
       , fightStrategyText = ""
       , expandedQuests = Set_.empty
+      , userWantsToShowAreaDanger = False
 
       -- backend state
       , lastTenToBackendMsgs = []
@@ -144,6 +147,21 @@ init url key =
         [ Task.perform GotZone Time.here
         , Task.perform GotTime Time.now
         , Nav.pushUrl key (Route.toString route)
+
+        -- TODO don't push this, only for developing styles
+        , let
+            initAuth =
+                Auth.init
+          in
+          Lamdera.sendToBackend <|
+            LogMeIn <|
+                Auth.hash
+                    ({ initAuth
+                        | name = "j2"
+                        , worldName = "main"
+                     }
+                        |> Auth.setPlaintextPassword "j2"
+                    )
         ]
     )
 
@@ -480,6 +498,11 @@ update msg ({ loginForm } as model) =
                     , Lamdera.sendToBackend <| MoveTo newCoords path
                     )
 
+        SetShowAreaDanger newShow ->
+            ( { model | userWantsToShowAreaDanger = newShow }
+            , Cmd.none
+            )
+
         OpenMessage messageId ->
             ( model
             , Lamdera.sendToBackend <| MessageWasRead messageId
@@ -514,8 +537,8 @@ update msg ({ loginForm } as model) =
             , Cmd.none
             )
 
-        ToggleAdminNewWorldFast ->
-            ( { model | adminNewWorldFast = not model.adminNewWorldFast }
+        SetAdminNewWorldFast new ->
+            ( { model | adminNewWorldFast = new }
             , Cmd.none
             )
 
@@ -685,7 +708,9 @@ updateFromBackend msg model =
 
         YoureLoggedOut worlds ->
             { model
-                | loginForm = Auth.init
+                | loginForm =
+                    Auth.init
+                        |> Auth.selectDefaultWorld worlds
                 , alertMessage = Nothing
                 , worlds = Just worlds
                 , worldData = NotLoggedIn
@@ -695,7 +720,9 @@ updateFromBackend msg model =
         CurrentWorlds worlds ->
             ( { model
                 | worlds = Just worlds
-                , loginForm = Auth.selectDefaultWorld worlds model.loginForm
+                , loginForm =
+                    model.loginForm
+                        |> Auth.selectDefaultWorld worlds
               }
             , Cmd.none
             )
@@ -790,15 +817,43 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document FrontendMsg
 view model =
+    let
+        worldNames : List World.Name
+        worldNames =
+            model.worlds
+                |> Maybe.withDefault []
+                |> List.map .name
+
+        leftNav =
+            case model.worldData of
+                IsAdmin _ ->
+                    [ alertMessageView model.alertMessage
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ adminLinksView model.route
+                        , commonLinksView model.route
+                        ]
+                    ]
+
+                IsPlayer data ->
+                    [ alertMessageView model.alertMessage
+                    , playerInfoView data.player
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ loggedInLinksView data.player model.route
+                        , commonLinksView model.route
+                        ]
+                    ]
+
+                NotLoggedIn ->
+                    [ loginFormView worldNames model.loginForm
+                    , alertMessageView model.alertMessage
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ loggedOutLinksView model.route
+                        , commonLinksView model.route
+                        ]
+                    ]
+    in
     { title = "NuAshworld " ++ Version.version
-    , body =
-        [ stylesLinkView
-        , favicon16View
-        , favicon32View
-        , genericFaviconView
-        , genericFavicon2View
-        , view_ model
-        ]
+    , body = [ appView { leftNav = leftNav } model ]
     }
 
 
@@ -807,70 +862,90 @@ appView :
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
+    H.div [ HA.class "flex flex-1 flex-row bg-green-900 max-w-vw max-h-vh overflow-hidden" ]
+        [ leftNavView leftNav model
+        , contentView model
+        ]
+
+
+leftNavView : List (Html FrontendMsg) -> Model -> Html FrontendMsg
+leftNavView leftNav model =
     let
-        tickFrequency : Maybe Time.Interval
-        tickFrequency =
+        tickData :
+            Maybe
+                { tickFrequency : Time.Interval
+                , worldName : String
+                }
+        tickData =
             case model.worldData of
                 IsAdmin _ ->
                     Nothing
 
                 IsPlayer data ->
-                    Just data.tickFrequency
+                    Just
+                        { tickFrequency = data.tickFrequency
+                        , worldName = data.worldName
+                        }
 
                 NotLoggedIn ->
                     Nothing
     in
-    H.div
-        [ HA.id "app"
-        , HA.classList
-            [ ( "player", isPlayer model )
-            , ( "admin", isAdmin model )
-            ]
-        ]
-        [ H.div [ HA.id "left-nav" ]
-            [ logoView
-            , H.div [ HA.id "left-nav-content" ]
-                ((tickFrequency
-                    |> H.viewMaybe (\freq -> nextTickView freq model.zone model.time)
-                 )
-                    :: leftNav
-                    ++ [ commonLinksView model.route ]
-                )
-            ]
-        , contentView model
+    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto" ]
+        [ logoView model
+        , H.div [ HA.class "flex flex-col items-center gap-6" ]
+            ((tickData |> H.viewMaybe (nextTickView model.zone model.time))
+                :: leftNav
+            )
         ]
 
 
-nextTickView : Time.Interval -> Time.Zone -> Posix -> Html FrontendMsg
-nextTickView tickFrequency zone time =
+nextTickView :
+    Time.Zone
+    -> Posix
+    ->
+        { tickFrequency : Time.Interval
+        , worldName : String
+        }
+    -> Html FrontendMsg
+nextTickView zone time { tickFrequency, worldName } =
     let
         millis =
             Time.posixToMillis time
     in
-    H.div [ HA.id "next-tick" ] <|
-        if millis == 0 then
-            []
+    -- The -0.5px is a hack to prevent text on Windows from being blurry (basically aligning it back to the pixel grid)
+    H.div [ HA.class "grid grid-cols-2 gap-x-[1ch] -translate-x-[0.5px]" ] <|
+        List.concat
+            [ [ H.span
+                    [ HA.class "text-green-300 text-right" ]
+                    [ H.text "World:" ]
+              , H.span [] [ H.text worldName ]
+              ]
+            , if millis == 0 then
+                []
 
-        else
-            let
-                nextTick =
-                    Tick.nextTick tickFrequency time
+              else
+                let
+                    nextTick =
+                        Tick.nextTick tickFrequency time
 
-                nextTickString =
-                    DateFormat.format
-                        [ DateFormat.hourMilitaryFixed
-                        , DateFormat.text ":"
-                        , DateFormat.minuteFixed
-                        , DateFormat.text ":"
-                        , DateFormat.secondFixed
-                        ]
-                        zone
-                        nextTick
-            in
-            [ H.text "Next tick: "
-            , H.span
-                [ HA.class "slightly-emphasized" ]
-                [ H.text nextTickString ]
+                    nextTickString =
+                        DateFormat.format
+                            [ DateFormat.hourMilitaryFixed
+                            , DateFormat.text ":"
+                            , DateFormat.minuteFixed
+                            , DateFormat.text ":"
+                            , DateFormat.secondFixed
+                            ]
+                            zone
+                            nextTick
+                in
+                [ H.span
+                    [ HA.class "text-green-300 text-right" ]
+                    [ H.text "Next tick:" ]
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text nextTickString ]
+                ]
             ]
 
 
@@ -900,7 +975,7 @@ contentView model =
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
-    H.div [ HA.id "content" ]
+    H.div [ HA.class "pt-8 px-10 pb-10 flex flex-col flex-1 items-start overflow-auto max-h-vh" ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -929,7 +1004,7 @@ contentView model =
                 notFoundView url
 
             ( Map, IsPlayer data ) ->
-                withCreatedPlayer data (mapView model.mapMouseCoords)
+                withCreatedPlayer data (mapView model)
 
             ( Map, _ ) ->
                 mapLoggedOutView
@@ -995,27 +1070,27 @@ contentView model =
 pageTitleView : String -> Html FrontendMsg
 pageTitleView title =
     H.h2
-        [ HA.id "page-title" ]
+        [ HA.class "text-lg font-extraBold mb-10" ]
         [ H.text title ]
 
 
 aboutView : List (Html FrontendMsg)
 aboutView =
     [ pageTitleView "About"
-    , Markdown.toHtml
-        [ HA.id "about-content" ]
-        """
-Welcome to **NuAshworld** - a multiplayer turn-based browser game set in the
-universe of Fallout 2.
-
-Do you have what it takes to survive in the post-apocalyptic wasteland? Can you
-shape the world for the better?
-
-What more, **can you stand up to the Enclave?**
-
-Many thanks to Patreons:
-* DJetelina (iScrE4m)
-"""
+    , H.div [ HA.class "flex flex-col gap-4 max-w-[60ch]" ]
+        [ H.p []
+            [ H.text "Welcome to "
+            , H.span [ HA.class "text-green-100" ] [ H.text "NuAshworld" ]
+            , H.text " - a multiplayer turn-based browser game set in the universe of Fallout 2."
+            ]
+        , H.p []
+            [ H.text "Do you have what it takes to survive in the post-apocalyptic wasteland? Can you shape the world for the better?"
+            ]
+        , H.p []
+            [ H.text "What more, "
+            , H.span [ HA.class "text-green-100" ] [ H.text "can you stand up to the Enclave?" ]
+            ]
+        ]
     ]
 
 
@@ -1027,11 +1102,19 @@ worldsListView worlds =
 
         Just worlds_ ->
             [ pageTitleView "Worlds"
-            , H.ul []
+            , H.div [ HA.class "flex flex-row flex-wrap gap-4" ]
                 (worlds_
+                    |> List.sortBy
+                        (\w ->
+                            if w.name == Logic.mainWorldName then
+                                0
+
+                            else
+                                1
+                        )
                     |> List.map
                         (\world ->
-                            H.li []
+                            H.div [ HA.class "bg-green-800 p-[2ch]" ]
                                 [ worldInfoView
                                     { name = world.name
                                     , description = world.description
@@ -1097,13 +1180,16 @@ adminMapView worldName adminData =
                         |> List.map (.location >> Map.toTileCoords)
             in
             H.div
-                [ HA.id "map"
-                , HA.class "admin-map"
-                , cssVars
+                [ cssVars
                     [ ( "--map-columns", String.fromInt Map.columns )
                     , ( "--map-rows", String.fromInt Map.rows )
                     , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                     ]
+                , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+                , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+                , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+                , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+                , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
                 ]
                 (locationsView Nothing
                     :: List.map mapMarkerView playerCoords
@@ -1111,11 +1197,14 @@ adminMapView worldName adminData =
 
 
 mapView :
-    Maybe ( TileCoords, Set TileCoords )
+    { model
+        | mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
+        , userWantsToShowAreaDanger : Bool
+    }
     -> PlayerData
     -> CPlayer
     -> List (Html FrontendMsg)
-mapView mouseCoords _ player =
+mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
     let
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -1129,13 +1218,16 @@ mapView mouseCoords _ player =
             Map.toTileCoords player.location
 
         mouseRelatedView : ( TileCoords, Set TileCoords ) -> Html FrontendMsg
-        mouseRelatedView ( ( x, y ) as mouseCoords_, pathTaken ) =
+        mouseRelatedView ( ( x, y ) as mouseCoords, pathTaken ) =
             let
+                impassableTiles : Set TileCoords
+                impassableTiles =
+                    pathTaken
+                        |> Set.filter (Terrain.forCoords >> Terrain.isPassable >> not)
+
                 notAllPassable : Bool
                 notAllPassable =
-                    pathTaken
-                        |> Set.toList
-                        |> List.any (Terrain.forCoords >> Terrain.isPassable >> not)
+                    not (Set.isEmpty impassableTiles)
 
                 cost : Int
                 cost =
@@ -1158,32 +1250,50 @@ mapView mouseCoords _ player =
 
                 bigChunk : BigChunk
                 bigChunk =
-                    BigChunk.forCoords mouseCoords_
-            in
-            H.div
-                [ HA.id "map-mouse-layer"
-                , HA.classList
-                    [ ( "too-distant", tooDistant )
-                    , ( "not-all-passable", notAllPassable )
-                    ]
-                ]
-                [ H.div
-                    [ HA.id "map-mouse-tile"
-                    , HA.class "tile"
-                    , cssVars
-                        [ ( "--tile-coord-x", String.fromInt x )
-                        , ( "--tile-coord-y", String.fromInt y )
-                        ]
-                    ]
-                    []
-                , H.div
-                    [ HA.id "map-path-tiles" ]
-                    (List.map pathTileView
-                        (Set.toList (Set.remove mouseCoords_ pathTaken))
-                    )
-                , H.viewIf (Perception.atLeast Perception.Good perceptionLevel) <|
+                    BigChunk.forCoords mouseCoords
+
+                impossiblePath : Bool
+                impossiblePath =
+                    tooDistant || notAllPassable
+
+                ( pathTextColor, pathBgColor ) =
+                    if impossiblePath then
+                        ( "text-orange", "bg-orange" )
+
+                    else
+                        ( "text-green-200", "bg-green-300" )
+
+                tileUnderCursor =
                     H.div
-                        [ HA.id "map-cost-info"
+                        [ tileClass
+                        , HA.class
+                            (if Set.member mouseCoords impassableTiles then
+                                "bg-red"
+
+                             else
+                                pathBgColor
+                            )
+                        , HA.class "opacity-75 pointer-events-none z-[1]"
+                        , cssVars
+                            [ ( "--tile-coord-x", String.fromInt x )
+                            , ( "--tile-coord-y", String.fromInt y )
+                            ]
+                        ]
+                        []
+
+                pathTiles =
+                    H.div
+                        [ HA.class "absolute inset-0" ]
+                        (List.map (pathTileView pathBgColor impassableTiles)
+                            (Set.toList (Set.remove mouseCoords pathTaken))
+                        )
+
+                tooltip =
+                    H.div
+                        [ HA.class "w-fit whitespace-nowrap p-5 bg-green-900 relative z-[3]"
+                        , HA.class pathTextColor
+                        , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--tile-coord-x))-50%)]"
+                        , HA.class "translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y)-100%-10px)]"
                         , cssVars
                             [ ( "--tile-coord-x", String.fromInt x )
                             , ( "--tile-coord-y", String.fromInt y )
@@ -1197,19 +1307,31 @@ mapView mouseCoords _ player =
                                 [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
-                                , H.viewIf shouldShowBigChunks <|
-                                    H.div [] [ H.text <| "Map tile difficulty: " ++ BigChunk.difficulty bigChunk ]
+                                , H.viewIf canShowAreaDanger <|
+                                    H.div [] [ H.text <| "Map area danger: " ++ BigChunk.difficulty bigChunk ]
                                 ]
                         ]
+            in
+            H.div
+                [ HA.class "absolute inset-0" ]
+                [ tileUnderCursor
+                , pathTiles
+                , tooltip
+                    |> H.viewIf (Perception.atLeast Perception.Good perceptionLevel)
                 ]
 
-        pathTileView : TileCoords -> Html FrontendMsg
-        pathTileView ( x, y ) =
+        pathTileView : String -> Set TileCoords -> TileCoords -> Html FrontendMsg
+        pathTileView pathBgColor impassableTiles (( x, y ) as coord) =
             H.div
-                [ HA.classList
-                    [ ( "tile", True )
-                    , ( "map-path-tile", True )
-                    ]
+                [ HA.class
+                    (if Set.member coord impassableTiles then
+                        "bg-red"
+
+                     else
+                        pathBgColor
+                    )
+                , HA.class "opacity-50 pointer-events-none z-[1]"
+                , tileClass
                 , cssVars
                     [ ( "--tile-coord-x", String.fromInt x )
                     , ( "--tile-coord-y", String.fromInt y )
@@ -1219,12 +1341,12 @@ mapView mouseCoords _ player =
 
         mouseCoordsOnly : Maybe TileCoords
         mouseCoordsOnly =
-            Maybe.map Tuple.first mouseCoords
+            Maybe.map Tuple.first mapMouseCoords
 
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
             H.div
-                [ HA.id "map-mouse-event-catcher"
+                [ HA.class "absolute inset-0 z-[4]"
                 , HE.stopPropagationOn "mouseover"
                     (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
                         changedCoordsDecoder mouseCoordsOnly
@@ -1259,8 +1381,7 @@ mapView mouseCoords _ player =
         bigChunkLayerView : () -> Html FrontendMsg
         bigChunkLayerView () =
             S.svg
-                [ HA.id "map-fog"
-                , SA.viewBox <| "0 0 " ++ String.fromInt Map.columns ++ " " ++ String.fromInt Map.rows
+                [ SA.viewBox <| "0 0 " ++ String.fromInt Map.columns ++ " " ++ String.fromInt Map.rows
                 ]
                 (BigChunk.all
                     |> List.map
@@ -1274,24 +1395,41 @@ mapView mouseCoords _ player =
                         )
                 )
 
-        shouldShowBigChunks : Bool
-        shouldShowBigChunks =
+        canShowAreaDanger : Bool
+        canShowAreaDanger =
             Perception.atLeast Perception.Perfect perceptionLevel
+
+        showAreaDanger : Bool
+        showAreaDanger =
+            canShowAreaDanger && userWantsToShowAreaDanger
     in
     [ pageTitleView "Map"
-    , H.div
-        [ HA.id "map"
-        , cssVars
-            [ ( "--map-columns", String.fromInt Map.columns )
-            , ( "--map-rows", String.fromInt Map.rows )
-            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+    , H.div [ HA.class "flex flex-col items-start gap-4" ]
+        [ H.viewIf canShowAreaDanger <|
+            UI.checkbox
+                { isOn = userWantsToShowAreaDanger
+                , toggle = SetShowAreaDanger
+                , label = "Show area danger levels"
+                }
+        , H.div
+            [ cssVars
+                [ ( "--map-columns", String.fromInt Map.columns )
+                , ( "--map-rows", String.fromInt Map.rows )
+                , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+                ]
+            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+            , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
-        ]
-        [ locationsView (Just playerCoords)
-        , mapMarkerView playerCoords
-        , H.viewIfLazy shouldShowBigChunks bigChunkLayerView
-        , mouseEventCatcherView
-        , H.viewMaybe mouseRelatedView mouseCoords
+            [ locationsView (Just playerCoords)
+            , mapMarkerView playerCoords
+            , bigChunkLayerView
+                |> H.viewIfLazy showAreaDanger
+            , mouseEventCatcherView
+            , H.viewMaybe mouseRelatedView mapMouseCoords
+            ]
         ]
     ]
 
@@ -1330,6 +1468,11 @@ svgPolygonForTiles color coords =
         []
 
 
+tileClass : Attribute msg
+tileClass =
+    HA.class "absolute left-0 top-0 w-[var(--map-cell-size)] h-[var(--map-cell-size)] translate-x-[calc(var(--map-cell-size)*var(--tile-coord-x))] translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y))]"
+
+
 locationView : Maybe TileCoords -> Location -> Html FrontendMsg
 locationView maybePlayer location =
     let
@@ -1351,22 +1494,52 @@ locationView maybePlayer location =
         isCurrent : Bool
         isCurrent =
             maybePlayer == Just ( x, y )
+
+        borderWidth : String
+        borderWidth =
+            case size of
+                Location.Small ->
+                    "border"
+
+                Location.Middle ->
+                    "border"
+
+                Location.Large ->
+                    "border-2"
     in
     H.div
-        [ HA.classList
-            [ ( "tile", True )
-            , ( "map-location", True )
-            , ( "small", size == Location.Small )
-            , ( "middle", size == Location.Middle )
-            , ( "large", size == Location.Large )
-            , ( "has-vendor", hasVendor )
-            , ( "is-current", isCurrent )
-            ]
+        [ tileClass
+        , HA.class "opacity-50 text-green-100 absolute inset-0"
+        , HA.classList
+            [ ( "!opacity-100", hasVendor || isCurrent ) ]
         , HA.attribute "data-location-name" name
-        , cssVars
-            [ ( "--tile-coord-x", String.fromInt x )
-            , ( "--tile-coord-y", String.fromInt y )
-            ]
+        , TW.mod "hover" "opacity-100"
+        , TW.mod "before" <|
+            "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
+                ++ borderWidth
+        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
+        , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
+        , cssVars <|
+            List.concat
+                [ [ ( "--tile-coord-x", String.fromInt x )
+                  , ( "--tile-coord-y", String.fromInt y )
+                  ]
+                , case size of
+                    Location.Small ->
+                        [ ( "--location-size", "11px" )
+                        , ( "--location-name-top", "68%" )
+                        ]
+
+                    Location.Middle ->
+                        [ ( "--location-size", "23px" )
+                        , ( "--location-name-top", "75%" )
+                        ]
+
+                    Location.Large ->
+                        [ ( "--location-size", "45px" )
+                        , ( "--location-name-top", "100%" )
+                        ]
+                ]
         ]
         []
 
@@ -1375,7 +1548,7 @@ locationsView : Maybe TileCoords -> Html FrontendMsg
 locationsView maybePlayer =
     Location.allLocations
         |> List.map (locationView maybePlayer)
-        |> H.div [ HA.id "map-locations" ]
+        |> H.div [ HA.class "absolute inset-0 bg-black-transparent" ]
 
 
 changedCoordsDecoder : Maybe TileCoords -> Decoder TileCoords
@@ -1407,12 +1580,14 @@ changedCoordsDecoder mouseCoords =
 mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
-        [ HA.class "map-marker"
+        [ HA.class "absolute left-0 top-0 z-[2]"
+        , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
+        , HA.class "translate-y-[calc(var(--map-cell-size)*(0.5+var(--player-coord-y))-50%)]"
         , cssVars
             [ ( "--player-coord-x", String.fromInt x )
             , ( "--player-coord-y", String.fromInt y )
             ]
-        , HA.src "/images/map_marker.png"
+        , HA.src "/images/map_marker.webp"
         , HA.width 25
         , HA.height 13
         ]
@@ -1430,15 +1605,21 @@ cssVars vars =
 mapLoggedOutView : List (Html FrontendMsg)
 mapLoggedOutView =
     [ pageTitleView "Map"
-    , H.div
-        [ HA.id "map"
-        , cssVars
-            [ ( "--map-columns", String.fromInt Map.columns )
-            , ( "--map-rows", String.fromInt Map.rows )
-            , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+    , H.div [ HA.class "flex flex-col items-start gap-4" ]
+        [ H.div
+            [ cssVars
+                [ ( "--map-columns", String.fromInt Map.columns )
+                , ( "--map-rows", String.fromInt Map.rows )
+                , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
+                ]
+            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
+            , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
+            , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
+            [ locationsView Nothing ]
         ]
-        [ locationsView Nothing ]
     ]
 
 
@@ -1467,28 +1648,24 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
         emptyCount =
             totalCount - doneCount
     in
-    H.div [ HA.class "quest-progressbar" ]
-        [ H.span [] [ H.text "[" ]
-        , H.span [] [ H.text <| String.repeat doneCount "=" ++ String.repeat emptyCount "-" ]
-        , H.span [] [ H.text "]" ]
-        , H.span [ HA.class "quest-progressbar-text" ]
-            [ H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt (round (percentDone * 100)) ++ "%" ]
-            , H.span [] [ H.text " done (" ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt ticksGiven ]
-            , H.span [] [ H.text "/" ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt ticksNeeded ]
-            , H.span [] [ H.text " ticks, you gave " ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt ticksGivenByPlayer ]
-            , H.span [] [ H.text ")" ]
+    H.div [ HA.class "flex flex-row gap-[1ch]" ]
+        [ H.span [ HA.class "text-green-300" ]
+            [ H.text <|
+                "["
+                    ++ String.repeat doneCount "="
+                    ++ String.repeat emptyCount "-"
+                    ++ "]"
             ]
+        , H.text <|
+            String.fromInt (round (percentDone * 100))
+                ++ "%"
+                ++ " done ("
+                ++ String.fromInt ticksGiven
+                ++ "/"
+                ++ String.fromInt ticksNeeded
+                ++ " ticks, you gave "
+                ++ String.fromInt ticksGivenByPlayer
+                ++ ")"
         ]
 
 
@@ -1504,24 +1681,25 @@ townMainSquareView expandedQuests location { questsProgress } player =
             not <| List.isEmpty quests
     in
     [ pageTitleView <| "Town: " ++ Location.name location
-    , if Vendor.isInLocation location then
-        H.div []
-            [ H.button
-                [ HE.onClick GoToTownStore ]
-                [ H.text "[Visit store]" ]
-            ]
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ if Vendor.isInLocation location then
+            H.div []
+                [ UI.button
+                    [ HE.onClick GoToTownStore ]
+                    [ H.text "[Visit store]" ]
+                ]
 
-      else
-        H.div [] [ H.text "No vendor in this town..." ]
-    , if hasQuests then
-        H.h3 [] [ H.text "Quests" ]
+          else
+            H.div [] [ H.text "No vendor in this town..." ]
+        , if hasQuests then
+            H.h3 [] [ H.text "Quests" ]
 
-      else
-        H.text "No quests in this town..."
-    , H.viewIf hasQuests <|
-        H.ul
-            [ HA.class "quests" ]
-            (List.map (questView player questsProgress expandedQuests) quests)
+          else
+            H.text "No quests in this town..."
+        , H.viewIf hasQuests <|
+            H.ul []
+                (List.map (questView player questsProgress expandedQuests) quests)
+        ]
     ]
 
 
@@ -1538,17 +1716,8 @@ questView player questsProgress expandedQuests quest =
                     Set_.member quest expandedQuests
             in
             H.li
-                [ HE.onClick
-                    (if isExpanded then
-                        CollapseQuestItem quest
-
-                     else
-                        ExpandQuestItem quest
-                    )
-                , HA.classList
-                    [ ( "quest", True )
-                    , ( "expanded", isExpanded )
-                    ]
+                [ HA.classList
+                    [ ( "[&:not(:last-child)]:mb-5", isExpanded ) ]
                 ]
                 (if isExpanded then
                     expandedQuestView player progress quest
@@ -1560,7 +1729,16 @@ questView player questsProgress expandedQuests quest =
 
 collapsedQuestView : Quest.Name -> List (Html FrontendMsg)
 collapsedQuestView quest =
-    [ H.text <| Quest.title quest
+    [ H.span
+        [ HA.class "cursor-pointer"
+        , TW.mod "hover" "text-green-100"
+        , HE.onClick (ExpandQuestItem quest)
+        ]
+        [ H.span
+            [ HA.class "text-green-100 pr-2" ]
+            [ H.text "[+]" ]
+        , H.text <| Quest.title quest
+        ]
     ]
 
 
@@ -1591,119 +1769,119 @@ expandedQuestView player progress quest =
         ticksNeeded =
             Quest.ticksNeeded quest
     in
-    [ H.div [ HA.class "quest-inner" ]
+    [ H.div [ HA.class "flex flex-col gap-[2ch]" ]
         [ H.div []
             [ H.span
-                [ HA.class "quest-name"
-                , HE.onClick <| CollapseQuestItem quest
+                [ HE.onClick <| CollapseQuestItem quest
+                , HA.class "cursor-pointer"
+                , TW.mod "hover" "text-green-100"
                 ]
-                [ H.text <| Quest.title quest ]
+                [ H.span
+                    [ HA.class "text-green-100 pr-2" ]
+                    [ H.text "["
+                    , H.span [ HA.class "min-w-[1ch] text-center inline-block" ] [ H.text "-" ]
+                    , H.text "]"
+                    ]
+                , H.text <| Quest.title quest
+                ]
             , if Set_.member quest player.questsActive then
-                H.button
-                    [ HA.class "quest-toggle-btn"
+                UI.button
+                    [ HA.class "ml-[1ch] !text-green-100"
+                    , TW.mod "hover" "text-orange"
                     , HE.onClickStopPropagation <| AskToStopProgressing quest
                     ]
                     [ H.text "[STOP]" ]
 
               else
-                H.button
-                    [ HA.class "quest-toggle-btn"
+                UI.button
+                    [ HA.class "ml-[1ch] !text-green-100"
+                    , TW.mod "hover" "text-orange"
                     , HE.onClickStopPropagation <| AskToStartProgressing quest
                     ]
                     [ H.text "[START]" ]
             ]
-        , questProgressbarView
-            { ticksGiven = progress.ticksGiven
-            , ticksNeeded = ticksNeeded
-            , ticksGivenByPlayer = progress.ticksGivenByPlayer
-            }
-        , H.div [ HA.class "quest-players" ]
-            [ H.span [] [ H.text "Players active: " ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt progress.playersActive ]
-            , H.span [] [ H.text " (" ]
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt progress.ticksPerHour ]
-            , H.span [] [ H.text " ticks/hour)" ]
-            ]
-        , H.div [ HA.class "quest-xp-per-tick" ]
-            [ H.text "XP per tick: "
-            , H.span
-                [ HA.class "quest-number" ]
-                [ H.text <| String.fromInt (Quest.xpPerTickGiven quest) ]
-            ]
-        , H.div
-            [ HA.class "quest-requirements-title" ]
-            [ H.text "Quest Requirements" ]
-        , if List.isEmpty questRequirements then
-            H.div
-                [ HA.class "quest-requirements-none" ]
-                [ H.text "NONE" ]
-
-          else
-            H.ul
-                [ HA.class "quest-requirements-list" ]
-                (List.map (Quest.title >> liText) questRequirements)
-        , H.div
-            [ HA.class "quest-requirements-title" ]
-            [ H.text "Player Requirements"
-            , H.span
-                [ HA.class "deemphasized" ]
-                [ H.text " (affect ticks/hour)" ]
-            ]
-        , if List.isEmpty playerRequirements then
-            H.div
-                [ HA.class "quest-requirements-none" ]
-                [ H.text "NONE" ]
-
-          else
-            H.ul
-                [ HA.class "quest-requirements-list" ]
-                (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
-        , H.div
-            [ HA.class "quest-requirements-title" ]
-            [ H.text "Global Rewards" ]
-        , if List.isEmpty globalRewards then
-            H.div
-                [ HA.class "quest-requirements-none" ]
-                [ H.text "NONE" ]
-
-          else
-            H.ul
-                [ HA.class "quest-requirements-list" ]
-                (List.map (Quest.globalRewardTitle >> liText) globalRewards)
-        , H.div
-            [ HA.class "quest-requirements-title" ]
-            (if List.isEmpty playerRewards then
-                [ H.text "Player Rewards" ]
-
-             else
-                [ H.text "Player Rewards"
-                , H.span
-                    [ HA.class "deemphasized" ]
-                    [ H.text " (if you give " ]
-                , H.span
-                    [ HA.class "quest-number" ]
-                    [ H.text <|
-                        String.fromInt (Quest.ticksNeededForPlayerReward quest)
-                            ++ "+"
-                    ]
-                , H.span
-                    [ HA.class "deemphasized" ]
-                    [ H.text " ticks)" ]
+        , H.div [ HA.class "bg-green-800 p-[2ch]" ]
+            [ questProgressbarView
+                { ticksGiven = progress.ticksGiven
+                , ticksNeeded = ticksNeeded
+                , ticksGivenByPlayer = progress.ticksGivenByPlayer
+                }
+            , H.div []
+                [ H.text <|
+                    "Players active: "
+                        ++ String.fromInt progress.playersActive
+                        ++ " ("
+                        ++ String.fromInt progress.ticksPerHour
+                        ++ " ticks/hour)"
                 ]
-            )
-        , if List.isEmpty playerRewards then
-            H.div
-                [ HA.class "quest-requirements-none" ]
-                [ H.text "NONE" ]
+            , H.div []
+                [ H.text <|
+                    "XP per tick: "
+                        ++ String.fromInt (Quest.xpPerTickGiven quest)
+                ]
+            , H.div
+                [ HA.class "mt-5" ]
+                [ H.text "Quest Requirements" ]
+            , if List.isEmpty questRequirements then
+                H.div
+                    [ HA.class "ml-[4ch]" ]
+                    [ H.text "NONE" ]
 
-          else
-            H.ul
-                [ HA.class "quest-requirements-list" ]
-                (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+              else
+                H.ul
+                    [ HA.class "ps-[4ch]" ]
+                    (List.map (Quest.title >> liText) questRequirements)
+            , H.div
+                [ HA.class "mt-5" ]
+                [ H.text "Player Requirements (affect ticks/hour)" ]
+            , if List.isEmpty playerRequirements then
+                H.div
+                    [ HA.class "ml-[4ch]" ]
+                    [ H.text "NONE" ]
+
+              else
+                H.ul
+                    [ HA.class "ps-[4ch]" ]
+                    (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
+            , H.div
+                [ HA.class "mt-5" ]
+                [ H.text "Global Rewards" ]
+            , if List.isEmpty globalRewards then
+                H.div
+                    [ HA.class "ml-[4ch]" ]
+                    [ H.text "NONE" ]
+
+              else
+                H.ul
+                    [ HA.class "ps-[4ch]" ]
+                    (List.map (Quest.globalRewardTitle >> liText) globalRewards)
+            , H.div
+                [ HA.class "mt-5" ]
+                (if List.isEmpty playerRewards then
+                    [ H.text "Player Rewards" ]
+
+                 else
+                    [ H.text "Player Rewards"
+                    , H.text " (if you give "
+                    , H.span
+                        []
+                        [ H.text <|
+                            String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                                ++ "+"
+                        ]
+                    , H.text " ticks)"
+                    ]
+                )
+            , if List.isEmpty playerRewards then
+                H.div
+                    [ HA.class "ml-[4ch]" ]
+                    [ H.text "NONE" ]
+
+              else
+                H.ul
+                    [ HA.class "ps-[4ch]" ]
+                    (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+            ]
         ]
     ]
 
@@ -1825,28 +2003,29 @@ townStoreView barter location world player =
 
                 resetBtn : Html FrontendMsg
                 resetBtn =
-                    H.button
-                        [ HA.id "town-store-reset-btn"
+                    UI.button
+                        [ HA.style "grid-area" "barter-reset-btn"
                         , HE.onClick <| BarterMsg ResetBarter
                         ]
                         [ H.text "[Reset]" ]
 
                 confirmBtn : Html FrontendMsg
                 confirmBtn =
-                    H.button
-                        [ HA.id "town-store-confirm-btn"
+                    UI.button
+                        [ HA.style "grid-area" "barter-confirm-btn"
                         , HE.onClick <| BarterMsg ConfirmBarter
                         ]
                         [ H.text "[Confirm]" ]
 
                 capsView :
-                    { class : String
+                    { itemLabelClass : String
+                    , gridArea : String
                     , transfer : Int -> FrontendMsg
                     , transferNPosition : Barter.TransferNPosition
                     }
                     -> Int
                     -> Html FrontendMsg
-                capsView { class, transfer, transferNPosition } caps =
+                capsView { itemLabelClass, gridArea, transfer, transferNPosition } caps =
                     let
                         capsString : String
                         capsString =
@@ -1867,18 +2046,22 @@ townStoreView barter location world player =
 
                         transferNView =
                             H.div
-                                [ HA.class "town-store-transfer-n-area"
+                                [ HA.class "flex group"
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ H.button
-                                    [ HA.class "town-store-transfer-btn before-hover"
+                                [ UI.button
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                    , TW.mod "group-hover" "hidden"
+                                    , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                     , HA.disabled <| caps <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
-                                , H.input
-                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                , UI.input
+                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
+                                    , TW.mod "group-hover" "block"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
                                     , HA.title "Transfer N items"
@@ -1886,54 +2069,62 @@ townStoreView barter location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        H.button
+                                        UI.button
                                             [ HA.disabled True
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        H.button
+                                        UI.button
                                             [ HE.onClick <| transfer n
                                             , HA.disabled <| n <= 0 || n > caps
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
                                 ]
 
                         transferOneView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer 1
                                 , HA.disabled <| caps <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer caps
                                 , HA.disabled <| caps <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
-                                [ HA.class "town-store-item-label" ]
+                                [ HA.class <| "flex-1 " ++ itemLabelClass ]
                                 [ H.text <| "Caps: $" ++ capsString ]
                     in
                     H.div
-                        [ HA.class <| "town-store-item town-store-caps " ++ class
+                        [ HA.class <| "flex items-center px-2 pt-1 pb-0.5"
+                        , TW.mod "[&[data-caps='0']]" "text-green-300"
+                        , HA.style "grid-area" gridArea
                         , HA.attribute "data-caps" capsString
                         ]
                     <|
@@ -1954,13 +2145,13 @@ townStoreView barter location world player =
 
                 playerItemView :
                     { items : Dict Item.Id Item
-                    , class : String
+                    , itemLabelClass : String
                     , transfer : Item.Id -> Int -> FrontendMsg
                     , transferNPosition : Item.Id -> Barter.TransferNPosition
                     }
                     -> ( Item.Id, Int )
                     -> Html FrontendMsg
-                playerItemView { items, class, transfer, transferNPosition } ( id, count ) =
+                playerItemView { items, itemLabelClass, transfer, transferNPosition } ( id, count ) =
                     let
                         itemName =
                             case Dict.get id items of
@@ -1989,18 +2180,22 @@ townStoreView barter location world player =
 
                         transferNView =
                             H.div
-                                [ HA.class "town-store-transfer-n-area"
+                                [ HA.class "flex group"
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ H.button
-                                    [ HA.class "town-store-transfer-btn before-hover"
+                                [ UI.button
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                    , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                    , TW.mod "group-hover" "hidden"
                                     , HA.disabled <| count <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
-                                , H.input
-                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                , UI.input
+                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
+                                    , TW.mod "group-hover" "block"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput position
                                     , HA.title "Transfer N items"
@@ -2008,53 +2203,59 @@ townStoreView barter location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        H.button
+                                        UI.button
                                             [ HA.disabled True
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        H.button
+                                        UI.button
                                             [ HE.onClick <| transfer id n
                                             , HA.disabled <| n <= 0 || n > count
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
                                 ]
 
                         transferOneView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer id 1
                                 , HA.disabled <| count <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            H.button
+                            UI.button
                                 [ HE.onClick <| transfer id count
                                 , HA.disabled <| count <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
-                                [ HA.class "town-store-item-label" ]
+                                [ HA.class <| "flex-1 " ++ itemLabelClass ]
                                 [ H.text <| String.fromInt count ++ "x " ++ itemName ]
                     in
-                    H.div [ HA.class <| "town-store-item " ++ class ] <|
+                    H.div [ HA.class "flex items-center px-2 py-0.5" ] <|
                         case arrowsDirection of
                             Barter.ArrowLeft ->
                                 [ transferAllView
@@ -2073,34 +2274,42 @@ townStoreView barter location world player =
                 playerNameView : Html FrontendMsg
                 playerNameView =
                     H.div
-                        [ HA.id "town-store-player-name" ]
+                        [ HA.class "p-2 border-b-2 border-b-green-800"
+                        , HA.style "grid-area" "player-name"
+                        ]
                         [ H.text <| "Player: " ++ player.name ]
 
                 vendorNameView : Html FrontendMsg
                 vendorNameView =
                     H.div
-                        [ HA.id "town-store-vendor-name" ]
+                        [ HA.class "p-2 border-b-2 border-b-green-800 text-right"
+                        , HA.style "grid-area" "vendor-name"
+                        ]
                         [ H.text <| "Vendor: " ++ Vendor.nameWithLocation vendor.name ]
 
                 playerTradedValueView : Html FrontendMsg
                 playerTradedValueView =
                     H.div
-                        [ HA.id "town-store-player-traded-value" ]
+                        [ HA.class "text-green-100 text-center p-2"
+                        , HA.style "grid-area" "player-traded-value"
+                        ]
                         [ H.text <| "Value: $" ++ String.fromInt playerTradedValue ]
 
                 vendorTradedValueView : Html FrontendMsg
                 vendorTradedValueView =
                     H.div
-                        [ HA.id "town-store-vendor-traded-value" ]
+                        [ HA.class "text-green-100 text-center p-2"
+                        , HA.style "grid-area" "vendor-traded-value"
+                        ]
                         [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
 
                 playerKeptItemsView : Html FrontendMsg
                 playerKeptItemsView =
-                    H.div [ HA.id "town-store-player-kept-items" ]
+                    H.div [ HA.style "grid-area" "player-kept-items" ]
                         (List.map
                             (playerItemView
                                 { items = player.items
-                                , class = "player-kept-item"
+                                , itemLabelClass = ""
                                 , transfer = \id count -> BarterMsg <| AddPlayerItem id count
                                 , transferNPosition = Barter.PlayerKeptItem
                                 }
@@ -2110,11 +2319,11 @@ townStoreView barter location world player =
 
                 playerTradedItemsView : Html FrontendMsg
                 playerTradedItemsView =
-                    H.div [ HA.id "town-store-player-traded-items" ]
+                    H.div [ HA.style "grid-area" "player-traded-items" ]
                         (List.map
                             (playerItemView
                                 { items = player.items
-                                , class = "player-traded-item"
+                                , itemLabelClass = "ml-1"
                                 , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
                                 , transferNPosition = Barter.PlayerTradedItem
                                 }
@@ -2124,11 +2333,11 @@ townStoreView barter location world player =
 
                 vendorKeptItemsView : Html FrontendMsg
                 vendorKeptItemsView =
-                    H.div [ HA.id "town-store-vendor-kept-items" ]
+                    H.div [ HA.style "grid-area" "vendor-kept-items" ]
                         (List.map
                             (playerItemView
                                 { items = vendor.items
-                                , class = "vendor-kept-item"
+                                , itemLabelClass = "ml-1"
                                 , transfer = \id count -> BarterMsg <| AddVendorItem id count
                                 , transferNPosition = Barter.VendorKeptItem
                                 }
@@ -2138,11 +2347,11 @@ townStoreView barter location world player =
 
                 vendorTradedItemsView : Html FrontendMsg
                 vendorTradedItemsView =
-                    H.div [ HA.id "town-store-vendor-traded-items" ]
+                    H.div [ HA.style "grid-area" "vendor-traded-items" ]
                         (List.map
                             (playerItemView
                                 { items = vendor.items
-                                , class = "vendor-traded-item"
+                                , itemLabelClass = ""
                                 , transfer = \id count -> BarterMsg <| RemoveVendorItem id count
                                 , transferNPosition = Barter.VendorTradedItem
                                 }
@@ -2153,7 +2362,8 @@ townStoreView barter location world player =
                 playerKeptCapsView : Html FrontendMsg
                 playerKeptCapsView =
                     capsView
-                        { class = "player-kept-caps"
+                        { itemLabelClass = ""
+                        , gridArea = "player-kept-caps"
                         , transfer = BarterMsg << AddPlayerCaps
                         , transferNPosition = Barter.PlayerKeptCaps
                         }
@@ -2162,7 +2372,8 @@ townStoreView barter location world player =
                 playerTradedCapsView : Html FrontendMsg
                 playerTradedCapsView =
                     capsView
-                        { class = "player-traded-caps"
+                        { itemLabelClass = "ml-1"
+                        , gridArea = "player-traded-caps"
                         , transfer = BarterMsg << RemovePlayerCaps
                         , transferNPosition = Barter.PlayerTradedCaps
                         }
@@ -2171,7 +2382,8 @@ townStoreView barter location world player =
                 vendorKeptCapsView : Html FrontendMsg
                 vendorKeptCapsView =
                     capsView
-                        { class = "vendor-kept-caps"
+                        { itemLabelClass = "ml-1"
+                        , gridArea = "vendor-kept-caps"
                         , transfer = BarterMsg << AddVendorCaps
                         , transferNPosition = Barter.VendorKeptCaps
                         }
@@ -2180,7 +2392,8 @@ townStoreView barter location world player =
                 vendorTradedCapsView : Html FrontendMsg
                 vendorTradedCapsView =
                     capsView
-                        { class = "vendor-traded-caps"
+                        { itemLabelClass = ""
+                        , gridArea = "vendor-traded-caps"
                         , transfer = BarterMsg << RemoveVendorCaps
                         , transferNPosition = Barter.VendorTradedCaps
                         }
@@ -2188,11 +2401,19 @@ townStoreView barter location world player =
 
                 playerTradedBg : Html FrontendMsg
                 playerTradedBg =
-                    H.div [ HA.id "town-store-player-traded-bg" ] []
+                    H.div
+                        [ HA.style "grid-area" "2 / 2 / 5 / 3"
+                        , HA.class "bg-green-800-half-transparent border-r border-r-green-800"
+                        ]
+                        []
 
                 vendorTradedBg : Html FrontendMsg
                 vendorTradedBg =
-                    H.div [ HA.id "town-store-vendor-traded-bg" ] []
+                    H.div
+                        [ HA.style "grid-area" "2 / 3 / 5 / 4"
+                        , HA.class "bg-green-800-half-transparent border-l border-l-green-800"
+                        ]
+                        []
 
                 gridContents : List (Html FrontendMsg)
                 gridContents =
@@ -2215,14 +2436,18 @@ townStoreView barter location world player =
                     ]
             in
             [ pageTitleView <| "Store: " ++ Location.name location
-            , H.button
+            , UI.button
                 [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
                 [ H.text "[Back]" ]
-            , H.div [ HA.id "town-store-grid" ] gridContents
+            , H.div
+                [ HA.class "mt-10 self-stretch grid grid-cols-[repeat(4,1fr)]"
+                , HA.class "town-store-grid"
+                ]
+                gridContents
             , H.viewMaybe
                 (\message ->
                     H.div
-                        [ HA.id "town-store-barter-message" ]
+                        [ HA.class "mt-10 text-orange" ]
                         [ H.text <| Barter.messageText message ]
                 )
                 barter.lastMessage
@@ -2233,36 +2458,33 @@ newCharView : Maybe HoveredItem -> NewChar -> List (Html FrontendMsg)
 newCharView hoveredItem newChar =
     let
         createBtnView =
-            H.div [ HA.id "new-character-create-btn" ]
-                [ H.button
+            H.div [ HA.class "mt-10" ]
+                [ UI.button
                     [ HE.onClick CreateChar ]
-                    [ H.text "[Create]" ]
+                    [ H.text "[ Create ]" ]
                 ]
 
         errorView =
             H.viewMaybe
                 (\error ->
-                    H.div [ HA.id "new-character-error" ]
+                    H.div [ HA.class "text-orange mt-5" ]
                         [ H.text <| NewChar.error error ]
                 )
                 newChar.error
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.id "new-character-grid" ]
-        [ H.div
-            [ HA.class "new-character-column" ]
+        [ HA.class "grid grid-cols-[42ch_42ch_minmax(0,1fr)] gap-5" ]
+        [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
             , createBtnView
             , errorView
             ]
-        , H.div
-            [ HA.class "new-character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSkillsView newChar
             ]
-        , H.div
-            [ HA.class "new-character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharDerivedStatsView newChar
             , newCharHelpView hoveredItem
             ]
@@ -2277,24 +2499,27 @@ newCharHelpView maybeHoveredItem =
         helpContent =
             case maybeHoveredItem of
                 Nothing ->
-                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
+                    H.p
+                        [ HA.class "max-w-[50ch] text-green-300" ]
+                        [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
                     let
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div []
+                    H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "hovered-item-title" ]
+                            [ HA.class "text-orange" ]
                             [ H.text title ]
-                        , Markdown.toHtml [] description
+                        , -- TODO formatting of lists etc.
+                          Markdown.toHtml [] description
                         ]
     in
     H.div
-        [ HA.id "new-character-help" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2311,22 +2536,28 @@ newCharDerivedStatsView newChar =
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
                 }
 
-        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
-        itemView ( label, value, tooltip ) =
+        itemView : ( String, String, Maybe HoveredItem ) -> Html FrontendMsg
+        itemView ( label, value, hoveredItem ) =
             let
-                ( liAttrs, valueAttrs ) =
-                    case tooltip of
-                        Just tooltip_ ->
-                            ( [ HA.title tooltip_ ]
-                            , [ HA.class "has-tooltip" ]
-                            )
+                liAttrs =
+                    case hoveredItem of
+                        Just hoveredItem_ ->
+                            [ HE.onMouseOver <| HoverItem hoveredItem_
+                            , HE.onMouseOut StopHoveringItem
+                            ]
 
                         Nothing ->
-                            ( [], [] )
+                            []
             in
-            H.li liAttrs
-                [ H.text <| label ++ ": "
-                , H.span valueAttrs [ H.text value ]
+            H.li
+                (TW.mod "hover" "bg-green-800"
+                    :: liAttrs
+                )
+                [ UI.liBullet
+                , H.text <| label ++ ": "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text value ]
                 ]
 
         perceptionLevel : PerceptionLevel
@@ -2336,12 +2567,11 @@ newCharDerivedStatsView newChar =
                 , hasAwarenessPerk = False
                 }
     in
-    H.div
-        [ HA.id "new-character-derived-stats" ]
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
-        , H.ul [ HA.id "new-character-derived-stats-list" ] <|
+        , H.ul [] <|
             List.map itemView
                 [ ( "Hitpoints"
                   , String.fromInt <|
@@ -2364,7 +2594,7 @@ newCharDerivedStatsView newChar =
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| Perception.tooltip perceptionLevel
+                  , Just <| HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -2395,36 +2625,40 @@ newCharSpecialView newChar =
                 value =
                     Special.get type_ finalSpecial
             in
-            H.tr
-                [ HA.class "character-special-attribute"
-                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+            H.div
+                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "contents group"
                 ]
-                [ H.td
-                    [ HA.class "character-special-attribute-dec" ]
-                    [ H.button
+                [ H.div []
+                    [ UI.button
                         [ HE.onClick <| NewCharDecSpecial type_
                         , HA.disabled <|
                             not <|
                                 Special.canDecrement
                                     type_
                                     finalSpecial
+                        , HA.class "!text-green-100"
+                        , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[-]" ]
                     ]
-                , H.td
-                    [ HA.class "character-special-attribute-label" ]
+                , H.div
+                    [ HA.class "px-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
+                    ]
                     [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.classList
-                        [ ( "character-special-attribute-value", True )
-                        , ( "out-of-range", not <| Special.isValueInRange value )
-                        ]
+                , H.div
+                    [ HA.class "pr-[1ch] text-right"
+                    , HA.classList [ ( "!text-orange", not <| Special.isValueInRange value ) ]
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| String.fromInt value ]
-                , H.td
-                    [ HA.class "character-special-attribute-inc" ]
-                    [ H.button
+                , H.div
+                    []
+                    [ UI.button
                         [ HE.onClick <| NewCharIncSpecial type_
                         , HA.disabled <|
                             not <|
@@ -2432,25 +2666,30 @@ newCharSpecialView newChar =
                                     newChar.availableSpecial
                                     type_
                                     finalSpecial
+                        , HA.class "!text-green-100"
+                        , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[+]" ]
                     ]
                 ]
     in
     H.div
-        [ HA.id "new-character-special" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "SPECIAL ("
             , H.span
-                [ HA.class "new-character-section-available-number" ]
+                [ HA.class "text-orange" ]
                 [ H.text <| String.fromInt newChar.availableSpecial ]
             , H.text " points left)"
             ]
-        , H.table
-            [ HA.id "character-special-table" ]
+        , H.div [ HA.class "grid grid-cols-[3ch_13ch_3ch_3ch] auto-rows-auto" ]
             (List.map specialItemView Special.all)
-        , H.p [] [ H.text "Distribute your SPECIAL points (each attribute can be in range 1..10)." ]
+        , H.p
+            [ HA.class "text-green-300" ]
+            [ H.text "Distribute your SPECIAL points (each attribute can be in range 1..10)." ]
         ]
 
 
@@ -2467,46 +2706,41 @@ newCharTraitsView traits =
                 isToggled : Bool
                 isToggled =
                     Set_.member trait traits
-
-                buttonLabel : String
-                buttonLabel =
-                    if isToggled then
-                        "[*]"
-
-                    else
-                        "[ ]"
             in
             H.li
-                [ HA.classList
-                    [ ( "new-character-traits-trait", True )
-                    , ( "is-toggled", isToggled )
-                    ]
+                [ HA.class "flex flex-row gap-[1ch] pr-[2ch] justify-start cursor-pointer group"
+                , TW.mod "hover" "text-orange bg-green-800"
+                , HA.classList [ ( "text-orange", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.button
+                [ UI.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
-                    , HA.class "new-character-trait-tag-btn"
+                    , HA.class "!text-green-100"
+                    , HA.classList [ ( "!text-orange", isToggled ) ]
+                    , TW.mod "group-hover" "!text-orange bg-green-800"
                     ]
-                    [ H.text buttonLabel ]
+                    [ H.text <| UI.checkboxLabel isToggled ]
                 , H.div [] [ H.text <| Trait.name trait ]
                 ]
     in
     H.div
-        [ HA.id "new-character-traits" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "new-character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Traits ("
             , H.span
-                [ HA.class "new-character-section-available-number" ]
+                [ HA.class "text-orange" ]
                 [ H.text <| String.fromInt availableTraits ]
             , H.text " available)"
             ]
         , H.ul
-            [ HA.id "new-character-traits-list" ]
+            [ HA.class "w-max grid grid-cols-2 gap-x-[2ch]" ]
             (List.map traitView Trait.all)
-        , H.p [] [ H.text "Select up to two traits." ]
+        , H.p
+            [ HA.class "text-green-300" ]
+            [ H.text "Select up to two traits." ]
         ]
 
 
@@ -2533,7 +2767,6 @@ newCharSkillsView newChar =
         , hasTagPerk = False
         , availableSkillPoints = 0
         , isNewChar = True
-        , id = "new-character-skills"
         }
 
 
@@ -2568,21 +2801,24 @@ choosePerkView maybeHoveredItem applicablePerks =
         perkView perk =
             H.li
                 [ HE.onClick <| AskToChoosePerk perk
-                , HA.class "character-choose-perk-item"
+                , HA.class "cursor-pointer group"
                 , HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.text <| Perk.name perk ]
+                [ UI.liBullet
+                , H.span
+                    [ TW.mod "group-hover" "text-orange"
+                    ]
+                    [ H.text <| Perk.name perk ]
+                ]
     in
     H.div
-        [ HA.id "character-choose-perk" ]
+        [ HA.class "flex-1 flex flex-col self-stretch" ]
         [ H.div
-            [ HA.id "character-choose-perk-columns" ]
-            [ H.div []
+            [ HA.class "flex-1 grid grid-cols-[minmax(0,max-content)_minmax(0,60ch)] gap-8" ]
+            [ H.div [ HA.class "flex flex-col gap-4" ]
                 [ H.h3 [] [ H.text "Choose a perk!" ]
-                , H.ul
-                    [ HA.id "character-choose-perk-list" ]
-                    (List.map perkView applicablePerks)
+                , H.ul [] (List.map perkView applicablePerks)
                 ]
             , H.viewMaybe perkDescriptionView maybeHoveredItem
             ]
@@ -2605,19 +2841,16 @@ perkDescriptionView hoveredItem =
 normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
 normalCharacterView maybeHoveredItem player =
     H.div
-        [ HA.id "character-grid" ]
-        [ H.div
-            [ HA.class "character-column" ]
+        [ HA.class "grid grid-cols-[24ch_34ch_minmax(0,1fr)] gap-5" ]
+        [ H.div [ HA.class "flex flex-col gap-8" ]
             [ charSpecialView player
             , charTraitsView player.traits
             , charPerksView player.perks
             ]
-        , H.div
-            [ HA.class "character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ charSkillsView player
             ]
-        , H.div
-            [ HA.class "character-column" ]
+        , H.div [ HA.class "flex flex-col gap-8" ]
             [ charDerivedStatsView player
             , charHelpView maybeHoveredItem
             ]
@@ -2630,23 +2863,27 @@ charTraitsView traits =
         itemView : Trait -> Html FrontendMsg
         itemView trait =
             H.li
-                [ HA.class "character-traits-trait"
+                [ HA.class "pr-[2ch]"
+                , TW.mod "hover" "text-green-100 bg-green-800"
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.text <| Trait.name trait ]
+                [ UI.liBullet
+                , H.text <| Trait.name trait
+                ]
     in
     H.div
-        [ HA.id "character-traits" ]
+        [ HA.class "flex flex-col" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
         , if Set_.isEmpty traits then
-            H.p [] [ H.text "You have no traits." ]
+            H.p
+                [ HA.class "text-green-300" ]
+                [ H.text "You have no traits." ]
 
           else
-            H.ul
-                [ HA.id "character-traits-list" ]
+            H.ul [ HA.class "w-fit" ]
                 (List.map itemView <| Set_.toList traits)
         ]
 
@@ -2658,24 +2895,26 @@ charHelpView maybeHoveredItem =
         helpContent =
             case maybeHoveredItem of
                 Nothing ->
-                    H.p [] [ H.text "Hover over an item to show more information about it here!" ]
+                    H.p
+                        [ HA.class "max-w-[50ch] text-green-300" ]
+                        [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
                     let
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div []
+                    H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "hovered-item-title" ]
+                            [ HA.class "text-orange" ]
                             [ H.text title ]
                         , Markdown.toHtml [] description
                         ]
     in
     H.div
-        [ HA.id "character-help" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Help" ]
         , helpContent
         ]
@@ -2684,22 +2923,28 @@ charHelpView maybeHoveredItem =
 charDerivedStatsView : CPlayer -> Html FrontendMsg
 charDerivedStatsView player =
     let
-        itemView : ( String, String, Maybe String ) -> Html FrontendMsg
-        itemView ( label, value, tooltip ) =
+        itemView : ( String, String, Maybe HoveredItem ) -> Html FrontendMsg
+        itemView ( label, value, hoveredItem ) =
             let
-                ( liAttrs, valueAttrs ) =
-                    case tooltip of
-                        Just tooltip_ ->
-                            ( [ HA.title tooltip_ ]
-                            , [ HA.class "has-tooltip" ]
-                            )
+                liAttrs =
+                    case hoveredItem of
+                        Just hoveredItem_ ->
+                            [ HE.onMouseOver <| HoverItem hoveredItem_
+                            , HE.onMouseOut StopHoveringItem
+                            ]
 
                         Nothing ->
-                            ( [], [] )
+                            []
             in
-            H.li liAttrs
-                [ H.text <| label ++ ": "
-                , H.span valueAttrs [ H.text value ]
+            H.li
+                (TW.mod "hover" "bg-green-800"
+                    :: liAttrs
+                )
+                [ UI.liBullet
+                , H.text <| label ++ ": "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text value ]
                 ]
 
         perceptionLevel : PerceptionLevel
@@ -2709,12 +2954,11 @@ charDerivedStatsView player =
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
-    H.div
-        [ HA.id "character-derived-stats" ]
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
-        , H.ul [ HA.id "character-derived-stats-list" ] <|
+        , H.ul [] <|
             List.map itemView
                 [ ( "Max HP"
                   , String.fromInt <|
@@ -2744,7 +2988,7 @@ charDerivedStatsView player =
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| Perception.tooltip perceptionLevel
+                  , Just <| HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -2767,29 +3011,30 @@ charSpecialView player =
                 value =
                     Special.get type_ player.special
             in
-            H.tr
-                [ HA.class "character-special-attribute"
-                , HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+            H.div
+                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "contents group"
                 ]
-                [ H.td
-                    [ HA.class "character-special-attribute-label" ]
+                [ H.div
+                    [ HA.class "px-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
+                    ]
                     [ H.text <| Special.label type_ ]
-                , H.td
-                    [ HA.class "character-special-attribute-value"
-
+                , H.div
                     -- TODO highlighted if addiction etc?
+                    [ HA.class "text-right pr-[1ch]"
+                    , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| String.fromInt value ]
                 ]
     in
     H.div
-        [ HA.id "character-special" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "SPECIAL" ]
-        , H.table
-            [ HA.id "character-special-table" ]
+        , H.div [ HA.class "grid grid-cols-[13ch_3ch]" ]
             (List.map specialItemView Special.all)
         ]
 
@@ -2801,7 +3046,6 @@ skillsView_ :
     , hasTagPerk : Bool
     , availableSkillPoints : Int
     , isNewChar : Bool
-    , id : String
     }
     -> Html FrontendMsg
 skillsView_ r =
@@ -2837,95 +3081,114 @@ skillsView_ r =
                 isTagged =
                     Set_.member skill r.taggedSkills
 
-                ( showTagButton, isTaggingDisabled, tagButtonLabel ) =
+                ( showTagButton, isTaggingDisabled ) =
                     case ( r.isNewChar, isTagged ) of
                         ( True, True ) ->
-                            ( True, False, "[*]" )
+                            ( True, False )
 
                         ( True, False ) ->
-                            ( True, availableTags == 0, "[ ]" )
+                            ( True, availableTags == 0 )
 
                         ( False, True ) ->
-                            ( availableTags > 0, True, "[*]" )
+                            ( availableTags > 0, True )
 
                         ( False, False ) ->
-                            ( availableTags > 0, availableTags == 0, "[ ]" )
+                            ( availableTags > 0, availableTags == 0 )
 
                 isIncButtonDisabled : Bool
                 isIncButtonDisabled =
                     r.availableSkillPoints <= 0
+
+                isTaggable : Bool
+                isTaggable =
+                    showTagButton && not isTaggingDisabled
+
+                hoverTextColor : String
+                hoverTextColor =
+                    if r.isNewChar then
+                        "text-orange"
+
+                    else
+                        "text-green-100"
             in
-            H.li
-                [ HA.classList
-                    [ ( "character-skills-skill", True )
-                    , ( "not-useful", notUseful )
-                    , ( "is-tagged", isTagged )
-                    , ( "is-taggable", showTagButton && not isTaggingDisabled )
+            H.div
+                [ HA.class "contents group"
+                , TW.mod "hover" hoverTextColor
+                , HA.classList
+                    [ ( "text-green-300", notUseful )
+                    , ( "text-orange", isTagged )
+                    , ( "cursor-pointer", isTaggable )
                     ]
                 , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
                 , HE.onMouseOver <| HoverItem <| HoveredSkill skill
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ H.div
-                    [ HA.class "character-skill-name" ]
-                    [ H.viewIf showTagButton <|
-                        H.button
-                            [ HE.onClickStopPropagation <| onTag skill
-                            , HA.disabled isTaggingDisabled
-                            , HA.class "character-skill-tag-btn"
+                [ H.viewIf showTagButton <|
+                    UI.button
+                        [ HE.onClickStopPropagation <| onTag skill
+                        , HA.disabled isTaggingDisabled
+                        , HA.class "!text-green-100 px-[1ch]"
+                        , HA.classList
+                            [ ( "!text-orange", isTagged )
+                            , ( "!text-green-300", notUseful )
                             ]
-                            [ H.text tagButtonLabel ]
-                    , H.text <| Skill.name skill
-                    ]
+                        , TW.mod "group-hover" "!text-orange bg-green-800"
+                        ]
+                        [ H.text <| UI.checkboxLabel isTagged ]
                 , H.div
-                    [ HA.class "character-skill-value" ]
-                    [ H.div
-                        [ HA.class "character-skill-percent" ]
-                        [ H.text <| String.fromInt percent ++ "%" ]
-                    , H.viewIf (not r.isNewChar) <|
-                        H.button
-                            [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
-                            , HA.class "character-skill-inc-btn"
-                            , HA.disabled isIncButtonDisabled
-                            , HA.attributeIf isIncButtonDisabled <|
-                                HA.title "You have no skill points available."
-                            ]
-                            [ H.text "[+]" ]
+                    [ HA.class "pr-[1ch]"
+                    , HA.classList [ ( "pl-[1ch]", not showTagButton ) ]
+                    , TW.mod "group-hover" "bg-green-800"
                     ]
+                    [ H.text <| Skill.name skill ]
+                , H.div
+                    [ HA.class "text-right"
+                    , TW.mod "group-hover" "bg-green-800"
+                    ]
+                    [ H.text <| String.fromInt percent ++ "%" ]
+                , H.viewIf (not r.isNewChar) <|
+                    UI.button
+                        [ HE.onClickStopPropagation <| AskToUseSkillPoints skill
+                        , HA.disabled isIncButtonDisabled
+                        , HA.attributeIf isIncButtonDisabled <|
+                            HA.title "You have no skill points available."
+                        , HA.class "pl-[1ch]"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-green-100 cursor-pointer"
+                        , TW.mod "disabled" "cursor-not-allowed opacity-50"
+                        , TW.mod "group-hover" "bg-green-800"
+                        ]
+                        [ H.text "[+]" ]
                 ]
     in
     if r.isNewChar then
         H.div
-            [ HA.id r.id ]
+            [ HA.class "flex flex-col gap-4" ]
             [ H.h3
-                [ HA.class "new-character-section-title" ]
+                [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "new-character-section-available-number" ]
+                    [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt availableTags ]
                 , H.text " tags left)"
                 ]
-            , H.ul
-                [ HA.id "character-skills-list" ]
+            , H.div [ HA.class "grid grid-cols-[5ch_16ch_minmax(auto,5ch)]" ]
                 (List.map skillView Skill.all)
-            , H.p [] [ H.text "Tag three skills. Dimmed skills are not yet useful in the game." ]
+            , H.p
+                [ HA.class "text-green-300" ]
+                [ H.text "Tag three skills. Dimmed skills are not yet useful in the game." ]
             ]
 
     else
-        H.div
-            [ HA.id r.id
-            , HA.classList [ ( "cannot-inc", r.availableSkillPoints <= 0 ) ]
-            ]
+        H.div [ HA.class "flex flex-col gap-4" ]
             [ H.h3
-                [ HA.class "character-section-title" ]
+                [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "character-section-available-number" ]
+                    [ HA.class "text-orange" ]
                     [ H.text <| String.fromInt r.availableSkillPoints ]
                 , H.text " points available)"
                 ]
-            , H.ul
-                [ HA.id "character-skills-list" ]
+            , H.div [ HA.class "grid grid-cols-[16ch_minmax(auto,5ch)_4ch]" ]
                 (List.map skillView Skill.all)
             , H.viewIf (availableTags > 0) <|
                 H.p [] [ H.text <| "Tags available: " ++ String.fromInt availableTags ]
@@ -2941,7 +3204,6 @@ charSkillsView player =
         , hasTagPerk = Perk.rank Perk.Tag player.perks > 0
         , availableSkillPoints = player.availableSkillPoints
         , isNewChar = False
-        , id = "character-skills"
         }
 
 
@@ -2956,11 +3218,13 @@ charPerksView perks =
                     Perk.maxRank perk
             in
             H.li
-                [ HA.class "character-perks-perk"
-                , HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                [ HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
+                , HA.class "pr-[2ch]"
+                , TW.mod "hover" "text-green-100 bg-green-800"
                 ]
-                [ H.text <|
+                [ UI.liBullet
+                , H.text <|
                     if maxRank == 1 then
                         Perk.name perk
 
@@ -2968,17 +3232,15 @@ charPerksView perks =
                         Perk.name perk ++ " (" ++ String.fromInt rank ++ "x)"
                 ]
     in
-    H.div
-        [ HA.id "character-perks" ]
+    H.div []
         [ H.h3
-            [ HA.class "character-section-title" ]
+            [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
         , if Dict_.isEmpty perks then
             H.p [] [ H.text "No perks yet!" ]
 
           else
-            H.ul
-                [ HA.id "character-perks-list" ]
+            H.ul []
                 (List.map itemView <| Dict_.toList perks)
         ]
 
@@ -3024,21 +3286,20 @@ inventoryView _ player =
                             ( True, Just "You're at full HP." )
             in
             H.li
-                [ HA.class "inventory-item"
-                , HA.attributeMaybe HA.title tooltip
-                ]
-                [ H.button
-                    [ HA.class "inventory-item-use-btn"
-                    , HE.onClick <| AskToUseItem item.id
-                    , HA.disabled isDisabled
-                    ]
-                    [ H.text "[Use]" ]
-                , H.viewIf (Item.isEquippable item.kind) <|
-                    H.button
-                        [ HA.class "inventory-item-equip-btn"
-                        , HE.onClick <| AskToEquipItem item.id
+                [ HA.class "flex flex-row gap-[1ch]" ]
+                [ UI.liBullet
+                , H.span
+                    [ HA.class "flex flex-row gap-[2ch]" ]
+                    [ UI.button
+                        [ HE.onClick <| AskToUseItem item.id
+                        , HA.disabled isDisabled
                         ]
-                        [ H.text "[Equip]" ]
+                        [ H.text "[Use]" ]
+                    , H.viewIf (Item.isEquippable item.kind) <|
+                        UI.button
+                            [ HE.onClick <| AskToEquipItem item.id ]
+                            [ H.text "[Equip]" ]
+                    ]
                 , H.span
                     [ HA.class "inventory-item-label" ]
                     [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
@@ -3098,61 +3359,102 @@ inventoryView _ player =
                 }
     in
     [ pageTitleView "Inventory"
-    , H.p [] [ H.text <| "Total value: $" ++ String.fromInt totalValue ]
-    , if Dict.isEmpty player.items then
-        H.p [] [ H.text "You have no items!" ]
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.p []
+            [ H.text <| "Total value: "
+            , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Items" ]
+        , if Dict.isEmpty player.items then
+            H.p [] [ H.text "You have no items!" ]
 
-      else
-        H.ul
-            [ HA.id "inventory-list" ]
-            (player.items
-                |> Dict.values
-                |> List.sortBy
-                    (\{ kind } ->
-                        ( Item.typeName (Item.type_ kind)
-                        , Item.baseValue kind
-                        , Item.name kind
+          else
+            H.ul []
+                (player.items
+                    |> Dict.values
+                    |> List.sortBy
+                        (\{ kind } ->
+                            ( Item.typeName (Item.type_ kind)
+                            , Item.baseValue kind
+                            , Item.name kind
+                            )
                         )
-                    )
-                |> List.map itemView
-            )
-    , H.h3
-        [ HA.id "inventory-equipment" ]
-        [ H.text "Equipment" ]
-    , H.div
-        [ HA.id "inventory-equipment-armor" ]
-        [ H.text "Armor: "
-        , case player.equippedArmor of
-            Nothing ->
-                H.text "None"
+                    |> List.map itemView
+                )
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Equipment" ]
+        , H.div []
+            [ UI.liBullet
+            , H.text "Armor: "
+            , H.span [ HA.class "text-green-100" ] <|
+                case player.equippedArmor of
+                    Nothing ->
+                        [ H.text "None" ]
 
-            Just armor ->
-                H.span []
-                    [ H.text <| Item.name armor.kind
-                    , H.button
-                        [ HE.onClick AskToUnequipArmor
-                        , HA.class "inventory-equipment-unequip-btn"
+                    Just armor ->
+                        [ H.text <| Item.name armor.kind
+                        , UI.button
+                            [ HE.onClick AskToUnequipArmor
+                            , HA.class "ml-[1ch]"
+                            ]
+                            [ H.text "[Unequip]" ]
                         ]
-                        [ H.text "[Unequip]" ]
-                    ]
-        ]
-    , H.h3
-        [ HA.id "inventory-stats" ]
-        [ H.text "Defence stats" ]
-    , H.ul
-        []
-        [ H.li [] [ H.text <| "Armor Class: " ++ String.fromInt armorClass ]
-        , H.li [] [ H.text <| "Damage Threshold: " ++ String.fromInt damageThreshold ]
-        , H.li [] [ H.text <| "Damage Resistance: " ++ String.fromInt damageResistance ]
-        ]
-    , H.h3
-        [ HA.id "inventory-stats" ]
-        [ H.text "Attack stats" ]
-    , H.ul
-        []
-        [ H.li [] [ H.text <| "Min Damage: " ++ String.fromInt attackStats.minDamage ]
-        , H.li [] [ H.text <| "Max Damage: " ++ String.fromInt attackStats.maxDamage ]
-        , H.li [] [ H.text <| "Chance to hit at target armor class 0: " ++ String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Defence stats" ]
+        , H.ul []
+            [ H.li []
+                [ UI.liBullet
+                , H.text "Armor Class: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt armorClass ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Damage Threshold: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt damageThreshold ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Damage Resistance: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt damageResistance ]
+                ]
+            ]
+        , H.h3
+            [ HA.class "text-green-300" ]
+            [ H.text "Attack stats" ]
+        , H.ul []
+            [ H.li []
+                [ UI.liBullet
+                , H.text "Min Damage: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt attackStats.minDamage ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Max Damage: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt attackStats.maxDamage ]
+                ]
+            , H.li []
+                [ UI.liBullet
+                , H.text "Chance to hit at target armor class 0: "
+                , H.span
+                    [ HA.class "text-green-100" ]
+                    [ H.text <| String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
+                ]
+            ]
         ]
     ]
 
@@ -3160,81 +3462,65 @@ inventoryView _ player =
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 messagesView currentTime zone _ player =
     [ pageTitleView "Messages"
-    , H.table [ HA.id "messages-table" ]
-        [ H.thead []
-            [ H.tr []
-                [ H.th
-                    [ HA.class "messages-unread"
-                    , HA.title "Unread"
+    , H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.table [ HA.id "messages-table" ]
+            [ H.thead []
+                [ H.tr []
+                    [ H.th [ HA.title "Unread" ] [ H.text "U" ]
+                    , H.th [] [ H.text "Summary" ]
+                    , H.th [] [ H.text "Date" ]
+                    , H.th [ HA.title "Remove" ] [ H.text "X" ]
                     ]
-                    [ H.text "U" ]
-                , H.th [ HA.class "messages-summary" ] [ H.text "Summary" ]
-                , H.th [ HA.class "messages-date" ] [ H.text "Date" ]
-                , H.th
-                    [ HA.class "messages-remove"
-                    , HA.title "Remove"
-                    ]
-                    [ H.text "✗" ]
                 ]
-            ]
-        , H.tbody []
-            (player.messages
-                |> Dict.values
-                |> List.sortBy (.id >> negate)
-                |> List.map
-                    (\message ->
-                        let
-                            isUnread : Bool
-                            isUnread =
-                                not message.hasBeenRead
+            , H.tbody []
+                (player.messages
+                    |> Dict.values
+                    |> List.sortBy (.id >> negate)
+                    |> List.map
+                        (\message ->
+                            let
+                                isUnread : Bool
+                                isUnread =
+                                    not message.hasBeenRead
 
-                            summary : String
-                            summary =
-                                Message.summary message
+                                summary : String
+                                summary =
+                                    Message.summary message
 
-                            relativeDate : String
-                            relativeDate =
-                                DateFormat.Relative.relativeTime
-                                    currentTime
-                                    message.date
-                        in
-                        H.tr
-                            [ HA.classList [ ( "is-unread", isUnread ) ]
-                            , HE.onClick <| OpenMessage message.id
-                            ]
-                            [ if isUnread then
-                                H.td
-                                    [ HA.class "messages-unread"
-                                    , HA.title "Unread"
+                                relativeDate : String
+                                relativeDate =
+                                    DateFormat.Relative.relativeTime
+                                        currentTime
+                                        message.date
+                            in
+                            H.tr
+                                [ HA.classList [ ( "text-green-100", isUnread ) ]
+                                , HE.onClick <| OpenMessage message.id
+                                ]
+                                [ if isUnread then
+                                    H.td [ HA.title "Unread" ] [ H.text "*" ]
+
+                                  else
+                                    H.td [] []
+                                , H.td
+                                    [ HA.title summary ]
+                                    [ H.text summary ]
+                                , H.td
+                                    [ HA.title <| Message.fullDate zone message ]
+                                    [ H.text relativeDate ]
+                                , H.td
+                                    [ TW.mod "hover" "text-orange"
+                                    , HA.title "Remove"
+                                    , HE.onClickStopPropagation <| AskToRemoveMessage message.id
                                     ]
-                                    [ H.text "*" ]
-
-                              else
-                                H.td [ HA.class "messages-unread" ] []
-                            , H.td
-                                [ HA.class "messages-summary"
-                                , HA.title summary
+                                    [ H.text "X" ]
                                 ]
-                                [ H.text summary ]
-                            , H.td
-                                [ HA.class "messages-date"
-                                , HA.title <| Message.fullDate zone message
-                                ]
-                                [ H.text relativeDate ]
-                            , H.td
-                                [ HA.class "messages-remove"
-                                , HA.title "Remove"
-                                , HE.onClickStopPropagation <| AskToRemoveMessage message.id
-                                ]
-                                [ H.text "✗" ]
-                            ]
-                    )
-            )
+                        )
+                )
+            ]
+        , H.viewIf (Dict.isEmpty player.messages) <|
+            H.div [] [ H.text "No messages right now!" ]
         ]
-    , H.viewIf (Dict.isEmpty player.messages) <|
-        H.div
-            [ HA.id "messages-empty-note" ]
-            [ H.text "No messages right now!" ]
     ]
 
 
@@ -3256,21 +3542,23 @@ messageView zone messageId _ player =
                         }
             in
             [ pageTitleView "Message"
-            , H.h3
-                [ HA.id "message-summary" ]
-                [ H.text <| Message.summary message ]
-            , H.div
-                [ HA.id "message-date" ]
-                [ H.text <| Message.fullDate zone message ]
-            , Message.content
-                [ HA.id "message-content" ]
-                perceptionLevel
-                message
-            , H.button
-                [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages)
-                , HA.id "message-back-button"
+            , H.div [ HA.class "flex flex-col gap-4" ]
+                [ H.div [ HA.class "flex flex-col items-start" ]
+                    [ H.h3
+                        [ HA.class "m-0 text-green-100 font-bold" ]
+                        [ H.text <| Message.summary message ]
+                    , H.div
+                        [ HA.class "text-green-300" ]
+                        [ H.text <| Message.fullDate zone message ]
+                    , UI.button
+                        [ HE.onClick <| GoToRoute (PlayerRoute Route.Messages) ]
+                        [ H.text "[Back]" ]
+                    ]
+                , Message.content
+                    [ HA.class "max-w-[70ch]" ]
+                    perceptionLevel
+                    message
                 ]
-                [ H.text "[Back]" ]
             ]
 
 
@@ -3285,7 +3573,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
 
                 FightStrategyHelp.Reference reference ->
                     H.span
-                        [ HA.class "fight-strategy-syntax-help-reference"
+                        [ HA.class "text-orange font-mono"
                         , HE.onMouseOver <| HoverItem <| HoveredFightStrategyReference reference
                         , HE.onMouseOut StopHoveringItem
                         ]
@@ -3294,7 +3582,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
         hoverInfo =
             case maybeHoveredItem of
                 Nothing ->
-                    { title = "Hover for help"
+                    { title = "Hover a [THING] for help"
                     , description = ""
                     }
 
@@ -3302,20 +3590,29 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
                     HoveredItem.text hoveredItem
     in
     [ pageTitleView "Fight Strategy syntax help"
-    , H.button
-        [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
-        [ H.text "[Back]" ]
-    , H.div
-        [ HA.class "fight-strategy-syntax-help-grid" ]
-        [ H.pre
-            [ HA.class "fight-strategy-syntax-help-cheatsheet" ]
-            (List.map viewMarkup FightStrategyHelp.help)
+    , H.div [ HA.class "flex flex-col gap-4 items-start" ]
+        [ UI.button
+            [ HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategy)) ]
+            [ H.text "[Back]" ]
         , H.div
-            [ HA.class "fight-strategy-syntax-help-hover" ]
-            [ H.h3 [] [ H.text hoverInfo.title ]
-            , H.pre
-                [ HA.class "fight-strategy-syntax-help-hover-description" ]
-                [ H.text hoverInfo.description ]
+            [ HA.class "flex flex-row gap-[2ch]" ]
+            [ H.div [ HA.class "w-[80ch]" ]
+                [ H.div []
+                    [ H.text "Your strategy needs to be of the shape "
+                    , H.span [ HA.class "text-green-100" ] [ H.text "[STRATEGY]" ]
+                    , H.text ", and its goal is to choose which "
+                    , H.span [ HA.class "text-green-100" ] [ H.text "[COMMAND]" ]
+                    , H.text " to do in your current turn. See below for your options:"
+                    ]
+                , H.pre [ HA.class "font-mono" ]
+                    (List.map viewMarkup FightStrategyHelp.help)
+                ]
+            , H.div [ HA.class "flex-1" ]
+                [ H.h3 [ HA.classList [ ( "text-orange pb-4", maybeHoveredItem /= Nothing ) ] ] [ H.text hoverInfo.title ]
+                , H.pre
+                    [ HA.class "font-sans whitespace-pre-wrap max-w-[60ch]" ]
+                    [ H.text hoverInfo.description ]
+                ]
             ]
         ]
     ]
@@ -3348,8 +3645,9 @@ settingsFightStrategyView fightStrategyText _ player =
         viewWarning : FightStrategy.ValidationWarning -> Html FrontendMsg
         viewWarning warning =
             H.li
-                [ HA.class "fight-strategy-warning" ]
-                [ H.text <|
+                [ TW.mod "hover" "text-green-100" ]
+                [ UI.liBullet
+                , H.text <|
                     case warning of
                         FightStrategy.ItemDoesntHeal itemKind ->
                             "Item doesn't heal: " ++ Item.name itemKind
@@ -3387,9 +3685,12 @@ settingsFightStrategyView fightStrategyText _ player =
                         _ ->
                             "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>"
             in
+            -- TODO when user clicks the dead end, splice it into the program
             H.li
-                [ HA.class "fight-strategy-dead-end" ]
-                [ H.text <| "- " ++ item ]
+                [ TW.mod "hover" "text-green-100" ]
+                [ UI.liBullet
+                , H.text item
+                ]
 
         deadEndCategorization : Parser.DeadEnd -> ( ( Int, Int ), String, String )
         deadEndCategorization deadEnd =
@@ -3417,8 +3718,8 @@ settingsFightStrategyView fightStrategyText _ player =
             )
 
         helpBtn =
-            H.button
-                [ HA.class "fight-strategy-help-btn"
+            UI.button
+                [ HA.class "ml-[1ch]"
                 , HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategySyntaxHelp))
                 ]
                 [ H.text "[Syntax cheatsheet]" ]
@@ -3445,72 +3746,101 @@ settingsFightStrategyView fightStrategyText _ player =
     in
     [ pageTitleView "Settings: Fight Strategy"
     , H.div
-        [ HA.class "fight-strategy-grid" ]
-        [ H.div [ HA.class "fight-strategy-examples" ]
-            (H.text "Examples: "
-                :: (FightStrategy.all
-                        |> List.map
-                            (\( name, strategy ) ->
-                                H.button
-                                    [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
-                                    , HA.class "fight-strategy-example"
-                                    ]
-                                    [ H.text name ]
-                            )
-                        |> List.intersperse (H.text ", ")
-                   )
-            )
-        , H.textarea
-            [ HE.onInput SetFightStrategyText
-            , HA.class "fight-strategy-textarea"
-            , HA.value fightStrategyText
-            ]
-            []
-        , firstDeadEnd
-            |> H.viewMaybe
-                (\{ row, col } ->
-                    H.div
-                        [ HA.class "fight-strategy-hovered-error"
-                        , cssVars
-                            [ ( "--error-row", String.fromInt row )
-                            , ( "--error-col", String.fromInt col )
-                            ]
-                        ]
-                        []
+        [ HA.class "flex flex-row gap-4" ]
+        [ H.div [ HA.class "flex flex-col" ]
+            [ H.div []
+                (H.text "Examples: "
+                    :: (FightStrategy.all
+                            |> List.map
+                                (\( name, strategy ) ->
+                                    UI.button
+                                        [ HE.onClick <| SetFightStrategyText <| FightStrategy.toString strategy
+                                        , HA.class "normal-case"
+                                        , TW.mod "before" "content-['[']"
+                                        , TW.mod "after" "content-[']']"
+                                        ]
+                                        [ H.text name ]
+                                )
+                            |> List.intersperse (H.text ", ")
+                       )
                 )
-        , H.div
-            [ HA.class "fight-strategy-info" ]
-            (H.div
-                [ HA.class "fight-strategy-info-heading" ]
+            , H.div [ HA.class "relative" ]
+                -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
+                [ UI.textarea
+                    [ HE.onInput SetFightStrategyText
+                    , HA.class "!bg-green-800 w-[70ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre font-mono"
+                    , HA.value fightStrategyText
+                    ]
+                    []
+                , firstDeadEnd
+                    |> H.viewMaybe
+                        (\{ row, col } ->
+                            H.div
+                                [ HA.class "absolute left-4 top-4 pointer-events-none select-none w-[24px] h-4 -ml-0.5 pl-0.5 border-l border-l-orange leading-[18px]"
+                                , HA.class "bg-[linear-gradient(90deg,var(--orange-transparent)_0%,var(--orange-fully-transparent)_100%)]"
+                                , HA.class "translate-x-[calc((var(--error-col)-1)*8px+1px)]"
+                                , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px+1px)]"
+                                , cssVars
+                                    [ ( "--error-row", String.fromInt row )
+                                    , ( "--error-col", String.fromInt col )
+                                    ]
+                                ]
+                                []
+                        )
+                ]
+            , H.div
+                [ HA.class "flex flex-row gap-[1ch]" ]
+                [ UI.button
+                    [ HA.disabled <| not hasTextChanged || Result.isErr parseResult
+                    , parseResult
+                        |> Result.toMaybe
+                        |> HA.attributeMaybe
+                            (\strategy ->
+                                HE.onClick <|
+                                    AskToSetFightStrategy ( strategy, fightStrategyText )
+                            )
+                    ]
+                    [ H.text "[Save]" ]
+                , UI.button
+                    [ HA.disabled <| not hasTextChanged
+                    , HE.onClick <| SetFightStrategyText player.fightStrategyText
+                    ]
+                    [ H.text "[Reset to saved]" ]
+                ]
+            ]
+        , H.div [ HA.class "flex flex-col gap-4 max-w-[50ch]" ]
+            (H.div []
                 [ H.text "Info:"
                 , helpBtn
                 ]
                 :: (if Result.isOk parseResult then
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
-                            [ H.text "Your strategy is OK" ]
+                        [ H.p []
+                            [ H.text "Your strategy is "
+                            , H.span [ HA.class "text-green-100" ] [ H.text "OK" ]
+                            ]
                         ]
 
                     else
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
-                            [ H.text "Your strategy is not finished yet." ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        [ H.p []
+                            [ H.text "Your strategy is "
+                            , H.span
+                                [ HA.class "text-orange" ]
+                                [ H.text "not finished yet." ]
+                            ]
+                        , H.p []
                             [ H.text "See the yellow indicator on the left and the notes below to figure out where the problem is." ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        , H.p []
                             [ H.text "If needed, ask on Discord in the "
                             , H.a
                                 [ HA.href discordFightStrategiesChannelInviteLink
                                 , HA.target "_blank"
-                                , HA.class "fight-strategy-info-link"
+                                , HA.class "text-green-100 whitespace-pre"
+                                , TW.mod "hover" "text-orange"
                                 ]
                                 [ H.text "#fight-strategies" ]
                             , H.text " channel."
                             ]
-                        , H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        , H.p []
                             [ H.text <|
                                 if String.isEmpty (String.trim fightStrategyText) then
                                     "Start with:"
@@ -3528,7 +3858,7 @@ settingsFightStrategyView fightStrategyText _ player =
                                                 ":"
                                            )
                             ]
-                        , H.ul [ HA.class "fight-strategy-dead-ends" ]
+                        , H.ul []
                             (deadEnds
                                 |> List.sortBy deadEndCategorization
                                 |> List.map viewDeadEnd
@@ -3539,61 +3869,39 @@ settingsFightStrategyView fightStrategyText _ player =
                         []
 
                     else
-                        [ H.p
-                            [ HA.class "fight-strategy-info-paragraph" ]
+                        [ H.p [ HA.class "text-green-300" ]
                             [ H.text "Warnings:" ]
-                        , H.ul
-                            [ HA.class "fight-strategy-warnings" ]
+                        , H.ul []
                             (List.map viewWarning warnings)
                         ]
                    )
             )
-        ]
-    , H.div
-        [ HA.class "fight-strategy-buttons" ]
-        [ H.button
-            [ HA.class "fight-strategy-save-btn"
-            , HA.disabled <| not hasTextChanged || Result.isErr parseResult
-            , parseResult
-                |> Result.toMaybe
-                |> HA.attributeMaybe
-                    (\strategy ->
-                        HE.onClick <|
-                            AskToSetFightStrategy ( strategy, fightStrategyText )
-                    )
-            ]
-            [ H.text "[Save]" ]
-        , H.button
-            [ HA.class "fight-strategy-reset-btn"
-            , HA.disabled <| not hasTextChanged
-            , HE.onClick <| SetFightStrategyText player.fightStrategyText
-            ]
-            [ H.text "[Reset to saved]" ]
         ]
     ]
 
 
 newsItemView : Time.Zone -> News.Item -> Html FrontendMsg
 newsItemView zone { date, title, text } =
-    H.div
-        [ HA.class "news-item" ]
+    H.div []
         [ H.h3
-            [ HA.class "news-item-title" ]
+            [ HA.class "text-green-100 font-bold" ]
             [ H.text title ]
         , H.time
-            [ HA.class "news-item-date" ]
+            [ HA.class "text-green-300" ]
             [ date
                 |> News.formatDate zone
                 |> H.text
             ]
-        , News.formatText "news-item-text" text
+        , News.formatText "max-w-[60ch]" text
         ]
 
 
 newsView : Time.Zone -> List (Html FrontendMsg)
 newsView zone =
-    pageTitleView "News"
-        :: List.map (newsItemView zone) News.items
+    [ pageTitleView "News"
+    , H.div [ HA.class "flex flex-col gap-15" ]
+        (List.map (newsItemView zone) News.items)
+    ]
 
 
 fightView : Maybe Fight.Info -> PlayerData -> CPlayer -> List (Html FrontendMsg)
@@ -3619,34 +3927,34 @@ fightView maybeFight _ player =
                         }
             in
             [ pageTitleView "Fight"
-            , H.div []
-                [ H.text <|
-                    "Attacker: "
-                        ++ Fight.opponentName fight.attacker
-                        ++ (if youAreAttacker then
-                                " (you)"
+            , H.div [ HA.class "flex flex-col gap-4" ]
+                [ H.div []
+                    [ H.text <|
+                        "Attacker: "
+                            ++ Fight.opponentName fight.attacker
+                            ++ (if youAreAttacker then
+                                    " (you)"
 
-                            else
-                                ""
-                           )
-                ]
-            , H.div []
-                [ H.text <|
-                    "Target: "
-                        ++ Fight.opponentName fight.target
-                        ++ (if youAreAttacker then
-                                ""
+                                else
+                                    ""
+                               )
+                    ]
+                , H.div []
+                    [ H.text <|
+                        "Target: "
+                            ++ Fight.opponentName fight.target
+                            ++ (if youAreAttacker then
+                                    ""
 
-                            else
-                                " (you)"
-                           )
+                                else
+                                    " (you)"
+                               )
+                    ]
+                , Data.Fight.View.view perceptionLevel fight player.name
+                , UI.button
+                    [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder) ]
+                    [ H.text "[Back]" ]
                 ]
-            , Data.Fight.View.view perceptionLevel fight player.name
-            , H.button
-                [ HE.onClick <| GoToRoute (PlayerRoute Route.Ladder)
-                , HA.id "fight-back-button"
-                ]
-                [ H.text "[Back]" ]
             ]
 
 
@@ -3663,23 +3971,36 @@ ladderLoadingView =
 worldInfoView : WorldInfo -> Html FrontendMsg
 worldInfoView data =
     H.ul []
-        [ H.li [] [ H.text <| "Name: " ++ data.name ]
-        , H.li []
-            [ H.text <|
-                "Players: "
-                    ++ String.fromInt data.playersCount
+        [ H.li []
+            [ H.text "Name: "
+            , H.span [ HA.class "text-green-100" ] [ H.text data.name ]
             ]
         , H.li []
-            [ H.text <|
-                "Tick frequency: "
-                    ++ Tick.curveToString data.tickPerIntervalCurve
-                    ++ " ticks every "
-                    ++ Time.intervalToString data.tickFrequency
+            [ H.text "Players: "
+            , H.span [ HA.class "text-green-100" ] [ H.text (String.fromInt data.playersCount) ]
             ]
         , H.li []
-            [ H.text <|
-                "Vendor restock frequency: every "
-                    ++ Time.intervalToString data.vendorRestockFrequency
+            [ H.text "Tick frequency: "
+            , H.span [ HA.class "text-green-100" ]
+                [ case data.tickPerIntervalCurve of
+                    Tick.Linear n ->
+                        H.text <| String.fromInt n ++ " ticks every " ++ Time.intervalToString data.tickFrequency
+
+                    Tick.QuarterAndRest { quarter, rest } ->
+                        H.text <|
+                            String.fromInt quarter
+                                ++ " ticks every "
+                                ++ Time.intervalToString data.tickFrequency
+                                ++ " until "
+                                ++ String.fromInt (Tick.limit // 4)
+                                ++ " ticks are reached, then "
+                                ++ String.fromInt rest
+                ]
+            ]
+        , H.li []
+            [ H.text "Vendor restock frequency: "
+            , H.span [ HA.class "text-green-100" ]
+                [ H.text <| "every " ++ Time.intervalToString data.vendorRestockFrequency ]
             ]
         ]
 
@@ -3687,15 +4008,17 @@ worldInfoView data =
 aboutWorldView : PlayerData -> CPlayer -> List (Html FrontendMsg)
 aboutWorldView data _ =
     [ pageTitleView <| "About world: " ++ data.worldName
-    , worldInfoView
-        { name = data.worldName
-        , description = data.description
-        , startedAt = data.startedAt
-        , tickFrequency = data.tickFrequency
-        , tickPerIntervalCurve = data.tickPerIntervalCurve
-        , vendorRestockFrequency = data.vendorRestockFrequency
-        , playersCount = List.length data.otherPlayers + 1
-        }
+    , H.div [ HA.class "p-[2ch]" ]
+        [ worldInfoView
+            { name = data.worldName
+            , description = data.description
+            , startedAt = data.startedAt
+            , tickFrequency = data.tickFrequency
+            , tickPerIntervalCurve = data.tickPerIntervalCurve
+            , vendorRestockFrequency = data.vendorRestockFrequency
+            , playersCount = List.length data.otherPlayers + 1
+            }
+        ]
     ]
 
 
@@ -3713,41 +4036,26 @@ ladderView data loggedInPlayer =
 
 playerLadderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
 playerLadderTableView players loggedInPlayer =
-    let
-        cantFight : String -> Html FrontendMsg
-        cantFight message =
-            H.td
-                [ HA.class "ladder-fight"
-                , HA.title message
-                ]
-                [ H.text "-" ]
-    in
-    H.table [ HA.id "ladder-table" ]
+    H.table
+        []
         [ H.thead []
             [ H.tr []
                 [ H.th
-                    [ HA.class "ladder-rank"
+                    [ HA.class "text-right"
                     , HA.title "Rank"
                     ]
                     [ H.text "#" ]
-                , H.th [ HA.class "ladder-fight" ] [ H.text "Fight" ]
-                , H.th [ HA.class "ladder-name" ] [ H.text "Name" ]
+                , H.th [] [ H.text "Fight" ]
+                , H.th [] [ H.text "Name" ]
+                , H.th [ HA.title "Health status" ] [ H.text "Status" ]
+                , H.th [ HA.class "text-right" ] [ H.text "Lvl" ]
                 , H.th
-                    [ HA.class "ladder-status"
-                    , HA.title "Health status"
-                    ]
-                    [ H.text "Status" ]
-                , H.th [ HA.class "ladder-lvl" ] [ H.text "Lvl" ]
-
-                --, H.th [HA.class "ladder-city"] [ H.text "City" ] -- city
-                --, H.th [HA.class "ladder-flag"] [] -- flag
-                , H.th
-                    [ HA.class "ladder-wins"
+                    [ HA.class "text-right"
                     , HA.title "Wins"
                     ]
                     [ H.text "W" ]
                 , H.th
-                    [ HA.class "ladder-losses"
+                    [ HA.class "text-right"
                     , HA.title "Losses"
                     ]
                     [ H.text "L" ]
@@ -3757,12 +4065,25 @@ playerLadderTableView players loggedInPlayer =
             (players
                 |> List.indexedMap
                     (\i player ->
+                        let
+                            isYou =
+                                loggedInPlayer.name == player.name
+
+                            cantFight : String -> Html FrontendMsg
+                            cantFight message =
+                                H.td
+                                    [ HA.class "text-green-300 cursor-not-allowed"
+                                    , HA.classList [ ( "bg-green-800", isYou ) ]
+                                    , HA.title message
+                                    ]
+                                    [ H.text "-" ]
+                        in
                         H.tr
-                            [ HA.classList
-                                [ ( "is-player", loggedInPlayer.name == player.name ) ]
+                            [ HA.classList [ ( "text-green-100", isYou ) ]
                             ]
                             [ H.td
-                                [ HA.class "ladder-rank"
+                                [ HA.class "text-right"
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Rank"
                                 ]
                                 [ H.text <| String.fromInt <| i + 1 ]
@@ -3780,17 +4101,19 @@ playerLadderTableView players loggedInPlayer =
 
                               else
                                 H.td
-                                    [ HA.class "ladder-fight"
-                                    , HE.onClick <| AskToFight player.name
+                                    [ HE.onClick <| AskToFight player.name
+                                    , HA.class "cursor-pointer bg-green-800 text-green-100"
+                                    , HA.classList [ ( "bg-green-800", isYou ) ]
+                                    , TW.mod "hover" "text-orange"
                                     ]
                                     [ H.text "Fight" ]
                             , H.td
-                                [ HA.class "ladder-name"
+                                [ HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Name"
                                 ]
                                 [ H.text player.name ]
                             , H.td
-                                [ HA.class "ladder-status"
+                                [ HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title <|
                                     if loggedInPlayer.special.perception <= 1 then
                                         "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
@@ -3800,17 +4123,20 @@ playerLadderTableView players loggedInPlayer =
                                 ]
                                 [ H.text <| HealthStatus.label player.healthStatus ]
                             , H.td
-                                [ HA.class "ladder-lvl"
+                                [ HA.class "text-right"
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Level"
                                 ]
                                 [ H.text <| String.fromInt player.level ]
                             , H.td
-                                [ HA.class "ladder-wins"
+                                [ HA.class "text-right"
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Wins"
                                 ]
                                 [ H.text <| String.fromInt player.wins ]
                             , H.td
-                                [ HA.class "ladder-losses"
+                                [ HA.class "text-right"
+                                , HA.classList [ ( "bg-green-800", isYou ) ]
                                 , HA.title "Losses"
                                 ]
                                 [ H.text <| String.fromInt player.losses ]
@@ -3822,7 +4148,7 @@ playerLadderTableView players loggedInPlayer =
 
 adminLadderTableView : List SPlayer -> Html FrontendMsg
 adminLadderTableView players =
-    H.table [ HA.id "ladder-table" ]
+    H.table []
         [ H.thead []
             [ H.tr []
                 [ H.th
@@ -3926,10 +4252,8 @@ contentUnavailableView reason =
         "Content unavailable ("
             ++ reason
             ++ "). This is most likely a bug. We should have redirected you someplace else. Could you report this to the developers please?"
-    , H.button
-        [ HE.onClick <| GoToRoute News
-        , HA.id "message-back-button"
-        ]
+    , UI.button
+        [ HE.onClick <| GoToRoute News ]
         [ H.text "[Back]" ]
     ]
 
@@ -3955,42 +4279,14 @@ notInitializedView model =
 
 loadingNavView : Html FrontendMsg
 loadingNavView =
-    H.div
-        [ HA.id "loading-nav" ]
+    H.div []
         [ H.text "Loading..."
-        , H.span [ HA.class "loading-cursor" ] []
+        , H.span
+            [ HA.class "loading-cursor"
+            , HA.class "inline-block w-[1ch] h-4 -mb-0.5 ml-0.5"
+            ]
+            []
         ]
-
-
-view_ : Model -> Html FrontendMsg
-view_ model =
-    let
-        worldNames : List World.Name
-        worldNames =
-            model.worlds
-                |> Maybe.withDefault []
-                |> List.map .name
-
-        leftNav =
-            case model.worldData of
-                IsAdmin _ ->
-                    [ alertMessageView model.alertMessage
-                    , adminLinksView model.route
-                    ]
-
-                IsPlayer data ->
-                    [ alertMessageView model.alertMessage
-                    , playerInfoView data.player
-                    , loggedInLinksView data.player model.route
-                    ]
-
-                NotLoggedIn ->
-                    [ loginFormView worldNames model.loginForm
-                    , alertMessageView model.alertMessage
-                    , loggedOutLinksView model.route
-                    ]
-    in
-    appView { leftNav = leftNav } model
 
 
 alertMessageView : Maybe String -> Html FrontendMsg
@@ -3999,7 +4295,7 @@ alertMessageView maybeMessage =
         |> H.viewMaybe
             (\message ->
                 H.div
-                    [ HA.id "alert-message" ]
+                    [ HA.class "text-orange" ]
                     [ H.text message ]
             )
 
@@ -4007,38 +4303,53 @@ alertMessageView maybeMessage =
 loginFormView : List World.Name -> Auth Plaintext -> Html FrontendMsg
 loginFormView worlds auth =
     let
-        formId =
-            "login-form"
+        input attrs children =
+            UI.input
+                (HA.class "text-green-100 w-[18ch] font-extraBold"
+                    :: TW.mod "focus" "bg-green-900"
+                    :: attrs
+                )
+                children
     in
     H.form
-        [ HA.id formId
+        [ HA.class "w-[20ch]"
         , HE.onSubmit Login
         ]
-        [ H.input
-            [ HA.id "login-name-input"
-            , HA.value auth.name
+        [ input
+            [ HA.value auth.name
             , HA.placeholder "Username_______________"
             , HE.onInput SetAuthName
             ]
             []
-        , H.input
-            [ HA.id "login-password-input"
-            , HA.type_ "password"
+        , input
+            [ HA.type_ "password"
             , HA.value <| Auth.unwrap auth.password
             , HA.placeholder "Password_______________"
             , HE.onInput SetAuthPassword
             ]
             []
         , H.div
-            [ HA.class "login-world-select-label" ]
+            [ HA.class "mt-5" ]
             [ H.text "World: " ]
         , H.div
-            [ HA.class "login-world-select-wrapper" ]
+            [ HA.class "select-wrapper"
+            , HA.class "grid items-center relative w-[20ch] rounded cursor-pointer bg-green-200 mt-2  text-black"
+            , TW.mod "after" "justify-self-end -translate-y-0.5 rotate-180 px-2 text-black"
+            ]
             [ H.select
                 [ HE.onChange SetAuthWorld
-                , HA.class "login-world-select"
+                , HA.class "select"
+                , HA.class "peer appearance-none bg-transparent border-0 m-0 py-1 pl-2 pr-8 w-full z-[1] outline-none"
                 ]
-                (("" :: worlds)
+                (worlds
+                    |> List.sortBy
+                        (\worldName ->
+                            if worldName == Logic.mainWorldName then
+                                0
+
+                            else
+                                1
+                        )
                     |> List.map
                         (\worldName ->
                             H.option
@@ -4048,19 +4359,17 @@ loginFormView worlds auth =
                                 [ H.text worldName ]
                         )
                 )
-            , H.span [ HA.class "login-world-select-focus" ] []
+            , H.span
+                [ TW.mod "peer-focus" "absolute inset-[-1px] border-2 border-green-100 rounded-[inherit]" ]
+                []
             ]
         , H.div
-            [ HA.id "login-form-buttons" ]
-            [ H.button
-                [ HA.id "login-button"
-                , HE.onClickPreventDefault Login
-                ]
+            [ HA.class "mt-4 flex justify-between" ]
+            [ UI.button
+                [ HE.onClickPreventDefault Login ]
                 [ H.text "[ Login ]" ]
-            , H.button
-                [ HA.id "register-button"
-                , HE.onClickPreventDefault Register
-                ]
+            , UI.button
+                [ HE.onClickPreventDefault Register ]
                 [ H.text "[ Register ]" ]
             ]
         ]
@@ -4089,7 +4398,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     )
 
                 LinkIn { route, isActive } ->
-                    ( H.button
+                    ( UI.button
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
                       , HA.attributeIf (isActive currentRoute) <| HA.class "active"
@@ -4098,7 +4407,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     )
 
                 LinkMsg msg ->
-                    ( H.button
+                    ( UI.button
                     , [ HE.onClick msg
                       , HA.attributeMaybe HA.title tooltip
                       , HA.disabled disabled
@@ -4107,9 +4416,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
     in
     tag
         (HA.class "link"
-            :: HA.classList
-                [ ( "dimmed", dimmed )
-                ]
+            :: HA.classList [ ( "dimmed", dimmed ) ]
             :: linkAttrs
         )
         [ H.span
@@ -4252,10 +4559,7 @@ loggedInLinksView player currentRoute =
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in
-    H.div
-        [ HA.id "logged-in-links"
-        , HA.class "links"
-        ]
+    H.div []
         (List.map (linkView currentRoute) links)
 
 
@@ -4267,23 +4571,16 @@ adminLinksView currentRoute =
             , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
             , linkMsg "Import" ImportButtonClicked Nothing False
             , linkMsg "Export" AskForExport Nothing False
-            , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]
     in
-    H.div
-        [ HA.id "logged-in-links"
-        , HA.class "links"
-        ]
+    H.div []
         (List.map (linkView currentRoute) links)
 
 
 loggedOutLinksView : Route -> Html FrontendMsg
 loggedOutLinksView currentRoute =
-    H.div
-        [ HA.id "logged-out-links"
-        , HA.class "links"
-        ]
+    H.div []
         ([ linkMsg "Refresh" Refresh Nothing False
          , linkIn "Map" Map Nothing False
          , linkIn "Worlds" WorldsList Nothing False
@@ -4294,17 +4591,14 @@ loggedOutLinksView currentRoute =
 
 commonLinksView : Route -> Html FrontendMsg
 commonLinksView currentRoute =
-    H.div
-        [ HA.id "common-links"
-        , HA.class "links"
-        ]
+    H.div []
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
          , linkOut "Discord" "https://discord.gg/SxymXxvehS" Nothing False
          , linkOut "Twitter" "https://twitter.com/NuAshworld" Nothing False
          , linkOut "GitHub" "https://github.com/Janiczek/nu-ashworld" Nothing False
          , linkOut "Reddit" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "Donate" "https://patreon.com/janiczek" Nothing False
+         , linkOut "Donate" "https://github.com/sponsors/Janiczek" Nothing False
          ]
             |> List.map (linkView currentRoute)
         )
@@ -4313,8 +4607,7 @@ commonLinksView currentRoute =
 adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)
 adminWorldsListView newWorldName newWorldFast data =
     [ pageTitleView "Admin :: Worlds"
-    , H.div
-        [ HA.id "admin-worlds-list" ]
+    , H.div []
         [ H.table []
             [ H.thead []
                 [ H.tr []
@@ -4330,10 +4623,10 @@ adminWorldsListView newWorldName newWorldFast data =
                             H.tr [ HA.class "world" ]
                                 [ H.td [] [ H.text worldName ]
                                 , H.td []
-                                    [ H.button
+                                    [ UI.button
                                         [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldActivity worldName))) ]
                                         [ H.text "[Activity]" ]
-                                    , H.button
+                                    , UI.button
                                         [ HE.onClick (GoToRoute (AdminRoute (Route.AdminWorldHiscores worldName))) ]
                                         [ H.text "[Hiscores]" ]
                                     ]
@@ -4342,26 +4635,19 @@ adminWorldsListView newWorldName newWorldFast data =
                 )
             ]
         ]
-    , H.div [ HA.id "admin-new-world-form" ]
-        [ H.input
+    , H.div []
+        [ UI.input
             [ HE.onInput SetAdminNewWorldName
             , HA.placeholder "New world name"
             , HA.value newWorldName
             ]
             []
-        , H.label
-            [ HA.for "admin-new-world-fast-checkbox"
-            , HE.onClick ToggleAdminNewWorldFast
-            ]
-            [ H.input
-                [ HA.type_ "checkbox"
-                , HA.id "admin-new-world-fast-checkbox"
-                , HA.checked newWorldFast
-                ]
-                []
-            , H.text "Fast?"
-            ]
-        , H.button
+        , UI.checkbox
+            { isOn = newWorldFast
+            , label = "Fast?"
+            , toggle = SetAdminNewWorldFast
+            }
+        , UI.button
             [ HE.onClick AskToCreateNewWorld
             , HA.disabled (Dict.member newWorldName data.worlds)
             ]
@@ -4382,7 +4668,7 @@ adminWorldActivityView lastTenToBackendMsgs worldName data =
         Just _ ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
             , H.h3 [] [ H.text "Last 10 messages" ]
-            , H.table [ HA.id "admin-last-ten-msgs-table" ]
+            , H.table []
                 (H.thead []
                     [ H.tr []
                         [ H.th [] [ H.text "World" ]
@@ -4452,8 +4738,7 @@ adminWorldHiscoresView worldName data =
                         ]
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
-            , H.div
-                [ HA.id "admin-hiscores-content" ]
+            , H.div []
                 [ H.ul []
                     (List.map viewMaxBy
                         [ ( "Most money", .caps )
@@ -4503,111 +4788,94 @@ playerInfoView player =
 createdPlayerInfoView : CPlayer -> Html FrontendMsg
 createdPlayerInfoView player =
     H.div
-        [ HA.id "player-info" ]
-        [ H.div [ HA.class "player-stat-label" ] [ H.text "Name:" ]
+        [ HA.class "grid grid-cols-2" ]
+        [ H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Name:" ]
         , H.div
-            [ HA.classList
-                [ ( "player-stat-value", True )
-                , ( "emphasized", True )
-                ]
-            ]
+            [ HA.class "col-start-2 text-green-100" ]
             [ H.text player.name ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Hitpoints"
             ]
             [ H.text "HP:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.hp ++ "/" ++ String.fromInt player.maxHp ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-2" ]
+            [ "{HP}/{MAXHP}"
+                |> String.replace "{HP}" (String.fromInt player.hp)
+                |> String.replace "{MAXHP}" (String.fromInt player.maxHp)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Experience points"
             ]
             [ H.text "XP:" ]
-        , H.div [ HA.class "player-stat-value" ]
+        , H.div [ HA.class "col-start-2" ]
             [ H.span [] [ H.text <| String.fromInt player.xp ]
             , H.span
-                [ HA.class "deemphasized" ]
+                [ HA.class "text-green-300" ]
                 [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
             ]
-        , H.div [ HA.class "player-stat-label" ] [ H.text "Level:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Level:" ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Wins/Losses"
             ]
             [ H.text "W/L:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.wins ++ "/" ++ String.fromInt player.losses ]
-        , H.div [ HA.class "player-stat-label" ] [ H.text "Caps:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| "$" ++ String.fromInt player.caps ]
         , H.div
-            [ HA.class "player-stat-label"
+            [ HA.class "col-start-2" ]
+            [ "{WINS}/{LOSSES}"
+                |> String.replace "{WINS}" (String.fromInt player.wins)
+                |> String.replace "{LOSSES}" (String.fromInt player.losses)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ H.text "Caps:" ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ "${CAPS}"
+                |> String.replace "{CAPS}" (String.fromInt player.caps)
+                |> H.text
+            ]
+        , H.div
+            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
             , HA.title "Ticks"
             ]
             [ H.text "Ticks:" ]
-        , H.div [ HA.class "player-stat-value" ] [ H.text <| String.fromInt player.ticks ]
+        , H.div
+            [ HA.class "col-start-2" ]
+            [ H.text <| String.fromInt player.ticks ]
         ]
 
 
-stylesLinkView : Html msg
-stylesLinkView =
-    H.node "link"
-        [ HA.rel "stylesheet"
-        , HA.href <| "/styles/app.css?v=" ++ Version.version
-        ]
-        []
-
-
-favicon16View : Html msg
-favicon16View =
-    H.node "link"
-        [ HA.rel "icon"
-        , HA.href "/images/favicon-16.png"
-        ]
-        []
-
-
-favicon32View : Html msg
-favicon32View =
-    H.node "link"
-        [ HA.rel "icon"
-        , HA.href "/images/favicon-32.png"
-        ]
-        []
-
-
-genericFaviconView : Html msg
-genericFaviconView =
-    H.node "link"
-        [ HA.rel "shortcut icon"
-        , HA.type_ "image/png"
-        , HA.href "/images/favicon-392.png"
-        ]
-        []
-
-
-genericFavicon2View : Html msg
-genericFavicon2View =
-    H.node "link"
-        [ HA.rel "apple-touch-icon"
-        , HA.href "/images/favicon-392.png"
-        ]
-        []
-
-
-logoView : Html msg
-logoView =
-    H.div [ HA.id "logo-wrapper" ]
+logoView : Model -> Html msg
+logoView model =
+    H.div [ HA.class "flex flex-col items-end" ]
         [ H.img
             [ HA.src "/images/logo-black-small.png"
             , HA.alt "NuAshworld Logo"
             , HA.title "NuAshworld - go to homepage"
-            , HA.id "logo"
+            , HA.class
+                (if isPlayer model || isAdmin model then
+                    "filter-logo-active"
+
+                 else
+                    "filter-logo-inactive"
+                )
             , HA.width 190
             , HA.height 36
             ]
             []
         , H.div
-            [ HA.id "version"
+            [ HA.class "text-green-300"
             , HA.title "Game version"
             ]
             [ H.text Version.version ]

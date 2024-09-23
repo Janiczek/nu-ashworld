@@ -1,0 +1,54 @@
+:root {
+    /* Calculated with https://codepen.io/sosuke/pen/Pjoqqp */
+    --filter-logo-inactive: invert(42%) sepia(85%) saturate(1707%) hue-rotate(88deg) brightness(102%) contrast(112%);
+    --filter-logo-active: invert(71%) sepia(54%) saturate(3327%) hue-rotate(60deg) brightness(106%) contrast(118%) drop-shadow(0px 0px 8px var(--green-300));
+}
+
+/* Safari hack courtesy https://browserstrangeness.github.io/
+
+Disable the flicker animation in Safari, since it behaves very weird and
+doesn't look as nice as in Chrome/Firefox. 
+*/
+_::-webkit-full-page-media,
+_:future,
+:root .filter-logo-active {
+    animation: none;
+}
+
+@keyframes flicker {
+
+    0%,
+    19%,
+    26%,
+    46%,
+    65%,
+    82%,
+    86%,
+    87%,
+    90%,
+    95% {
+        filter: var(--filter-logo-inactive);
+    }
+
+    20%,
+    25%,
+    47%,
+    64%,
+    83%,
+    85%,
+    88%,
+    89%,
+    96%,
+    100% {
+        filter: var(--filter-logo-active);
+    }
+}
+
+.filter-logo-inactive {
+    filter: var(--filter-logo-inactive);
+}
+
+.filter-logo-active {
+    filter: var(--filter-logo-active);
+    animation: flicker 2s linear 1;
+}

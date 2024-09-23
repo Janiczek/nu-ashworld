@@ -47,6 +47,7 @@ type Condition
     | And Condition Condition
     | Operator OperatorData
     | OpponentIsPlayer
+    | OpponentIsNPC
 
 
 type alias OperatorData =
@@ -129,6 +130,9 @@ conditionToString condition =
 
         OpponentIsPlayer ->
             "opponent is player"
+
+        OpponentIsNPC ->
+            "opponent is NPC"
 
         Operator { op, value, number_ } ->
             valueToString value
@@ -290,6 +294,11 @@ encodeCondition condition =
                 [ ( "type", JE.string "OpponentIsPlayer" )
                 ]
 
+        OpponentIsNPC ->
+            JE.object
+                [ ( "type", JE.string "OpponentIsNPC" )
+                ]
+
         Operator { op, value, number_ } ->
             JE.object
                 [ ( "type", JE.string "Operator" )
@@ -399,6 +408,9 @@ conditionDecoder =
 
                     "OpponentIsPlayer" ->
                         JD.succeed OpponentIsPlayer
+
+                    "OpponentIsNPC" ->
+                        JD.succeed OpponentIsNPC
 
                     "Operator" ->
                         JD.succeed OperatorData
@@ -574,6 +586,9 @@ extractItems strategy =
                     fromCondition c1 ++ fromCondition c2
 
                 OpponentIsPlayer ->
+                    []
+
+                OpponentIsNPC ->
                     []
 
                 Operator { value } ->

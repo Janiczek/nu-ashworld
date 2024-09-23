@@ -4,6 +4,7 @@ module Admin exposing
     , encodeToBackendMsg
     )
 
+import BiDict
 import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.FightStrategy as FightStrategy
@@ -44,11 +45,12 @@ backendModelDecoderV1 seed =
     JD.map
         (\world ->
             { worlds = Dict.singleton Logic.mainWorldName world
-            , loggedInPlayers = Dict.empty
+            , loggedInPlayers = BiDict.empty
             , time = Time.millisToPosix 0
             , adminLoggedIn = Nothing
             , lastTenToBackendMsgs = Queue.empty
             , randomSeed = seed
+            , playerDataCache = Dict.empty
             }
         )
         World.decoder
@@ -60,11 +62,12 @@ backendModelDecoderV2 seed =
     JD.map
         (\worlds ->
             { worlds = worlds
-            , loggedInPlayers = Dict.empty
+            , loggedInPlayers = BiDict.empty
             , time = Time.millisToPosix 0
             , adminLoggedIn = Nothing
             , lastTenToBackendMsgs = Queue.empty
             , randomSeed = seed
+            , playerDataCache = Dict.empty
             }
         )
         (JD.field "worlds" (Dict.decoder JD.string World.decoder))
