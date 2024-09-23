@@ -1,0 +1,7 @@
+.town-store-grid {
+    grid-template-areas:
+        "player-name       player-name         vendor-name         vendor-name"
+        "player-kept-caps  player-traded-caps  vendor-traded-caps  vendor-kept-caps"
+        "player-kept-items player-traded-items vendor-traded-items vendor-kept-items"
+        "barter-reset-btn  player-traded-value vendor-traded-value barter-confirm-btn";
+}

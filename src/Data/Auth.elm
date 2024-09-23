@@ -210,6 +210,14 @@ selectDefaultWorld worlds auth =
     { auth
         | worldName =
             worlds
+                |> List.sortBy
+                    (\world ->
+                        if world.name == Logic.mainWorldName then
+                            0
+
+                        else
+                            1
+                    )
                 |> List.head
                 |> Maybe.map .name
                 |> Maybe.withDefault auth.worldName

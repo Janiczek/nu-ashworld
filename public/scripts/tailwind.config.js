@@ -16,6 +16,7 @@ export const theme = {
             200: "#00C000",
             100: "#3CF800",
             //
+            "800-half-transparent": "rgba(16, 36, 12, 0.5)",
             "300-half-transparent": "rgba(0, 124, 0, 0.5)",
         },
         orange: {

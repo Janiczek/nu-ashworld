@@ -2004,7 +2004,7 @@ townStoreView barter location world player =
                 resetBtn : Html FrontendMsg
                 resetBtn =
                     UI.button
-                        [ HA.id "town-store-reset-btn"
+                        [ HA.style "grid-area" "barter-reset-btn"
                         , HE.onClick <| BarterMsg ResetBarter
                         ]
                         [ H.text "[Reset]" ]
@@ -2012,19 +2012,20 @@ townStoreView barter location world player =
                 confirmBtn : Html FrontendMsg
                 confirmBtn =
                     UI.button
-                        [ HA.id "town-store-confirm-btn"
+                        [ HA.style "grid-area" "barter-confirm-btn"
                         , HE.onClick <| BarterMsg ConfirmBarter
                         ]
                         [ H.text "[Confirm]" ]
 
                 capsView :
-                    { class : String
+                    { itemLabelClass : String
+                    , gridArea : String
                     , transfer : Int -> FrontendMsg
                     , transferNPosition : Barter.TransferNPosition
                     }
                     -> Int
                     -> Html FrontendMsg
-                capsView { class, transfer, transferNPosition } caps =
+                capsView { itemLabelClass, gridArea, transfer, transferNPosition } caps =
                     let
                         capsString : String
                         capsString =
@@ -2045,18 +2046,22 @@ townStoreView barter location world player =
 
                         transferNView =
                             H.div
-                                [ HA.class "town-store-transfer-n-area"
+                                [ HA.class "flex group"
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
                                 [ UI.button
-                                    [ HA.class "town-store-transfer-btn before-hover"
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                    , TW.mod "group-hover" "hidden"
+                                    , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                     , HA.disabled <| caps <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
                                 , UI.input
-                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
+                                    , TW.mod "group-hover" "block"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
                                     , HA.title "Transfer N items"
@@ -2066,7 +2071,10 @@ townStoreView barter location world player =
                                     Nothing ->
                                         UI.button
                                             [ HA.disabled True
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
@@ -2075,7 +2083,10 @@ townStoreView barter location world player =
                                         UI.button
                                             [ HE.onClick <| transfer n
                                             , HA.disabled <| n <= 0 || n > caps
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
@@ -2085,10 +2096,10 @@ townStoreView barter location world player =
                             UI.button
                                 [ HE.onClick <| transfer 1
                                 , HA.disabled <| caps <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
@@ -2097,21 +2108,23 @@ townStoreView barter location world player =
                             UI.button
                                 [ HE.onClick <| transfer caps
                                 , HA.disabled <| caps <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
-                                [ HA.class "town-store-item-label" ]
+                                [ HA.class <| "flex-1 " ++ itemLabelClass ]
                                 [ H.text <| "Caps: $" ++ capsString ]
                     in
                     H.div
-                        [ HA.class <| "town-store-item town-store-caps " ++ class
+                        [ HA.class <| "flex items-center px-2 pt-1 pb-0.5"
+                        , TW.mod "[&[data-caps='0']]" "text-green-300"
+                        , HA.style "grid-area" gridArea
                         , HA.attribute "data-caps" capsString
                         ]
                     <|
@@ -2132,13 +2145,13 @@ townStoreView barter location world player =
 
                 playerItemView :
                     { items : Dict Item.Id Item
-                    , class : String
+                    , itemLabelClass : String
                     , transfer : Item.Id -> Int -> FrontendMsg
                     , transferNPosition : Item.Id -> Barter.TransferNPosition
                     }
                     -> ( Item.Id, Int )
                     -> Html FrontendMsg
-                playerItemView { items, class, transfer, transferNPosition } ( id, count ) =
+                playerItemView { items, itemLabelClass, transfer, transferNPosition } ( id, count ) =
                     let
                         itemName =
                             case Dict.get id items of
@@ -2167,18 +2180,22 @@ townStoreView barter location world player =
 
                         transferNView =
                             H.div
-                                [ HA.class "town-store-transfer-n-area"
+                                [ HA.class "flex group"
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
                                 [ UI.button
-                                    [ HA.class "town-store-transfer-btn before-hover"
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                    , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                    , TW.mod "group-hover" "hidden"
                                     , HA.disabled <| count <= 0
                                     , HA.title "Transfer N items"
                                     ]
                                     [ H.text "N" ]
                                 , UI.input
-                                    [ HA.class "town-store-transfer-n-input after-hover"
+                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
+                                    , TW.mod "group-hover" "block"
                                     , HA.value transferNValue
                                     , HE.onInput <| BarterMsg << SetTransferNInput position
                                     , HA.title "Transfer N items"
@@ -2188,7 +2205,10 @@ townStoreView barter location world player =
                                     Nothing ->
                                         UI.button
                                             [ HA.disabled True
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
@@ -2197,7 +2217,10 @@ townStoreView barter location world player =
                                         UI.button
                                             [ HE.onClick <| transfer id n
                                             , HA.disabled <| n <= 0 || n > count
-                                            , HA.class "town-store-transfer-btn after-hover"
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
+                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                            , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
@@ -2207,10 +2230,10 @@ townStoreView barter location world player =
                             UI.button
                                 [ HE.onClick <| transfer id 1
                                 , HA.disabled <| count <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
@@ -2219,20 +2242,20 @@ townStoreView barter location world player =
                             UI.button
                                 [ HE.onClick <| transfer id count
                                 , HA.disabled <| count <= 0
-                                , HA.classList
-                                    [ ( "town-store-transfer-btn", True )
-                                    , ( "hidden", isNHovered )
-                                    ]
+                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
+                                , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
                         itemView =
                             H.span
-                                [ HA.class "town-store-item-label" ]
+                                [ HA.class <| "flex-1 " ++ itemLabelClass ]
                                 [ H.text <| String.fromInt count ++ "x " ++ itemName ]
                     in
-                    H.div [ HA.class <| "town-store-item " ++ class ] <|
+                    H.div [ HA.class "flex items-center px-2 py-0.5" ] <|
                         case arrowsDirection of
                             Barter.ArrowLeft ->
                                 [ transferAllView
@@ -2251,34 +2274,42 @@ townStoreView barter location world player =
                 playerNameView : Html FrontendMsg
                 playerNameView =
                     H.div
-                        [ HA.id "town-store-player-name" ]
+                        [ HA.class "p-2 border-b-2 border-b-green-800"
+                        , HA.style "grid-area" "player-name"
+                        ]
                         [ H.text <| "Player: " ++ player.name ]
 
                 vendorNameView : Html FrontendMsg
                 vendorNameView =
                     H.div
-                        [ HA.id "town-store-vendor-name" ]
+                        [ HA.class "p-2 border-b-2 border-b-green-800 text-right"
+                        , HA.style "grid-area" "vendor-name"
+                        ]
                         [ H.text <| "Vendor: " ++ Vendor.nameWithLocation vendor.name ]
 
                 playerTradedValueView : Html FrontendMsg
                 playerTradedValueView =
                     H.div
-                        [ HA.id "town-store-player-traded-value" ]
+                        [ HA.class "text-green-100 text-center p-2"
+                        , HA.style "grid-area" "player-traded-value"
+                        ]
                         [ H.text <| "Value: $" ++ String.fromInt playerTradedValue ]
 
                 vendorTradedValueView : Html FrontendMsg
                 vendorTradedValueView =
                     H.div
-                        [ HA.id "town-store-vendor-traded-value" ]
+                        [ HA.class "text-green-100 text-center p-2"
+                        , HA.style "grid-area" "vendor-traded-value"
+                        ]
                         [ H.text <| "Value: $" ++ String.fromInt vendorTradedValue ]
 
                 playerKeptItemsView : Html FrontendMsg
                 playerKeptItemsView =
-                    H.div [ HA.id "town-store-player-kept-items" ]
+                    H.div [ HA.style "grid-area" "player-kept-items" ]
                         (List.map
                             (playerItemView
                                 { items = player.items
-                                , class = "player-kept-item"
+                                , itemLabelClass = ""
                                 , transfer = \id count -> BarterMsg <| AddPlayerItem id count
                                 , transferNPosition = Barter.PlayerKeptItem
                                 }
@@ -2288,11 +2319,11 @@ townStoreView barter location world player =
 
                 playerTradedItemsView : Html FrontendMsg
                 playerTradedItemsView =
-                    H.div [ HA.id "town-store-player-traded-items" ]
+                    H.div [ HA.style "grid-area" "player-traded-items" ]
                         (List.map
                             (playerItemView
                                 { items = player.items
-                                , class = "player-traded-item"
+                                , itemLabelClass = "ml-1"
                                 , transfer = \id count -> BarterMsg <| RemovePlayerItem id count
                                 , transferNPosition = Barter.PlayerTradedItem
                                 }
@@ -2302,11 +2333,11 @@ townStoreView barter location world player =
 
                 vendorKeptItemsView : Html FrontendMsg
                 vendorKeptItemsView =
-                    H.div [ HA.id "town-store-vendor-kept-items" ]
+                    H.div [ HA.style "grid-area" "vendor-kept-items" ]
                         (List.map
                             (playerItemView
                                 { items = vendor.items
-                                , class = "vendor-kept-item"
+                                , itemLabelClass = "ml-1"
                                 , transfer = \id count -> BarterMsg <| AddVendorItem id count
                                 , transferNPosition = Barter.VendorKeptItem
                                 }
@@ -2316,11 +2347,11 @@ townStoreView barter location world player =
 
                 vendorTradedItemsView : Html FrontendMsg
                 vendorTradedItemsView =
-                    H.div [ HA.id "town-store-vendor-traded-items" ]
+                    H.div [ HA.style "grid-area" "vendor-traded-items" ]
                         (List.map
                             (playerItemView
                                 { items = vendor.items
-                                , class = "vendor-traded-item"
+                                , itemLabelClass = ""
                                 , transfer = \id count -> BarterMsg <| RemoveVendorItem id count
                                 , transferNPosition = Barter.VendorTradedItem
                                 }
@@ -2331,7 +2362,8 @@ townStoreView barter location world player =
                 playerKeptCapsView : Html FrontendMsg
                 playerKeptCapsView =
                     capsView
-                        { class = "player-kept-caps"
+                        { itemLabelClass = ""
+                        , gridArea = "player-kept-caps"
                         , transfer = BarterMsg << AddPlayerCaps
                         , transferNPosition = Barter.PlayerKeptCaps
                         }
@@ -2340,7 +2372,8 @@ townStoreView barter location world player =
                 playerTradedCapsView : Html FrontendMsg
                 playerTradedCapsView =
                     capsView
-                        { class = "player-traded-caps"
+                        { itemLabelClass = "ml-1"
+                        , gridArea = "player-traded-caps"
                         , transfer = BarterMsg << RemovePlayerCaps
                         , transferNPosition = Barter.PlayerTradedCaps
                         }
@@ -2349,7 +2382,8 @@ townStoreView barter location world player =
                 vendorKeptCapsView : Html FrontendMsg
                 vendorKeptCapsView =
                     capsView
-                        { class = "vendor-kept-caps"
+                        { itemLabelClass = "ml-1"
+                        , gridArea = "vendor-kept-caps"
                         , transfer = BarterMsg << AddVendorCaps
                         , transferNPosition = Barter.VendorKeptCaps
                         }
@@ -2358,7 +2392,8 @@ townStoreView barter location world player =
                 vendorTradedCapsView : Html FrontendMsg
                 vendorTradedCapsView =
                     capsView
-                        { class = "vendor-traded-caps"
+                        { itemLabelClass = ""
+                        , gridArea = "vendor-traded-caps"
                         , transfer = BarterMsg << RemoveVendorCaps
                         , transferNPosition = Barter.VendorTradedCaps
                         }
@@ -2366,11 +2401,19 @@ townStoreView barter location world player =
 
                 playerTradedBg : Html FrontendMsg
                 playerTradedBg =
-                    H.div [ HA.id "town-store-player-traded-bg" ] []
+                    H.div
+                        [ HA.style "grid-area" "2 / 2 / 5 / 3"
+                        , HA.class "bg-green-800-half-transparent border-r border-r-green-800"
+                        ]
+                        []
 
                 vendorTradedBg : Html FrontendMsg
                 vendorTradedBg =
-                    H.div [ HA.id "town-store-vendor-traded-bg" ] []
+                    H.div
+                        [ HA.style "grid-area" "2 / 3 / 5 / 4"
+                        , HA.class "bg-green-800-half-transparent border-l border-l-green-800"
+                        ]
+                        []
 
                 gridContents : List (Html FrontendMsg)
                 gridContents =
@@ -2396,11 +2439,15 @@ townStoreView barter location world player =
             , UI.button
                 [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
                 [ H.text "[Back]" ]
-            , H.div [ HA.id "town-store-grid" ] gridContents
+            , H.div
+                [ HA.class "mt-10 self-stretch grid grid-cols-[repeat(4,1fr)]"
+                , HA.class "town-store-grid"
+                ]
+                gridContents
             , H.viewMaybe
                 (\message ->
                     H.div
-                        [ HA.id "town-store-barter-message" ]
+                        [ HA.class "mt-10 text-orange" ]
                         [ H.text <| Barter.messageText message ]
                 )
                 barter.lastMessage
@@ -4289,6 +4336,14 @@ loginFormView worlds auth =
                 , HA.class "peer appearance-none bg-transparent border-0 m-0 py-1 pl-2 pr-8 w-full z-[1] outline-none"
                 ]
                 (worlds
+                    |> List.sortBy
+                        (\worldName ->
+                            if worldName == Logic.mainWorldName then
+                                0
+
+                            else
+                                1
+                        )
                     |> List.map
                         (\worldName ->
                             H.option
