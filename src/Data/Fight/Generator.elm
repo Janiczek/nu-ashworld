@@ -6,9 +6,7 @@ module Data.Fight.Generator exposing
     , targetAlreadyDead
     )
 
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
-import Data.Enemy as Enemy
+import Data.Enemy as Enemy exposing (addedSkillPercentages)
 import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
@@ -20,21 +18,22 @@ import Data.FightStrategy as FightStrategy
         , Operator(..)
         , Value(..)
         )
-import Data.Item as Item
+import Data.Item as Item exposing (Item)
 import Data.Message as Message exposing (Content(..))
-import Data.Perk as Perk
-import Data.Player exposing (SPlayer)
+import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
-import Dict
+import Dict exposing (Dict)
 import Dict.Extra as Dict
 import List.Extra as List
 import Logic exposing (AttackStats)
 import Random exposing (Generator)
 import Random.Bool as Random
 import Random.FloatExtra as Random
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Time exposing (Posix)
 
 
@@ -580,7 +579,26 @@ generator r =
 
 givenUp : OngoingFight -> Bool
 givenUp ongoing =
-    ongoing.actionsTaken >= maxActionsTaken
+    let
+        threshold : Int
+        threshold =
+            20
+
+        lastActions : List ( Who, Fight.Action )
+        lastActions =
+            List.take threshold ongoing.reverseLog
+
+        damageDealt : ( Who, Fight.Action ) -> Bool
+        damageDealt ( _, action ) =
+            case action of
+                Fight.Attack { damage } ->
+                    damage > 0
+
+                _ ->
+                    False
+    in
+    (ongoing.actionsTaken > threshold && not (List.any damageDealt lastActions))
+        || (ongoing.actionsTaken >= maxActionsTaken)
 
 
 runStrategyRepeatedly : Who -> OngoingFight -> Generator OngoingFight
@@ -600,17 +618,8 @@ runStrategyRepeatedly who ongoing =
                                 go userResult.nextOngoing
 
                             else
-                                -- fallback strategy: DoWhatever
-                                runStrategy FightStrategy.doWhatever who currentOngoing
-                                    |> Random.andThen
-                                        (\fallbackResult ->
-                                            if fallbackResult.ranCommandSuccessfully then
-                                                go fallbackResult.nextOngoing
-
-                                            else
-                                                -- no meaningful action left, let's end the turn
-                                                Random.constant currentOngoing
-                                        )
+                                { currentOngoing | actionsTaken = currentOngoing.actionsTaken + 1 }
+                                    |> Random.constant
                         )
 
             else
@@ -1238,7 +1247,22 @@ enemyOpponentGenerator r lastItemId enemyType =
             )
 
 
-playerOpponent : SPlayer -> Opponent
+playerOpponent :
+    { splayer
+        | name : String
+        , special : Special
+        , perks : SeqDict Perk Int
+        , traits : SeqSet Trait
+        , hp : Int
+        , maxHp : Int
+        , xp : Int
+        , caps : Int
+        , addedSkillPercentages : SeqDict Skill Int
+        , equippedArmor : Maybe Item
+        , fightStrategy : FightStrategy
+        , items : Dict Item.Id Item
+    }
+    -> Opponent
 playerOpponent player =
     let
         naturalArmorClass : Int

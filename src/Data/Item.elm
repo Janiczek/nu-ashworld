@@ -6,6 +6,8 @@ module Data.Item exposing
     , Type(..)
     , UniqueKey
     , all
+    , allHealing
+    , allHealingNonempty
     , armorClass
     , baseValue
     , create
@@ -150,6 +152,22 @@ all =
     , HuntingRifle
     , ScopedHuntingRifle
     ]
+
+
+allHealing : List Kind
+allHealing =
+    List.filter isHealing all
+
+
+allHealingNonempty : ( Kind, List Kind )
+allHealingNonempty =
+    case allHealing of
+        [] ->
+            -- Just a sentinel, shouldn't happen
+            ( Fruit, [] )
+
+        x :: xs ->
+            ( x, xs )
 
 
 isHealing : Kind -> Bool

@@ -44,4 +44,8 @@ build-calculators: build-calculator-barter-price
 
 .PHONY: build-calculator-barter-price
 build-calculator-barter-price:
-	yarn elm make src/Calculator/BarterPrice.elm --output docs/calc/barter-price.html
+	lamdera make src/Calculator/BarterPrice.elm --output docs/calc/barter-price.html
+
+.PHONY: build-calculator-meta
+build-calculator-meta:
+	lamdera make src/Calculator/Meta.elm --output docs/calc/meta.html
