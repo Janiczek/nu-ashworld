@@ -9,6 +9,7 @@ module Data.Special exposing
     , decrementNewChar
     , description
     , encode
+    , fromList
     , get
     , increment
     , init
@@ -18,6 +19,7 @@ module Data.Special exposing
     , mapWithoutClamp
     , set
     , sum
+    , toList
     )
 
 import Json.Decode as JD exposing (Decoder)
@@ -268,3 +270,33 @@ description type_ =
 
         Luck ->
             "Fate. Karma. An extremely high or low Luck will affect the character - somehow. Events and situations will be changed by how lucky (or unlucky) your character is."
+
+
+toList : Special -> List Int
+toList special =
+    [ special.strength
+    , special.perception
+    , special.endurance
+    , special.charisma
+    , special.intelligence
+    , special.agility
+    , special.luck
+    ]
+
+
+fromList : List Int -> Maybe Special
+fromList list =
+    case list of
+        [ strength, perception, endurance, charisma, intelligence, agility, luck ] ->
+            Just
+                { strength = strength
+                , perception = perception
+                , endurance = endurance
+                , charisma = charisma
+                , intelligence = intelligence
+                , agility = agility
+                , luck = luck
+                }
+
+        _ ->
+            Nothing
