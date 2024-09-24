@@ -93,7 +93,7 @@ conditionGenerator =
 
 maxStrategyDepth : Int
 maxStrategyDepth =
-    3
+    2
 
 
 fightStrategyGenerator : Generator FightStrategy

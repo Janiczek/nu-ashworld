@@ -410,14 +410,18 @@ viewIndividual individual =
               , individual.taggedSkills
                     |> SeqSet.toList
                     |> List.map Debug.toString
+                    |> List.sort
                     |> String.join ", "
               , individual.traits
                     |> SeqSet.toList
                     |> List.map Debug.toString
+                    |> List.sort
                     |> String.join ", "
               ]
-                |> String.join " | "
+                |> String.join "  --  "
                 |> H.text
+                |> List.singleton
+                |> H.span [ HA.class "whitespace-pre" ]
             ]
         , H.pre
             [ HA.style "white-space" "pre-wrap" ]
@@ -429,7 +433,18 @@ viewPopulation : List Individual -> Html Msg
 viewPopulation population =
     H.div []
         [ H.h2 [] [ H.text "Population" ]
-        , H.ol [ HA.start 0 ] <| List.map (\individual -> H.li [] [ viewIndividual individual ]) population
+        , H.ol
+            [ HA.start 0
+            , HA.class "list-decimal"
+            ]
+          <|
+            List.map
+                (\individual ->
+                    H.li
+                        [ HA.class "ml-8" ]
+                        [ viewIndividual individual ]
+                )
+                population
         ]
 
 
