@@ -11,9 +11,11 @@ import Dict.Extra
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
+import Process
 import Random exposing (Generator)
 import Random.Extra
 import SeqSet
+import Task
 
 
 
@@ -25,6 +27,7 @@ type alias Model =
     , population : List Individual
     , fights : Dict ( Int, Int ) (List Fight.Result) -- ints are indexes into `population`
     , wins : Dict Int Int -- the key is index into the population, value is number of wins
+    , autoRun : Bool
     }
 
 
@@ -40,6 +43,7 @@ init =
       , population = []
       , fights = Dict.empty
       , wins = Dict.empty
+      , autoRun = False
       }
     , initCmd
     )
@@ -51,6 +55,7 @@ init =
 
 type Msg
     = Reinit
+    | Auto
     | GeneratedPopulation (List Individual)
     | RunSim
     | DidRunSim (Dict ( Int, Int ) (List Fight.Result))
@@ -67,15 +72,29 @@ fightsPerPair =
     4
 
 
+maxGeneration : Int
+maxGeneration =
+    100
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reinit ->
             init
 
+        Auto ->
+            ( { model | autoRun = True }
+            , Task.perform identity (Task.succeed RunSim)
+            )
+
         GeneratedPopulation population ->
             ( { model | population = population }
-            , Cmd.none
+            , if model.autoRun then
+                Task.perform identity (Task.succeed RunSim)
+
+              else
+                Cmd.none
             )
 
         RunSim ->
@@ -143,7 +162,11 @@ update msg model =
                 | fights = fights
                 , wins = wins
               }
-            , Cmd.none
+            , if model.autoRun && model.generation < maxGeneration then
+                Task.perform identity (Process.sleep 100 |> Task.andThen (\() -> Task.succeed Continue))
+
+              else
+                Cmd.none
             )
 
         Continue ->
@@ -174,7 +197,7 @@ nextPopulationGenerator population wins =
     let
         eliteCount : Int
         eliteCount =
-            2
+            3
 
         sortedByWinsDesc : List { ind : Individual, wins : Int }
         sortedByWinsDesc =
@@ -261,6 +284,7 @@ view model =
             [ H.button [ HE.onClick Reinit ] [ H.text "[Reinit]" ]
             , H.button [ HE.onClick RunSim ] [ H.text "[Run Sim]" ]
             , H.button [ HE.onClick Continue ] [ H.text "[Continue]" ]
+            , H.button [ HE.onClick Auto ] [ H.text "[Auto]" ]
             ]
         , viewFights model.fights
         , viewRanking model.wins
