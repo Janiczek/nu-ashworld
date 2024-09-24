@@ -1,8 +1,8 @@
 module Frontend exposing (..)
 
 import Admin
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Cmd.Extra as Cmd
@@ -135,7 +135,7 @@ init url key =
       , barter = Barter.empty
       , fightInfo = Nothing
       , fightStrategyText = ""
-      , expandedQuests = Set_.empty
+      , expandedQuests = SeqSet.empty
       , userWantsToShowAreaDanger = False
 
       -- backend state
@@ -557,12 +557,12 @@ update msg ({ loginForm } as model) =
             )
 
         CollapseQuestItem quest ->
-            ( { model | expandedQuests = Set_.remove quest model.expandedQuests }
+            ( { model | expandedQuests = SeqSet.remove quest model.expandedQuests }
             , Cmd.none
             )
 
         ExpandQuestItem quest ->
-            ( { model | expandedQuests = Set_.insert quest model.expandedQuests }
+            ( { model | expandedQuests = SeqSet.insert quest model.expandedQuests }
             , Cmd.none
             )
 
@@ -1669,7 +1669,7 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
         ]
 
 
-townMainSquareView : Set_.Set Quest.Name -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+townMainSquareView : SeqSet Quest.Name -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView expandedQuests location { questsProgress } player =
     let
         quests : List Quest.Name
@@ -1703,9 +1703,9 @@ townMainSquareView expandedQuests location { questsProgress } player =
     ]
 
 
-questView : CPlayer -> Dict_.Dict Quest.Name Quest.Progress -> Set_.Set Quest.Name -> Quest.Name -> Html FrontendMsg
+questView : CPlayer -> SeqDict Quest.Name Quest.Progress -> SeqSet Quest.Name -> Quest.Name -> Html FrontendMsg
 questView player questsProgress expandedQuests quest =
-    case Dict_.get quest questsProgress of
+    case SeqDict.get quest questsProgress of
         Nothing ->
             H.text "BUG: couldn't get quest progress, please report this"
 
@@ -1713,7 +1713,7 @@ questView player questsProgress expandedQuests quest =
             let
                 isExpanded : Bool
                 isExpanded =
-                    Set_.member quest expandedQuests
+                    SeqSet.member quest expandedQuests
             in
             H.li
                 [ HA.classList
@@ -1784,7 +1784,7 @@ expandedQuestView player progress quest =
                     ]
                 , H.text <| Quest.title quest
                 ]
-            , if Set_.member quest player.questsActive then
+            , if SeqSet.member quest player.questsActive then
                 UI.button
                     [ HA.class "ml-[1ch] !text-green-100"
                     , TW.mod "hover" "text-orange"
@@ -2037,7 +2037,7 @@ townStoreView barter location world player =
 
                         transferNValue : String
                         transferNValue =
-                            Dict_.get transferNPosition barter.transferNInputs
+                            SeqDict.get transferNPosition barter.transferNInputs
                                 |> Maybe.withDefault Barter.defaultTransferN
 
                         isNHovered : Bool
@@ -2171,7 +2171,7 @@ townStoreView barter location world player =
 
                         transferNValue : String
                         transferNValue =
-                            Dict_.get position barter.transferNInputs
+                            SeqDict.get position barter.transferNInputs
                                 |> Maybe.withDefault Barter.defaultTransferN
 
                         isNHovered : Bool
@@ -2693,19 +2693,19 @@ newCharSpecialView newChar =
         ]
 
 
-newCharTraitsView : Set_.Set Trait -> Html FrontendMsg
+newCharTraitsView : SeqSet Trait -> Html FrontendMsg
 newCharTraitsView traits =
     let
         availableTraits : Int
         availableTraits =
-            Logic.maxTraits - Set_.size traits
+            Logic.maxTraits - SeqSet.size traits
 
         traitView : Trait -> Html FrontendMsg
         traitView trait =
             let
                 isToggled : Bool
                 isToggled =
-                    Set_.member trait traits
+                    SeqSet.member trait traits
             in
             H.li
                 [ HA.class "flex flex-row gap-[1ch] pr-[2ch] justify-start cursor-pointer group"
@@ -2857,7 +2857,7 @@ normalCharacterView maybeHoveredItem player =
         ]
 
 
-charTraitsView : Set_.Set Trait -> Html FrontendMsg
+charTraitsView : SeqSet Trait -> Html FrontendMsg
 charTraitsView traits =
     let
         itemView : Trait -> Html FrontendMsg
@@ -2877,14 +2877,14 @@ charTraitsView traits =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
-        , if Set_.isEmpty traits then
+        , if SeqSet.isEmpty traits then
             H.p
                 [ HA.class "text-green-300" ]
                 [ H.text "You have no traits." ]
 
           else
             H.ul [ HA.class "w-fit" ]
-                (List.map itemView <| Set_.toList traits)
+                (List.map itemView <| SeqSet.toList traits)
         ]
 
 
@@ -3040,9 +3040,9 @@ charSpecialView player =
 
 
 skillsView_ :
-    { addedSkillPercentages : Dict_.Dict Skill Int
+    { addedSkillPercentages : SeqDict Skill Int
     , special : Special
-    , taggedSkills : Set_.Set Skill
+    , taggedSkills : SeqSet Skill
     , hasTagPerk : Bool
     , availableSkillPoints : Int
     , isNewChar : Bool
@@ -3064,7 +3064,7 @@ skillsView_ r =
 
         availableTags : Int
         availableTags =
-            max 0 <| totalTags - Set_.size r.taggedSkills
+            max 0 <| totalTags - SeqSet.size r.taggedSkills
 
         skillView : Skill -> Html FrontendMsg
         skillView skill =
@@ -3079,7 +3079,7 @@ skillsView_ r =
 
                 isTagged : Bool
                 isTagged =
-                    Set_.member skill r.taggedSkills
+                    SeqSet.member skill r.taggedSkills
 
                 ( showTagButton, isTaggingDisabled ) =
                     case ( r.isNewChar, isTagged ) of
@@ -3207,7 +3207,7 @@ charSkillsView player =
         }
 
 
-charPerksView : Dict_.Dict Perk Int -> Html FrontendMsg
+charPerksView : SeqDict Perk Int -> Html FrontendMsg
 charPerksView perks =
     let
         itemView : ( Perk, Int ) -> Html FrontendMsg
@@ -3236,12 +3236,12 @@ charPerksView perks =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
-        , if Dict_.isEmpty perks then
+        , if SeqDict.isEmpty perks then
             H.p [] [ H.text "No perks yet!" ]
 
           else
             H.ul []
-                (List.map itemView <| Dict_.toList perks)
+                (List.map itemView <| SeqDict.toList perks)
         ]
 
 
@@ -4768,7 +4768,7 @@ adminWorldHiscoresView worldName data =
                         , ( "Most perks"
                           , \p ->
                                 p.perks
-                                    |> Dict_.values
+                                    |> SeqDict.values
                                     |> List.sum
                           )
                         ]

@@ -36,8 +36,8 @@ module Data.Player.SPlayer exposing
     , useSkillPoints
     )
 
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
@@ -263,7 +263,7 @@ addPerksOnLevelup newLevel player =
             Trait.isSelected Trait.Skilled player.traits
 
         totalPerkRanks =
-            List.sum <| Dict_.values player.perks
+            List.sum <| SeqDict.values player.perks
 
         perkRate =
             Logic.perkRate { hasSkilledTrait = hasSkilledTrait }
@@ -295,10 +295,10 @@ tick currentTime worldTickCurve player =
 addQuestProgressXp : Posix -> SPlayer -> SPlayer
 addQuestProgressXp currentTime player =
     let
-        xpPerQuest : Dict_.Dict Quest.Name Int
+        xpPerQuest : SeqDict Quest.Name Int
         xpPerQuest =
             player.questsActive
-                |> Set_.toList
+                |> SeqSet.toList
                 |> List.map
                     (\quest ->
                         ( quest
@@ -308,12 +308,12 @@ addQuestProgressXp currentTime player =
                             |> (*) (Quest.xpPerTickGiven quest)
                         )
                     )
-                |> Dict_.fromList
+                |> SeqDict.fromList
 
         totalXp : Int
         totalXp =
             xpPerQuest
-                |> Dict_.values
+                |> SeqDict.values
                 |> List.sum
     in
     player
@@ -443,7 +443,7 @@ removeItem id removedCount player =
 
 tagSkill : Skill -> SPlayer -> SPlayer
 tagSkill skill player =
-    { player | taggedSkills = Set_.insert skill player.taggedSkills }
+    { player | taggedSkills = SeqSet.insert skill player.taggedSkills }
 
 
 useSkillPoints : Skill -> SPlayer -> SPlayer
@@ -451,7 +451,7 @@ useSkillPoints skill player =
     let
         isTagged : Bool
         isTagged =
-            Set_.member skill player.taggedSkills
+            SeqSet.member skill player.taggedSkills
 
         percentToAdd : Int
         percentToAdd =
@@ -489,7 +489,7 @@ addSkillPercentage percentToAdd skill player =
     if skillPercent < 300 then
         { player
             | addedSkillPercentages =
-                Dict_.update skill
+                SeqDict.update skill
                     (\maybePercent ->
                         case maybePercent of
                             Nothing ->
@@ -524,7 +524,7 @@ incPerkRank : Perk -> SPlayer -> SPlayer
 incPerkRank perk player =
     { player
         | perks =
-            Dict_.update perk
+            SeqDict.update perk
                 (\maybeRank ->
                     case maybeRank of
                         Nothing ->
@@ -687,20 +687,20 @@ questEngagement player quest =
                 ItemRequirementOneOf items ->
                     -- TODO consume the items once adding the quest? Only in some of these cases (chimpanzee brain) and not in others (lockpick)?
                     let
-                        playerItemKinds : Set_.Set Item.Kind
+                        playerItemKinds : SeqSet Item.Kind
                         playerItemKinds =
                             player.items
                                 |> Dict.values
                                 |> List.map .kind
-                                |> Set_.fromList
+                                |> SeqSet.fromList
                     in
-                    List.all (\kind -> Set_.member kind playerItemKinds) items
+                    List.all (\kind -> SeqSet.member kind playerItemKinds) items
 
                 CapsRequirement amount ->
                     -- TODO remove the caps once adding the quest?
                     player.caps >= amount
     in
-    if Set_.member quest player.questsActive then
+    if SeqSet.member quest player.questsActive then
         if List.isEmpty reqs then
             Progressing
 
@@ -719,7 +719,7 @@ questEngagement player quest =
 
 stopProgressing : Quest.Name -> SPlayer -> SPlayer
 stopProgressing quest player =
-    { player | questsActive = Set_.remove quest player.questsActive }
+    { player | questsActive = SeqSet.remove quest player.questsActive }
 
 
 canStartProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> Bool
@@ -730,7 +730,7 @@ canStartProgressing quest worldTickCurve player =
 startProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> SPlayer
 startProgressing quest worldTickCurve player =
     if canStartProgressing quest worldTickCurve player then
-        { player | questsActive = Set_.insert quest player.questsActive }
+        { player | questsActive = SeqSet.insert quest player.questsActive }
 
     else
         player
@@ -739,7 +739,7 @@ startProgressing quest worldTickCurve player =
 ticksPerHourUsedOnQuests : SPlayer -> Int
 ticksPerHourUsedOnQuests player =
     player.questsActive
-        |> Set_.toList
+        |> SeqSet.toList
         |> List.map (questEngagement player >> Logic.ticksGivenPerQuestEngagement)
         |> List.sum
 

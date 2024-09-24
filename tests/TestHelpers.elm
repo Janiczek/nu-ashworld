@@ -1,7 +1,7 @@
 module TestHelpers exposing (..)
 
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Data.Enemy as Enemy
 import Data.Fight as Fight
     exposing
@@ -256,7 +256,7 @@ enemyTypeFuzzer =
     oneOfValues Enemy.allTypes
 
 
-traitsFuzzer : Fuzzer (Set_.Set Trait)
+traitsFuzzer : Fuzzer (SeqSet Trait)
 traitsFuzzer =
     Trait.all
         |> List.map (Fuzz.maybe << Fuzz.constant)
@@ -266,11 +266,11 @@ traitsFuzzer =
                 maybes
                     |> Maybe.values
                     |> List.take 2
-                    |> Set_.fromList
+                    |> SeqSet.fromList
             )
 
 
-perksFuzzer : Fuzzer (Dict_.Dict Perk Int)
+perksFuzzer : Fuzzer (SeqDict Perk Int)
 perksFuzzer =
     Perk.all
         |> List.map
@@ -301,7 +301,7 @@ perksFuzzer =
                         )
                         ( 33, [] )
                     |> Tuple.second
-                    |> Dict_.fromList
+                    |> SeqDict.fromList
             )
 
 
@@ -350,7 +350,7 @@ attackStatsFuzzer =
         |> Fuzz.map (\s -> { s | maxDamage = max s.minDamage s.maxDamage })
 
 
-addedSkillPercentagesFuzzer : Fuzzer (Dict_.Dict Skill Int)
+addedSkillPercentagesFuzzer : Fuzzer (SeqDict Skill Int)
 addedSkillPercentagesFuzzer =
     Skill.all
         |> List.map
@@ -360,7 +360,7 @@ addedSkillPercentagesFuzzer =
                     (Fuzz.intRange -10 300)
             )
         |> Fuzz.sequence
-        |> Fuzz.map Dict_.fromList
+        |> Fuzz.map SeqDict.fromList
 
 
 specialFuzzer : Fuzzer Special

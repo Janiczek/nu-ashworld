@@ -17,6 +17,8 @@ module Logic exposing
     , maxTraits
     , minTicksPerHourNeededForQuest
     , naturalArmorClass
+    , newCharAvailableSpecialPoints
+    , newCharMaxTaggedSkills
     , newCharSpecial
     , perkRate
     , playerCombatCapsGained
@@ -34,8 +36,6 @@ module Logic exposing
     , xpGained
     )
 
-import AssocList as Dict_
-import AssocSet as Set_
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.Item as Item
 import Data.Perk as Perk exposing (Perk)
@@ -44,6 +44,8 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp exposing (BaseXp(..))
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 
 
 attackApCost :
@@ -222,7 +224,7 @@ darknessPenalty isItDark distanceHexes =
 
 
 unarmedChanceToHit :
-    { attackerAddedSkillPercentages : Dict_.Dict Skill Int
+    { attackerAddedSkillPercentages : SeqDict Skill Int
     , attackerSpecial : Special
     , distanceHexes : Int
     , shotType : ShotType
@@ -347,8 +349,8 @@ type alias AttackStats =
 unarmedAttackStats :
     { special : Special
     , unarmedSkill : Int
-    , traits : Set_.Set Trait
-    , perks : Dict_.Dict Perk Int
+    , traits : SeqSet Trait
+    , perks : SeqDict Perk Int
     , level : Int
     , npcExtraBonus : Int
     }
@@ -548,29 +550,29 @@ skillPointsPerLevel r =
 
 
 addedSkillPercentages :
-    { taggedSkills : Set_.Set Skill
+    { taggedSkills : SeqSet Skill
     , hasGiftedTrait : Bool
     }
-    -> Dict_.Dict Skill Int
+    -> SeqDict Skill Int
 addedSkillPercentages { taggedSkills, hasGiftedTrait } =
     let
         taggedSkillBonuses =
             taggedSkills
-                |> Set_.toList
+                |> SeqSet.toList
                 {- Each tag adds 20% at the beginning. This doesn't happen
                    later when adding a tag via the Tag! perk.
                 -}
                 |> List.map (\skill -> ( skill, 20 ))
-                |> Dict_.fromList
+                |> SeqDict.fromList
 
         giftedTraitPenalties =
             if hasGiftedTrait then
                 Skill.all
                     |> List.map (\skill -> ( skill, -10 ))
-                    |> Dict_.fromList
+                    |> SeqDict.fromList
 
             else
-                Dict_.empty
+                SeqDict.empty
     in
     [ taggedSkillBonuses
     , giftedTraitPenalties
@@ -578,10 +580,10 @@ addedSkillPercentages { taggedSkills, hasGiftedTrait } =
         |> List.foldl
             (\bonusesDict accSkills ->
                 bonusesDict
-                    |> Dict_.foldl
+                    |> SeqDict.foldl
                         (\bonusSkill bonus accSkills_ ->
                             accSkills_
-                                |> Dict_.update bonusSkill
+                                |> SeqDict.update bonusSkill
                                     (\maybeSkillPercentage ->
                                         case maybeSkillPercentage of
                                             Nothing ->
@@ -593,7 +595,7 @@ addedSkillPercentages { taggedSkills, hasGiftedTrait } =
                         )
                         accSkills
             )
-            Dict_.empty
+            SeqDict.empty
 
 
 newCharSpecial :
@@ -635,6 +637,16 @@ newCharSpecial r =
         |> Special.mapWithoutClamp ((+) allBonus) Special.Intelligence
         |> Special.mapWithoutClamp ((+) (agilityBonus + allBonus)) Special.Agility
         |> Special.mapWithoutClamp ((+) allBonus) Special.Luck
+
+
+newCharAvailableSpecialPoints : Int
+newCharAvailableSpecialPoints =
+    5
+
+
+newCharMaxTaggedSkills : Int
+newCharMaxTaggedSkills =
+    3
 
 
 maxTraits : Int
@@ -689,7 +701,7 @@ canUseItem :
         | hp : Int
         , maxHp : Int
         , special : Special
-        , traits : Set_.Set Trait
+        , traits : SeqSet Trait
         , ticks : Int
     }
     -> Item.Kind

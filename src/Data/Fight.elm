@@ -19,8 +19,8 @@ module Data.Fight exposing
     , theOther
     )
 
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.FightStrategy exposing (FightStrategy)
@@ -62,15 +62,15 @@ type alias Opponent =
     , maxHp : Int
     , maxAp : Int
     , sequence : Int
-    , traits : Set_.Set Trait
-    , perks : Dict_.Dict Perk Int
+    , traits : SeqSet Trait
+    , perks : SeqDict Perk Int
     , caps : Int
     , items : Dict Item.Id Item
     , drops : List Item
     , equippedArmor : Maybe Item.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
-    , addedSkillPercentages : Dict_.Dict Skill Int
+    , addedSkillPercentages : SeqDict Skill Int
     , special : Special
     , fightStrategy : FightStrategy
     }

@@ -11,7 +11,7 @@ module Data.Perk exposing
     , rank
     )
 
-import AssocList as Dict_
+import SeqDict exposing (SeqDict)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
@@ -284,10 +284,10 @@ name perk =
             "Gecko Skinning"
 
 
-multipleRankPerks : Dict_.Dict Perk Int
+multipleRankPerks : SeqDict Perk Int
 multipleRankPerks =
     -- https://fallout.fandom.com/wiki/Fallout_2_perks
-    Dict_.fromList
+    SeqDict.fromList
         [ ( EarlierSequence, 3 )
         , ( Educated, 3 )
         , ( BonusHthDamage, 3 )
@@ -303,7 +303,7 @@ multipleRankPerks =
 
 maxRank : Perk -> Int
 maxRank perk =
-    Dict_.get perk multipleRankPerks
+    SeqDict.get perk multipleRankPerks
         |> Maybe.withDefault 1
 
 
@@ -575,17 +575,17 @@ decoder =
             )
 
 
-rank : Perk -> Dict_.Dict Perk Int -> Int
+rank : Perk -> SeqDict Perk Int -> Int
 rank perk perks =
-    Dict_.get perk perks
+    SeqDict.get perk perks
         |> Maybe.withDefault 0
 
 
 allApplicableForLevelup :
     { level : Int
     , special : Special
-    , addedSkillPercentages : Dict_.Dict Skill Int
-    , perks : Dict_.Dict Perk Int
+    , addedSkillPercentages : SeqDict Skill Int
+    , perks : SeqDict Perk Int
     }
     -> List Perk
 allApplicableForLevelup r =
@@ -595,8 +595,8 @@ allApplicableForLevelup r =
 isApplicableForLevelup :
     { level : Int
     , special : Special
-    , addedSkillPercentages : Dict_.Dict Skill Int
-    , perks : Dict_.Dict Perk Int
+    , addedSkillPercentages : SeqDict Skill Int
+    , perks : SeqDict Perk Int
     }
     -> Perk
     -> Bool

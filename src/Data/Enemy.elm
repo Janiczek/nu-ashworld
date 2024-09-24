@@ -25,7 +25,7 @@ module Data.Enemy exposing
     , xp
     )
 
-import AssocList as Dict_
+import SeqDict exposing (SeqDict)
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item exposing (Item)
@@ -843,83 +843,83 @@ special type_ =
             Special 8 8 5 1 1 10 8
 
 
-addedSkillPercentages : Type -> Dict_.Dict Skill Int
+addedSkillPercentages : Type -> SeqDict Skill Int
 addedSkillPercentages type_ =
     case type_ of
         Brahmin ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 19 )
                 ]
 
         AngryBrahmin ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 63 )
                 , ( MeleeWeapons, 73 )
                 ]
 
         WeakBrahmin ->
-            Dict_.empty
+            SeqDict.empty
 
         WildBrahmin ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 52 )
                 , ( MeleeWeapons, 2 )
                 ]
 
         GiantAnt ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 25 )
                 , ( MeleeWeapons, 35 )
                 ]
 
         ToughGiantAnt ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 40 )
                 , ( MeleeWeapons, 50 )
                 ]
 
         LesserRadscorpion ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 29 )
                 ]
 
         Radscorpion ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 21 )
                 ]
 
         LesserBlackRadscorpion ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 25 )
                 ]
 
         BlackRadscorpion ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 54 )
                 ]
 
         SilverGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 17 )
                 ]
 
         ToughSilverGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 23 )
                 ]
 
         GoldenGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 34 )
                 ]
 
         ToughGoldenGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( Unarmed, 40 )
                 ]
 
         FireGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( SmallGuns, 43 )
                 , ( EnergyWeapons, 64 )
                 , ( Unarmed, 60 )
@@ -927,7 +927,7 @@ addedSkillPercentages type_ =
                 ]
 
         ToughFireGecko ->
-            Dict_.fromList
+            SeqDict.fromList
                 [ ( SmallGuns, 55 )
                 , ( EnergyWeapons, 80 )
                 , ( Unarmed, 64 )

@@ -16,6 +16,7 @@ module Data.Special exposing
     , isValueInRange
     , label
     , mapWithoutClamp
+    , set
     , sum
     )
 
@@ -138,6 +139,11 @@ Imagine this sequence:
 decrementNewChar : Type -> Special -> Special
 decrementNewChar =
     mapWithoutClamp (\x -> x - 1)
+
+
+set : Type -> Int -> Special -> Special
+set type_ value special =
+    map (always value) type_ special
 
 
 mapWithoutClamp : (Int -> Int) -> Type -> Special -> Special

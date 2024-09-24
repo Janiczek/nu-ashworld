@@ -8,7 +8,7 @@ module Data.Trait exposing
     , name
     )
 
-import AssocSet as Set_
+import SeqSet exposing (SeqSet)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 
@@ -127,9 +127,9 @@ decoder =
             )
 
 
-isSelected : Trait -> Set_.Set Trait -> Bool
+isSelected : Trait -> SeqSet Trait -> Bool
 isSelected trait traits =
-    Set_.member trait traits
+    SeqSet.member trait traits
 
 
 description : Trait -> String

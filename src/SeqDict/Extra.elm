@@ -1,15 +1,15 @@
-module AssocList.ExtraExtra exposing
+module SeqDict.Extra exposing
     ( decoder
     , encode
     , groupBy
     )
 
-import AssocList
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import SeqDict exposing (SeqDict)
 
 
-encode : (k -> JE.Value) -> (v -> JE.Value) -> AssocList.Dict k v -> JE.Value
+encode : (k -> JE.Value) -> (v -> JE.Value) -> SeqDict k v -> JE.Value
 encode encodeKey encodeValue dict =
     let
         encodeTuple : ( k, v ) -> JE.Value
@@ -20,11 +20,11 @@ encode encodeKey encodeValue dict =
                 ]
     in
     dict
-        |> AssocList.toList
+        |> SeqDict.toList
         |> JE.list encodeTuple
 
 
-decoder : Decoder k -> Decoder v -> Decoder (AssocList.Dict k v)
+decoder : Decoder k -> Decoder v -> Decoder (SeqDict k v)
 decoder keyDecoder valueDecoder =
     let
         tupleDecoder : Decoder ( k, v )
@@ -34,17 +34,17 @@ decoder keyDecoder valueDecoder =
                 (JD.field "value" valueDecoder)
     in
     JD.list tupleDecoder
-        |> JD.map AssocList.fromList
+        |> JD.map SeqDict.fromList
 
 
-groupBy : (a -> b) -> List a -> AssocList.Dict b (List a)
+groupBy : (a -> b) -> List a -> SeqDict b (List a)
 groupBy keyfn list =
     List.foldr
         (\x acc ->
-            AssocList.update
+            SeqDict.update
                 (keyfn x)
                 (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just)
                 acc
         )
-        AssocList.empty
+        SeqDict.empty
         list

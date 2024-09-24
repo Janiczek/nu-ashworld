@@ -1,7 +1,7 @@
 module Evergreen.V101.Data.Player exposing (..)
 
 import AssocList
-import AssocSet
+import SeqSet
 import Dict
 import Evergreen.V101.Data.Auth
 import Evergreen.V101.Data.FightStrategy

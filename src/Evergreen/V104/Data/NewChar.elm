@@ -1,6 +1,6 @@
 module Evergreen.V104.Data.NewChar exposing (..)
 
-import AssocSet
+import SeqSet
 import Evergreen.V104.Data.Skill
 import Evergreen.V104.Data.Special
 import Evergreen.V104.Data.Trait

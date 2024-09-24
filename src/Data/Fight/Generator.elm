@@ -6,8 +6,8 @@ module Data.Fight.Generator exposing
     , targetAlreadyDead
     )
 
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
@@ -51,10 +51,10 @@ type alias OngoingFight =
     { distanceHexes : Int
     , attacker : Opponent
     , attackerAp : Int
-    , attackerItemsUsed : Dict_.Dict Item.Kind Int
+    , attackerItemsUsed : SeqDict Item.Kind Int
     , target : Opponent
     , targetAp : Int
-    , targetItemsUsed : Dict_.Dict Item.Kind Int
+    , targetItemsUsed : SeqDict Item.Kind Int
     , reverseLog : List ( Who, Fight.Action )
     , actionsTaken : Int
     }
@@ -85,7 +85,7 @@ opponentAp who ongoing =
             ongoing.targetAp
 
 
-opponentItemsUsed : Who -> OngoingFight -> Dict_.Dict Item.Kind Int
+opponentItemsUsed : Who -> OngoingFight -> SeqDict Item.Kind Int
 opponentItemsUsed who ongoing =
     case who of
         Attacker ->
@@ -403,10 +403,10 @@ generator r =
                         { distanceHexes = distance
                         , attacker = r.attacker
                         , attackerAp = r.attacker.maxAp
-                        , attackerItemsUsed = Dict_.empty
+                        , attackerItemsUsed = SeqDict.empty
                         , target = r.target
                         , targetAp = r.target.maxAp
-                        , targetItemsUsed = Dict_.empty
+                        , targetItemsUsed = SeqDict.empty
                         , reverseLog = [ ( Attacker, Fight.Start { distanceHexes = distance } ) ]
                         , actionsTaken = 0
                         }
@@ -756,7 +756,7 @@ incItemsUsed : Who -> Item.Kind -> OngoingFight -> OngoingFight
 incItemsUsed who itemKind ongoing =
     let
         inc dict =
-            Dict_.update itemKind
+            SeqDict.update itemKind
                 (\maybeCount ->
                     case maybeCount of
                         Nothing ->
@@ -1013,7 +1013,7 @@ type alias StrategyState =
     , them : Opponent
     , themWho : Who
     , yourAp : Int
-    , yourItemsUsed : Dict_.Dict Item.Kind Int
+    , yourItemsUsed : SeqDict Item.Kind Int
     , distanceHexes : Int
     , ongoingFight : OngoingFight
     }
@@ -1073,7 +1073,7 @@ evalValue state value =
 
         ItemsUsed itemKind ->
             state.yourItemsUsed
-                |> Dict_.get itemKind
+                |> SeqDict.get itemKind
                 |> Maybe.withDefault 0
 
         ChanceToHit shotType ->
@@ -1187,13 +1187,13 @@ enemyOpponentGenerator r lastItemId enemyType =
                     hp =
                         Enemy.hp enemyType
 
-                    addedSkillPercentages : Dict_.Dict Skill Int
+                    addedSkillPercentages : SeqDict Skill Int
                     addedSkillPercentages =
                         Enemy.addedSkillPercentages enemyType
 
-                    traits : Set_.Set Trait
+                    traits : SeqSet Trait
                     traits =
-                        Set_.empty
+                        SeqSet.empty
 
                     special : Special
                     special =
@@ -1209,7 +1209,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , maxAp = Enemy.actionPoints enemyType
                   , sequence = Enemy.sequence enemyType
                   , traits = traits
-                  , perks = Dict_.empty
+                  , perks = SeqDict.empty
                   , caps = caps_
                   , items = Dict.empty
                   , drops = items
@@ -1221,7 +1221,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                             { special = special
                             , unarmedSkill = unarmedSkill
                             , traits = traits
-                            , perks = Dict_.empty
+                            , perks = SeqDict.empty
                             , level =
                                 -- TODO what to do? What damage ranges do enemies really have in FO2?
                                 1

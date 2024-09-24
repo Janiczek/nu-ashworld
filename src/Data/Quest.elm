@@ -26,7 +26,7 @@ module Data.Quest exposing
     , xpPerTickGiven
     )
 
-import AssocList as Dict_
+import SeqDict exposing (SeqDict)
 import Data.Item as Item exposing (Kind(..))
 import Data.Map.Location exposing (Location(..))
 import Data.Perk as Perk exposing (Perk(..))
@@ -1671,11 +1671,11 @@ locationQuestRequirements loc =
             [ NCRRetrieveComputerParts ]
 
 
-forLocation : Dict_.Dict Location (List Name)
+forLocation : SeqDict Location (List Name)
 forLocation =
     List.foldl
         (\quest acc ->
-            Dict_.update
+            SeqDict.update
                 (location quest)
                 (\maybeQuests ->
                     case maybeQuests of
@@ -1687,13 +1687,13 @@ forLocation =
                 )
                 acc
         )
-        Dict_.empty
+        SeqDict.empty
         all
 
 
 allForLocation : Location -> List Name
 allForLocation loc =
-    Dict_.get loc forLocation
+    SeqDict.get loc forLocation
         |> Maybe.withDefault []
 
 

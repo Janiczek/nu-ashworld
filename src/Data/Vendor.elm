@@ -18,9 +18,9 @@ module Data.Vendor exposing
     , vendorsDecoder
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
+import SeqSet exposing (SeqSet)
 import Data.Item as Item exposing (Item)
 import Data.Map.Location as Location exposing (Location)
 import Dict exposing (Dict)
@@ -139,17 +139,17 @@ barterSkill name_ =
             80
 
 
-getFrom : Dict_.Dict Name Vendor -> Name -> Vendor
+getFrom : SeqDict Name Vendor -> Name -> Vendor
 getFrom vendors name_ =
-    Dict_.get name_ vendors
+    SeqDict.get name_ vendors
         |> Maybe.withDefault (emptyVendor name_)
 
 
-emptyVendors : Dict_.Dict Name Vendor
+emptyVendors : SeqDict Name Vendor
 emptyVendors =
     all
         |> List.map (\name_ -> ( name_, emptyVendor name_ ))
-        |> Dict_.fromList
+        |> SeqDict.fromList
 
 
 emptyVendor : Name -> Vendor
@@ -190,17 +190,17 @@ stockGenerator { stock } =
         |> Random.map (List.filter (\( _, count ) -> count > 0))
 
 
-restockVendors : Int -> Dict_.Dict Name Vendor -> Generator ( Dict_.Dict Name Vendor, Int )
+restockVendors : Int -> SeqDict Name Vendor -> Generator ( SeqDict Name Vendor, Int )
 restockVendors lastItemId vendors =
     let
         restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
         restockVendor lastItemId_ spec_ vendor =
             let
-                stockKeys : Set_.Set Item.UniqueKey
+                stockKeys : SeqSet Item.UniqueKey
                 stockKeys =
                     spec_.stock
                         |> List.map .uniqueKey
-                        |> Set_.fromList
+                        |> SeqSet.fromList
             in
             Random.map2
                 (\newCaps newStock ->
@@ -228,7 +228,7 @@ restockVendors lastItemId vendors =
                         nonStockItems : Dict Item.Id Item
                         nonStockItems =
                             vendor.items
-                                |> Dict.filter (\_ item -> not <| Set_.member (Item.getUniqueKey item) stockKeys)
+                                |> Dict.filter (\_ item -> not <| SeqSet.member (Item.getUniqueKey item) stockKeys)
                     in
                     ( { vendor
                         | caps = newCaps
@@ -252,7 +252,7 @@ restockVendors lastItemId vendors =
                                 (getFrom accVendors name_)
                                 |> Random.map
                                     (\( restockedVendor, idAfterVendor ) ->
-                                        ( Dict_.insert name_ restockedVendor accVendors
+                                        ( SeqDict.insert name_ restockedVendor accVendors
                                         , idAfterVendor
                                         )
                                     )
@@ -261,14 +261,14 @@ restockVendors lastItemId vendors =
             (Random.constant ( vendors, lastItemId ))
 
 
-encodeVendors : Dict_.Dict Name Vendor -> JE.Value
+encodeVendors : SeqDict Name Vendor -> JE.Value
 encodeVendors vendors =
-    Dict_.encode encodeName encode vendors
+    SeqDict.encode encodeName encode vendors
 
 
-vendorsDecoder : Decoder (Dict_.Dict Name Vendor)
+vendorsDecoder : Decoder (SeqDict Name Vendor)
 vendorsDecoder =
-    Dict_.decoder nameDecoder decoder
+    SeqDict.decoder nameDecoder decoder
 
 
 encodeName : Name -> JE.Value
@@ -446,18 +446,18 @@ location name_ =
             Location.VaultCity
 
 
-locationsWithVendors : Dict_.Dict Location Name
+locationsWithVendors : SeqDict Location Name
 locationsWithVendors =
     all
         |> List.map (\name_ -> ( location name_, name_ ))
-        |> Dict_.fromList
+        |> SeqDict.fromList
 
 
 forLocation : Location -> Maybe Name
 forLocation loc =
-    Dict_.get loc locationsWithVendors
+    SeqDict.get loc locationsWithVendors
 
 
 isInLocation : Location -> Bool
 isInLocation loc =
-    Dict_.member loc locationsWithVendors
+    SeqDict.member loc locationsWithVendors

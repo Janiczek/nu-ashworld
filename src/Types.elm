@@ -1,6 +1,6 @@
 module Types exposing (..)
 
-import AssocSet as Set_
+import SeqSet exposing (SeqSet)
 import BiDict exposing (BiDict)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
@@ -56,7 +56,7 @@ type alias FrontendModel =
     , fightInfo : Maybe Fight.Info
     , barter : Barter.State
     , fightStrategyText : String
-    , expandedQuests : Set_.Set Quest.Name
+    , expandedQuests : SeqSet Quest.Name
     , userWantsToShowAreaDanger : Bool
 
     -- admin state

@@ -25,8 +25,8 @@ module Data.Barter exposing
     , unsetTransferNHover
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 import Data.Item as Item
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
@@ -57,7 +57,7 @@ type alias State =
     , playerCaps : Int
     , vendorCaps : Int
     , lastMessage : Maybe Message
-    , transferNInputs : Dict_.Dict TransferNPosition String
+    , transferNInputs : SeqDict TransferNPosition String
     , transferNHover : Maybe TransferNPosition
     }
 
@@ -69,7 +69,7 @@ empty =
     , playerCaps = 0
     , vendorCaps = 0
     , lastMessage = Nothing
-    , transferNInputs = Dict_.empty
+    , transferNInputs = SeqDict.empty
     , transferNHover = Nothing
     }
 
@@ -261,7 +261,7 @@ doubleArrow direction =
 
 setTransferNInput : TransferNPosition -> String -> State -> State
 setTransferNInput position string state =
-    { state | transferNInputs = Dict_.insert position string state.transferNInputs }
+    { state | transferNInputs = SeqDict.insert position string state.transferNInputs }
 
 
 setTransferNHover : TransferNPosition -> State -> State
@@ -282,7 +282,7 @@ encode state =
         , ( "playerCaps", JE.int state.playerCaps )
         , ( "vendorCaps", JE.int state.vendorCaps )
         , ( "lastMessage", JE.maybe encodeMessage state.lastMessage )
-        , ( "transferNInputs", Dict_.encode encodeTransferNPosition JE.string state.transferNInputs )
+        , ( "transferNInputs", SeqDict.encode encodeTransferNPosition JE.string state.transferNInputs )
         , ( "transferNHover", JE.maybe encodeTransferNPosition state.transferNHover )
         ]
 

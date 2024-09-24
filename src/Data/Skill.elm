@@ -10,7 +10,7 @@ module Data.Skill exposing
     , name
     )
 
-import AssocList as Dict_
+import SeqDict exposing (SeqDict)
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
@@ -176,13 +176,13 @@ specialPercentage skill s =
             2 * (s.intelligence + s.endurance)
 
 
-get : Special -> Dict_.Dict Skill Int -> Skill -> Int
+get : Special -> SeqDict Skill Int -> Skill -> Int
 get finalSpecial addedPercentages skill =
     let
         added : Int
         added =
             addedPercentages
-                |> Dict_.get skill
+                |> SeqDict.get skill
                 |> Maybe.withDefault 0
 
         viaSpecial : Int

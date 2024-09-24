@@ -6,8 +6,8 @@ module Data.World exposing
     , init
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 import Data.Player as Player
     exposing
         ( Player
@@ -38,14 +38,14 @@ type alias World =
     { players : Dict PlayerName (Player SPlayer)
     , nextWantedTick : Maybe Posix
     , nextVendorRestockTick : Maybe Posix
-    , vendors : Dict_.Dict Vendor.Name Vendor
+    , vendors : SeqDict Vendor.Name Vendor
     , lastItemId : Int
     , description : String
     , startedAt : Posix
     , tickFrequency : Time.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
     , vendorRestockFrequency : Time.Interval
-    , questsProgress : Dict_.Dict Quest.Name (Dict PlayerName Int)
+    , questsProgress : SeqDict Quest.Name (Dict PlayerName Int)
 
     -- TODO perhaps have the shops here too, for some manual admin addition of items?
     -- TODO perhaps have the global rewards here too, for manual addition?
@@ -81,7 +81,7 @@ init { fast } =
     , questsProgress =
         Quest.all
             |> List.map (\q -> ( q, Dict.empty ))
-            |> Dict_.fromList
+            |> SeqDict.fromList
     }
 
 
@@ -104,7 +104,7 @@ encode world =
         ]
 
 
-lastItemId : Dict PlayerName (Player SPlayer) -> Dict_.Dict Vendor.Name Vendor -> Int
+lastItemId : Dict PlayerName (Player SPlayer) -> SeqDict Vendor.Name Vendor -> Int
 lastItemId players vendors =
     let
         lastPlayersItemId : Int
@@ -119,7 +119,7 @@ lastItemId players vendors =
         lastVendorsItemId : Int
         lastVendorsItemId =
             vendors
-                |> Dict_.values
+                |> SeqDict.values
                 |> List.fastConcatMap (.items >> Dict.keys)
                 |> List.maximum
                 |> Maybe.withDefault 0
@@ -160,7 +160,7 @@ decoderV1 =
             , questsProgress =
                 Quest.all
                     |> List.map (\q -> ( q, Dict.empty ))
-                    |> Dict_.fromList
+                    |> SeqDict.fromList
             }
         )
         (JD.field "players"
@@ -193,7 +193,7 @@ decoderV2 =
             , questsProgress =
                 Quest.all
                     |> List.map (\q -> ( q, Dict.empty ))
-                    |> Dict_.fromList
+                    |> SeqDict.fromList
             }
         )
         (JD.field "players"
@@ -227,7 +227,7 @@ decoderV3 =
             , questsProgress =
                 Quest.all
                     |> List.map (\q -> ( q, Dict.empty ))
-                    |> Dict_.fromList
+                    |> SeqDict.fromList
             }
         )
         |> JD.andMap
@@ -285,4 +285,4 @@ decoderV4 =
         |> JD.andMap (JD.field "tickFrequency" Time.intervalDecoder)
         |> JD.andMap (JD.field "tickPerIntervalCurve" Tick.curveDecoder)
         |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)
-        |> JD.andMap (JD.field "questsProgress" (Dict_.decoder Quest.decoder (Dict.decoder JD.string JD.int)))
+        |> JD.andMap (JD.field "questsProgress" (SeqDict.decoder Quest.decoder (Dict.decoder JD.string JD.int)))

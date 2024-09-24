@@ -7,7 +7,7 @@ module Data.WorldData exposing
     , isPlayer
     )
 
-import AssocList as Dict_
+import SeqDict exposing (SeqDict)
 import Data.Ladder as Ladder
 import Data.Player
     exposing
@@ -61,8 +61,8 @@ type alias PlayerData =
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
-    , vendors : Dict_.Dict Vendor.Name Vendor
-    , questsProgress : Dict_.Dict Quest.Name Quest.Progress
+    , vendors : SeqDict Vendor.Name Vendor
+    , questsProgress : SeqDict Quest.Name Quest.Progress
     }
 
 

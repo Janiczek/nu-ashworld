@@ -1,7 +1,7 @@
 module Evergreen.V101.Data.Fight exposing (..)
 
 import AssocList
-import AssocSet
+import SeqSet
 import Dict
 import Evergreen.V101.Data.Enemy
 import Evergreen.V101.Data.Fight.ShotType

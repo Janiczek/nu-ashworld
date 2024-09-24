@@ -1,8 +1,8 @@
 module Backend exposing (..)
 
 import Admin
-import AssocList as Dict_
-import AssocSet as Set_
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import BiDict
 import Cmd.Extra as Cmd
 import Data.Auth as Auth
@@ -249,7 +249,7 @@ getPlayerData_ worldName world player =
            recalculating them all the time
         -}
         world.questsProgress
-            |> Dict_.map
+            |> SeqDict.map
                 (\quest ticksGivenPerPlayer ->
                     let
                         engagements : List Quest.Engagement
@@ -473,7 +473,7 @@ processGameTickForQuests worldName model =
             (\world ->
                 { world
                     | questsProgress =
-                        Dict_.map
+                        SeqDict.map
                             (\quest progressPerPlayer ->
                                 progressPerPlayer
                                     |> Dict.map
@@ -1346,11 +1346,11 @@ tagSkill skill clientId _ worldName player model =
 
         unusedTags : Int
         unusedTags =
-            totalTagsAvailable - Set_.size player.taggedSkills
+            totalTagsAvailable - SeqSet.size player.taggedSkills
 
         isTagged : Bool
         isTagged =
-            Set_.member skill player.taggedSkills
+            SeqSet.member skill player.taggedSkills
     in
     if unusedTags > 0 && not isTagged then
         model
@@ -1666,7 +1666,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
         |> Maybe.withDefault ( newModel, Cmd.none )
 
 
-oneTimePerkEffects : Posix -> Dict_.Dict Perk (SPlayer -> SPlayer)
+oneTimePerkEffects : Posix -> SeqDict Perk (SPlayer -> SPlayer)
 oneTimePerkEffects currentTime =
     let
         oneTimeEffect : Perk -> Maybe (SPlayer -> SPlayer)
@@ -1830,7 +1830,7 @@ oneTimePerkEffects currentTime =
     in
     Perk.all
         |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))
-        |> Dict_.fromList
+        |> SeqDict.fromList
 
 
 choosePerk : Perk -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1855,7 +1855,7 @@ choosePerk perk clientId _ worldName player model =
                 (identity
                     >> SPlayer.incPerkRank perk
                     >> SPlayer.decAvailablePerks
-                    >> (case Dict_.get perk (oneTimePerkEffects model.time) of
+                    >> (case SeqDict.get perk (oneTimePerkEffects model.time) of
                             Nothing ->
                                 identity
 
@@ -1993,7 +1993,7 @@ updateVendor worldName location fn model =
                                 world.vendors
 
                             Just vendorName ->
-                                Dict_.update vendorName (Maybe.map fn) world.vendors
+                                SeqDict.update vendorName (Maybe.map fn) world.vendors
                 }
             )
 
@@ -2040,7 +2040,7 @@ startProgressing quest clientId world worldName player model =
                 { world_
                     | questsProgress =
                         world_.questsProgress
-                            |> Dict_.update quest
+                            |> SeqDict.update quest
                                 (\maybePlayersProgress ->
                                     case maybePlayersProgress of
                                         Nothing ->

@@ -12,8 +12,8 @@ module Data.NewChar exposing
     , toggleTrait
     )
 
-import AssocSet as Set_
-import AssocSet.Extra as Set_
+import SeqSet exposing (SeqSet)
+import SeqSet.Extra as SeqSet
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -26,8 +26,8 @@ type alias NewChar =
     { -- doesn't contain bonuses from traits
       baseSpecial : Special
     , availableSpecial : Int
-    , taggedSkills : Set_.Set Skill
-    , traits : Set_.Set Trait
+    , taggedSkills : SeqSet Skill
+    , traits : SeqSet Trait
     , error : Maybe CreationError
     }
 
@@ -43,9 +43,9 @@ type CreationError
 init : NewChar
 init =
     { baseSpecial = Special.init
-    , availableSpecial = 5
-    , taggedSkills = Set_.empty
-    , traits = Set_.empty
+    , availableSpecial = Logic.newCharAvailableSpecialPoints
+    , taggedSkills = SeqSet.empty
+    , traits = SeqSet.empty
     , error = Nothing
     }
 
@@ -98,9 +98,9 @@ toggleTaggedSkill : Skill -> NewChar -> NewChar
 toggleTaggedSkill skill char =
     let
         newTaggedSkills =
-            Set_.toggle skill char.taggedSkills
+            SeqSet.toggle skill char.taggedSkills
     in
-    if Set_.size newTaggedSkills > 3 then
+    if SeqSet.size newTaggedSkills > Logic.newCharMaxTaggedSkills then
         char
 
     else
@@ -111,9 +111,9 @@ toggleTrait : Trait -> NewChar -> NewChar
 toggleTrait trait char =
     let
         newTraits =
-            Set_.toggle trait char.traits
+            SeqSet.toggle trait char.traits
     in
-    if Set_.size newTraits > 2 then
+    if SeqSet.size newTraits > 2 then
         char
 
     else
@@ -154,8 +154,8 @@ encode newChar =
     JE.object
         [ ( "baseSpecial", Special.encode newChar.baseSpecial )
         , ( "availableSpecial", JE.int newChar.availableSpecial )
-        , ( "taggedSkills", Set_.encode Skill.encode newChar.taggedSkills )
-        , ( "traits", Set_.encode Trait.encode newChar.traits )
+        , ( "taggedSkills", SeqSet.encode Skill.encode newChar.taggedSkills )
+        , ( "traits", SeqSet.encode Trait.encode newChar.traits )
         , ( "error", JE.maybe encodeCreationError newChar.error )
         ]
 

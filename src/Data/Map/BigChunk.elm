@@ -7,8 +7,8 @@ module Data.Map.BigChunk exposing
     , tileCoords
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.SmallChunk as SmallChunk exposing (SmallChunk(..))
 
@@ -264,14 +264,14 @@ fromSmallChunk smallChunk =
             C4
 
 
-groupedCoords : Dict_.Dict BigChunk (List TileCoords)
+groupedCoords : SeqDict BigChunk (List TileCoords)
 groupedCoords =
     Map.allTileCoords
-        |> Dict_.groupBy forCoords
+        |> SeqDict.groupBy forCoords
 
 
 tileCoords : BigChunk -> List TileCoords
 tileCoords bigChunk =
-    Dict_.get bigChunk groupedCoords
+    SeqDict.get bigChunk groupedCoords
         -- shouldn't happen:
         |> Maybe.withDefault []

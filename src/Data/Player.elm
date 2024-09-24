@@ -16,10 +16,10 @@ module Data.Player exposing
     , serverToClientOther
     )
 
-import AssocList as Dict_
-import AssocList.ExtraExtra as Dict_
-import AssocSet as Set_
-import AssocSet.Extra as Set_
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
+import SeqSet exposing (SeqSet)
+import SeqSet.Extra as SeqSet
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -71,19 +71,19 @@ type alias SPlayer =
     , wins : Int
     , losses : Int
     , location : TileNum
-    , perks : Dict_.Dict Perk Int
+    , perks : SeqDict Perk Int
     , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
-    , traits : Set_.Set Trait
+    , traits : SeqSet Trait
     , -- doesn't contain Special base skill % values:
-      addedSkillPercentages : Dict_.Dict Skill Int
-    , taggedSkills : Set_.Set Skill
+      addedSkillPercentages : SeqDict Skill Int
+    , taggedSkills : SeqSet Skill
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
-    , questsActive : Set_.Set Quest.Name
+    , questsActive : SeqSet Quest.Name
     }
 
 
@@ -98,19 +98,19 @@ type alias CPlayer =
     , wins : Int
     , losses : Int
     , location : TileNum
-    , perks : Dict_.Dict Perk Int
+    , perks : SeqDict Perk Int
     , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
-    , traits : Set_.Set Trait
+    , traits : SeqSet Trait
     , -- doesn't contain Special base skill % values:
-      addedSkillPercentages : Dict_.Dict Skill Int
-    , taggedSkills : Set_.Set Skill
+      addedSkillPercentages : SeqDict Skill Int
+    , taggedSkills : SeqSet Skill
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
-    , questsActive : Set_.Set Quest.Name
+    , questsActive : SeqSet Quest.Name
     }
 
 
@@ -154,18 +154,18 @@ encodeSPlayer player =
         , ( "wins", JE.int player.wins )
         , ( "losses", JE.int player.losses )
         , ( "location", JE.int player.location )
-        , ( "perks", Dict_.encode Perk.encode JE.int player.perks )
+        , ( "perks", SeqDict.encode Perk.encode JE.int player.perks )
         , ( "messages", JE.list Message.encode (Dict.values player.messages) )
         , ( "items", Dict.encode JE.int Item.encode player.items )
-        , ( "traits", Set_.encode Trait.encode player.traits )
-        , ( "addedSkillPercentages", Dict_.encode Skill.encode JE.int player.addedSkillPercentages )
-        , ( "taggedSkills", Set_.encode Skill.encode player.taggedSkills )
+        , ( "traits", SeqSet.encode Trait.encode player.traits )
+        , ( "addedSkillPercentages", SeqDict.encode Skill.encode JE.int player.addedSkillPercentages )
+        , ( "taggedSkills", SeqSet.encode Skill.encode player.taggedSkills )
         , ( "availableSkillPoints", JE.int player.availableSkillPoints )
         , ( "availablePerks", JE.int player.availablePerks )
         , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
         , ( "fightStrategy", FightStrategy.encode player.fightStrategy )
         , ( "fightStrategyText", JE.string player.fightStrategyText )
-        , ( "questsActive", Set_.encode Quest.encode player.questsActive )
+        , ( "questsActive", SeqSet.encode Quest.encode player.questsActive )
         ]
 
 
@@ -219,18 +219,18 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.succeed 0)
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
         |> JD.map
             (\player ->
                 let
@@ -263,18 +263,18 @@ sPlayerDecoderV2 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
         |> JD.map
             (\player ->
                 let
@@ -308,18 +308,18 @@ sPlayerDecoderV3 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.succeed Nothing)
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
 
 
 {-| Adding equippedArmor
@@ -339,18 +339,18 @@ sPlayerDecoderV4 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.succeed (Tuple.second FightStrategy.default))
         |> JD.andMap (JD.succeed "")
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
 
 
 {-| Adding fightStrategy
@@ -370,12 +370,12 @@ sPlayerDecoderV5 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
@@ -386,7 +386,7 @@ sPlayerDecoderV5 =
                     |> JD.map FightStrategy.toString
                 )
             )
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
 
 
 {-| Adding fightStrategyText
@@ -406,18 +406,18 @@ sPlayerDecoderV6 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
 
 
 {-| Adding worldName
@@ -437,18 +437,18 @@ sPlayerDecoderV7 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
-        |> JD.andMap (JD.succeed Set_.empty)
+        |> JD.andMap (JD.succeed SeqSet.empty)
 
 
 {-| Adding questsActive
@@ -468,18 +468,18 @@ sPlayerDecoderV8 =
         |> JD.andMap (JD.field "wins" JD.int)
         |> JD.andMap (JD.field "losses" JD.int)
         |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (Dict_.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "traits" (Set_.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (Dict_.decoder Skill.decoder JD.int))
-        |> JD.andMap (JD.field "taggedSkills" (Set_.decoder Skill.decoder))
+        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
-        |> JD.andMap (JD.field "questsActive" (Set_.decoder Quest.decoder))
+        |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
 
 
 serverToClient : SPlayer -> CPlayer
@@ -578,7 +578,7 @@ fromNewChar currentTime auth newChar =
                 , hasSmallFrameTrait = Trait.isSelected Trait.SmallFrame newChar.traits
                 }
     in
-    if Set_.size newChar.taggedSkills /= 3 then
+    if SeqSet.size newChar.taggedSkills /= 3 then
         Err NewChar.DoesNotHaveThreeTaggedSkills
 
     else if newChar.availableSpecial > 0 then
@@ -590,7 +590,7 @@ fromNewChar currentTime auth newChar =
     else if not <| Special.isInRange finalSpecial then
         Err NewChar.HasSpecialOutOfRange
 
-    else if Set_.size newChar.traits > 2 then
+    else if SeqSet.size newChar.traits > 2 then
         Err NewChar.HasMoreThanTwoTraits
 
     else
@@ -622,7 +622,7 @@ fromNewChar currentTime auth newChar =
             , wins = 0
             , losses = 0
             , location = startingTileNum
-            , perks = Dict_.empty
+            , perks = SeqDict.empty
             , messages =
                 [ Message.new 0 currentTime Message.Welcome ]
                     |> List.map (\message -> ( message.id, message ))
@@ -642,5 +642,5 @@ fromNewChar currentTime auth newChar =
             , fightStrategyText =
                 Tuple.second FightStrategy.default
                     |> FightStrategy.toString
-            , questsActive = Set_.empty
+            , questsActive = SeqSet.empty
             }
