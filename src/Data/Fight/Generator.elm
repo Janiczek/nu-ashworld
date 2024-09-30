@@ -7,7 +7,7 @@ module Data.Fight.Generator exposing
     )
 
 import Data.Enemy as Enemy exposing (addedSkillPercentages)
-import Data.Fight as Fight exposing (Opponent, Who(..))
+import Data.Fight as Fight exposing (Opponent, Who(..), CommandRejectionReason(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.FightStrategy as FightStrategy
@@ -133,6 +133,9 @@ apCost opponent action =
 
         Fight.Heal _ ->
             Logic.healApCost
+
+        Fight.DoNothing _ ->
+            0
 
 
 subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
@@ -584,10 +587,6 @@ givenUp ongoing =
         threshold =
             20
 
-        lastActions : List ( Who, Fight.Action )
-        lastActions =
-            List.take threshold ongoing.reverseLog
-
         damageDealt : ( Who, Fight.Action ) -> Bool
         damageDealt ( _, action ) =
             case action of
@@ -597,7 +596,7 @@ givenUp ongoing =
                 _ ->
                     False
     in
-    (ongoing.actionsTaken > threshold && not (List.any damageDealt lastActions))
+    (ongoing.actionsTaken > threshold && not (List.any damageDealt (List.take threshold ongoing.reverseLog)))
         || (ongoing.actionsTaken >= maxActionsTaken)
 
 
@@ -618,8 +617,7 @@ runStrategyRepeatedly who ongoing =
                                 go userResult.nextOngoing
 
                             else
-                                { currentOngoing | actionsTaken = currentOngoing.actionsTaken + 1 }
-                                    |> Random.constant
+                                Random.constant userResult.nextOngoing
                         )
 
             else
@@ -653,6 +651,7 @@ runStrategy strategy who ongoing =
         command : Command
         command =
             evalStrategy state strategy
+                |> Debug.log "Want to do"
     in
     runCommand who ongoing state command
 
@@ -683,11 +682,15 @@ runCommand who ongoing state command =
                 |> runCommand who ongoing state
 
 
-rejectCommand : OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
-rejectCommand ongoing =
+rejectCommand : Who -> CommandRejectionReason -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+rejectCommand who reason ongoing =
     Random.constant
         { ranCommandSuccessfully = False
-        , nextOngoing = ongoing
+        , nextOngoing =
+            { ongoing
+                | actionsTaken = ongoing.actionsTaken + 1
+                , reverseLog = ( who, Fight.DoNothing reason ) :: ongoing.reverseLog
+            }
         }
 
 
@@ -706,17 +709,17 @@ heal who ongoing itemKind =
             opponent_ who ongoing
     in
     if itemCount itemKind opponent <= 0 then
-        rejectCommand ongoing
+        rejectCommand who Fight.Heal_ItemNotPresent ongoing
 
     else if not <| Item.isHealing itemKind then
         -- TODO validate strategies and tell user the item cannot heal when defining the strategy?
         {- We're not using <= because there might later be usages for items that
            damage you instead of healing? Who knows
         -}
-        rejectCommand ongoing
+        rejectCommand who Fight.Heal_ItemDoesNotHeal ongoing
 
     else if opponent.hp == opponent.maxHp then
-        rejectCommand ongoing
+        rejectCommand who Fight.Heal_AlreadyFullyHealed ongoing
 
     else
         Item.healAmountGenerator itemKind
@@ -795,7 +798,7 @@ itemCount kind opponent =
 moveForward : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 moveForward who ongoing =
     if ongoing.distanceHexes <= 0 then
-        rejectCommand ongoing
+        rejectCommand who MoveForward_AlreadyNextToEachOther ongoing
 
     else
         -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
@@ -905,8 +908,11 @@ attack who ongoing shotType =
         chance =
             chanceToHit who ongoing shotType
     in
-    if ongoing.distanceHexes /= 0 || opponentAp who ongoing < apCost_ then
-        rejectCommand ongoing
+    if ongoing.distanceHexes /= 0 then
+        rejectCommand who Attack_NotCloseEnough ongoing
+
+    else if opponentAp who ongoing < apCost_ then
+        rejectCommand who Attack_NotEnoughAP ongoing
 
     else
         Random.int 1 100

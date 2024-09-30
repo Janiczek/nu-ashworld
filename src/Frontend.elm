@@ -1,8 +1,6 @@
 module Frontend exposing (..)
 
 import Admin
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Cmd.Extra as Cmd
@@ -79,6 +77,8 @@ import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Parser
 import Result.Extra as Result
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Set exposing (Set)
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
@@ -3927,7 +3927,7 @@ fightView maybeFight _ player =
                         }
             in
             [ pageTitleView "Fight"
-            , H.div [ HA.class "flex flex-col gap-4" ]
+            , H.div [ HA.class "flex flex-col gap-4 items-start" ]
                 [ H.div []
                     [ H.text <|
                         "Attacker: "

@@ -36,8 +36,6 @@ module Data.Player.SPlayer exposing
     , useSkillPoints
     )
 
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Map exposing (TileNum)
@@ -57,6 +55,8 @@ import Data.Trait as Trait
 import Data.Xp as Xp
 import Dict exposing (Dict)
 import Logic
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Time exposing (Posix)
 
 

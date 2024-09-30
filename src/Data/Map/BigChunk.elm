@@ -7,10 +7,10 @@ module Data.Map.BigChunk exposing
     , tileCoords
     )
 
-import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.SmallChunk as SmallChunk exposing (SmallChunk(..))
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 
 
 type BigChunk

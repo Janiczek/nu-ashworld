@@ -6,8 +6,6 @@ module Data.World exposing
     , init
     )
 
-import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
 import Data.Player as Player
     exposing
         ( Player
@@ -25,6 +23,8 @@ import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JEE
 import List.ExtraExtra as List
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 import Time exposing (Posix)
 import Time.Extra as Time
 import Time.ExtraExtra as Time

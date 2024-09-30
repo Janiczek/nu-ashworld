@@ -25,13 +25,13 @@ module Data.Barter exposing
     , unsetTransferNHover
     )
 
-import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
 import Data.Item as Item
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Json.Encode as JE
 import Json.Encode.Extra as JE
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
 
 
 type Message

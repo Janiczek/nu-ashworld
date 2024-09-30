@@ -8,9 +8,9 @@ module Data.Trait exposing
     , name
     )
 
-import SeqSet exposing (SeqSet)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import SeqSet exposing (SeqSet)
 
 
 

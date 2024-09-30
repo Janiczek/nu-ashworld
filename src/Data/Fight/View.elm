@@ -1,7 +1,7 @@
 module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
-import Data.Fight as Fight exposing (Action, OpponentType, Who(..))
+import Data.Fight as Fight exposing (Action, OpponentType, Who(..), CommandRejectionReason(..))
 import Data.Fight.ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item exposing (Item)
 import Data.Player.PlayerName exposing (PlayerName)
@@ -296,6 +296,37 @@ view perceptionLevel fight yourName =
                                                                 else
                                                                     ""
                                                                )
+
+                                                Fight.DoNothing rejectionReason ->
+                                                    -- TODO make this nicer... probably reads wrong
+                                                    let
+                                                        ( action__, issue ) =
+                                                            case rejectionReason of
+                                                                Heal_AlreadyFullyHealed ->
+                                                                    ( "heal", "already fully healed" )
+
+                                                                Heal_ItemDoesNotHeal ->
+                                                                    ( "heal", "the selected item does not heal" )
+
+                                                                Heal_ItemNotPresent ->
+                                                                    ( "heal", "the wanted item is not present" )
+
+                                                                Attack_NotCloseEnough ->
+                                                                    ( "attack", "not close enough" )
+
+                                                                Attack_NotEnoughAP ->
+                                                                    ( "attack", "not enough AP" )
+
+                                                                MoveForward_AlreadyNextToEachOther ->
+                                                                    ( "move forward", "already next to each other" )
+                                                    in
+                                                    H.text <|
+                                                        names_.subject.verbPresent "skip"
+                                                            ++ " a turn. Wanted to "
+                                                            ++ action__
+                                                            ++ ". Issue: "
+                                                            ++ issue
+                                                            ++ "."
                                     in
                                     H.li
                                         [ HA.class "ps-[2ch]" ]

@@ -1,8 +1,6 @@
 module Backend exposing (..)
 
 import Admin
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
 import BiDict
 import Cmd.Extra as Cmd
 import Data.Auth as Auth
@@ -59,6 +57,8 @@ import Logic
 import Queue
 import Random exposing (Generator)
 import Random.List
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)

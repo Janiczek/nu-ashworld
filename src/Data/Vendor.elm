@@ -18,9 +18,6 @@ module Data.Vendor exposing
     , vendorsDecoder
     )
 
-import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
-import SeqSet exposing (SeqSet)
 import Data.Item as Item exposing (Item)
 import Data.Map.Location as Location exposing (Location)
 import Dict exposing (Dict)
@@ -32,6 +29,9 @@ import Random exposing (Generator)
 import Random.Extra
 import Random.FloatExtra as Random exposing (NormalIntSpec)
 import Random.List
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
+import SeqSet exposing (SeqSet)
 
 
 type Name

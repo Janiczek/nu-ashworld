@@ -12,14 +12,14 @@ module Data.NewChar exposing
     , toggleTrait
     )
 
-import SeqSet exposing (SeqSet)
-import SeqSet.Extra as SeqSet
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Json.Encode as JE
 import Json.Encode.Extra as JE
 import Logic
+import SeqSet exposing (SeqSet)
+import SeqSet.Extra as SeqSet
 
 
 type alias NewChar =

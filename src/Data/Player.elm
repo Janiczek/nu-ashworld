@@ -16,10 +16,6 @@ module Data.Player exposing
     , serverToClientOther
     )
 
-import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
-import SeqSet exposing (SeqSet)
-import SeqSet.Extra as SeqSet
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -50,6 +46,10 @@ import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Json.Encode.Extra as JE
 import Logic
+import SeqDict exposing (SeqDict)
+import SeqDict.Extra as SeqDict
+import SeqSet exposing (SeqSet)
+import SeqSet.Extra as SeqSet
 import Time exposing (Posix)
 
 

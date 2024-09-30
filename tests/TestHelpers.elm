@@ -1,7 +1,5 @@
 module TestHelpers exposing (..)
 
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
 import Data.Enemy as Enemy
 import Data.Fight as Fight
     exposing
@@ -34,6 +32,8 @@ import Logic exposing (AttackStats)
 import Maybe.Extra as Maybe
 import Parser as P exposing (Parser, Problem(..))
 import Random
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import String.Extra as String
 import Test exposing (Test)
 import Time exposing (Posix)

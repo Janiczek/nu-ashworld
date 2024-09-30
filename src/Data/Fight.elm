@@ -1,5 +1,6 @@
 module Data.Fight exposing
     ( Action(..)
+    , CommandRejectionReason(..)
     , Info
     , Opponent
     , OpponentType(..)
@@ -19,8 +20,6 @@ module Data.Fight exposing
     , theOther
     )
 
-import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
 import Data.Enemy as Enemy
 import Data.Fight.ShotType as ShotType exposing (ShotType)
 import Data.FightStrategy exposing (FightStrategy)
@@ -35,6 +34,8 @@ import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Logic exposing (AttackStats)
+import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 
 
 type alias Info =
@@ -109,6 +110,16 @@ type Action
         , healedHp : Int
         , newHp : Int
         }
+    | DoNothing CommandRejectionReason
+
+
+type CommandRejectionReason
+    = Heal_ItemNotPresent
+    | Heal_ItemDoesNotHeal
+    | Heal_AlreadyFullyHealed
+    | MoveForward_AlreadyNextToEachOther
+    | Attack_NotCloseEnough
+    | Attack_NotEnoughAP
 
 
 theOther : Who -> Who
@@ -448,6 +459,32 @@ encodeAction action =
                 , ( "newHp", JE.int r.newHp )
                 ]
 
+        DoNothing reason ->
+            JE.object
+                [ ( "type", JE.string "DoNothing" )
+                , ( "reason"
+                  , JE.string <|
+                        case reason of
+                            Heal_ItemNotPresent ->
+                                "Heal_ItemNotPresent"
+
+                            Heal_ItemDoesNotHeal ->
+                                "Heal_ItemDoesNotHeal"
+
+                            Heal_AlreadyFullyHealed ->
+                                "Heal_AlreadyFullyHealed"
+
+                            MoveForward_AlreadyNextToEachOther ->
+                                "MoveForward_AlreadyNextToEachOther"
+
+                            Attack_NotCloseEnough ->
+                                "Attack_NotCloseEnough"
+
+                            Attack_NotEnoughAP ->
+                                "Attack_NotEnoughAP"
+                  )
+                ]
+
 
 actionDecoder : Decoder Action
 actionDecoder =
@@ -490,8 +527,40 @@ actionDecoder =
                             (JD.field "healedHp" JD.int)
                             (JD.field "newHp" JD.int)
 
+                    "DoNothing" ->
+                        JD.map DoNothing (JD.field "reason" commandRejectionReasonDecoder)
+
                     _ ->
                         JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"
+            )
+
+
+commandRejectionReasonDecoder : Decoder CommandRejectionReason
+commandRejectionReasonDecoder =
+    JD.string
+        |> JD.andThen
+            (\reason ->
+                case reason of
+                    "Heal_AlreadyFullyHealed" ->
+                        JD.succeed Heal_AlreadyFullyHealed
+
+                    "Heal_ItemDoesNotHeal" ->
+                        JD.succeed Heal_ItemDoesNotHeal
+
+                    "Heal_ItemNotPresent" ->
+                        JD.succeed Heal_ItemNotPresent
+
+                    "Attack_NotCloseEnough" ->
+                        JD.succeed Attack_NotCloseEnough
+
+                    "Attack_NotEnoughAP" ->
+                        JD.succeed Attack_NotEnoughAP
+
+                    "MoveForward_AlreadyNextToEachOther" ->
+                        JD.succeed MoveForward_AlreadyNextToEachOther
+
+                    _ ->
+                        JD.fail <| "Unknown CommandRejectionReason: '" ++ reason ++ "'"
             )
 
 

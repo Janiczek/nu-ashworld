@@ -26,7 +26,6 @@ module Data.Quest exposing
     , xpPerTickGiven
     )
 
-import SeqDict exposing (SeqDict)
 import Data.Item as Item exposing (Kind(..))
 import Data.Map.Location exposing (Location(..))
 import Data.Perk as Perk exposing (Perk(..))
@@ -34,6 +33,7 @@ import Data.Skill as Skill exposing (Skill(..))
 import Data.Vendor as Vendor exposing (Name(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import SeqDict exposing (SeqDict)
 
 
 

@@ -7,7 +7,6 @@ module Data.WorldData exposing
     , isPlayer
     )
 
-import SeqDict exposing (SeqDict)
 import Data.Ladder as Ladder
 import Data.Player
     exposing
@@ -22,6 +21,7 @@ import Data.Tick exposing (TickPerIntervalCurve)
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.World as World
 import Dict exposing (Dict)
+import SeqDict exposing (SeqDict)
 import Time exposing (Posix)
 import Time.Extra as Time
 

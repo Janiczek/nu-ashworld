@@ -25,7 +25,6 @@ module Data.Enemy exposing
     , xp
     )
 
-import SeqDict exposing (SeqDict)
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item exposing (Item)
@@ -42,6 +41,7 @@ import Random exposing (Generator)
 import Random.Bool as Random
 import Random.Extra as Random
 import Random.FloatExtra as Random exposing (NormalIntSpec)
+import SeqDict exposing (SeqDict)
 
 
 

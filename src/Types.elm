@@ -1,6 +1,5 @@
 module Types exposing (..)
 
-import SeqSet exposing (SeqSet)
 import BiDict exposing (BiDict)
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
@@ -34,6 +33,7 @@ import Frontend.Route exposing (Route)
 import Lamdera exposing (ClientId, SessionId)
 import Queue exposing (Queue)
 import Random
+import SeqSet exposing (SeqSet)
 import Set exposing (Set)
 import Time exposing (Posix)
 import Url exposing (Url)

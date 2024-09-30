@@ -10,10 +10,10 @@ module Data.Skill exposing
     , name
     )
 
-import SeqDict exposing (SeqDict)
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import SeqDict exposing (SeqDict)
 
 
 type Skill

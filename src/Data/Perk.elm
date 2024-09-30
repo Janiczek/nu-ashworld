@@ -11,11 +11,11 @@ module Data.Perk exposing
     , rank
     )
 
-import SeqDict exposing (SeqDict)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import SeqDict exposing (SeqDict)
 
 
 type Perk
