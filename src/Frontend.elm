@@ -3803,7 +3803,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
-                    , HA.class "!bg-green-800 w-[70ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre font-mono"
+                    , HA.class "!bg-green-800 w-[70ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre-wrap font-mono"
                     , HA.value fightStrategyText
                     ]
                     []
@@ -3851,7 +3851,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 :: (if Result.isOk parseResult then
                         [ H.p []
                             [ H.text "Your strategy is "
-                            , H.span [ HA.class "text-green-100" ] [ H.text "OK" ]
+                            , H.span [ HA.class "text-green-100" ] [ H.text "valid." ]
                             ]
                         ]
 
