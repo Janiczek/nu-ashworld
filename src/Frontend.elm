@@ -3301,19 +3301,19 @@ inventoryView _ player =
         itemView : Item -> Html FrontendMsg
         itemView item =
             let
-                ( isDisabled, tooltip ) =
+                disabledTooltip =
                     case Logic.canUseItem player item.kind of
                         Ok () ->
-                            ( False, Nothing )
+                            Nothing
 
                         Err ItemCannotBeUsedDirectly ->
-                            ( True, Just "This item cannot be used directly." )
+                            Just "This item cannot be used directly."
 
                         Err (YouNeedTicks n) ->
-                            ( True, Just <| "You need " ++ String.fromInt n ++ " ticks to use this item." )
+                            Just <| "You need " ++ String.fromInt n ++ " ticks to use this item."
 
                         Err YoureAtFullHp ->
-                            ( True, Just "You're at full HP." )
+                            Just "You're at full HP."
             in
             H.li
                 [ HA.class "flex flex-row gap-[1ch]" ]
@@ -3322,7 +3322,8 @@ inventoryView _ player =
                     [ HA.class "flex flex-row gap-[2ch]" ]
                     [ UI.button
                         [ HE.onClick <| AskToUseItem item.id
-                        , HA.disabled isDisabled
+                        , HA.disabled <| disabledTooltip /= Nothing
+                        , HA.attributeMaybe HA.title disabledTooltip
                         ]
                         [ H.text "[Use]" ]
                     , H.viewIf (Item.isEquippable item.kind) <|
