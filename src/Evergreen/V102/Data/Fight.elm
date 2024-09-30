@@ -1,7 +1,6 @@
 module Evergreen.V102.Data.Fight exposing (..)
 
 import AssocList
-import SeqSet
 import Dict
 import Evergreen.V102.Data.Enemy
 import Evergreen.V102.Data.Fight.ShotType
@@ -13,6 +12,7 @@ import Evergreen.V102.Data.Skill
 import Evergreen.V102.Data.Special
 import Evergreen.V102.Data.Trait
 import Evergreen.V102.Logic
+import SeqSet
 
 
 type alias PlayerOpponent =

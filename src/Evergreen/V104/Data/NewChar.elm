@@ -1,9 +1,9 @@
 module Evergreen.V104.Data.NewChar exposing (..)
 
-import SeqSet
 import Evergreen.V104.Data.Skill
 import Evergreen.V104.Data.Special
 import Evergreen.V104.Data.Trait
+import SeqSet
 
 
 type CreationError

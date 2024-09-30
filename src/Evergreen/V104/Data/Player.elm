@@ -1,7 +1,6 @@
 module Evergreen.V104.Data.Player exposing (..)
 
 import AssocList
-import SeqSet
 import Dict
 import Evergreen.V104.Data.Auth
 import Evergreen.V104.Data.FightStrategy
@@ -15,6 +14,7 @@ import Evergreen.V104.Data.Skill
 import Evergreen.V104.Data.Special
 import Evergreen.V104.Data.Trait
 import Evergreen.V104.Data.Xp
+import SeqSet
 
 
 type alias SPlayer =
