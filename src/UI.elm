@@ -18,8 +18,9 @@ button : List (Attribute msg) -> List (Html msg) -> Html msg
 button attrs content =
     H.button
         (HA.class "uppercase whitespace-pre cursor-pointer text-green-200 select-none"
-            :: TW.mod "disabled" "text-green-300"
-            :: TW.mod "hover" "text-green-100 bg-green-800"
+            :: TW.mod "disabled" "text-green-300 cursor-not-allowed"
+            :: TW.mod "hover" "text-green-100"
+            :: TW.mod "[&:not([disabled]):hover]" "bg-green-800"
             :: TW.mod "active" "text-orange"
             :: attrs
         )

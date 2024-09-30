@@ -3495,6 +3495,7 @@ messagesView currentTime zone _ player =
     , H.div [ HA.class "flex flex-col gap-4 items-start" ]
         [ UI.button
             [ HE.onClick AskToRemoveFightMessages
+            , HA.disabled <| not (Dict.any (\_ { content } -> Message.isFightMessage content) player.messages)
             , HA.class "normal-case"
             ]
             [ H.text "[Remove fight messages]" ]
