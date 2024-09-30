@@ -148,19 +148,19 @@ init url key =
         , Nav.pushUrl key (Route.toString route)
 
         -- TODO don't push this, only for developing styles
-        , let
-            initAuth =
-                Auth.init
-          in
-          Lamdera.sendToBackend <|
-            LogMeIn <|
-                Auth.hash
-                    ({ initAuth
-                        | name = "j2"
-                        , worldName = "main"
-                     }
-                        |> Auth.setPlaintextPassword "j2"
-                    )
+        --, let
+        --    initAuth =
+        --        Auth.init
+        --  in
+        --  Lamdera.sendToBackend <|
+        --    LogMeIn <|
+        --        Auth.hash
+        --            ({ initAuth
+        --                | name = "j2"
+        --                , worldName = "main"
+        --             }
+        --                |> Auth.setPlaintextPassword "j2"
+        --            )
         ]
     )
 
@@ -3417,23 +3417,33 @@ inventoryView _ player =
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Equipment" ]
-        , H.div []
-            [ UI.liBullet
-            , H.text "Armor: "
-            , H.span [ HA.class "text-green-100" ] <|
-                case player.equippedArmor of
-                    Nothing ->
-                        [ H.text "None" ]
+        , [ ( player.equippedArmor
+            , "Armor"
+            , \armor ->
+                [ H.text <| Item.name armor.kind
+                , UI.button
+                    [ HE.onClick AskToUnequipArmor
+                    , HA.class "ml-[1ch]"
+                    ]
+                    [ H.text "[Unequip]" ]
+                ]
+            )
+          ]
+            |> List.map
+                (\( maybeItem, label, viewItem ) ->
+                    H.div []
+                        [ UI.liBullet
+                        , H.text <| label ++ ": "
+                        , H.span [ HA.class "text-green-100" ] <|
+                            case maybeItem of
+                                Nothing ->
+                                    [ H.text "None" ]
 
-                    Just armor ->
-                        [ H.text <| Item.name armor.kind
-                        , UI.button
-                            [ HE.onClick AskToUnequipArmor
-                            , HA.class "ml-[1ch]"
-                            ]
-                            [ H.text "[Unequip]" ]
+                                Just item ->
+                                    viewItem item
                         ]
-            ]
+                )
+            |> H.ul []
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Defence stats" ]
