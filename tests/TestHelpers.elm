@@ -27,7 +27,6 @@ import Data.Trait as Trait exposing (Trait)
 import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import Fuzz.Extra as Fuzz
 import Logic exposing (AttackStats)
 import Maybe.Extra as Maybe
 import Parser as P exposing (Parser, Problem(..))
@@ -146,6 +145,7 @@ commandFuzzer =
         , Fuzz.map Heal healingItemKindFuzzer
         , Fuzz.constant MoveForward
         , Fuzz.constant DoWhatever
+        , Fuzz.constant SkipTurn
         ]
 
 
@@ -194,18 +194,20 @@ operatorDataFuzzer =
     Fuzz.constant OperatorData
         |> Fuzz.andMap valueFuzzer
         |> Fuzz.andMap operatorFuzzer
-        |> Fuzz.andMap Fuzz.int
+        |> Fuzz.andMap valueFuzzer
 
 
 valueFuzzer : Fuzzer Value
 valueFuzzer =
     Fuzz.oneOf
         [ Fuzz.constant MyHP
+        , Fuzz.constant MyMaxHP
         , Fuzz.constant MyAP
         , Fuzz.map MyItemCount healingItemKindFuzzer
         , Fuzz.map ItemsUsed healingItemKindFuzzer
         , Fuzz.map ChanceToHit shotTypeFuzzer
         , Fuzz.constant Distance
+        , Fuzz.map Number Fuzz.int
         ]
 
 
@@ -323,7 +325,7 @@ equippedArmorKindFuzzer =
 armorKindFuzzer : Fuzzer Item.Kind
 armorKindFuzzer =
     Item.all
-        |> List.filter (\kind -> Item.type_ kind == Just Item.Armor)
+        |> List.filter (\kind -> Item.type_ kind == Item.Armor)
         |> oneOfValues
 
 

@@ -297,7 +297,12 @@ view perceptionLevel fight yourName =
                                                                     ""
                                                                )
 
-                                                Fight.DoNothing rejectionReason ->
+                                                Fight.SkipTurn ->
+                                                    H.text <|
+                                                        names_.subject.verbPresent "skip"
+                                                            ++ " a turn."
+
+                                                Fight.FailToDoAnything rejectionReason ->
                                                     -- TODO make this nicer... probably reads wrong
                                                     let
                                                         ( action__, issue ) =
@@ -321,8 +326,8 @@ view perceptionLevel fight yourName =
                                                                     ( "move forward", "already next to each other" )
                                                     in
                                                     H.text <|
-                                                        names_.subject.verbPresent "skip"
-                                                            ++ " a turn. Wanted to "
+                                                        names_.subject.verbPresent "fail"
+                                                            ++ " to do anything. Wanted to "
                                                             ++ action__
                                                             ++ ". Issue: "
                                                             ++ issue

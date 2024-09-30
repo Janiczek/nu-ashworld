@@ -17,14 +17,13 @@ import Data.Item exposing (Kind(..))
 
 default : ( String, FightStrategy )
 default =
-    yolo
+    conservative
 
 
 all : List ( String, FightStrategy )
 all =
     [ dontCare
     , conservative
-    , yolo
     ]
 
 
@@ -39,30 +38,14 @@ conservative : ( String, FightStrategy )
 conservative =
     ( "Conservative"
     , If
-        { condition = Operator { value = Distance, op = GT_, number_ = 0 }
+        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 0 }
         , then_ = Command MoveForward
         , else_ =
             If
                 { condition =
                     And
-                        (Operator { value = MyHP, op = LT_, number_ = 80 })
-                        (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 10 })
-                , then_ = Command (Heal Stimpak)
-                , else_ = Command (Attack (AimedShot Eyes))
-                }
-        }
-    )
-
-
-yolo : ( String, FightStrategy )
-yolo =
-    ( "YOLO"
-    , If
-        { condition = Operator { value = Distance, op = GT_, number_ = 0 }
-        , then_ = Command MoveForward
-        , else_ =
-            If
-                { condition = Operator { value = MyHP, op = LT_, number_ = 80 }
+                        (Operator { lhs = MyHP, op = LT_, rhs = MyMaxHP })
+                        (Operator { lhs = ItemsUsed Stimpak, op = LT_, rhs = Number 10 })
                 , then_ = Command (Heal Stimpak)
                 , else_ = Command (Attack (AimedShot Eyes))
                 }

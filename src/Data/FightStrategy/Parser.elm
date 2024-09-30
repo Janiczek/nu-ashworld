@@ -72,6 +72,7 @@ command =
         , heal
         , P.map (\_ -> MoveForward) (P.keyword "move forward")
         , P.map (\_ -> DoWhatever) (P.keyword "do whatever")
+        , P.map (\_ -> SkipTurn) (P.keyword "skip turn")
         ]
 
 
@@ -152,7 +153,7 @@ operatorCondition =
         |. P.spaces
         |= operator
         |. P.spaces
-        |= possiblyNegativeInt
+        |= value
         |> P.map Operator
 
 
@@ -182,11 +183,13 @@ value : Parser Value
 value =
     P.oneOf
         [ P.map (\_ -> MyHP) (P.keyword "my HP")
+        , P.map (\_ -> MyMaxHP) (P.keyword "my max HP")
         , P.map (\_ -> MyAP) (P.keyword "my AP")
         , itemCount
         , itemsUsed
         , chanceToHit
         , P.map (\_ -> Distance) (P.keyword "distance")
+        , P.map Number possiblyNegativeInt
         ]
 
 

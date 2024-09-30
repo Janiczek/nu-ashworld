@@ -1,15 +1,8 @@
-module Dict.ExtraExtra exposing (all, decoder, encode)
+module Dict.ExtraExtra exposing (decoder, encode)
 
 import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-
-
-all : (comparable -> value -> Bool) -> Dict comparable value -> Bool
-all fn dict =
-    dict
-        |> Dict.toList
-        |> List.all (\( k, v ) -> fn k v)
 
 
 encode : (comparable -> JE.Value) -> (v -> JE.Value) -> Dict comparable v -> JE.Value

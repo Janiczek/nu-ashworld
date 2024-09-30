@@ -51,19 +51,21 @@ type Condition
 
 
 type alias OperatorData =
-    { value : Value
+    { lhs : Value
     , op : Operator
-    , number_ : Int
+    , rhs : Value
     }
 
 
 type Value
     = MyHP
+    | MyMaxHP
     | MyAP
     | MyItemCount Item.Kind
     | ItemsUsed Item.Kind
     | ChanceToHit ShotType
     | Distance
+    | Number Int
 
 
 type Command
@@ -72,6 +74,7 @@ type Command
     | Heal Item.Kind
     | MoveForward
     | DoWhatever
+    | SkipTurn
 
 
 indent : String -> String
@@ -110,6 +113,9 @@ toString strategy =
                 DoWhatever ->
                     "do whatever"
 
+                SkipTurn ->
+                    "skip turn"
+
 
 conditionToString : Condition -> String
 conditionToString condition =
@@ -134,12 +140,12 @@ conditionToString condition =
         OpponentIsNPC ->
             "opponent is NPC"
 
-        Operator { op, value, number_ } ->
-            valueToString value
+        Operator { lhs, op, rhs } ->
+            valueToString lhs
                 ++ " "
                 ++ operatorToString op
                 ++ " "
-                ++ String.fromInt number_
+                ++ valueToString rhs
 
 
 valueToString : Value -> String
@@ -147,6 +153,9 @@ valueToString value =
     case value of
         MyHP ->
             "my HP"
+
+        MyMaxHP ->
+            "my max HP"
 
         MyAP ->
             "my AP"
@@ -166,6 +175,9 @@ valueToString value =
 
         Distance ->
             "distance"
+
+        Number n ->
+            String.fromInt n
 
 
 operatorToString : Operator -> String
@@ -271,6 +283,11 @@ encodeCommand command =
                 [ ( "type", JE.string "DoWhatever" )
                 ]
 
+        SkipTurn ->
+            JE.object
+                [ ( "type", JE.string "SkipTurn" )
+                ]
+
 
 encodeCondition : Condition -> JE.Value
 encodeCondition condition =
@@ -299,12 +316,12 @@ encodeCondition condition =
                 [ ( "type", JE.string "OpponentIsNPC" )
                 ]
 
-        Operator { op, value, number_ } ->
+        Operator { lhs, op, rhs } ->
             JE.object
                 [ ( "type", JE.string "Operator" )
                 , ( "operator", encodeOperator op )
-                , ( "value", encodeValue value )
-                , ( "number", JE.int number_ )
+                , ( "lhs", encodeValue lhs )
+                , ( "rhs", encodeValue rhs )
                 ]
 
 
@@ -339,6 +356,11 @@ encodeValue value =
                 [ ( "type", JE.string "MyHP" )
                 ]
 
+        MyMaxHP ->
+            JE.object
+                [ ( "type", JE.string "MyMaxHP" )
+                ]
+
         MyAP ->
             JE.object
                 [ ( "type", JE.string "MyAP" )
@@ -365,6 +387,12 @@ encodeValue value =
         Distance ->
             JE.object
                 [ ( "type", JE.string "Distance" )
+                ]
+
+        Number n ->
+            JE.object
+                [ ( "type", JE.string "Number" )
+                , ( "value", JE.int n )
                 ]
 
 
@@ -414,9 +442,9 @@ conditionDecoder =
 
                     "Operator" ->
                         JD.succeed OperatorData
-                            |> JD.andMap (JD.field "value" valueDecoder)
+                            |> JD.andMap (JD.field "lhs" valueDecoder)
                             |> JD.andMap (JD.field "operator" operatorDecoder)
-                            |> JD.andMap (JD.field "number" JD.int)
+                            |> JD.andMap (JD.field "rhs" valueDecoder)
                             |> JD.map Operator
 
                     _ ->
@@ -432,6 +460,9 @@ valueDecoder =
                 case type_ of
                     "MyHP" ->
                         JD.succeed MyHP
+
+                    "MyMaxHP" ->
+                        JD.succeed MyMaxHP
 
                     "MyAP" ->
                         JD.succeed MyAP
@@ -450,6 +481,9 @@ valueDecoder =
 
                     "Distance" ->
                         JD.succeed Distance
+
+                    "Number" ->
+                        JD.map Number JD.int
 
                     _ ->
                         JD.fail <| "Unknown Value type: " ++ type_
@@ -478,6 +512,9 @@ commandDecoder =
 
                     "DoWhatever" ->
                         JD.succeed DoWhatever
+
+                    "SkipTurn" ->
+                        JD.succeed SkipTurn
 
                     _ ->
                         JD.fail <| "Unknown Command type: " ++ type_
@@ -516,7 +553,7 @@ operatorDecoder =
 doWhatever : FightStrategy
 doWhatever =
     If
-        { condition = Operator { value = Distance, op = GT_, number_ = 0 }
+        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 0 }
         , then_ = Command MoveForward
         , else_ = Command AttackRandomly
         }
@@ -543,6 +580,9 @@ extractItems strategy =
                 MyHP ->
                     []
 
+                MyMaxHP ->
+                    []
+
                 MyAP ->
                     []
 
@@ -556,6 +596,9 @@ extractItems strategy =
                     []
 
                 Distance ->
+                    []
+
+                Number _ ->
                     []
 
         fromCommand : Command -> List Item.Kind
@@ -576,6 +619,9 @@ extractItems strategy =
                 DoWhatever ->
                     []
 
+                SkipTurn ->
+                    []
+
         fromCondition : Condition -> List Item.Kind
         fromCondition condition =
             case condition of
@@ -591,8 +637,8 @@ extractItems strategy =
                 OpponentIsNPC ->
                     []
 
-                Operator { value } ->
-                    fromValue value
+                Operator { lhs, rhs } ->
+                    fromValue lhs ++ fromValue rhs
     in
     case strategy of
         Command command ->

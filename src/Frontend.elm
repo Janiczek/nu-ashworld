@@ -3,7 +3,7 @@ module Frontend exposing (..)
 import Admin
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Cmd.Extra as Cmd
+import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
@@ -53,7 +53,6 @@ import DateFormat
 import DateFormat.Relative
 import Dict exposing (Dict)
 import Dict.Extra as Dict
-import Dict.ExtraExtra as Dict
 import File
 import File.Download
 import File.Select
@@ -1728,7 +1727,8 @@ townMainSquareView expandedQuests location { questsProgress } player =
         , H.viewIf hasQuests <|
             H.ul []
                 (quests
-                |> List.map (questView player questsProgress expandedQuests))
+                    |> List.map (questView player questsProgress expandedQuests)
+                )
         ]
     ]
 
@@ -3495,7 +3495,8 @@ messagesView currentTime zone _ player =
     , H.div [ HA.class "flex flex-col gap-4 items-start" ]
         [ UI.button
             [ HE.onClick AskToRemoveFightMessages
-            , HA.class "normal-case"]
+            , HA.class "normal-case"
+            ]
             [ H.text "[Remove fight messages]" ]
         , H.table [ HA.id "messages-table" ]
             [ H.thead []

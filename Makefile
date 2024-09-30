@@ -9,6 +9,7 @@ watch:
 start:
 	lamdera live
 
+# TODO use `elm-test --compiler lamdera` instead
 .PHONY: test
 test:
 	gsed --in-place=.bak '/lamdera/d' elm.json

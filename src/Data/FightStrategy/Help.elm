@@ -20,27 +20,28 @@ help =
 
 [COMMAND]                           [VALUE]                        
   - attack randomly                   - my HP                      
-  - attack ([SHOT TYPE])              - my AP                      
-  - heal ([ITEM])                     - number of available [ITEM] 
-  - move forward                      - number of used [ITEM]      
-  - do whatever                       - opponent's level           
+  - attack ([SHOT TYPE])              - my max HP
+  - heal ([ITEM])                     - my AP                      
+  - move forward                      - number of available [ITEM] 
+  - do whatever                       - number of used [ITEM]      
+  - skip turn                         - opponent's level           
                                       - chance to hit ([SHOT TYPE])
                                       - distance                   
-[CONDITION]                         
+[CONDITION]                           - [NUMBER]
   - opponent is player              
-  - opponent is NPC                 [SHOT TYPE]   
-  - [VALUE] [OPERATOR] [NUMBER]       - unaimed   
-  - ([CONDITION] or [CONDITION])      - head      
-  - ([CONDITION] and [CONDITION])     - eyes      
+  - opponent is NPC                 
+  - [VALUE] [OPERATOR] [VALUE]      [SHOT TYPE]   
+  - ([CONDITION] or [CONDITION])      - unaimed   
+  - ([CONDITION] and [CONDITION])     - head      
+                                      - eyes      
                                       - torso     
-                                      - groin     
-[OPERATOR]                            - left arm  
-  - <   (less than)                   - right arm 
-  - <=  (less than or equal)          - left leg  
-  - ==  (equals)                      - right leg 
-  - !=  (doesn't equal)
-  - >=  (greater than or equal)
-  - >   (greater than)
+[OPERATOR]                            - groin     
+  - <   (less than)                   - left arm  
+  - <=  (less than or equal)          - right arm 
+  - ==  (equals)                      - left leg  
+  - !=  (doesn't equal)               - right leg 
+  - >=  (greater than or equal)    
+  - >   (greater than)           
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -159,6 +160,8 @@ Examples:
 
         Command ->
             """The end result of applying your strategy to your current situation.
+
+The 'do whatever' command is a shortcut for 'if distance > 0 then move forward else attack randomly'.
 
 Examples:
 - heal (Stimpak)

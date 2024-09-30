@@ -616,7 +616,7 @@ equipItem { id } player =
                 Item.Book ->
                     player
 
-                Item.Armor _ ->
+                Item.Armor ->
                     player
                         |> (if player.equippedArmor /= Nothing then
                                 unequipArmor

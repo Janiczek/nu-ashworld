@@ -3,6 +3,7 @@ module Backend exposing (..)
 import Admin
 import BiDict
 import Cmd.Extra as Cmd
+import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -45,6 +46,7 @@ import Data.WorldData
 import Data.WorldInfo exposing (WorldInfo)
 import Data.Xp as Xp
 import Dict exposing (Dict)
+import Dict.Extra as Dict
 import Dict.ExtraExtra as Dict
 import Env
 import Http
@@ -416,7 +418,7 @@ update msg model =
                                                                                     if Lamdera.Hash.hasChanged newHash clientId model.playerDataCache then
                                                                                         accInner
                                                                                             |> Tuple.mapFirst (saveToPlayerDataCache clientId newHash)
-                                                                                            |> Cmd.withCmd (Lamdera.sendToFrontend clientId (CurrentPlayer playerData_))
+                                                                                            |> Cmd.add (Lamdera.sendToFrontend clientId (CurrentPlayer playerData_))
 
                                                                                     else
                                                                                         accInner

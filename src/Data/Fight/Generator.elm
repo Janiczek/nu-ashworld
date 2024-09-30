@@ -134,7 +134,10 @@ apCost opponent action =
         Fight.Heal _ ->
             Logic.healApCost
 
-        Fight.DoNothing _ ->
+        Fight.SkipTurn ->
+            0
+
+        Fight.FailToDoAnything _ ->
             0
 
 
@@ -651,7 +654,6 @@ runStrategy strategy who ongoing =
         command : Command
         command =
             evalStrategy state strategy
-                |> Debug.log "Want to do"
     in
     runCommand who ongoing state command
 
@@ -681,6 +683,9 @@ runCommand who ongoing state command =
                 |> evalStrategy state
                 |> runCommand who ongoing state
 
+        SkipTurn ->
+            skipTurn who ongoing
+
 
 currentTurnLog : Who -> List ( Who, Fight.Action ) -> List Fight.Action
 currentTurnLog who log =
@@ -702,7 +707,7 @@ rejectCommand who reason ongoing =
             if isFirst then
                 { ongoing
                     | actionsTaken = ongoing.actionsTaken + 1
-                    , reverseLog = ( who, Fight.DoNothing reason ) :: ongoing.reverseLog
+                    , reverseLog = ( who, Fight.FailToDoAnything reason ) :: ongoing.reverseLog
                 }
 
             else
@@ -839,6 +844,16 @@ moveForward who ongoing =
             |> subtractDistance maxPossibleMove
             |> subtractAp who action
             |> finalizeCommand
+
+
+skipTurn : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+skipTurn who ongoing =
+    let
+        nextOngoing =
+            ongoing
+                |> addLog who Fight.SkipTurn
+    in
+    finalizeCommand nextOngoing
 
 
 chanceToHit : Who -> OngoingFight -> ShotType -> Int
@@ -1079,11 +1094,11 @@ evalCondition state condition =
         OpponentIsNPC ->
             Fight.isNPC state.them.type_
 
-        Operator { op, value, number_ } ->
+        Operator { lhs, op, rhs } ->
             operatorFn
                 op
-                (evalValue state value)
-                number_
+                (evalValue state lhs)
+                (evalValue state rhs)
 
 
 evalValue : StrategyState -> Value -> Int
@@ -1091,6 +1106,9 @@ evalValue state value =
     case value of
         MyHP ->
             state.you.hp
+
+        MyMaxHP ->
+            state.you.maxHp
 
         MyAP ->
             state.yourAp
@@ -1125,6 +1143,9 @@ evalValue state value =
 
         Distance ->
             state.distanceHexes
+
+        Number n ->
+            n
 
 
 operatorFn : Operator -> (Int -> Int -> Bool)

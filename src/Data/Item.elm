@@ -389,31 +389,553 @@ baseValue kind =
 
 armorClass : Kind -> Int
 armorClass kind =
-    case type_ kind of
-        Armor r ->
-            r.armorClass
+    case kind of
+        Robes ->
+            5
 
-        _ ->
+        LeatherJacket ->
+            8
+
+        LeatherArmor ->
+            15
+
+        MetalArmor ->
+            10
+
+        TeslaArmor ->
+            15
+
+        CombatArmor ->
+            20
+
+        CombatArmorMk2 ->
+            25
+
+        PowerArmor ->
+            25
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
             0
 
 
 damageThresholdNormal : Kind -> Int
 damageThresholdNormal kind =
-    case type_ kind of
-        Armor r ->
-            r.damageThresholdNormal
+    case kind of
+        Robes ->
+            0
 
-        _ ->
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            2
+
+        MetalArmor ->
+            4
+
+        TeslaArmor ->
+            4
+
+        CombatArmor ->
+            5
+
+        CombatArmorMk2 ->
+            6
+
+        PowerArmor ->
+            12
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
             0
 
 
 damageResistanceNormal : Kind -> Int
 damageResistanceNormal kind =
-    case type_ kind of
-        Armor r ->
-            r.damageResistanceNormal
+    case kind of
+        Robes ->
+            20
 
-        _ ->
+        LeatherJacket ->
+            20
+
+        LeatherArmor ->
+            25
+
+        MetalArmor ->
+            30
+
+        TeslaArmor ->
+            20
+
+        CombatArmor ->
+            40
+
+        CombatArmorMk2 ->
+            40
+
+        PowerArmor ->
+            40
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
             0
 
 
@@ -1268,10 +1790,6 @@ usageEffects kind =
 type Type
     = Food
     | Armor
-        { armorClass : Int
-        , damageThresholdNormal : Int
-        , damageResistanceNormal : Int
-        }
     | UnarmedWeapon
     | MeleeWeapon
     | ThrownWeapon
@@ -1289,7 +1807,7 @@ isEquippableType type__ =
         Food ->
             False
 
-        Armor _ ->
+        Armor ->
             True
 
         UnarmedWeapon ->
@@ -1352,31 +1870,15 @@ type_ kind =
 
         Robes ->
             Armor
-                { armorClass = 5
-                , damageThresholdNormal = 0
-                , damageResistanceNormal = 20
-                }
 
         LeatherJacket ->
             Armor
-                { armorClass = 8
-                , damageThresholdNormal = 0
-                , damageResistanceNormal = 20
-                }
 
         LeatherArmor ->
             Armor
-                { armorClass = 15
-                , damageThresholdNormal = 2
-                , damageResistanceNormal = 25
-                }
 
         MetalArmor ->
             Armor
-                { armorClass = 10
-                , damageThresholdNormal = 4
-                , damageResistanceNormal = 30
-                }
 
         Beer ->
             Misc
@@ -1413,31 +1915,15 @@ type_ kind =
 
         TeslaArmor ->
             Armor
-                { armorClass = 15
-                , damageThresholdNormal = 4
-                , damageResistanceNormal = 20
-                }
 
         CombatArmor ->
             Armor
-                { armorClass = 20
-                , damageThresholdNormal = 5
-                , damageResistanceNormal = 40
-                }
 
         CombatArmorMk2 ->
             Armor
-                { armorClass = 25
-                , damageThresholdNormal = 6
-                , damageResistanceNormal = 40
-                }
 
         PowerArmor ->
             Armor
-                { armorClass = 25
-                , damageThresholdNormal = 12
-                , damageResistanceNormal = 40
-                }
 
         SuperSledge ->
             MeleeWeapon
@@ -1550,7 +2036,7 @@ typeName type__ =
         Book ->
             "Book"
 
-        Armor _ ->
+        Armor ->
             "Armor"
 
         Misc ->

@@ -26,6 +26,7 @@ value =
     parserTest "FightStrategy.value"
         FightStrategy.value
         [ ( "my HP", "my HP", Just MyHP )
+        , ( "my max HP", "my max HP", Just MyMaxHP )
         , ( "my AP", "my AP", Just MyAP )
         , ( "distance", "distance", Just Distance )
         , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount Stimpak) )
@@ -82,6 +83,7 @@ command =
         , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
         , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
         , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
+        , ( "skip turn", "skip turn", Just SkipTurn )
         ]
 
 
@@ -89,24 +91,25 @@ condition : Test
 condition =
     parserTest "FightStrategy.condition"
         FightStrategy.condition
-        [ ( "op: my HP < 50", "my HP < 50", Just (Operator { value = MyHP, op = LT_, number_ = 50 }) )
-        , ( "op: my AP >= 3", "my AP >= 3", Just (Operator { value = MyAP, op = GTE, number_ = 3 }) )
+        [ ( "op: my HP < 50", "my HP < 50", Just (Operator { lhs = MyHP, op = LT_, rhs = Number 50 }) )
+        , ( "op: my AP >= 3", "my AP >= 3", Just (Operator { lhs = MyAP, op = GTE, rhs = Number 3 }) )
+        , ( "op: my HP < my max HP", "my HP < my max HP", Just (Operator { lhs = MyHP, op = LT_, rhs = MyMaxHP }) )
         , ( "opponent is player", "opponent is player", Just OpponentIsPlayer )
         , ( "opponent is NPC", "opponent is NPC", Just OpponentIsNPC )
         , ( "and"
           , "(my HP < 50 and my AP >= 3)"
           , Just
                 (And
-                    (Operator { value = MyHP, op = LT_, number_ = 50 })
-                    (Operator { value = MyAP, op = GTE, number_ = 3 })
+                    (Operator { lhs = MyHP, op = LT_, rhs = Number 50 })
+                    (Operator { lhs = MyAP, op = GTE, rhs = Number 3 })
                 )
           )
         , ( "or"
           , "(my HP < 50 or my AP >= 3)"
           , Just
                 (Or
-                    (Operator { value = MyHP, op = LT_, number_ = 50 })
-                    (Operator { value = MyAP, op = GTE, number_ = 3 })
+                    (Operator { lhs = MyHP, op = LT_, rhs = Number 50 })
+                    (Operator { lhs = MyAP, op = GTE, rhs = Number 3 })
                 )
           )
         , ( "or of ands"
@@ -114,12 +117,12 @@ condition =
           , Just
                 (Or
                     (And
-                        (Operator { value = MyHP, op = LT_, number_ = 50 })
-                        (Operator { value = MyAP, op = GTE, number_ = 3 })
+                        (Operator { lhs = MyHP, op = LT_, rhs = Number 50 })
+                        (Operator { lhs = MyAP, op = GTE, rhs = Number 3 })
                     )
                     (And
-                        (Operator { value = MyHP, op = GT_, number_ = 50 })
-                        (Operator { value = MyAP, op = EQ_, number_ = 4 })
+                        (Operator { lhs = MyHP, op = GT_, rhs = Number 50 })
+                        (Operator { lhs = MyAP, op = EQ_, rhs = Number 4 })
                     )
                 )
           )
@@ -128,12 +131,12 @@ condition =
           , Just
                 (And
                     (Or
-                        (Operator { value = MyHP, op = LT_, number_ = 50 })
-                        (Operator { value = MyAP, op = GTE, number_ = 3 })
+                        (Operator { lhs = MyHP, op = LT_, rhs = Number 50 })
+                        (Operator { lhs = MyAP, op = GTE, rhs = Number 3 })
                     )
                     (Or
-                        (Operator { value = MyHP, op = GT_, number_ = 50 })
-                        (Operator { value = MyAP, op = EQ_, number_ = 4 })
+                        (Operator { lhs = MyHP, op = GT_, rhs = Number 50 })
+                        (Operator { lhs = MyAP, op = EQ_, rhs = Number 4 })
                     )
                 )
           )
@@ -147,12 +150,12 @@ condition =
                 |> multilineInput
           , Just
                 (And
-                    (Operator { value = MyHP, op = LT_, number_ = 100 })
+                    (Operator { lhs = MyHP, op = LT_, rhs = Number 100 })
                     (And
-                        (Operator { value = ItemsUsed Stimpak, op = LT_, number_ = 50 })
+                        (Operator { lhs = ItemsUsed Stimpak, op = LT_, rhs = Number 50 })
                         (Or
-                            (Operator { value = ItemsUsed HealingPowder, op = LT_, number_ = 50 })
-                            (Operator { value = ItemsUsed Fruit, op = LT_, number_ = 50 })
+                            (Operator { lhs = ItemsUsed HealingPowder, op = LT_, rhs = Number 50 })
+                            (Operator { lhs = ItemsUsed Fruit, op = LT_, rhs = Number 50 })
                         )
                     )
                 )
@@ -169,7 +172,7 @@ fightStrategy =
           , "if my HP < 10 then heal (Fruit) else do whatever"
           , Just
                 (If
-                    { condition = Operator { value = MyHP, op = LT_, number_ = 10 }
+                    { condition = Operator { lhs = MyHP, op = LT_, rhs = Number 10 }
                     , then_ = Command (Heal Fruit)
                     , else_ = Command DoWhatever
                     }
@@ -184,11 +187,11 @@ fightStrategy =
                 |> multilineInput
           , Just
                 (If
-                    { condition = Operator { value = MyHP, op = LT_, number_ = 10 }
+                    { condition = Operator { lhs = MyHP, op = LT_, rhs = Number 10 }
                     , then_ = Command (Heal Fruit)
                     , else_ =
                         If
-                            { condition = Operator { value = ItemsUsed Fruit, op = GT_, number_ = 200 }
+                            { condition = Operator { lhs = ItemsUsed Fruit, op = GT_, rhs = Number 200 }
                             , then_ = Command (Heal Stimpak)
                             , else_ = Command AttackRandomly
                             }

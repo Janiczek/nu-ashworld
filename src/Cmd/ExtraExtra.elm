@@ -1,4 +1,4 @@
-module Cmd.Extra exposing (andThen, withCmd)
+module Cmd.ExtraExtra exposing (andThen)
 
 
 andThen : (model -> ( model, Cmd msg )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
@@ -9,11 +9,4 @@ andThen fn ( model, oldCmd ) =
     in
     ( newModel
     , Cmd.batch [ oldCmd, newCmd ]
-    )
-
-
-withCmd : Cmd msg -> ( model, Cmd msg ) -> ( model, Cmd msg )
-withCmd newCmd ( model, oldCmd ) =
-    ( model
-    , Cmd.batch [ newCmd, oldCmd ]
     )

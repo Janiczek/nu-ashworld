@@ -110,7 +110,8 @@ type Action
         , healedHp : Int
         , newHp : Int
         }
-    | DoNothing CommandRejectionReason
+    | SkipTurn
+    | FailToDoAnything CommandRejectionReason
 
 
 type CommandRejectionReason
@@ -459,9 +460,14 @@ encodeAction action =
                 , ( "newHp", JE.int r.newHp )
                 ]
 
-        DoNothing reason ->
+        SkipTurn ->
             JE.object
-                [ ( "type", JE.string "DoNothing" )
+                [ ( "type", JE.string "SkipTurn" )
+                ]
+
+        FailToDoAnything reason ->
+            JE.object
+                [ ( "type", JE.string "FailToDoAnything" )
                 , ( "reason"
                   , JE.string <|
                         case reason of
@@ -527,8 +533,11 @@ actionDecoder =
                             (JD.field "healedHp" JD.int)
                             (JD.field "newHp" JD.int)
 
-                    "DoNothing" ->
-                        JD.map DoNothing (JD.field "reason" commandRejectionReasonDecoder)
+                    "SkipTurn" ->
+                        JD.succeed SkipTurn
+
+                    "FailToDoAnything" ->
+                        JD.map FailToDoAnything (JD.field "reason" commandRejectionReasonDecoder)
 
                     _ ->
                         JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"
