@@ -1,7 +1,7 @@
 module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
-import Data.Fight as Fight exposing (Action, OpponentType, Who(..), CommandRejectionReason(..))
+import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), OpponentType, Who(..))
 import Data.Fight.ShotType exposing (AimedShot, ShotType(..))
 import Data.Item as Item exposing (Item)
 import Data.Player.PlayerName exposing (PlayerName)

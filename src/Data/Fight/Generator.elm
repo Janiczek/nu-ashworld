@@ -7,7 +7,7 @@ module Data.Fight.Generator exposing
     )
 
 import Data.Enemy as Enemy exposing (addedSkillPercentages)
-import Data.Fight as Fight exposing (Opponent, Who(..), CommandRejectionReason(..))
+import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.FightStrategy as FightStrategy
@@ -102,8 +102,8 @@ apFromPreviousTurn who ongoing =
 
         usedAp =
             ongoing.reverseLog
-                |> List.takeWhile (\( w, _ ) -> w == who)
-                |> List.map (\( _, action ) -> apCost opponent action)
+                |> currentTurnLog who
+                |> List.map (apCost opponent)
                 |> List.sum
     in
     (opponent.maxAp - usedAp)
@@ -682,15 +682,31 @@ runCommand who ongoing state command =
                 |> runCommand who ongoing state
 
 
+currentTurnLog : Who -> List ( Who, Fight.Action ) -> List Fight.Action
+currentTurnLog who log =
+    log
+        |> List.takeWhile (\( w, _ ) -> w == who)
+        |> List.map Tuple.second
+
+
 rejectCommand : Who -> CommandRejectionReason -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 rejectCommand who reason ongoing =
+    let
+        isFirst =
+            currentTurnLog who ongoing.reverseLog
+                |> List.isEmpty
+    in
     Random.constant
         { ranCommandSuccessfully = False
         , nextOngoing =
-            { ongoing
-                | actionsTaken = ongoing.actionsTaken + 1
-                , reverseLog = ( who, Fight.DoNothing reason ) :: ongoing.reverseLog
-            }
+            if isFirst then
+                { ongoing
+                    | actionsTaken = ongoing.actionsTaken + 1
+                    , reverseLog = ( who, Fight.DoNothing reason ) :: ongoing.reverseLog
+                }
+
+            else
+                ongoing
         }
 
 
