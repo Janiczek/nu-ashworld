@@ -917,6 +917,9 @@ updateFromFrontend sessionId clientId msg model =
         RemoveMessage messageId ->
             withLoggedInCreatedPlayer (removeMessage messageId)
 
+        RemoveFightMessages ->
+            withLoggedInCreatedPlayer removeFightMessages
+
         Barter barterState ->
             withLocation (barter barterState)
 
@@ -1229,6 +1232,29 @@ removeMessage messageId clientId _ worldName player model =
     model
         |> updatePlayer worldName player.name (SPlayer.removeMessage messageId)
         |> sendCurrentWorld worldName player.name clientId
+
+
+removeFightMessages : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+removeFightMessages clientId _ worldName player model =
+    let
+        newModel =
+            model
+                |> updatePlayer worldName player.name SPlayer.removeFightMessages
+    in
+    case getPlayerData worldName player.name newModel of
+        Nothing ->
+            -- Shouldn't happen?
+            ( newModel, Cmd.none )
+
+        Just newPlayer ->
+            case newPlayer.player of
+                Player.NeedsCharCreated _ ->
+                    ( newModel, Cmd.none )
+
+                Player.Player player_ ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| YourMessages player_.messages
+                    )
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

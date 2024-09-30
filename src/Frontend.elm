@@ -202,7 +202,10 @@ update msg ({ loginForm } as model) =
                 IsPlayer data ->
                     fn data
 
-                _ ->
+                IsAdmin _ ->
+                    ( model, Cmd.none )
+
+                NotLoggedIn ->
                     ( model, Cmd.none )
     in
     case msg of
@@ -514,6 +517,11 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| RemoveMessage messageId
             )
 
+        AskToRemoveFightMessages ->
+            ( model
+            , Lamdera.sendToBackend RemoveFightMessages
+            )
+
         BarterMsg barterMsg ->
             updateBarter barterMsg model
 
@@ -642,14 +650,22 @@ updateBarter msg model =
                 mapBarter Barter.unsetTransferNHover model
 
 
+mapLoggedInWorld : (PlayerData -> PlayerData) -> Model -> Model
+mapLoggedInWorld fn model =
+    case model.worldData of
+        IsPlayer data ->
+            { model | worldData = IsPlayer (fn data) }
+
+        IsAdmin _ ->
+            model
+
+        NotLoggedIn ->
+            model
+
+
 updateLoggedInWorld : PlayerData -> Model -> Model
 updateLoggedInWorld data model =
-    case model.worldData of
-        IsPlayer _ ->
-            { model | worldData = IsPlayer data }
-
-        _ ->
-            model
+    mapLoggedInWorld (always data) model
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -772,6 +788,19 @@ updateFromBackend msg model =
             }
                 |> updateLoggedInWorld world
                 |> update (GoToRoute (PlayerRoute Route.Fight))
+
+        YourMessages messages ->
+            ( model
+                |> mapLoggedInWorld
+                    (\world ->
+                        { world
+                            | player =
+                                world.player
+                                    |> Player.map (\player -> { player | messages = messages })
+                        }
+                    )
+            , Cmd.none
+            )
 
         AlertMessage message ->
             ( { model | alertMessage = Just message }
@@ -1698,7 +1727,8 @@ townMainSquareView expandedQuests location { questsProgress } player =
             H.text "No quests in this town..."
         , H.viewIf hasQuests <|
             H.ul []
-                (List.map (questView player questsProgress expandedQuests) quests)
+                (quests
+                |> List.map (questView player questsProgress expandedQuests))
         ]
     ]
 
@@ -1731,7 +1761,7 @@ collapsedQuestView : Quest.Name -> List (Html FrontendMsg)
 collapsedQuestView quest =
     [ H.span
         [ HA.class "cursor-pointer"
-        , TW.mod "hover" "text-green-100"
+        , TW.mod "hover" "text-green-100 bg-green-800"
         , HE.onClick (ExpandQuestItem quest)
         ]
         [ H.span
@@ -1774,7 +1804,7 @@ expandedQuestView player progress quest =
             [ H.span
                 [ HE.onClick <| CollapseQuestItem quest
                 , HA.class "cursor-pointer"
-                , TW.mod "hover" "text-green-100"
+                , TW.mod "hover" "text-green-100 bg-green-800"
                 ]
                 [ H.span
                     [ HA.class "text-green-100 pr-2" ]
@@ -3462,8 +3492,12 @@ inventoryView _ player =
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 messagesView currentTime zone _ player =
     [ pageTitleView "Messages"
-    , H.div [ HA.class "flex flex-col gap-4" ]
-        [ H.table [ HA.id "messages-table" ]
+    , H.div [ HA.class "flex flex-col gap-4 items-start" ]
+        [ UI.button
+            [ HE.onClick AskToRemoveFightMessages
+            , HA.class "normal-case"]
+            [ H.text "[Remove fight messages]" ]
+        , H.table [ HA.id "messages-table" ]
             [ H.thead []
                 [ H.tr []
                     [ H.th [ HA.title "Unread" ] [ H.text "U" ]

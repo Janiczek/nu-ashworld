@@ -122,6 +122,7 @@ type FrontendMsg
     | SetShowAreaDanger Bool
     | OpenMessage Message.Id
     | AskToRemoveMessage Message.Id
+    | AskToRemoveFightMessages
     | BarterMsg BarterMsg
     | HoverItem HoveredItem
     | StopHoveringItem
@@ -170,6 +171,7 @@ type ToBackend
     | MoveTo TileCoords (Set TileCoords)
     | MessageWasRead Message.Id
     | RemoveMessage Message.Id
+    | RemoveFightMessages
     | Barter Barter.State
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name
@@ -215,3 +217,4 @@ type ToFrontend
     | JsonExportDone String
     | BarterDone ( PlayerData, Maybe Barter.Message )
     | BarterMessage Barter.Message
+    | YourMessages (Dict Message.Id Message.Message)

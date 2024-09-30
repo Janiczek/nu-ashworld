@@ -6,6 +6,7 @@ module Data.Message exposing
     , dictDecoder
     , encode
     , fullDate
+    , isFightMessage
     , new
     , newRead
     , summary
@@ -53,6 +54,22 @@ type Content
         { target : PlayerName
         , fightInfo : Fight.Info
         }
+
+
+isFightMessage : Content -> Bool
+isFightMessage content_ =
+    case content_ of
+        Welcome ->
+            False
+
+        YouAdvancedLevel _ ->
+            False
+
+        YouWereAttacked _ ->
+            True
+
+        YouAttacked _ ->
+            True
 
 
 encode : Message -> JE.Value
