@@ -19,11 +19,12 @@ export const theme = {
             "800-half-transparent": "rgba(16, 36, 12, 0.5)",
             "300-half-transparent": "rgba(0, 124, 0, 0.5)",
         },
-        orange: {
+        yellow: {
             DEFAULT: "#FCFF2F",
             transparent: "rgba(252, 253, 125, 0.25)",
             "fully-transparent": "rgba(252, 253, 125, 0)",
         },
+        orange: "#FF962D",
         red: "#FC0001",
     },
     fontSize: {

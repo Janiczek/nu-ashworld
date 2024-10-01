@@ -25,7 +25,7 @@
 .link.active .link-label,
 .link:hover,
 .link:hover .link-label {
-    color: var(--orange);
+    color: var(--yellow);
 }
 
 .link.dimmed:not(:hover):not(.active) .link-label {

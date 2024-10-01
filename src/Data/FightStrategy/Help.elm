@@ -23,25 +23,25 @@ help =
   - attack ([SHOT TYPE])              - my max HP
   - heal ([ITEM])                     - my AP                      
   - heal with anything                - number of available [ITEM] 
-  - move forward                      - number of used [ITEM]      
-  - do whatever                       - opponent's level           
-  - skip turn                         - chance to hit ([SHOT TYPE])
-                                      - distance                   
-                                      - [NUMBER]
- [CONDITION]                        
-   - opponent is player             
-   - opponent is NPC                [SHOT TYPE]   
-   - [VALUE] [OPERATOR] [VALUE]       - unaimed   
-   - ([CONDITION] or [CONDITION])     - head      
-   - ([CONDITION] and [CONDITION])    - eyes      
-                                      - torso     
-                                      - groin     
- [OPERATOR]                           - left arm  
-   - <   (less than)                  - right arm 
-   - <=  (less than or equal)         - left leg  
-   - ==  (equals)                     - right leg 
-   - !=  (doesn't equal)           
-   - >=  (greater than or equal)  
+  - move forward                      - number of available healing items
+  - do whatever                       - number of used [ITEM]      
+  - skip turn                         - number of used healing items
+                                      - opponent's level           
+                                      - chance to hit ([SHOT TYPE])
+ [CONDITION]                          - distance                   
+   - opponent is player               - [NUMBER]
+   - opponent is NPC                 
+   - [VALUE] [OPERATOR] [VALUE]      
+   - ([CONDITION] or [CONDITION])   [SHOT TYPE]   
+   - ([CONDITION] and [CONDITION])    - unaimed   
+                                      - head      
+                                      - eyes      
+ [OPERATOR]                           - torso     
+   - <   (less than)                  - groin     
+   - <=  (less than or equal)         - left arm  
+   - ==  (equals)                     - right arm 
+   - !=  (doesn't equal)              - left leg 
+   - >=  (greater than or equal)      - right leg
    - >   (greater than)           
 """
         |> P.run parser
@@ -201,6 +201,7 @@ Example usage:
             """Examples:
 - my HP
 - chance to hit (left leg)
+- number of available healing items
 - number of available Stimpak"""
 
         Operator ->

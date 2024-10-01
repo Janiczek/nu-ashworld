@@ -140,7 +140,7 @@ view model =
                     ]
                 , H.div [ HA.id "final-price" ]
                     [ H.span
-                        [ HA.class "text-orange" ]
+                        [ HA.class "text-yellow" ]
                         [ H.text "Final price: " ]
                     , H.text <|
                         case maybePrice of

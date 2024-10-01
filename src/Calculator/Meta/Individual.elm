@@ -121,7 +121,9 @@ valueGenerator =
         [ Random.constant FightStrategy.MyMaxHP
         , Random.constant FightStrategy.MyAP
         , Random.map FightStrategy.MyItemCount itemKindGenerator
+        , Random.constant FightStrategy.MyHealingItemCount
         , Random.map FightStrategy.ItemsUsed itemKindGenerator
+        , Random.constant FightStrategy.HealingItemsUsed
         , Random.map FightStrategy.ChanceToHit shotTypeGenerator
         , Random.constant FightStrategy.Distance
         , Random.map FightStrategy.Number (Random.int -50 300)

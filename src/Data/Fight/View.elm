@@ -171,7 +171,7 @@ view perceptionLevel fight yourName =
                         highlight : String -> Html msg
                         highlight n =
                             H.span
-                                [ HA.class "text-orange" ]
+                                [ HA.class "text-yellow" ]
                                 [ H.text n ]
 
                         other : Who

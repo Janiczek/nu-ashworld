@@ -62,7 +62,9 @@ type Value
     | MyMaxHP
     | MyAP
     | MyItemCount Item.Kind
+    | MyHealingItemCount
     | ItemsUsed Item.Kind
+    | HealingItemsUsed
     | ChanceToHit ShotType
     | Distance
     | Number Int
@@ -168,9 +170,15 @@ valueToString value =
             "number of available "
                 ++ Item.name kind
 
+        MyHealingItemCount ->
+            "number of available healing items"
+
         ItemsUsed kind ->
             "number of used "
                 ++ Item.name kind
+
+        HealingItemsUsed ->
+            "number of used healing items"
 
         ChanceToHit shotType ->
             "chance to hit ("
@@ -381,10 +389,20 @@ encodeValue value =
                 , ( "item", Item.encodeKind itemKind )
                 ]
 
+        MyHealingItemCount ->
+            JE.object
+                [ ( "type", JE.string "MyHealingItemCount" )
+                ]
+
         ItemsUsed itemKind ->
             JE.object
                 [ ( "type", JE.string "ItemsUsed" )
                 , ( "item", Item.encodeKind itemKind )
+                ]
+
+        HealingItemsUsed ->
+            JE.object
+                [ ( "type", JE.string "HealingItemsUsed" )
                 ]
 
         ChanceToHit shotType ->
@@ -480,9 +498,15 @@ valueDecoder =
                         JD.succeed MyItemCount
                             |> JD.andMap (JD.field "item" Item.kindDecoder)
 
+                    "MyHealingItemCount" ->
+                        JD.succeed MyHealingItemCount
+
                     "ItemsUsed" ->
                         JD.succeed ItemsUsed
                             |> JD.andMap (JD.field "item" Item.kindDecoder)
+
+                    "HealingItemsUsed" ->
+                        JD.succeed HealingItemsUsed
 
                     "ChanceToHit" ->
                         JD.succeed ChanceToHit
@@ -601,8 +625,14 @@ extractItems strategy =
                 MyItemCount kind ->
                     [ kind ]
 
+                MyHealingItemCount ->
+                    []
+
                 ItemsUsed kind ->
                     [ kind ]
+
+                HealingItemsUsed ->
+                    []
 
                 ChanceToHit _ ->
                     []

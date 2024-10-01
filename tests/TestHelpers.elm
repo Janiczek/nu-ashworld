@@ -205,7 +205,9 @@ valueFuzzer =
         , Fuzz.constant MyMaxHP
         , Fuzz.constant MyAP
         , Fuzz.map MyItemCount healingItemKindFuzzer
+        , Fuzz.constant MyHealingItemCount
         , Fuzz.map ItemsUsed healingItemKindFuzzer
+        , Fuzz.constant HealingItemsUsed
         , Fuzz.map ChanceToHit shotTypeFuzzer
         , Fuzz.constant Distance
         , Fuzz.map Number Fuzz.int

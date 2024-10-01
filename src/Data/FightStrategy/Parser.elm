@@ -186,7 +186,9 @@ value =
         [ P.map (\_ -> MyHP) (P.keyword "my HP")
         , P.map (\_ -> MyMaxHP) (P.keyword "my max HP")
         , P.map (\_ -> MyAP) (P.keyword "my AP")
+        , P.map (\_ -> MyHealingItemCount) (P.keyword "number of available healing items")
         , itemCount
+        , P.map (\_ -> HealingItemsUsed) (P.keyword "number of used healing items")
         , itemsUsed
         , chanceToHit
         , P.map (\_ -> Distance) (P.keyword "distance")

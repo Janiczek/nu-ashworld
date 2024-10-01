@@ -57,8 +57,8 @@ renderer =
         | link =
             \{ title, destination } children ->
                 H.a
-                    [ HA.class "text-orange relative no-underline"
-                    , TW.mod "after" "absolute content-[''] bg-orange-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
+                    [ HA.class "text-yellow relative no-underline"
+                    , TW.mod "after" "absolute content-[''] bg-yellow-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
                     , TW.mod "hover:after" "bottom-0 h-full"
                     , HA.href destination
                     , HAE.attributeMaybe HA.title title

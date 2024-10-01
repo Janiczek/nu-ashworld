@@ -7,7 +7,8 @@
     --green-100: #3CF800;
 
 
-    --orange: #FCFF2F;
+    --yellow: #FCFF2F;
+    --orange: #FF962D;
     --red: #FC0001;
 
     --green-800-half-transparent: rgba(16, 36, 12, 0.5);
@@ -16,8 +17,8 @@
     --green-100-half-transparent: rgba(60, 248, 0, 0.5);
     --green-100-fully-transparent: rgba(60, 248, 0, 0);
 
-    --orange-transparent: rgba(252, 253, 125, 0.25);
-    --orange-fully-transparent: rgba(252, 253, 125, 0);
+    --yellow-transparent: rgba(252, 253, 125, 0.25);
+    --yellow-fully-transparent: rgba(252, 253, 125, 0);
     --black-transparent: rgba(0, 0, 0, 0.25);
     /*
     Greens:
@@ -74,7 +75,7 @@ body:after {
 /* To remove this style we'd have to use Dillon's Markdown package. Too lazy right now */
 strong {
     font-weight: 400 !important;
-    color: var(--orange) !important;
+    color: var(--yellow) !important;
 }
 
 /* Tables */

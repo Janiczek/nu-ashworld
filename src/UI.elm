@@ -21,7 +21,7 @@ button attrs content =
             :: TW.mod "disabled" "text-green-300 cursor-not-allowed"
             :: TW.mod "hover" "text-green-100"
             :: TW.mod "[&:not([disabled]):hover]" "bg-green-800"
-            :: TW.mod "active" "text-orange"
+            :: TW.mod "active" "text-yellow"
             :: attrs
         )
         content
@@ -82,6 +82,6 @@ checkbox { label, isOn, toggle } =
         [ HE.onClick (toggle (not isOn))
         , HA.class "cursor-pointer text-green-200 select-none"
         , TW.mod "hover" "text-green-100 bg-green-800"
-        , TW.mod "active" "text-orange"
+        , TW.mod "active" "text-yellow"
         ]
         [ H.text <| checkboxLabel isOn ++ " " ++ label ]

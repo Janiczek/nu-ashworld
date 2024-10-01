@@ -45,8 +45,8 @@ conservative =
                 { condition =
                     And
                         (Operator { lhs = MyHP, op = LT_, rhs = MyMaxHP })
-                        (Operator { lhs = MyItemCount Stimpak, op = GT_, rhs = Number 0 })
-                , then_ = Command (Heal Stimpak)
+                        (Operator { lhs = MyHealingItemCount, op = GT_, rhs = Number 0 })
+                , then_ = Command HealWithAnything
                 , else_ = Command (Attack NormalShot)
                 }
         }

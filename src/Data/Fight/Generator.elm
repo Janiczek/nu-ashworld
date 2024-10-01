@@ -1141,10 +1141,36 @@ evalValue state value =
                 |> Maybe.map (Tuple.second >> .count)
                 |> Maybe.withDefault 0
 
+        MyHealingItemCount ->
+            state.you.items
+                |> Dict.toList
+                |> List.filterMap
+                    (\( _, item ) ->
+                        if Item.isHealing item.kind then
+                            Just item.count
+
+                        else
+                            Nothing
+                    )
+                |> List.sum
+
         ItemsUsed itemKind ->
             state.yourItemsUsed
                 |> SeqDict.get itemKind
                 |> Maybe.withDefault 0
+
+        HealingItemsUsed ->
+            state.yourItemsUsed
+                |> SeqDict.toList
+                |> List.filterMap
+                    (\( kind, count ) ->
+                        if Item.isHealing kind then
+                            Just count
+
+                        else
+                            Nothing
+                    )
+                |> List.sum
 
         ChanceToHit shotType ->
             Logic.unarmedChanceToHit

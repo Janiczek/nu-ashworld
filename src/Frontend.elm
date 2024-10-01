@@ -1306,7 +1306,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                 ( pathTextColor, pathBgColor ) =
                     if impossiblePath then
-                        ( "text-orange", "bg-orange" )
+                        ( "text-yellow", "bg-yellow" )
 
                     else
                         ( "text-green-200", "bg-green-300" )
@@ -1418,7 +1418,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                     "yellow"
 
                 C3 ->
-                    "orange"
+                    "yellow"
 
                 C4 ->
                     "red"
@@ -1837,7 +1837,7 @@ expandedQuestView player progress quest =
             , if SeqSet.member quest player.questsActive then
                 UI.button
                     [ HA.class "ml-[1ch] !text-green-100"
-                    , TW.mod "hover" "text-orange"
+                    , TW.mod "hover" "text-yellow"
                     , HE.onClickStopPropagation <| AskToStopProgressing quest
                     ]
                     [ H.text "[STOP]" ]
@@ -1845,7 +1845,7 @@ expandedQuestView player progress quest =
               else
                 UI.button
                     [ HA.class "ml-[1ch] !text-green-100"
-                    , TW.mod "hover" "text-orange"
+                    , TW.mod "hover" "text-yellow"
                     , HE.onClickStopPropagation <| AskToStartProgressing quest
                     ]
                     [ H.text "[START]" ]
@@ -2497,7 +2497,7 @@ townStoreView barter location world player =
             , H.viewMaybe
                 (\message ->
                     H.div
-                        [ HA.class "mt-10 text-orange" ]
+                        [ HA.class "mt-10 text-yellow" ]
                         [ H.text <| Barter.messageText message ]
                 )
                 barter.lastMessage
@@ -2517,7 +2517,7 @@ newCharView hoveredItem newChar =
         errorView =
             H.viewMaybe
                 (\error ->
-                    H.div [ HA.class "text-orange mt-5" ]
+                    H.div [ HA.class "text-yellow mt-5" ]
                         [ H.text <| NewChar.error error ]
                 )
                 newChar.error
@@ -2560,7 +2560,7 @@ newCharHelpView maybeHoveredItem =
                     in
                     H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "text-orange" ]
+                            [ HA.class "text-yellow" ]
                             [ H.text title ]
                         , -- TODO formatting of lists etc.
                           Markdown.toHtml [] description
@@ -2674,6 +2674,9 @@ newCharSpecialView newChar =
             let
                 value =
                     Special.get type_ finalSpecial
+
+                isInRange =
+                    Special.isValueInRange value
             in
             H.div
                 [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
@@ -2690,19 +2693,20 @@ newCharSpecialView newChar =
                                     finalSpecial
                         , HA.class "!text-green-100"
                         , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
-                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-yellow"
                         , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[-]" ]
                     ]
                 , H.div
                     [ HA.class "px-[1ch]"
+                    , HA.classList [ ( "!text-yellow", not isInRange ) ]
                     , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| Special.label type_ ]
                 , H.div
                     [ HA.class "pr-[1ch] text-right"
-                    , HA.classList [ ( "!text-orange", not <| Special.isValueInRange value ) ]
+                    , HA.classList [ ( "!text-yellow", not isInRange ) ]
                     , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| String.fromInt value ]
@@ -2718,7 +2722,7 @@ newCharSpecialView newChar =
                                     finalSpecial
                         , HA.class "!text-green-100"
                         , TW.mod "disabled" "!text-green-300 cursor-not-allowed"
-                        , TW.mod "[&:not(:disabled):hover]" "!text-orange"
+                        , TW.mod "[&:not(:disabled):hover]" "!text-yellow"
                         , TW.mod "group-hover" "bg-green-800"
                         ]
                         [ H.text "[+]" ]
@@ -2731,7 +2735,7 @@ newCharSpecialView newChar =
             [ HA.class "text-green-300" ]
             [ H.text "SPECIAL ("
             , H.span
-                [ HA.class "text-orange" ]
+                [ HA.class "text-yellow" ]
                 [ H.text <| String.fromInt newChar.availableSpecial ]
             , H.text " points left)"
             ]
@@ -2759,8 +2763,8 @@ newCharTraitsView traits =
             in
             H.li
                 [ HA.class "flex flex-row gap-[1ch] pr-[2ch] justify-start cursor-pointer group"
-                , TW.mod "hover" "text-orange bg-green-800"
-                , HA.classList [ ( "text-orange", isToggled ) ]
+                , TW.mod "hover" "text-yellow bg-green-800"
+                , HA.classList [ ( "text-yellow", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
@@ -2768,8 +2772,8 @@ newCharTraitsView traits =
                 [ UI.button
                     [ HE.onClickStopPropagation <| NewCharToggleTrait trait
                     , HA.class "!text-green-100"
-                    , HA.classList [ ( "!text-orange", isToggled ) ]
-                    , TW.mod "group-hover" "!text-orange bg-green-800"
+                    , HA.classList [ ( "!text-yellow", isToggled ) ]
+                    , TW.mod "group-hover" "!text-yellow bg-green-800"
                     ]
                     [ H.text <| UI.checkboxLabel isToggled ]
                 , H.div [] [ H.text <| Trait.name trait ]
@@ -2781,7 +2785,7 @@ newCharTraitsView traits =
             [ HA.class "text-green-300" ]
             [ H.text "Traits ("
             , H.span
-                [ HA.class "text-orange" ]
+                [ HA.class "text-yellow" ]
                 [ H.text <| String.fromInt availableTraits ]
             , H.text " available)"
             ]
@@ -2857,7 +2861,7 @@ choosePerkView maybeHoveredItem applicablePerks =
                 ]
                 [ UI.liBullet
                 , H.span
-                    [ TW.mod "group-hover" "text-orange"
+                    [ TW.mod "group-hover" "text-yellow"
                     ]
                     [ H.text <| Perk.name perk ]
                 ]
@@ -2956,7 +2960,7 @@ charHelpView maybeHoveredItem =
                     in
                     H.div [ HA.class "max-w-[50ch]" ]
                         [ H.h4
-                            [ HA.class "text-orange" ]
+                            [ HA.class "text-yellow" ]
                             [ H.text title ]
                         , Markdown.toHtml [] description
                         ]
@@ -3156,7 +3160,7 @@ skillsView_ r =
                 hoverTextColor : String
                 hoverTextColor =
                     if r.isNewChar then
-                        "text-orange"
+                        "text-yellow"
 
                     else
                         "text-green-100"
@@ -3166,7 +3170,7 @@ skillsView_ r =
                 , TW.mod "hover" hoverTextColor
                 , HA.classList
                     [ ( "text-green-300", notUseful )
-                    , ( "text-orange", isTagged )
+                    , ( "text-yellow", isTagged )
                     , ( "cursor-pointer", isTaggable )
                     ]
                 , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
@@ -3179,10 +3183,10 @@ skillsView_ r =
                         , HA.disabled isTaggingDisabled
                         , HA.class "!text-green-100 px-[1ch]"
                         , HA.classList
-                            [ ( "!text-orange", isTagged )
+                            [ ( "!text-yellow", isTagged )
                             , ( "!text-green-300", notUseful )
                             ]
-                        , TW.mod "group-hover" "!text-orange bg-green-800"
+                        , TW.mod "group-hover" "!text-yellow bg-green-800"
                         ]
                         [ H.text <| UI.checkboxLabel isTagged ]
                 , H.div
@@ -3217,7 +3221,7 @@ skillsView_ r =
                 [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "text-orange" ]
+                    [ HA.class "text-yellow" ]
                     [ H.text <| String.fromInt availableTags ]
                 , H.text " tags left)"
                 ]
@@ -3234,7 +3238,7 @@ skillsView_ r =
                 [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
                 , H.span
-                    [ HA.class "text-orange" ]
+                    [ HA.class "text-yellow" ]
                     [ H.text <| String.fromInt r.availableSkillPoints ]
                 , H.text " points available)"
                 ]
@@ -3588,7 +3592,7 @@ messagesView currentTime zone _ player =
                                     [ HA.title <| Message.fullDate zone message ]
                                     [ H.text relativeDate ]
                                 , H.td
-                                    [ TW.mod "hover" "text-orange"
+                                    [ TW.mod "hover" "text-yellow"
                                     , HA.title "Remove"
                                     , HE.onClickStopPropagation <| AskToRemoveMessage message.id
                                     ]
@@ -3652,7 +3656,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
 
                 FightStrategyHelp.Reference reference ->
                     H.span
-                        [ HA.class "text-orange font-mono"
+                        [ HA.class "text-yellow font-mono"
                         , HE.onMouseOver <| HoverItem <| HoveredFightStrategyReference reference
                         , HE.onMouseOut StopHoveringItem
                         ]
@@ -3687,7 +3691,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
                     (List.map viewMarkup FightStrategyHelp.help)
                 ]
             , H.div [ HA.class "flex-1" ]
-                [ H.h3 [ HA.classList [ ( "text-orange pb-4", maybeHoveredItem /= Nothing ) ] ] [ H.text hoverInfo.title ]
+                [ H.h3 [ HA.classList [ ( "text-yellow pb-4", maybeHoveredItem /= Nothing ) ] ] [ H.text hoverInfo.title ]
                 , H.pre
                     [ HA.class "font-sans whitespace-pre-wrap max-w-[60ch]" ]
                     [ H.text hoverInfo.description ]
@@ -3855,8 +3859,8 @@ settingsFightStrategyView fightStrategyText _ player =
                     |> H.viewMaybe
                         (\{ row, col } ->
                             H.div
-                                [ HA.class "absolute left-4 top-4 pointer-events-none select-none w-[24px] h-4 -ml-0.5 pl-0.5 border-l border-l-orange leading-[18px]"
-                                , HA.class "bg-[linear-gradient(90deg,var(--orange-transparent)_0%,var(--orange-fully-transparent)_100%)]"
+                                [ HA.class "absolute left-4 top-4 pointer-events-none select-none w-[24px] h-4 -ml-0.5 pl-0.5 border-l border-l-yellow leading-[18px]"
+                                , HA.class "bg-[linear-gradient(90deg,var(--yellow-transparent)_0%,var(--yellow-fully-transparent)_100%)]"
                                 , HA.class "translate-x-[calc((var(--error-col)-1)*8px+1px)]"
                                 , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px+1px)]"
                                 , cssVars
@@ -3903,7 +3907,7 @@ settingsFightStrategyView fightStrategyText _ player =
                         [ H.p []
                             [ H.text "Your strategy is "
                             , H.span
-                                [ HA.class "text-orange" ]
+                                [ HA.class "text-yellow" ]
                                 [ H.text "not finished yet." ]
                             ]
                         , H.p []
@@ -3914,7 +3918,7 @@ settingsFightStrategyView fightStrategyText _ player =
                                 [ HA.href discordFightStrategiesChannelInviteLink
                                 , HA.target "_blank"
                                 , HA.class "text-green-100 whitespace-pre"
-                                , TW.mod "hover" "text-orange"
+                                , TW.mod "hover" "text-yellow"
                                 ]
                                 [ H.text "#fight-strategies" ]
                             , H.text " channel."
@@ -4183,7 +4187,7 @@ playerLadderTableView players loggedInPlayer =
                                     [ HE.onClick <| AskToFight player.name
                                     , HA.class "cursor-pointer bg-green-800 text-green-100"
                                     , HA.classList [ ( "bg-green-800", isYou ) ]
-                                    , TW.mod "hover" "text-orange"
+                                    , TW.mod "hover" "text-yellow"
                                     ]
                                     [ H.text "Fight" ]
                             , H.td
@@ -4374,7 +4378,7 @@ alertMessageView maybeMessage =
         |> H.viewMaybe
             (\message ->
                 H.div
-                    [ HA.class "text-orange" ]
+                    [ HA.class "text-yellow" ]
                     [ H.text message ]
             )
 
