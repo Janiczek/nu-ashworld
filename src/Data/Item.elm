@@ -8,6 +8,7 @@ module Data.Item exposing
     , all
     , allHealing
     , allHealingNonempty
+    , allNonempty
     , armorClass
     , baseValue
     , create
@@ -20,7 +21,8 @@ module Data.Item exposing
     , getUniqueKey
     , healAmountGenerator
     , healAmountGenerator_
-    , isEquippable
+    , isArmor
+    , isHandEquippable
     , isHealing
     , kindDecoder
     , name
@@ -152,6 +154,17 @@ all =
     , HuntingRifle
     , ScopedHuntingRifle
     ]
+
+
+allNonempty : ( Kind, List Kind )
+allNonempty =
+    case all of
+        [] ->
+            -- Just a sentinel, shouldn't happen
+            ( Fruit, [] )
+
+        x :: xs ->
+            ( x, xs )
 
 
 allHealing : List Kind
@@ -1801,14 +1814,14 @@ type Type
     | Ammo
 
 
-isEquippableType : Type -> Bool
-isEquippableType type__ =
+isHandEquippableType : Type -> Bool
+isHandEquippableType type__ =
     case type__ of
         Food ->
             False
 
         Armor ->
-            True
+            False
 
         UnarmedWeapon ->
             True
@@ -2022,9 +2035,14 @@ type_ kind =
             Misc
 
 
-isEquippable : Kind -> Bool
-isEquippable kind =
-    isEquippableType (type_ kind)
+isHandEquippable : Kind -> Bool
+isHandEquippable kind =
+    isHandEquippableType (type_ kind)
+
+
+isArmor : Kind -> Bool
+isArmor kind =
+    type_ kind == Armor
 
 
 typeName : Type -> String

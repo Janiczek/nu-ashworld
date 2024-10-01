@@ -9,7 +9,6 @@ import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import List.Extra
-import Markdown
 import Set exposing (Set)
 
 

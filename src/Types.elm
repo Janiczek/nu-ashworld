@@ -98,8 +98,12 @@ type FrontendMsg
     | AskToUseItem Item.Id
     | AskToWander
     | AskToChoosePerk Perk
-    | AskToEquipItem Item.Id
+    | AskToEquipArmor Item.Id
+    | AskToEquipLeftHand Item.Id
+    | AskToEquipRightHand Item.Id
     | AskToUnequipArmor
+    | AskToUnequipLeftHand
+    | AskToUnequipRightHand
     | AskToSetFightStrategy ( FightStrategy, String )
     | AskForExport
     | ImportButtonClicked
@@ -161,9 +165,13 @@ type ToBackend
     | HealMe
     | UseItem Item.Id
     | Wander
-    | EquipItem Item.Id
+    | EquipArmor Item.Id
+    | EquipLeftHand Item.Id
+    | EquipRightHand Item.Id
     | SetFightStrategy ( FightStrategy, String )
     | UnequipArmor
+    | UnequipLeftHand
+    | UnequipRightHand
     | RefreshPlease
     | TagSkill Skill
     | UseSkillPoints Skill

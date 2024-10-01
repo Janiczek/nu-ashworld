@@ -8,7 +8,9 @@ module Data.Player.SPlayer exposing
     , addXp
     , canStartProgressing
     , decAvailablePerks
-    , equipItem
+    , equipArmor
+    , equipLeftHand
+    , equipRightHand
     , healManuallyUsingTick
     , incLosses
     , incPerkRank
@@ -33,6 +35,8 @@ module Data.Player.SPlayer exposing
     , tagSkill
     , tick
     , unequipArmor
+    , unequipLeftHand
+    , unequipRightHand
     , updateStrengthForAdrenalineRush
     , useSkillPoints
     )
@@ -436,17 +440,14 @@ removeItem id removedCount player =
         | items =
             player.items
                 |> Dict.update id
-                    (\maybeItem ->
-                        case maybeItem of
-                            Nothing ->
+                    (Maybe.andThen
+                        (\oldItem ->
+                            if oldItem.count > removedCount then
+                                Just { oldItem | count = oldItem.count - removedCount }
+
+                            else
                                 Nothing
-
-                            Just oldItem ->
-                                if oldItem.count > removedCount then
-                                    Just { oldItem | count = oldItem.count - removedCount }
-
-                                else
-                                    Nothing
+                        )
                     )
     }
 
@@ -601,61 +602,95 @@ unequipArmor player =
                 |> addItem armor
 
 
-equipItem : Item -> SPlayer -> SPlayer
-equipItem { id } player =
+unequipLeftHand : SPlayer -> SPlayer
+unequipLeftHand player =
+    case player.equippedLeftHand of
+        Nothing ->
+            player
+
+        Just leftHand ->
+            { player | equippedLeftHand = Nothing }
+                |> addItem leftHand
+
+
+unequipRightHand : SPlayer -> SPlayer
+unequipRightHand player =
+    case player.equippedRightHand of
+        Nothing ->
+            player
+
+        Just rightHand ->
+            { player | equippedRightHand = Nothing }
+                |> addItem rightHand
+
+
+equipArmor : Item -> SPlayer -> SPlayer
+equipArmor { id } player =
     -- just to be sure...
     case Dict.get id player.items of
         Nothing ->
             player
 
         Just item ->
-            case Item.type_ item.kind of
-                Item.Food ->
-                    player
+            if Item.isArmor item.kind then
+                player
+                    |> (if player.equippedArmor /= Nothing then
+                            unequipArmor
 
-                Item.Book ->
-                    player
+                        else
+                            identity
+                       )
+                    |> removeItem item.id 1
+                    |> (\p -> { p | equippedArmor = Just { item | count = 1 } })
 
-                Item.Armor ->
-                    player
-                        |> (if player.equippedArmor /= Nothing then
-                                unequipArmor
+            else
+                player
 
-                            else
-                                identity
-                           )
-                        |> removeItem item.id 1
-                        |> (\p -> { p | equippedArmor = Just { item | count = 1 } })
 
-                Item.Ammo ->
-                    player
+equipLeftHand : Item -> SPlayer -> SPlayer
+equipLeftHand { id } player =
+    -- just to be sure...
+    case Dict.get id player.items of
+        Nothing ->
+            player
 
-                Item.Misc ->
-                    player
+        Just item ->
+            if Item.isHandEquippable item.kind then
+                player
+                    |> (if player.equippedLeftHand /= Nothing then
+                            unequipLeftHand
 
-                Item.UnarmedWeapon ->
-                    -- TODO equip weapons
-                    player
+                        else
+                            identity
+                       )
+                    |> removeItem item.id 1
+                    |> (\p -> { p | equippedLeftHand = Just { item | count = 1 } })
 
-                Item.MeleeWeapon ->
-                    -- TODO equip weapons
-                    player
+            else
+                player
 
-                Item.ThrownWeapon ->
-                    -- TODO equip weapons
-                    player
 
-                Item.SmallGun ->
-                    -- TODO equip weapons
-                    player
+equipRightHand : Item -> SPlayer -> SPlayer
+equipRightHand { id } player =
+    -- just to be sure...
+    case Dict.get id player.items of
+        Nothing ->
+            player
 
-                Item.BigGun ->
-                    -- TODO equip weapons
-                    player
+        Just item ->
+            if Item.isHandEquippable item.kind then
+                player
+                    |> (if player.equippedRightHand /= Nothing then
+                            unequipRightHand
 
-                Item.EnergyWeapon ->
-                    -- TODO equip weapons
-                    player
+                        else
+                            identity
+                       )
+                    |> removeItem item.id 1
+                    |> (\p -> { p | equippedRightHand = Just { item | count = 1 } })
+
+            else
+                player
 
 
 setFightStrategy : ( FightStrategy, String ) -> SPlayer -> SPlayer
@@ -734,6 +769,7 @@ stopProgressing quest player =
 
 canStartProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> Bool
 canStartProgressing quest worldTickCurve player =
+    -- TODO is it expected that `quest` is not used?
     ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.minTicksPerHourNeededForQuest
 
 

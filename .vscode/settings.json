@@ -18,5 +18,8 @@
     "\\bclassList[\\s\\[\\(]+\"[^\"]*\",\\s[^\\)]+\\)[\\s\\[\\(,]+\"[^\"]*\",\\s[^\\)]+\\)[\\s\\[\\(,]+\"([^\"]*)\"",
   ],
   "elmLS.elmPath": "lamdera",
-  "elmLS.elmReviewDiagnostics": "warning"
+  "elmLS.elmReviewDiagnostics": "warning",
+  "files.exclude": {
+    "src/Evergreen": true
+  }
 }

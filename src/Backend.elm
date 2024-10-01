@@ -60,7 +60,7 @@ import Queue
 import Random exposing (Generator)
 import Random.List
 import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
+import SeqSet
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -854,11 +854,23 @@ updateFromFrontend sessionId clientId msg model =
         Wander ->
             withLoggedInCreatedPlayer wander
 
-        EquipItem itemId ->
-            withLoggedInCreatedPlayer <| equipItem itemId
+        EquipArmor itemId ->
+            withLoggedInCreatedPlayer <| equipArmor itemId
+
+        EquipLeftHand itemId ->
+            withLoggedInCreatedPlayer <| equipLeftHand itemId
+
+        EquipRightHand itemId ->
+            withLoggedInCreatedPlayer <| equipRightHand itemId
 
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
+
+        UnequipLeftHand ->
+            withLoggedInCreatedPlayer unequipLeftHand
+
+        UnequipRightHand ->
+            withLoggedInCreatedPlayer unequipRightHand
 
         SetFightStrategy ( strategy, text ) ->
             withLoggedInCreatedPlayer <| setFightStrategy ( strategy, text )
@@ -1404,16 +1416,48 @@ healMe clientId _ worldName player model =
         |> sendCurrentWorld worldName player.name clientId
 
 
-equipItem : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-equipItem itemId clientId _ worldName player model =
+equipArmor : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipArmor itemId clientId _ worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
 
         Just item ->
-            if Item.isEquippable item.kind then
+            if Item.isArmor item.kind then
                 model
-                    |> updatePlayer worldName player.name (SPlayer.equipItem item)
+                    |> updatePlayer worldName player.name (SPlayer.equipArmor item)
+                    |> sendCurrentWorld worldName player.name clientId
+
+            else
+                ( model, Cmd.none )
+
+
+equipLeftHand : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipLeftHand itemId clientId _ worldName player model =
+    case Dict.get itemId player.items of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just item ->
+            if Item.isHandEquippable item.kind then
+                model
+                    |> updatePlayer worldName player.name (SPlayer.equipLeftHand item)
+                    |> sendCurrentWorld worldName player.name clientId
+
+            else
+                ( model, Cmd.none )
+
+
+equipRightHand : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipRightHand itemId clientId _ worldName player model =
+    case Dict.get itemId player.items of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just item ->
+            if Item.isHandEquippable item.kind then
+                model
+                    |> updatePlayer worldName player.name (SPlayer.equipRightHand item)
                     |> sendCurrentWorld worldName player.name clientId
 
             else
@@ -1509,6 +1553,30 @@ unequipArmor clientId _ worldName player model =
         Just _ ->
             model
                 |> updatePlayer worldName player.name SPlayer.unequipArmor
+                |> sendCurrentWorld worldName player.name clientId
+
+
+unequipLeftHand : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+unequipLeftHand clientId _ worldName player model =
+    case player.equippedLeftHand of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just _ ->
+            model
+                |> updatePlayer worldName player.name SPlayer.unequipLeftHand
+                |> sendCurrentWorld worldName player.name clientId
+
+
+unequipRightHand : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+unequipRightHand clientId _ worldName player model =
+    case player.equippedRightHand of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just _ ->
+            model
+                |> updatePlayer worldName player.name SPlayer.unequipRightHand
                 |> sendCurrentWorld worldName player.name clientId
 
 

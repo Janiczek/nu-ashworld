@@ -18,7 +18,6 @@ import Dict
 import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-import Logic
 import Queue
 import Random
 import Set.ExtraExtra as Set
@@ -35,30 +34,12 @@ encodeBackendModel model =
 backendModelDecoder : Random.Seed -> Decoder BackendModel
 backendModelDecoder seed =
     JD.oneOf
-        [ backendModelDecoderV2 seed
-        , backendModelDecoderV1 seed
+        [ backendModelDecoderV1 seed
         ]
 
 
 backendModelDecoderV1 : Random.Seed -> Decoder BackendModel
 backendModelDecoderV1 seed =
-    JD.map
-        (\world ->
-            { worlds = Dict.singleton Logic.mainWorldName world
-            , loggedInPlayers = BiDict.empty
-            , time = Time.millisToPosix 0
-            , adminLoggedIn = Nothing
-            , lastTenToBackendMsgs = Queue.empty
-            , randomSeed = seed
-            , playerDataCache = Dict.empty
-            }
-        )
-        World.decoder
-
-
-backendModelDecoderV2 : Random.Seed -> Decoder BackendModel
-backendModelDecoderV2 seed =
-    -- adds support for multiple worlds
     JD.map
         (\worlds ->
             { worlds = worlds
@@ -118,15 +99,35 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "Wander" ) ]
 
-        EquipItem itemId ->
+        EquipArmor itemId ->
             JE.object
-                [ ( "type", JE.string "EquipItem" )
+                [ ( "type", JE.string "EquipArmor" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        EquipLeftHand itemId ->
+            JE.object
+                [ ( "type", JE.string "EquipLeftHand" )
+                , ( "itemId", JE.int itemId )
+                ]
+
+        EquipRightHand itemId ->
+            JE.object
+                [ ( "type", JE.string "EquipRightHand" )
                 , ( "itemId", JE.int itemId )
                 ]
 
         UnequipArmor ->
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
+
+        UnequipLeftHand ->
+            JE.object
+                [ ( "type", JE.string "UnequipLeftHand" ) ]
+
+        UnequipRightHand ->
+            JE.object
+                [ ( "type", JE.string "UnequipRightHand" ) ]
 
         SetFightStrategy ( strategy, text ) ->
             JE.object

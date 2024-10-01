@@ -243,110 +243,12 @@ encodeResult result =
 resultDecoder : Decoder Result
 resultDecoder =
     JD.oneOf
-        [ resultDecoderV3
-        , resultDecoderV2
-        , resultDecoderV1
+        [ resultDecoderV1
         ]
 
 
-{-| Original
--}
 resultDecoderV1 : Decoder Result
 resultDecoderV1 =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "AttackerWon" ->
-                        JD.map2
-                            (\xp caps ->
-                                AttackerWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = []
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-
-                    "TargetWon" ->
-                        JD.map2
-                            (\xp caps ->
-                                TargetWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = []
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-
-                    "TargetAlreadyDead" ->
-                        JD.succeed TargetAlreadyDead
-
-                    "BothDead" ->
-                        JD.succeed BothDead
-
-                    "NobodyDead" ->
-                        JD.succeed NobodyDead
-
-                    _ ->
-                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
-            )
-
-
-{-| Adding the `itemsGained` field
--}
-resultDecoderV2 : Decoder Result
-resultDecoderV2 =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "AttackerWon" ->
-                        JD.map3
-                            (\xp caps items ->
-                                AttackerWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = items
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-                            (JD.field "itemsGained" (JD.list Item.decoder))
-
-                    "TargetWon" ->
-                        JD.map3
-                            (\xp caps items ->
-                                TargetWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = items
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-                            (JD.field "itemsGained" (JD.list Item.decoder))
-
-                    "TargetAlreadyDead" ->
-                        JD.succeed TargetAlreadyDead
-
-                    "BothDead" ->
-                        JD.succeed BothDead
-
-                    "NobodyDead" ->
-                        JD.succeed NobodyDead
-
-                    _ ->
-                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
-            )
-
-
-{-| Adding the `NobodyDeadGivenUp` result type
--}
-resultDecoderV3 : Decoder Result
-resultDecoderV3 =
     JD.field "type" JD.string
         |> JD.andThen
             (\type_ ->
@@ -576,29 +478,12 @@ commandRejectionReasonDecoder =
 attackActionDecoder : Decoder Action
 attackActionDecoder =
     JD.oneOf
-        [ attackActionDecoderV2
-        , attackActionDecoderV1
+        [ attackActionDecoderV1
         ]
 
 
 attackActionDecoderV1 : Decoder Action
 attackActionDecoderV1 =
-    JD.map3
-        (\damage shotType remainingHp ->
-            Attack
-                { damage = damage
-                , shotType = shotType
-                , remainingHp = remainingHp
-                , isCritical = False
-                }
-        )
-        (JD.field "damage" JD.int)
-        (JD.field "shotType" ShotType.decoder)
-        (JD.field "remainingHp" JD.int)
-
-
-attackActionDecoderV2 : Decoder Action
-attackActionDecoderV2 =
     JD.map4
         (\damage shotType remainingHp isCritical ->
             Attack

@@ -352,17 +352,14 @@ removeItem id removedCount vendor =
         | items =
             vendor.items
                 |> Dict.update id
-                    (\maybeItem ->
-                        case maybeItem of
-                            Nothing ->
+                    (Maybe.andThen
+                        (\oldItem ->
+                            if oldItem.count > removedCount then
+                                Just { oldItem | count = oldItem.count - removedCount }
+
+                            else
                                 Nothing
-
-                            Just oldItem ->
-                                if oldItem.count > removedCount then
-                                    Just { oldItem | count = oldItem.count - removedCount }
-
-                                else
-                                    Nothing
+                        )
                     )
     }
 

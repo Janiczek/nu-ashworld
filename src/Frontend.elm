@@ -309,14 +309,34 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend HealMe
             )
 
-        AskToEquipItem itemId ->
+        AskToEquipArmor itemId ->
             ( model
-            , Lamdera.sendToBackend <| EquipItem itemId
+            , Lamdera.sendToBackend <| EquipArmor itemId
+            )
+
+        AskToEquipLeftHand itemId ->
+            ( model
+            , Lamdera.sendToBackend <| EquipLeftHand itemId
+            )
+
+        AskToEquipRightHand itemId ->
+            ( model
+            , Lamdera.sendToBackend <| EquipRightHand itemId
             )
 
         AskToUnequipArmor ->
             ( model
             , Lamdera.sendToBackend UnequipArmor
+            )
+
+        AskToUnequipLeftHand ->
+            ( model
+            , Lamdera.sendToBackend UnequipLeftHand
+            )
+
+        AskToUnequipRightHand ->
+            ( model
+            , Lamdera.sendToBackend UnequipRightHand
             )
 
         AskToUseItem itemId ->
@@ -3320,17 +3340,31 @@ inventoryView _ player =
                 [ UI.liBullet
                 , H.span
                     [ HA.class "flex flex-row gap-[2ch]" ]
-                    [ UI.button
+                    (UI.button
                         [ HE.onClick <| AskToUseItem item.id
                         , HA.disabled <| disabledTooltip /= Nothing
                         , HA.attributeMaybe HA.title disabledTooltip
                         ]
                         [ H.text "[Use]" ]
-                    , H.viewIf (Item.isEquippable item.kind) <|
-                        UI.button
-                            [ HE.onClick <| AskToEquipItem item.id ]
-                            [ H.text "[Equip]" ]
-                    ]
+                        :: (if Item.isArmor item.kind then
+                                [ UI.button
+                                    [ HE.onClick <| AskToEquipArmor item.id ]
+                                    [ H.text "[Equip]" ]
+                                ]
+
+                            else if Item.isHandEquippable item.kind then
+                                [ UI.button
+                                    [ HE.onClick <| AskToEquipLeftHand item.id ]
+                                    [ H.text "[Equip left]" ]
+                                , UI.button
+                                    [ HE.onClick <| AskToEquipRightHand item.id ]
+                                    [ H.text "[Equip right]" ]
+                                ]
+
+                            else
+                                []
+                           )
+                    )
                 , H.span
                     [ HA.class "inventory-item-label" ]
                     [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
@@ -3417,20 +3451,12 @@ inventoryView _ player =
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Equipment" ]
-        , [ ( player.equippedArmor
-            , "Armor"
-            , \armor ->
-                [ H.text <| Item.name armor.kind
-                , UI.button
-                    [ HE.onClick AskToUnequipArmor
-                    , HA.class "ml-[1ch]"
-                    ]
-                    [ H.text "[Unequip]" ]
-                ]
-            )
+        , [ ( player.equippedArmor, "Armor", AskToUnequipArmor )
+          , ( player.equippedLeftHand, "Left hand", AskToUnequipLeftHand )
+          , ( player.equippedRightHand, "Right hand", AskToUnequipRightHand )
           ]
             |> List.map
-                (\( maybeItem, label, viewItem ) ->
+                (\( maybeItem, label, unequipMsg ) ->
                     H.div []
                         [ UI.liBullet
                         , H.text <| label ++ ": "
@@ -3440,7 +3466,13 @@ inventoryView _ player =
                                     [ H.text "None" ]
 
                                 Just item ->
-                                    viewItem item
+                                    [ H.text <| Item.name item.kind
+                                    , UI.button
+                                        [ HE.onClick unequipMsg
+                                        , HA.class "ml-[1ch]"
+                                        ]
+                                        [ H.text "[Unequip]" ]
+                                    ]
                         ]
                 )
             |> H.ul []

@@ -71,6 +71,15 @@ healingItemKindGenerator =
     Random.uniform x xs
 
 
+itemKindGenerator : Generator Item.Kind
+itemKindGenerator =
+    let
+        ( x, xs ) =
+            Item.allNonempty
+    in
+    Random.uniform x xs
+
+
 shotTypeGenerator : Generator ShotType
 shotTypeGenerator =
     Random.uniform ShotType.NormalShot
@@ -79,15 +88,54 @@ shotTypeGenerator =
 
 conditionGenerator : Generator FightStrategy.Condition
 conditionGenerator =
+    let
+        self =
+            Random.lazy (\() -> conditionGenerator)
+    in
     Random.uniform
-        (FightStrategy.Operator
-            { value = FightStrategy.MyHP
-            , op = FightStrategy.LT_
-            , number_ = 50
-            }
+        (Random.map3
+            (\lhs op rhs ->
+                FightStrategy.Operator
+                    { lhs = lhs
+                    , op = op
+                    , rhs = rhs
+                    }
+            )
+            valueGenerator
+            operatorGenerator
+            valueGenerator
         )
-        [ FightStrategy.OpponentIsPlayer
-        , FightStrategy.OpponentIsNPC
+        [ Random.constant FightStrategy.OpponentIsPlayer
+        , Random.constant FightStrategy.OpponentIsNPC
+        , Random.map2 FightStrategy.Or self self
+        , Random.map2 FightStrategy.And self self
+        ]
+        |> Random.andThen identity
+
+
+valueGenerator : Generator FightStrategy.Value
+valueGenerator =
+    Random.uniform
+        (Random.constant FightStrategy.MyHP)
+        [ Random.constant FightStrategy.MyMaxHP
+        , Random.constant FightStrategy.MyAP
+        , Random.map FightStrategy.MyItemCount itemKindGenerator
+        , Random.map FightStrategy.ItemsUsed itemKindGenerator
+        , Random.map FightStrategy.ChanceToHit shotTypeGenerator
+        , Random.constant FightStrategy.Distance
+        , Random.map FightStrategy.Number (Random.int -50 300)
+        ]
+        |> Random.andThen identity
+
+
+operatorGenerator : Generator FightStrategy.Operator
+operatorGenerator =
+    Random.uniform FightStrategy.LT_
+        [ FightStrategy.LTE
+        , FightStrategy.EQ_
+        , FightStrategy.NE
+        , FightStrategy.GTE
+        , FightStrategy.GT_
         ]
 
 
@@ -130,9 +178,9 @@ moveForwardIfNeeded strategy =
     FightStrategy.If
         { condition =
             FightStrategy.Operator
-                { value = FightStrategy.Distance
+                { lhs = FightStrategy.Distance
                 , op = FightStrategy.GT_
-                , number_ = 0
+                , rhs = FightStrategy.Number 0
                 }
         , then_ = FightStrategy.Command FightStrategy.MoveForward
         , else_ = strategy
@@ -476,6 +524,9 @@ mutateFightStrategy str =
 
                 FightStrategy.MoveForward ->
                     Random.constant FightStrategy.MoveForward
+
+                FightStrategy.SkipTurn ->
+                    Random.constant FightStrategy.SkipTurn
 
                 FightStrategy.DoWhatever ->
                     Random.constant FightStrategy.DoWhatever

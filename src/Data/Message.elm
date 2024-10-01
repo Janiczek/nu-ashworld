@@ -88,36 +88,12 @@ could change this back into decoder?
 dictDecoder : Decoder (Dict Id Message)
 dictDecoder =
     JD.oneOf
-        [ dictDecoderV2
-        , dictDecoderV1
+        [ dictDecoderV1
         ]
 
 
 dictDecoderV1 : Decoder (Dict Id Message)
 dictDecoderV1 =
-    JD.list
-        (JD.succeed
-            (\content_ hasBeenRead date id ->
-                { id = id
-                , content = content_
-                , hasBeenRead = hasBeenRead
-                , date = date
-                }
-            )
-            |> JD.andMap (JD.field "type" contentDecoder)
-            |> JD.andMap (JD.field "hasBeenRead" JD.bool)
-            |> JD.andMap (JD.field "date" Iso8601.decoder)
-        )
-        |> JD.map
-            (List.indexedMap (\id toMessage -> ( id, toMessage id ))
-                >> Dict.fromList
-            )
-
-
-{-| Adds ID, changes type into content
--}
-dictDecoderV2 : Decoder (Dict Id Message)
-dictDecoderV2 =
     JD.list
         (JD.succeed Message
             |> JD.andMap (JD.field "id" JD.int)

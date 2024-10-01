@@ -1,10 +1,6 @@
 SEED ?= "$$RANDOM"
 FUZZ ?= "100"
 
-.PHONY: watch
-watch:
-	elmid --watched-folder=src src/DummyMain.elm
-
 .PHONY: start
 start:
 	lamdera live

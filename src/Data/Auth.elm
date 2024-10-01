@@ -72,21 +72,12 @@ encodePassword password =
 verifiedDecoder : Decoder (Auth Verified)
 verifiedDecoder =
     JD.oneOf
-        [ verifiedDecoderV2
-        , verifiedDecoderV1
+        [ verifiedDecoderV1
         ]
 
 
 verifiedDecoderV1 : Decoder (Auth Verified)
 verifiedDecoderV1 =
-    JD.succeed Auth
-        |> JD.andMap (JD.field "name" JD.string)
-        |> JD.andMap (JD.field "password" verifiedPasswordDecoder)
-        |> JD.andMap (JD.succeed Logic.mainWorldName)
-
-
-verifiedDecoderV2 : Decoder (Auth Verified)
-verifiedDecoderV2 =
     JD.succeed Auth
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" verifiedPasswordDecoder)

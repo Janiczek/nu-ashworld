@@ -114,21 +114,18 @@ removePlayerItem id count state =
         | playerItems =
             state.playerItems
                 |> Dict.update id
-                    (\maybeExistingCount ->
-                        case maybeExistingCount of
-                            Nothing ->
+                    (Maybe.andThen
+                        (\existingCount ->
+                            let
+                                newCount =
+                                    existingCount - count
+                            in
+                            if newCount <= 0 then
                                 Nothing
 
-                            Just existingCount ->
-                                let
-                                    newCount =
-                                        existingCount - count
-                                in
-                                if newCount <= 0 then
-                                    Nothing
-
-                                else
-                                    Just newCount
+                            else
+                                Just newCount
+                        )
                     )
     }
 
@@ -139,21 +136,18 @@ removeVendorItem id count state =
         | vendorItems =
             state.vendorItems
                 |> Dict.update id
-                    (\maybeExistingCount ->
-                        case maybeExistingCount of
-                            Nothing ->
+                    (Maybe.andThen
+                        (\existingCount ->
+                            let
+                                newCount =
+                                    existingCount - count
+                            in
+                            if newCount <= 0 then
                                 Nothing
 
-                            Just existingCount ->
-                                let
-                                    newCount =
-                                        existingCount - count
-                                in
-                                if newCount <= 0 then
-                                    Nothing
-
-                                else
-                                    Just newCount
+                            else
+                                Just newCount
+                        )
                     )
     }
 
