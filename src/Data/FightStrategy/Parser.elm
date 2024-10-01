@@ -186,9 +186,7 @@ value =
         [ P.map (\_ -> MyHP) (P.keyword "my HP")
         , P.map (\_ -> MyMaxHP) (P.keyword "my max HP")
         , P.map (\_ -> MyAP) (P.keyword "my AP")
-        , P.map (\_ -> MyHealingItemCount) (P.keyword "number of available healing items")
         , itemCount
-        , P.map (\_ -> HealingItemsUsed) (P.keyword "number of used healing items")
         , itemsUsed
         , chanceToHit
         , P.map (\_ -> Distance) (P.keyword "distance")
@@ -198,18 +196,24 @@ value =
 
 itemCount : Parser Value
 itemCount =
-    P.succeed MyItemCount
+    P.succeed identity
         |. P.keyword "number of available"
         |. nonemptySpaces
-        |= itemKind
+        |= P.oneOf
+            [ P.map (\_ -> MyHealingItemCount) (P.keyword "healing items")
+            , P.map MyItemCount itemKind
+            ]
 
 
 itemsUsed : Parser Value
 itemsUsed =
-    P.succeed ItemsUsed
+    P.succeed identity
         |. P.keyword "number of used"
         |. nonemptySpaces
-        |= itemKind
+        |= P.oneOf
+            [ P.map (\_ -> HealingItemsUsed) (P.keyword "healing items")
+            , P.map ItemsUsed itemKind
+            ]
 
 
 chanceToHit : Parser Value

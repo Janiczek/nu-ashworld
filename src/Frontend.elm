@@ -3679,7 +3679,7 @@ settingsFightStrategySyntaxHelpView maybeHoveredItem =
             [ H.text "[Back]" ]
         , H.div
             [ HA.class "flex flex-row gap-[2ch]" ]
-            [ H.div [ HA.class "w-[80ch]" ]
+            [ H.div [ HA.class "w-[85ch]" ]
                 [ H.div []
                     [ H.text "Your strategy needs to be of the shape "
                     , H.span [ HA.class "text-green-100" ] [ H.text "[STRATEGY]" ]
@@ -3790,7 +3790,11 @@ settingsFightStrategyView fightStrategyText _ player =
                             ( string, "2: symbol" )
 
                         Parser.ExpectingKeyword string ->
-                            ( string, "1: keyword" )
+                            if string == "healing items" then
+                                ( string, "0: special keyword" )
+
+                            else
+                                ( string, "1: keyword" )
 
                         _ ->
                             ( "", "weird" )
@@ -3851,7 +3855,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
-                    , HA.class "!bg-green-800 w-[70ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre-wrap font-mono"
+                    , HA.class "!bg-green-800 w-[75ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre-wrap font-mono"
                     , HA.value fightStrategyText
                     ]
                     []
