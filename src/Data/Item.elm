@@ -12,8 +12,20 @@ module Data.Item exposing
     , armorClass
     , baseValue
     , create
+    , damageResistanceEMP
+    , damageResistanceElectrical
+    , damageResistanceExplosion
+    , damageResistanceFire
+    , damageResistanceLaser
     , damageResistanceNormal
+    , damageResistancePlasma
+    , damageThresholdEMP
+    , damageThresholdElectrical
+    , damageThresholdExplosion
+    , damageThresholdFire
+    , damageThresholdLaser
     , damageThresholdNormal
+    , damageThresholdPlasma
     , decoder
     , encode
     , encodeKind
@@ -768,6 +780,1110 @@ damageThresholdNormal kind =
             0
 
 
+damageThresholdExplosion : Kind -> Int
+damageThresholdExplosion kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            4
+
+        TeslaArmor ->
+            4
+
+        CombatArmor ->
+            6
+
+        CombatArmorMk2 ->
+            9
+
+        PowerArmor ->
+            20
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageThresholdElectrical : Kind -> Int
+damageThresholdElectrical kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        TeslaArmor ->
+            12
+
+        CombatArmor ->
+            2
+
+        CombatArmorMk2 ->
+            3
+
+        PowerArmor ->
+            12
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageThresholdEMP : Kind -> Int
+damageThresholdEMP kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageThresholdLaser : Kind -> Int
+damageThresholdLaser kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            6
+
+        TeslaArmor ->
+            19
+
+        CombatArmor ->
+            8
+
+        CombatArmorMk2 ->
+            9
+
+        PowerArmor ->
+            18
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageThresholdFire : Kind -> Int
+damageThresholdFire kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            4
+
+        TeslaArmor ->
+            4
+
+        CombatArmor ->
+            4
+
+        CombatArmorMk2 ->
+            5
+
+        PowerArmor ->
+            12
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageThresholdPlasma : Kind -> Int
+damageThresholdPlasma kind =
+    case kind of
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            4
+
+        TeslaArmor ->
+            10
+
+        CombatArmor ->
+            4
+
+        CombatArmorMk2 ->
+            5
+
+        PowerArmor ->
+            10
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
 damageResistanceNormal : Kind -> Int
 damageResistanceNormal kind =
     case kind of
@@ -791,6 +1907,1110 @@ damageResistanceNormal kind =
 
         CombatArmorMk2 ->
             40
+
+        PowerArmor ->
+            40
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistanceExplosion : Kind -> Int
+damageResistanceExplosion kind =
+    case kind of
+        Robes ->
+            20
+
+        LeatherJacket ->
+            20
+
+        LeatherArmor ->
+            20
+
+        MetalArmor ->
+            25
+
+        TeslaArmor ->
+            20
+
+        CombatArmor ->
+            40
+
+        CombatArmorMk2 ->
+            45
+
+        PowerArmor ->
+            50
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistanceElectrical : Kind -> Int
+damageResistanceElectrical kind =
+    case kind of
+        Robes ->
+            40
+
+        LeatherJacket ->
+            30
+
+        LeatherArmor ->
+            30
+
+        MetalArmor ->
+            0
+
+        TeslaArmor ->
+            80
+
+        CombatArmor ->
+            50
+
+        CombatArmorMk2 ->
+            55
+
+        PowerArmor ->
+            40
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistanceEMP : Kind -> Int
+damageResistanceEMP kind =
+    case kind of
+        Robes ->
+            500
+
+        LeatherJacket ->
+            500
+
+        LeatherArmor ->
+            500
+
+        MetalArmor ->
+            500
+
+        TeslaArmor ->
+            500
+
+        CombatArmor ->
+            500
+
+        CombatArmorMk2 ->
+            500
+
+        PowerArmor ->
+            500
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistanceLaser : Kind -> Int
+damageResistanceLaser kind =
+    case kind of
+        Robes ->
+            25
+
+        LeatherJacket ->
+            20
+
+        LeatherArmor ->
+            20
+
+        MetalArmor ->
+            75
+
+        TeslaArmor ->
+            90
+
+        CombatArmor ->
+            60
+
+        CombatArmorMk2 ->
+            65
+
+        PowerArmor ->
+            80
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistanceFire : Kind -> Int
+damageResistanceFire kind =
+    case kind of
+        Robes ->
+            10
+
+        LeatherJacket ->
+            10
+
+        LeatherArmor ->
+            20
+
+        MetalArmor ->
+            10
+
+        TeslaArmor ->
+            10
+
+        CombatArmor ->
+            30
+
+        CombatArmorMk2 ->
+            35
+
+        PowerArmor ->
+            60
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Beer ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        Grenade ->
+            0
+
+        BBGun ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        Bozar ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        SniperRifle ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        HkP90c ->
+            0
+
+        LaserPistol ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        GatlingLaser ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        GaussPistol ->
+            0
+
+        PulseRifle ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+
+damageResistancePlasma : Kind -> Int
+damageResistancePlasma kind =
+    case kind of
+        Robes ->
+            10
+
+        LeatherJacket ->
+            10
+
+        LeatherArmor ->
+            10
+
+        MetalArmor ->
+            20
+
+        TeslaArmor ->
+            180
+
+        CombatArmor ->
+            50
+
+        CombatArmorMk2 ->
+            50
 
         PowerArmor ->
             40
