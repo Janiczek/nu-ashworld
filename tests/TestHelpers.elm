@@ -143,6 +143,7 @@ commandFuzzer =
         [ Fuzz.map Attack shotTypeFuzzer
         , Fuzz.constant AttackRandomly
         , Fuzz.map Heal healingItemKindFuzzer
+        , Fuzz.constant HealWithAnything
         , Fuzz.constant MoveForward
         , Fuzz.constant DoWhatever
         , Fuzz.constant SkipTurn

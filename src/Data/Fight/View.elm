@@ -315,6 +315,12 @@ view perceptionLevel fight yourName =
                                                                 Heal_ItemNotPresent ->
                                                                     ( "heal", "the wanted item is not present" )
 
+                                                                HealWithAnything_AlreadyFullyHealed ->
+                                                                    ( "heal with anything", "already fully healed" )
+
+                                                                HealWithAnything_NoHealingItem ->
+                                                                    ( "heal with anything", "no healing item in inventory" )
+
                                                                 Attack_NotCloseEnough ->
                                                                     ( "attack", "not close enough" )
 

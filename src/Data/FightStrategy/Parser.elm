@@ -69,6 +69,7 @@ command =
     P.oneOf
         [ P.map (\_ -> AttackRandomly) (P.keyword "attack randomly")
         , attack
+        , P.map (\_ -> HealWithAnything) (P.keyword "heal with anything")
         , heal
         , P.map (\_ -> MoveForward) (P.keyword "move forward")
         , P.map (\_ -> DoWhatever) (P.keyword "do whatever")

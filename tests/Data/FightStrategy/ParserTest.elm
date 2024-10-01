@@ -83,6 +83,7 @@ command =
         , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
         , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
         , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
+        , ( "heal with anything", "heal with anything", Just HealWithAnything )
         , ( "skip turn", "skip turn", Just SkipTurn )
         ]
 

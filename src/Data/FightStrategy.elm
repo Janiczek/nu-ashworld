@@ -72,6 +72,7 @@ type Command
     = Attack ShotType
     | AttackRandomly
     | Heal Item.Kind
+    | HealWithAnything
     | MoveForward
     | DoWhatever
     | SkipTurn
@@ -106,6 +107,9 @@ toString strategy =
 
                 Heal itemKind ->
                     "heal (" ++ Item.name itemKind ++ ")"
+
+                HealWithAnything ->
+                    "heal with anything"
 
                 MoveForward ->
                     "move forward"
@@ -271,6 +275,11 @@ encodeCommand command =
             JE.object
                 [ ( "type", JE.string "Heal" )
                 , ( "itemKind", Item.encodeKind itemKind )
+                ]
+
+        HealWithAnything ->
+            JE.object
+                [ ( "type", JE.string "HealWithAnything" )
                 ]
 
         MoveForward ->
@@ -507,6 +516,9 @@ commandDecoder =
                         JD.succeed Heal
                             |> JD.andMap (JD.field "itemKind" Item.kindDecoder)
 
+                    "HealWithAnything" ->
+                        JD.succeed HealWithAnything
+
                     "MoveForward" ->
                         JD.succeed MoveForward
 
@@ -612,6 +624,9 @@ extractItems strategy =
 
                 Heal kind ->
                     [ kind ]
+
+                HealWithAnything ->
+                    []
 
                 MoveForward ->
                     []

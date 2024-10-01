@@ -118,6 +118,8 @@ type CommandRejectionReason
     = Heal_ItemNotPresent
     | Heal_ItemDoesNotHeal
     | Heal_AlreadyFullyHealed
+    | HealWithAnything_NoHealingItem
+    | HealWithAnything_AlreadyFullyHealed
     | MoveForward_AlreadyNextToEachOther
     | Attack_NotCloseEnough
     | Attack_NotEnoughAP
@@ -382,6 +384,12 @@ encodeAction action =
                             Heal_AlreadyFullyHealed ->
                                 "Heal_AlreadyFullyHealed"
 
+                            HealWithAnything_NoHealingItem ->
+                                "HealWithAnything_NoHealingItem"
+
+                            HealWithAnything_AlreadyFullyHealed ->
+                                "HealWithAnything_AlreadyFullyHealed"
+
                             MoveForward_AlreadyNextToEachOther ->
                                 "MoveForward_AlreadyNextToEachOther"
 
@@ -460,6 +468,12 @@ commandRejectionReasonDecoder =
 
                     "Heal_ItemNotPresent" ->
                         JD.succeed Heal_ItemNotPresent
+
+                    "HealWithAnything_NoHealingItem" ->
+                        JD.succeed HealWithAnything_NoHealingItem
+
+                    "HealWithAnything_AlreadyFullyHealed" ->
+                        JD.succeed HealWithAnything_AlreadyFullyHealed
 
                     "Attack_NotCloseEnough" ->
                         JD.succeed Attack_NotCloseEnough

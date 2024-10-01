@@ -675,6 +675,9 @@ runCommand who ongoing state command =
         Heal itemKind ->
             heal who ongoing itemKind
 
+        HealWithAnything ->
+            healWithAnything who ongoing
+
         MoveForward ->
             moveForward who ongoing
 
@@ -766,6 +769,24 @@ heal who ongoing itemKind =
                         |> incItemsUsed who itemKind
                         |> finalizeCommand
                 )
+
+
+healWithAnything : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+healWithAnything who ongoing =
+    let
+        opponent =
+            opponent_ who ongoing
+    in
+    if opponent.hp == opponent.maxHp then
+        rejectCommand who Fight.HealWithAnything_AlreadyFullyHealed ongoing
+
+    else
+        case Dict.find (\_ item -> Item.isHealing item.kind) opponent.items of
+            Nothing ->
+                rejectCommand who HealWithAnything_NoHealingItem ongoing
+
+            Just ( _, healingItem ) ->
+                heal who ongoing healingItem.kind
 
 
 decItem : Item.Kind -> Opponent -> Opponent

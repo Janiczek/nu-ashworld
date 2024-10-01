@@ -22,26 +22,27 @@ help =
   - attack randomly                   - my HP                      
   - attack ([SHOT TYPE])              - my max HP
   - heal ([ITEM])                     - my AP                      
-  - move forward                      - number of available [ITEM] 
-  - do whatever                       - number of used [ITEM]      
-  - skip turn                         - opponent's level           
-                                      - chance to hit ([SHOT TYPE])
+  - heal with anything                - number of available [ITEM] 
+  - move forward                      - number of used [ITEM]      
+  - do whatever                       - opponent's level           
+  - skip turn                         - chance to hit ([SHOT TYPE])
                                       - distance                   
-[CONDITION]                           - [NUMBER]
-  - opponent is player              
-  - opponent is NPC                 
-  - [VALUE] [OPERATOR] [VALUE]      [SHOT TYPE]   
-  - ([CONDITION] or [CONDITION])      - unaimed   
-  - ([CONDITION] and [CONDITION])     - head      
-                                      - eyes      
+                                      - [NUMBER]
+ [CONDITION]                        
+   - opponent is player             
+   - opponent is NPC                [SHOT TYPE]   
+   - [VALUE] [OPERATOR] [VALUE]       - unaimed   
+   - ([CONDITION] or [CONDITION])     - head      
+   - ([CONDITION] and [CONDITION])    - eyes      
                                       - torso     
-[OPERATOR]                            - groin     
-  - <   (less than)                   - left arm  
-  - <=  (less than or equal)          - right arm 
-  - ==  (equals)                      - left leg  
-  - !=  (doesn't equal)               - right leg 
-  - >=  (greater than or equal)    
-  - >   (greater than)           
+                                      - groin     
+ [OPERATOR]                           - left arm  
+   - <   (less than)                  - right arm 
+   - <=  (less than or equal)         - left leg  
+   - ==  (equals)                     - right leg 
+   - !=  (doesn't equal)           
+   - >=  (greater than or equal)  
+   - >   (greater than)           
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -165,6 +166,7 @@ The 'do whatever' command is a shortcut for 'if distance > 0 then move forward e
 
 Examples:
 - heal (Stimpak)
+- heal with anything
 - attack (head)
 - attack randomly
 - move forward"""

@@ -56,6 +56,7 @@ commandGenerator =
         (Random.map FightStrategy.Attack shotTypeGenerator)
         [ Random.constant FightStrategy.AttackRandomly
         , Random.map FightStrategy.Heal healingItemKindGenerator
+        , Random.constant FightStrategy.HealWithAnything
         , Random.constant FightStrategy.MoveForward
         , Random.constant FightStrategy.DoWhatever
         ]
