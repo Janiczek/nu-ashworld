@@ -14,7 +14,8 @@ module Data.FightStrategy exposing
     , warnings
     )
 
-import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
+import Data.Fight.ShotType as ShotType exposing (AimedShot(..))
 import Data.Item as Item
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
@@ -65,13 +66,14 @@ type Value
     | MyHealingItemCount
     | ItemsUsed Item.Kind
     | HealingItemsUsed
-    | ChanceToHit ShotType
+    | ChanceToHit AttackStyle
+    | RangeNeeded AttackStyle
     | Distance
     | Number Int
 
 
 type Command
-    = Attack ShotType
+    = Attack AttackStyle
     | AttackRandomly
     | Heal Item.Kind
     | HealWithAnything
@@ -101,8 +103,8 @@ toString strategy =
 
         Command command ->
             case command of
-                Attack shotType ->
-                    "attack (" ++ shotTypeToString shotType ++ ")"
+                Attack attackStyle ->
+                    "attack (" ++ AttackStyle.toString attackStyle ++ ")"
 
                 AttackRandomly ->
                     "attack randomly"
@@ -180,9 +182,14 @@ valueToString value =
         HealingItemsUsed ->
             "number of used healing items"
 
-        ChanceToHit shotType ->
+        ChanceToHit attackStyle ->
             "chance to hit ("
-                ++ shotTypeToString shotType
+                ++ AttackStyle.toString attackStyle
+                ++ ")"
+
+        RangeNeeded attackStyle ->
+            "range needed ("
+                ++ AttackStyle.toString attackStyle
                 ++ ")"
 
         Distance ->
@@ -214,39 +221,6 @@ operatorToString operator =
             ">"
 
 
-shotTypeToString : ShotType -> String
-shotTypeToString shotType =
-    case shotType of
-        NormalShot ->
-            "unaimed"
-
-        AimedShot aimedShot ->
-            case aimedShot of
-                Head ->
-                    "head"
-
-                Torso ->
-                    "torso"
-
-                Eyes ->
-                    "eyes"
-
-                Groin ->
-                    "groin"
-
-                LeftArm ->
-                    "left arm"
-
-                RightArm ->
-                    "right arm"
-
-                LeftLeg ->
-                    "left leg"
-
-                RightLeg ->
-                    "right leg"
-
-
 encode : FightStrategy -> JE.Value
 encode strategy =
     case strategy of
@@ -268,10 +242,10 @@ encode strategy =
 encodeCommand : Command -> JE.Value
 encodeCommand command =
     case command of
-        Attack shotType ->
+        Attack attackStyle ->
             JE.object
                 [ ( "type", JE.string "Attack" )
-                , ( "shotType", ShotType.encode shotType )
+                , ( "attackStyle", encodeAttackStyle attackStyle )
                 ]
 
         AttackRandomly ->
@@ -405,10 +379,16 @@ encodeValue value =
                 [ ( "type", JE.string "HealingItemsUsed" )
                 ]
 
-        ChanceToHit shotType ->
+        ChanceToHit attackStyle ->
             JE.object
                 [ ( "type", JE.string "ChanceToHit" )
-                , ( "shotType", ShotType.encode shotType )
+                , ( "attackStyle", encodeAttackStyle attackStyle )
+                ]
+
+        RangeNeeded attackStyle ->
+            JE.object
+                [ ( "type", JE.string "RangeNeeded" )
+                , ( "attackStyle", encodeAttackStyle attackStyle )
                 ]
 
         Distance ->
@@ -421,6 +401,49 @@ encodeValue value =
                 [ ( "type", JE.string "Number" )
                 , ( "value", JE.int n )
                 ]
+
+
+encodeAttackStyle : AttackStyle -> JE.Value
+encodeAttackStyle attackStyle =
+    case attackStyle of
+        UnarmedUnaimed ->
+            JE.object [ ( "type", JE.string "UnarmedUnaimed" ) ]
+
+        UnarmedAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "UnarmedAimed" )
+                , ( "aimedShot", ShotType.encodeAimedShot aimedShot )
+                ]
+
+        MeleeUnaimed ->
+            JE.object [ ( "type", JE.string "MeleeUnaimed" ) ]
+
+        MeleeAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "MeleeAimed" )
+                , ( "aimedShot", ShotType.encodeAimedShot aimedShot )
+                ]
+
+        ThrowUnaimed ->
+            JE.object [ ( "type", JE.string "ThrowUnaimed" ) ]
+
+        ThrowAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "ThrowAimed" )
+                , ( "aimedShot", ShotType.encodeAimedShot aimedShot )
+                ]
+
+        ShootSingleUnaimed ->
+            JE.object [ ( "type", JE.string "ShootSingleUnaimed" ) ]
+
+        ShootSingleAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "ShootSingleAimed" )
+                , ( "aimedShot", ShotType.encodeAimedShot aimedShot )
+                ]
+
+        ShootBurst ->
+            JE.object [ ( "type", JE.string "ShootBurst" ) ]
 
 
 decoder : Decoder FightStrategy
@@ -510,7 +533,11 @@ valueDecoder =
 
                     "ChanceToHit" ->
                         JD.succeed ChanceToHit
-                            |> JD.andMap (JD.field "shotType" ShotType.decoder)
+                            |> JD.andMap (JD.field "attackStyle" attackStyleDecoder)
+
+                    "RangeNeeded" ->
+                        JD.succeed RangeNeeded
+                            |> JD.andMap (JD.field "attackStyle" attackStyleDecoder)
 
                     "Distance" ->
                         JD.succeed Distance
@@ -523,6 +550,44 @@ valueDecoder =
             )
 
 
+attackStyleDecoder : Decoder AttackStyle
+attackStyleDecoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "UnarmedUnaimed" ->
+                        JD.succeed UnarmedUnaimed
+
+                    "UnarmedAimed" ->
+                        JD.map UnarmedAimed (JD.field "aimedShot" ShotType.aimedShotDecoder)
+
+                    "MeleeUnaimed" ->
+                        JD.succeed MeleeUnaimed
+
+                    "MeleeAimed" ->
+                        JD.map MeleeAimed (JD.field "aimedShot" ShotType.aimedShotDecoder)
+
+                    "ThrowUnaimed" ->
+                        JD.succeed ThrowUnaimed
+
+                    "ThrowAimed" ->
+                        JD.map ThrowAimed (JD.field "aimedShot" ShotType.aimedShotDecoder)
+
+                    "ShootSingleUnaimed" ->
+                        JD.succeed ShootSingleUnaimed
+
+                    "ShootSingleAimed" ->
+                        JD.map ShootSingleAimed (JD.field "aimedShot" ShotType.aimedShotDecoder)
+
+                    "ShootBurst" ->
+                        JD.succeed ShootBurst
+
+                    _ ->
+                        JD.fail <| "Unknown AttackStyle type: " ++ type_
+            )
+
+
 commandDecoder : Decoder Command
 commandDecoder =
     JD.field "type" JD.string
@@ -531,7 +596,7 @@ commandDecoder =
                 case type_ of
                     "Attack" ->
                         JD.succeed Attack
-                            |> JD.andMap (JD.field "shotType" ShotType.decoder)
+                            |> JD.andMap (JD.field "attackStyle" attackStyleDecoder)
 
                     "AttackRandomly" ->
                         JD.succeed AttackRandomly
@@ -635,6 +700,9 @@ extractItems strategy =
                     []
 
                 ChanceToHit _ ->
+                    []
+
+                RangeNeeded _ ->
                     []
 
                 Distance ->

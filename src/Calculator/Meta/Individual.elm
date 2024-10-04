@@ -1,6 +1,7 @@
 module Calculator.Meta.Individual exposing (Individual, crossover, generator, mutate)
 
-import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.ShotType as ShotType
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Skill as Skill exposing (Skill)
@@ -53,7 +54,7 @@ generator =
 commandGenerator : Generator FightStrategy.Command
 commandGenerator =
     Random.uniform
-        (Random.map FightStrategy.Attack shotTypeGenerator)
+        (Random.map FightStrategy.Attack attackStyleGenerator)
         [ Random.constant FightStrategy.AttackRandomly
         , Random.map FightStrategy.Heal healingItemKindGenerator
         , Random.constant FightStrategy.HealWithAnything
@@ -81,10 +82,20 @@ itemKindGenerator =
     Random.uniform x xs
 
 
-shotTypeGenerator : Generator ShotType
-shotTypeGenerator =
-    Random.uniform ShotType.NormalShot
-        (List.map ShotType.AimedShot ShotType.allAimed)
+attackStyleGenerator : Generator AttackStyle
+attackStyleGenerator =
+    Random.uniform ShootBurst
+        (UnarmedUnaimed
+            :: MeleeUnaimed
+            :: ThrowUnaimed
+            :: ShootSingleUnaimed
+            :: List.concatMap (\toAimed -> List.map toAimed ShotType.allAimed)
+                [ UnarmedAimed
+                , MeleeAimed
+                , ThrowAimed
+                , ShootSingleAimed
+                ]
+        )
 
 
 conditionGenerator : Generator FightStrategy.Condition
@@ -124,7 +135,8 @@ valueGenerator =
         , Random.constant FightStrategy.MyHealingItemCount
         , Random.map FightStrategy.ItemsUsed itemKindGenerator
         , Random.constant FightStrategy.HealingItemsUsed
-        , Random.map FightStrategy.ChanceToHit shotTypeGenerator
+        , Random.map FightStrategy.ChanceToHit attackStyleGenerator
+        , Random.map FightStrategy.RangeNeeded attackStyleGenerator
         , Random.constant FightStrategy.Distance
         , Random.map FightStrategy.Number (Random.int -50 300)
         ]

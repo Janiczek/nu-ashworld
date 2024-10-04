@@ -8,6 +8,7 @@ module Data.Fight.Generator exposing
 
 import Data.Enemy as Enemy exposing (addedSkillPercentages)
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Critical as Critical exposing (Critical)
 import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.FightStrategy as FightStrategy
@@ -34,6 +35,7 @@ import Random.Bool as Random
 import Random.FloatExtra as Random
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
+import Svg.Attributes exposing (x)
 import Time exposing (Posix)
 
 
@@ -103,15 +105,15 @@ apFromPreviousTurn who ongoing =
         usedAp =
             ongoing.reverseLog
                 |> currentTurnLog who
-                |> List.map (apCost opponent)
+                |> List.map apCost
                 |> List.sum
     in
     (opponent.maxAp - usedAp)
         |> max 0
 
 
-apCost : Opponent -> Fight.Action -> Int
-apCost opponent action =
+apCost : Fight.Action -> Int
+apCost action =
     case action of
         Fight.Start _ ->
             0
@@ -120,16 +122,10 @@ apCost opponent action =
             hexes
 
         Fight.Attack r_ ->
-            Logic.attackApCost
-                { isAimedShot = ShotType.isAimed r_.shotType
-                , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                }
+            r_.apCost
 
         Fight.Miss r_ ->
-            Logic.attackApCost
-                { isAimedShot = ShotType.isAimed r_.shotType
-                , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                }
+            r_.apCost
 
         Fight.Heal _ ->
             Logic.healApCost
@@ -145,7 +141,7 @@ subtractAp : Who -> Fight.Action -> OngoingFight -> OngoingFight
 subtractAp who action ongoing =
     let
         apToSubtract =
-            apCost (opponent_ who ongoing) action
+            apCost action
     in
     case who of
         Attacker ->
@@ -157,7 +153,11 @@ subtractAp who action ongoing =
 
 subtractDistance : Int -> OngoingFight -> OngoingFight
 subtractDistance n ongoing =
-    { ongoing | distanceHexes = ongoing.distanceHexes - n }
+    -- TODO TODO TODO TODO check everywhere that distance is 1, not 0
+    -- THEN go read through the melee combat and make sure no extra penalties are happening
+    -- THEN still in melee combat, make sure ranges are taken into account: super sledge can hit from 2 hexes away but knives / unarmed needs 1 hex, etc.
+    -- THEN you can probably go for ranged combat.
+    { ongoing | distanceHexes = max 1 <| ongoing.distanceHexes - n }
 
 
 addLog : Who -> Fight.Action -> OngoingFight -> OngoingFight
@@ -399,6 +399,7 @@ generator r =
                 { average = averageStartingDistance
                 , maxDeviation = 5
                 }
+                |> Random.map (max 1)
 
         initialFight : Generator OngoingFight
         initialFight =
@@ -653,7 +654,7 @@ runStrategy strategy who ongoing =
 
         command : Command
         command =
-            evalStrategy state strategy
+            evalStrategy who state strategy
     in
     runCommand who ongoing state command
 
@@ -666,8 +667,8 @@ runCommand :
     -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 runCommand who ongoing state command =
     case command of
-        Attack shotType ->
-            attack who ongoing shotType
+        Attack attackCombination ->
+            attack who ongoing attackCombination
 
         AttackRandomly ->
             attackRandomly who ongoing
@@ -683,7 +684,7 @@ runCommand who ongoing state command =
 
         DoWhatever ->
             FightStrategy.doWhatever
-                |> evalStrategy state
+                |> evalStrategy who state
                 |> runCommand who ongoing state
 
         SkipTurn ->
@@ -839,14 +840,14 @@ itemCount kind opponent =
 
 moveForward : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 moveForward who ongoing =
-    if ongoing.distanceHexes <= 0 then
+    if ongoing.distanceHexes <= 1 then
         rejectCommand who MoveForward_AlreadyNextToEachOther ongoing
 
     else
         -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
-        -- Eg. unarmed needs distance 0
-        -- Melee might need distance <2 and might prefer distance 0
-        -- Small guns might need distance <35 and prefer the largest where the chance to hit is ~95% or something
+        -- Eg. unarmed needs distance 1
+        -- Melee might need distance <=2 and might prefer distance 1
+        -- Small guns might need distance <=35 and prefer the largest where the chance to hit is ~95% or something
         -- TODO currently everything is unarmed.
         let
             maxPossibleMove : Int
@@ -877,8 +878,8 @@ skipTurn who ongoing =
     finalizeCommand nextOngoing
 
 
-chanceToHit : Who -> OngoingFight -> ShotType -> Int
-chanceToHit who ongoing shot =
+chanceToHit : Who -> OngoingFight -> AttackStyle -> ShotType -> Int
+chanceToHit who ongoing attackStyle shot =
     let
         opponent =
             opponent_ who ongoing
@@ -898,49 +899,109 @@ chanceToHit who ongoing shot =
                 , apFromPreviousTurn = apFromPreviousTurn other ongoing
                 }
     in
-    Logic.unarmedChanceToHit
+    Logic.chanceToHit
         { attackerSpecial = opponent.special
         , attackerAddedSkillPercentages = opponent.addedSkillPercentages
         , distanceHexes = ongoing.distanceHexes
-        , shotType = shot
+        , weaponRange =
+            opponent.equippedWeapon
+                |> Maybe.map (Item.range shot)
+                |> Maybe.withDefault Logic.unarmedRange
         , targetArmorClass = armorClass
+        , attackStyle = attackStyle
         }
+
+
+unarmedAttackStyle : ( AttackStyle, Int )
+unarmedAttackStyle =
+    ( AttackStyle.UnarmedUnaimed, Logic.unarmedApCost )
+
+
+randomAttackStyle : Int -> Maybe Item.Kind -> Generator ( AttackStyle, Int )
+randomAttackStyle availableAp equippedWeapon =
+    case equippedWeapon of
+        Nothing ->
+            Random.constant unarmedAttackStyle
+
+        Just weapon ->
+            case
+                Logic.attackStyleAndApCost weapon
+                    |> List.filter (\( _, apCost_ ) -> apCost_ <= availableAp)
+            of
+                [] ->
+                    {- Either a bug where a weapon doesn't have any attack styles
+                       but is equippable, or not enough AP for any attack.
+                    -}
+                    Random.constant unarmedAttackStyle
+
+                x :: xs ->
+                    Random.uniform x xs
 
 
 attackRandomly : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 attackRandomly who ongoing =
     let
-        shotType : Generator ShotType
-        shotType =
-            let
-                opponent =
-                    opponent_ who ongoing
+        opponent : Opponent
+        opponent =
+            opponent_ who ongoing
 
-                availableAp =
-                    opponentAp who ongoing
-
-                aimedShotApCost : Int
-                aimedShotApCost =
-                    Logic.attackApCost
-                        { isAimedShot = True
-                        , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
-                        }
-            in
-            Random.uniform
-                NormalShot
-                (if availableAp >= aimedShotApCost then
-                    List.map AimedShot ShotType.allAimed
-
-                 else
-                    []
-                )
+        availableAp : Int
+        availableAp =
+            opponentAp who ongoing
     in
-    shotType
-        |> Random.andThen (attack who ongoing)
+    randomAttackStyle availableAp opponent.equippedWeapon
+        |> Random.andThen (\( attackStyle, baseApCost ) -> attack_ who ongoing attackStyle baseApCost)
 
 
-attack : Who -> OngoingFight -> ShotType -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
-attack who ongoing shotType =
+attack : Who -> OngoingFight -> AttackStyle -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+attack who ongoing wantedAttackStyle =
+    let
+        opponent =
+            opponent_ who ongoing
+    in
+    (case opponent.equippedWeapon of
+        Nothing ->
+            Random.constant unarmedAttackStyle
+
+        Just weapon ->
+            let
+                possibleAttackStyles : List ( AttackStyle, Int )
+                possibleAttackStyles =
+                    Logic.attackStyleAndApCost weapon
+            in
+            if
+                List.member wantedAttackStyle
+                    (List.map Tuple.first possibleAttackStyles)
+            then
+                {- TODO can this happen? Eg. when we have equipped a
+                   spear but want to do Burst?  Should we let the
+                   player know something weird happened?
+
+                   This is theoretically a loophole where the player
+                   has a weapon with cost of shooting 5, has 3 AP
+                   left, and intentionally uses this invalid command
+                   to make use of this AP remnant with an unarmed
+                   attack.
+                -}
+                Random.constant unarmedAttackStyle
+
+            else
+                case possibleAttackStyles of
+                    [] ->
+                        -- This can probably only happpen if we somehow allow user to equip a non-weapon?
+                        Random.constant unarmedAttackStyle
+
+                    x :: xs ->
+                        Random.uniform x xs
+    )
+        |> Random.andThen
+            (\( attackStyle, baseApCost ) ->
+                attack_ who ongoing attackStyle baseApCost
+            )
+
+
+attack_ : Who -> OngoingFight -> AttackStyle -> Int -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+attack_ who ongoing attackStyle baseApCost =
     let
         opponent =
             opponent_ who ongoing
@@ -949,21 +1010,30 @@ attack who ongoing shotType =
         other =
             Fight.theOther who
 
+        shotType : ShotType
+        shotType =
+            AttackStyle.toShotType attackStyle
+
         apCost_ : Int
         apCost_ =
             Logic.attackApCost
                 { isAimedShot = ShotType.isAimed shotType
                 , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
+                , hasBonusRateOfFirePerk = Perk.rank Perk.BonusRateOfFire opponent.perks > 0
+                , attackStyle = attackStyle
+                , baseApCost = baseApCost
                 }
 
         chance : Int
         chance =
-            chanceToHit who ongoing shotType
+            chanceToHit who ongoing attackStyle shotType
     in
     if ongoing.distanceHexes /= 0 then
         rejectCommand who Attack_NotCloseEnough ongoing
 
     else if opponentAp who ongoing < apCost_ then
+        -- We've already filtered out attack styles with more AP than you can use.
+        -- If we're here it means that code has fallen through to the unarmed 3 AP default.
         rejectCommand who Attack_NotEnoughAP ongoing
 
     else
@@ -1051,6 +1121,7 @@ attack who ongoing shotType =
                                                             , shotType = shotType
                                                             , remainingHp = .hp (opponent_ other ongoing) - damage
                                                             , isCritical = maybeCriticalEffectsAndMessage /= Nothing
+                                                            , apCost = apCost_
                                                             }
                                                 in
                                                 -- TODO use the critical effects and message!!
@@ -1066,7 +1137,10 @@ attack who ongoing shotType =
                         let
                             action : Fight.Action
                             action =
-                                Fight.Miss { shotType = shotType }
+                                Fight.Miss
+                                    { shotType = shotType
+                                    , apCost = apCost_
+                                    }
                         in
                         ongoing
                             |> addLog who action
@@ -1086,28 +1160,28 @@ type alias StrategyState =
     }
 
 
-evalStrategy : StrategyState -> FightStrategy -> Command
-evalStrategy state strategy =
+evalStrategy : Who -> StrategyState -> FightStrategy -> Command
+evalStrategy who state strategy =
     case strategy of
         Command command ->
             command
 
         If { condition, then_, else_ } ->
-            if evalCondition state condition then
-                evalStrategy state then_
+            if evalCondition who state condition then
+                evalStrategy who state then_
 
             else
-                evalStrategy state else_
+                evalStrategy who state else_
 
 
-evalCondition : StrategyState -> Condition -> Bool
-evalCondition state condition =
+evalCondition : Who -> StrategyState -> Condition -> Bool
+evalCondition who state condition =
     case condition of
         Or c1 c2 ->
-            evalCondition state c1 || evalCondition state c2
+            evalCondition who state c1 || evalCondition who state c2
 
         And c1 c2 ->
-            evalCondition state c1 && evalCondition state c2
+            evalCondition who state c1 && evalCondition who state c2
 
         OpponentIsPlayer ->
             Fight.isPlayer state.them.type_
@@ -1118,12 +1192,12 @@ evalCondition state condition =
         Operator { lhs, op, rhs } ->
             operatorFn
                 op
-                (evalValue state lhs)
-                (evalValue state rhs)
+                (evalValue who state lhs)
+                (evalValue who state rhs)
 
 
-evalValue : StrategyState -> Value -> Int
-evalValue state value =
+evalValue : Who -> StrategyState -> Value -> Int
+evalValue who state value =
     case value of
         MyHP ->
             state.you.hp
@@ -1172,12 +1246,11 @@ evalValue state value =
                     )
                 |> List.sum
 
-        ChanceToHit shotType ->
-            Logic.unarmedChanceToHit
+        ChanceToHit attackStyle ->
+            Logic.chanceToHit
                 { attackerAddedSkillPercentages = state.you.addedSkillPercentages
                 , attackerSpecial = state.you.special
                 , distanceHexes = state.distanceHexes
-                , shotType = shotType
                 , targetArmorClass =
                     Logic.armorClass
                         { naturalArmorClass = state.them.naturalArmorClass
@@ -1186,13 +1259,38 @@ evalValue state value =
                         , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
                         , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
                         }
+                , attackStyle = attackStyle
+                , weaponRange = rangeNeeded attackStyle who state
                 }
+
+        RangeNeeded attackStyle ->
+            rangeNeeded attackStyle who state
 
         Distance ->
             state.distanceHexes
 
         Number n ->
             n
+
+
+rangeNeeded : AttackStyle -> Who -> StrategyState -> Int
+rangeNeeded attackStyle who state =
+    let
+        opponent : Opponent
+        opponent =
+            opponent_ who state.ongoingFight
+
+        equippedWeapon : Maybe Item.Kind
+        equippedWeapon =
+            opponent.equippedWeapon
+
+        shotType : ShotType
+        shotType =
+            AttackStyle.toShotType attackStyle
+    in
+    equippedWeapon
+        |> Maybe.map (Item.range shotType)
+        |> Maybe.withDefault Logic.unarmedRange
 
 
 operatorFn : Operator -> (Int -> Int -> Bool)
@@ -1313,6 +1411,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , items = Dict.empty
                   , drops = items
                   , equippedArmor = Enemy.equippedArmor enemyType
+                  , equippedWeapon = Enemy.equippedWeapon enemyType
                   , naturalArmorClass = Enemy.naturalArmorClass enemyType
                   , attackStats =
                         -- TODO for now it's all unarmed
@@ -1349,6 +1448,7 @@ playerOpponent :
         , caps : Int
         , addedSkillPercentages : SeqDict Skill Int
         , equippedArmor : Maybe Item
+        , equippedWeapon : Maybe Item
         , fightStrategy : FightStrategy
         , items : Dict Item.Id Item
     }
@@ -1405,6 +1505,7 @@ playerOpponent player =
     , items = player.items
     , drops = []
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
+    , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
     , naturalArmorClass = naturalArmorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages

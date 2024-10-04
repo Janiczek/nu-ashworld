@@ -27,22 +27,22 @@ help =
   - do whatever                       - number of used [ITEM]      
   - skip turn                         - number of used healing items
                                       - opponent's level           
-                                      - chance to hit ([SHOT TYPE])
- [CONDITION]                          - distance                   
-   - opponent is player               - [NUMBER]
-   - opponent is NPC                 
+                                      - chance to hit ([ATTACK])
+ [CONDITION]                          - range needed ([ATTACK])
+   - opponent is player               - distance 
+   - opponent is NPC                  - [NUMBER]
    - [VALUE] [OPERATOR] [VALUE]      
-   - ([CONDITION] or [CONDITION])   [SHOT TYPE]   
-   - ([CONDITION] and [CONDITION])    - unaimed   
-                                      - head      
-                                      - eyes      
- [OPERATOR]                           - torso     
-   - <   (less than)                  - groin     
-   - <=  (less than or equal)         - left arm  
-   - ==  (equals)                     - right arm 
-   - !=  (doesn't equal)              - left leg 
-   - >=  (greater than or equal)      - right leg
-   - >   (greater than)           
+   - ([CONDITION] or [CONDITION])    
+   - ([CONDITION] and [CONDITION])  [ATTACK]             [AIM]
+                                      - unarmed            - head      
+                                      - unarmed, [AIM]     - eyes     
+ [OPERATOR]                           - melee              - torso    
+   - <   (less than)                  - melee, [AIM]       - groin    
+   - <=  (less than or equal)         - throw              - left arm 
+   - ==  (equals)                     - throw, [AIM]       - right arm
+   - !=  (doesn't equal)              - shoot              - left leg 
+   - >=  (greater than or equal)      - shoot, [AIM]       - right leg
+   - >   (greater than)               - burst
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -57,7 +57,8 @@ type Reference
     = Strategy
     | Command
     | Condition
-    | ShotType
+    | Attack
+    | Aim
     | Item
     | Value
     | Operator
@@ -69,7 +70,8 @@ allReferences =
     [ Strategy
     , Command
     , Condition
-    , ShotType
+    , Attack
+    , Aim
     , Item
     , Value
     , Operator
@@ -89,8 +91,11 @@ referenceText ref =
         Condition ->
             "[CONDITION]"
 
-        ShotType ->
-            "[SHOT TYPE]"
+        Attack ->
+            "[ATTACK]"
+
+        Aim ->
+            "[AIM]"
 
         Item ->
             "[ITEM]"
@@ -179,17 +184,31 @@ Examples:
 - chance to hit (eyes) >= 80
 - opponent is player"""
 
-        ShotType ->
+        Attack ->
+            """Various types of attacks are available, depending on your equipped weapon.
+
+Examples:
+- unarmed
+- unarmed, head
+- melee
+- melee, eyes
+- throw
+- throw, left leg
+- shoot
+- shoot, groin
+- burst
+"""
+
+        Aim ->
             """Different aimed shots have a different chance-to-hit penalty, with an accompanying damage multiplier. More risk, more reward!
 
 Example usage:
 
 - inside [VALUE]:
-    chance to hit (torso)
+    chance to hit (shoot, torso)
 
-- inside [COMMAND]:
-    attack (torso)
-"""
+- inside [ATTACK]:
+    attack (throw, head)"""
 
         Item ->
             """Examples:
@@ -231,8 +250,11 @@ referenceTitle ref =
         Condition ->
             "Condition"
 
-        ShotType ->
-            "Shot Type"
+        Attack ->
+            "Attack"
+
+        Aim ->
+            "Aim"
 
         Item ->
             "Item"

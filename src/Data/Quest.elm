@@ -1757,8 +1757,216 @@ globalRewards name =
         KlamathSearchForSmileyTrapper ->
             []
 
-        _ ->
-            -- TODO
+        ToxicCavesRescueSmileyTrapper ->
+            []
+
+        ToxicCavesRepairTheGenerator ->
+            []
+
+        ToxicCavesLootTheBunker ->
+            []
+
+        DenFreeVicByPayingMetzger ->
+            -- TODO Vic opens a shop in Klamath
+            []
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            -- TODO Vic opens a shop in Klamath
+            []
+
+        DenDeliverMealToSmitty ->
+            []
+
+        DenFindCarParts ->
+            []
+
+        DenFixTheCar ->
+            []
+
+        ModocInvestigateGhostFarm ->
+            []
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            []
+
+        ModocMediateBetweenSlagsAndJo ->
+            []
+
+        ModocFindGoldWatchForCornelius ->
+            []
+
+        ModocFindGoldWatchForFarrel ->
+            []
+
+        VaultCityGetPlowForMrSmith ->
+            []
+
+        VaultCityRescueAmandasHusband ->
+            -- TODO [ Discount { who = VaultCityAmanda, percentage = 10 } ]
+            []
+
+        GeckoOptimizePowerPlant ->
+            -- TODO [ SellsGuaranteed { who = GeckoShop, what = SmallEnergyCell, amount = 20 } ]
+            []
+
+        ReddingClearWanamingoMine ->
+            -- TODO [ Discount { who = ReddingShop, percentage = 15 } ]
+            []
+
+        ReddingFindExcavatorChip ->
+            []
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            []
+
+        NewRenoHelpGuardSecretTransaction ->
+            []
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            []
+
+        NewRenoWinBoxingTournament ->
+            []
+
+        NewRenoAcquireElectronicLockpick ->
+            []
+
+        NCRGuardBrahminCaravan ->
+            -- TODO [ Discount { who = NCRShop, percentage = 10 } ]
+            []
+
+        NCRTestMutagenicSerum ->
+            []
+
+        NCRRetrieveComputerParts ->
+            []
+
+        NCRFreeSlaves ->
+            []
+
+        NCRInvestigateBrahminRaids ->
+            -- TODO [ Discount { who = NCRShop, percentage = 10 } ]
+            []
+
+        V15RescueChrissy ->
+            []
+
+        V15CompleteDealWithNCR ->
+            -- TODO [ Discount { who = NCRShop, percentage = 5 } ]
+            []
+
+        V13FixVaultComputer ->
+            -- TODO autodoc for free for everybody
+            []
+
+        V13FindTheGeck ->
+            []
+
+        BrokenHillsFixMineAirPurifier ->
+            []
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            []
+
+        BrokenHillsFindMissingPeople ->
+            -- TODO [ Discount { who = BrokenHillsShop, percentage = 10 } ]
+            []
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            []
+
+        RaidersFindEvidenceOfBishopTampering ->
+            []
+
+        RaidersKillEverybody ->
+            -- TODO possible new clan base
+            []
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            []
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            []
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            []
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            []
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            []
+
+        MilitaryBaseExcavateTheEntrance ->
+            []
+
+        MilitaryBaseKillMelchior ->
+            []
+
+        SanFranciscoFindFuelForTanker ->
+            -- TODO punks open shop
+            []
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            []
+
+        SanFranciscoFindNavCompPartForTanker ->
+            -- TODO [ Discount { who = SanFranciscoPunks, percentage = 10 } ]
+            []
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            []
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            []
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            []
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = Ec2mm, amount = 20 } ]
+            []
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = GaussRifle, amount = 1 } ]
+            []
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = PlasmaRifle, amount = 1 } ]
+            []
+
+        SanFranciscoEmbarkForEnclave ->
+            []
+
+        NavarroFixK9 ->
+            []
+
+        NavarroRetrieveFobForTanker ->
+            []
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            []
+
+        EnclaveKillThePresidentStealthily ->
+            []
+
+        EnclaveKillThePresidentTheUsualWay ->
+            []
+
+        EnclaveFindTheGeck ->
+            []
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            []
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            []
+
+        EnclaveKillFrankHorrigan ->
+            []
+
+        EnclaveReturnToMainland ->
+            -- TODO end the game
             []
 
 
@@ -1812,7 +2020,7 @@ playerRewards name =
             [ SkillUpgrade { skill = Sneak, percentage = 10 } ]
 
         KlamathKillRatGod ->
-            [ ItemReward { what = BBGun, amount = 1 } ]
+            [ ItemReward { what = RedRyderLEBBGun, amount = 1 } ]
 
         KlamathRescueTorr ->
             []
@@ -1886,7 +2094,7 @@ playerRewards name =
             [ ItemReward { what = ScoutHandbook, amount = 5 } ]
 
         NewRenoTrackDownPrettyBoyLloyd ->
-            [ ItemReward { what = Grenade, amount = 20 }
+            [ ItemReward { what = FragGrenade, amount = 20 }
             , ItemReward { what = SuperStimpak, amount = 10 }
             ]
 
@@ -1986,7 +2194,7 @@ playerRewards name =
             [ ItemReward { what = SkynetAim, amount = 1 } ]
 
         MilitaryBaseExcavateTheEntrance ->
-            [ ItemReward { what = Grenade, amount = 20 }
+            [ ItemReward { what = FragGrenade, amount = 20 }
             , ItemReward { what = SuperStimpak, amount = 10 }
             ]
 

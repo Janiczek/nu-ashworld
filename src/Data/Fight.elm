@@ -69,6 +69,7 @@ type alias Opponent =
     , items : Dict Item.Id Item
     , drops : List Item
     , equippedArmor : Maybe Item.Kind
+    , equippedWeapon : Maybe Item.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : SeqDict Skill Int
@@ -103,8 +104,14 @@ type Action
         , shotType : ShotType
         , remainingHp : Int
         , isCritical : Bool -- TODO the string
+        , apCost : Int
         }
-    | Miss { shotType : ShotType }
+    | Miss
+        { shotType : ShotType
+        , apCost : Int
+
+        -- TODO isCritical
+        }
     | Heal
         { itemKind : Item.Kind
         , healedHp : Int
@@ -348,12 +355,14 @@ encodeAction action =
                 , ( "shotType", ShotType.encode r.shotType )
                 , ( "remainingHp", JE.int r.remainingHp )
                 , ( "isCritical", JE.bool r.isCritical )
+                , ( "apCost", JE.int r.apCost )
                 ]
 
         Miss r ->
             JE.object
                 [ ( "type", JE.string "Miss" )
                 , ( "shotType", ShotType.encode r.shotType )
+                , ( "apCost", JE.int r.apCost )
                 ]
 
         Heal r ->
@@ -427,8 +436,15 @@ actionDecoder =
                         attackActionDecoder
 
                     "Miss" ->
-                        JD.field "shotType" ShotType.decoder
-                            |> JD.map (\shotType -> Miss { shotType = shotType })
+                        JD.map2
+                            (\shotType apCost ->
+                                Miss
+                                    { shotType = shotType
+                                    , apCost = apCost
+                                    }
+                            )
+                            (JD.field "shotType" ShotType.decoder)
+                            (JD.field "apCost" JD.int)
 
                     "Heal" ->
                         JD.map3
@@ -498,19 +514,21 @@ attackActionDecoder =
 
 attackActionDecoderV1 : Decoder Action
 attackActionDecoderV1 =
-    JD.map4
-        (\damage shotType remainingHp isCritical ->
+    JD.map5
+        (\damage shotType remainingHp isCritical apCost ->
             Attack
                 { damage = damage
                 , shotType = shotType
                 , remainingHp = remainingHp
                 , isCritical = isCritical
+                , apCost = apCost
                 }
         )
         (JD.field "damage" JD.int)
         (JD.field "shotType" ShotType.decoder)
         (JD.field "remainingHp" JD.int)
         (JD.field "isCritical" JD.bool)
+        (JD.field "apCost" JD.int)
 
 
 opponentName : OpponentType -> String

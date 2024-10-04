@@ -96,7 +96,7 @@ type Perk
       -- TODO WeaponHandling -- needs weapons
       -- lvl 15
     | BonusHthAttacks
-      -- TODO BonusRateOfFire -- needs weapons
+    | BonusRateOfFire
       -- TODO Pickpocket -- needs stealing mechanic
       -- lvl 18
       -- TODO SilentDeath -- needs sneaking in combat
@@ -114,6 +114,7 @@ all =
     , Awareness
     , BetterCriticals
     , BonusHthAttacks
+    , BonusRateOfFire
     , BonusHthDamage
     , CautiousNature
     , Comprehension
@@ -280,6 +281,9 @@ name perk =
         BonusHthAttacks ->
             "Bonus HtH Attacks"
 
+        BonusRateOfFire ->
+            "Bonus Rate of Fire"
+
         GeckoSkinning ->
             "Gecko Skinning"
 
@@ -433,6 +437,9 @@ encode perk =
 
             BonusHthAttacks ->
                 "bonus-hth-attacks"
+
+            BonusRateOfFire ->
+                "bonus-rate-of-fire"
 
             GeckoSkinning ->
                 "gecko-skinning"
@@ -738,6 +745,9 @@ isApplicableForLevelup r perk =
                 BonusHthAttacks ->
                     r.level >= 15 && s.agility >= 6
 
+                BonusRateOfFire ->
+                    r.level >= 15 && s.perception >= 6 && s.intelligence >= 6 && s.agility >= 7
+
                 GeckoSkinning ->
                     False
            )
@@ -763,6 +773,9 @@ description perk =
 
         BonusHthDamage ->
             "Experience in unarmed combat has given you the edge when it comes to damage. You cause +2 points of damage with hand-to-hand and melee attacks for each level of this Perk."
+
+        BonusRateOfFire ->
+            "This Perk allows you to pull the trigger a little more faster, and still remain as accurate as before. Each ranged weapon attack costs 1 AP less to perform."
 
         CautiousNature ->
             "You are more alert outdoors and enemies are less likely to sneak up on you. With this Perk you get a +3 to your perception in random encounters when determining placement. This means the average starting distance in your fights increases."

@@ -105,15 +105,9 @@ encodeToBackendMsg msg =
                 , ( "itemId", JE.int itemId )
                 ]
 
-        EquipLeftHand itemId ->
+        EquipWeapon itemId ->
             JE.object
-                [ ( "type", JE.string "EquipLeftHand" )
-                , ( "itemId", JE.int itemId )
-                ]
-
-        EquipRightHand itemId ->
-            JE.object
-                [ ( "type", JE.string "EquipRightHand" )
+                [ ( "type", JE.string "EquipWeapon" )
                 , ( "itemId", JE.int itemId )
                 ]
 
@@ -121,13 +115,9 @@ encodeToBackendMsg msg =
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
 
-        UnequipLeftHand ->
+        UnequipWeapon ->
             JE.object
-                [ ( "type", JE.string "UnequipLeftHand" ) ]
-
-        UnequipRightHand ->
-            JE.object
-                [ ( "type", JE.string "UnequipRightHand" ) ]
+                [ ( "type", JE.string "UnequipWeapon" ) ]
 
         SetFightStrategy ( strategy, text ) ->
             JE.object

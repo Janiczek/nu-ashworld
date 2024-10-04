@@ -8,6 +8,7 @@ module Data.FightStrategy.Parser exposing
     , value
     )
 
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Fight.ShotType
     exposing
         ( AimedShot(..)
@@ -82,7 +83,7 @@ attack =
     P.succeed Attack
         |. P.keyword "attack"
         |. P.token " ("
-        |= shotType
+        |= attackStyle
         |. P.token ")"
 
 
@@ -90,17 +91,22 @@ shotType : Parser ShotType
 shotType =
     P.oneOf
         [ P.map (\_ -> NormalShot) (P.keyword "unaimed")
-        , P.map AimedShot <|
-            P.oneOf
-                [ P.map (\_ -> Head) (P.keyword "head")
-                , P.map (\_ -> Torso) (P.keyword "torso")
-                , P.map (\_ -> Eyes) (P.keyword "eyes")
-                , P.map (\_ -> Groin) (P.keyword "groin")
-                , P.map (\_ -> LeftArm) (P.keyword "left arm")
-                , P.map (\_ -> RightArm) (P.keyword "right arm")
-                , P.map (\_ -> LeftLeg) (P.keyword "left leg")
-                , P.map (\_ -> RightLeg) (P.keyword "right leg")
-                ]
+        , P.map (\_ -> BurstShot) (P.keyword "burst")
+        , P.map AimedShot aimedShot
+        ]
+
+
+aimedShot : Parser AimedShot
+aimedShot =
+    P.oneOf
+        [ P.map (\_ -> Head) (P.keyword "head")
+        , P.map (\_ -> Torso) (P.keyword "torso")
+        , P.map (\_ -> Eyes) (P.keyword "eyes")
+        , P.map (\_ -> Groin) (P.keyword "groin")
+        , P.map (\_ -> LeftArm) (P.keyword "left arm")
+        , P.map (\_ -> RightArm) (P.keyword "right arm")
+        , P.map (\_ -> LeftLeg) (P.keyword "left leg")
+        , P.map (\_ -> RightLeg) (P.keyword "right leg")
         ]
 
 
@@ -189,6 +195,7 @@ value =
         , itemCount
         , itemsUsed
         , chanceToHit
+        , rangeNeeded
         , P.map (\_ -> Distance) (P.keyword "distance")
         , P.map Number possiblyNegativeInt
         ]
@@ -221,8 +228,42 @@ chanceToHit =
     P.succeed ChanceToHit
         |. P.keyword "chance to hit"
         |. P.token " ("
-        |= shotType
+        |= attackStyle
         |. P.token ")"
+
+
+rangeNeeded : Parser Value
+rangeNeeded =
+    P.succeed RangeNeeded
+        |. P.keyword "range needed"
+        |. P.token " ("
+        |= attackStyle
+        |. P.token ")"
+
+
+attackStyle : Parser AttackStyle
+attackStyle =
+    let
+        aimed =
+            P.succeed identity
+                |. P.symbol ", "
+                |= aimedShot
+
+        unaimedAimed str toAimed unaimed =
+            P.succeed identity
+                |. P.keyword str
+                |= P.oneOf
+                    [ P.map toAimed aimed
+                    , P.succeed unaimed
+                    ]
+    in
+    P.oneOf
+        [ unaimedAimed "unarmed" UnarmedAimed UnarmedUnaimed
+        , unaimedAimed "melee" MeleeAimed MeleeUnaimed
+        , unaimedAimed "throw" ThrowAimed ThrowUnaimed
+        , unaimedAimed "shoot" ShootSingleAimed ShootSingleUnaimed
+        , P.map (\_ -> ShootBurst) <| P.keyword "burst"
+        ]
 
 
 nonemptySpaces : Parser ()

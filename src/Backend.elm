@@ -857,20 +857,14 @@ updateFromFrontend sessionId clientId msg model =
         EquipArmor itemId ->
             withLoggedInCreatedPlayer <| equipArmor itemId
 
-        EquipLeftHand itemId ->
-            withLoggedInCreatedPlayer <| equipLeftHand itemId
-
-        EquipRightHand itemId ->
-            withLoggedInCreatedPlayer <| equipRightHand itemId
+        EquipWeapon itemId ->
+            withLoggedInCreatedPlayer <| equipWeapon itemId
 
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
 
-        UnequipLeftHand ->
-            withLoggedInCreatedPlayer unequipLeftHand
-
-        UnequipRightHand ->
-            withLoggedInCreatedPlayer unequipRightHand
+        UnequipWeapon ->
+            withLoggedInCreatedPlayer unequipWeapon
 
         SetFightStrategy ( strategy, text ) ->
             withLoggedInCreatedPlayer <| setFightStrategy ( strategy, text )
@@ -1432,32 +1426,16 @@ equipArmor itemId clientId _ worldName player model =
                 ( model, Cmd.none )
 
 
-equipLeftHand : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-equipLeftHand itemId clientId _ worldName player model =
+equipWeapon : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+equipWeapon itemId clientId _ worldName player model =
     case Dict.get itemId player.items of
         Nothing ->
             ( model, Cmd.none )
 
         Just item ->
-            if Item.isHandEquippable item.kind then
+            if Item.isWeapon item.kind then
                 model
-                    |> updatePlayer worldName player.name (SPlayer.equipLeftHand item)
-                    |> sendCurrentWorld worldName player.name clientId
-
-            else
-                ( model, Cmd.none )
-
-
-equipRightHand : Item.Id -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-equipRightHand itemId clientId _ worldName player model =
-    case Dict.get itemId player.items of
-        Nothing ->
-            ( model, Cmd.none )
-
-        Just item ->
-            if Item.isHandEquippable item.kind then
-                model
-                    |> updatePlayer worldName player.name (SPlayer.equipRightHand item)
+                    |> updatePlayer worldName player.name (SPlayer.equipWeapon item)
                     |> sendCurrentWorld worldName player.name clientId
 
             else
@@ -1556,27 +1534,15 @@ unequipArmor clientId _ worldName player model =
                 |> sendCurrentWorld worldName player.name clientId
 
 
-unequipLeftHand : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-unequipLeftHand clientId _ worldName player model =
-    case player.equippedLeftHand of
+unequipWeapon : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+unequipWeapon clientId _ worldName player model =
+    case player.equippedWeapon of
         Nothing ->
             ( model, Cmd.none )
 
         Just _ ->
             model
-                |> updatePlayer worldName player.name SPlayer.unequipLeftHand
-                |> sendCurrentWorld worldName player.name clientId
-
-
-unequipRightHand : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-unequipRightHand clientId _ worldName player model =
-    case player.equippedRightHand of
-        Nothing ->
-            ( model, Cmd.none )
-
-        Just _ ->
-            model
-                |> updatePlayer worldName player.name SPlayer.unequipRightHand
+                |> updatePlayer worldName player.name SPlayer.unequipWeapon
                 |> sendCurrentWorld worldName player.name clientId
 
 
@@ -1862,6 +1828,9 @@ oneTimePerkEffects currentTime =
                                 |> SPlayer.addSkillPercentage 10 Skill.Science
 
                 Perk.BonusHthAttacks ->
+                    Nothing
+
+                Perk.BonusRateOfFire ->
                     Nothing
 
                 Perk.BonusHthDamage ->

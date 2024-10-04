@@ -3,7 +3,7 @@ module Data.FightStrategy.Named exposing
     , default
     )
 
-import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -38,7 +38,7 @@ conservative : ( String, FightStrategy )
 conservative =
     ( "Conservative"
     , If
-        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 0 }
+        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 1 }
         , then_ = Command MoveForward
         , else_ =
             If
@@ -47,7 +47,7 @@ conservative =
                         (Operator { lhs = MyHP, op = LT_, rhs = MyMaxHP })
                         (Operator { lhs = MyHealingItemCount, op = GT_, rhs = Number 0 })
                 , then_ = Command HealWithAnything
-                , else_ = Command (Attack NormalShot)
+                , else_ = Command (Attack UnarmedUnaimed)
                 }
         }
     )

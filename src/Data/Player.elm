@@ -81,8 +81,7 @@ type alias SPlayer =
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
-    , equippedLeftHand : Maybe Item
-    , equippedRightHand : Maybe Item
+    , equippedWeapon : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -110,8 +109,7 @@ type alias CPlayer =
     , availableSkillPoints : Int
     , availablePerks : Int
     , equippedArmor : Maybe Item
-    , equippedLeftHand : Maybe Item
-    , equippedRightHand : Maybe Item
+    , equippedWeapon : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -223,8 +221,7 @@ sPlayerDecoderV1 =
         |> JD.andMap (JD.field "availableSkillPoints" JD.int)
         |> JD.andMap (JD.field "availablePerks" JD.int)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "equippedLeftHand" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "equippedRightHand" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
@@ -251,8 +248,7 @@ serverToClient p =
     , availableSkillPoints = p.availableSkillPoints
     , availablePerks = p.availablePerks
     , equippedArmor = p.equippedArmor
-    , equippedLeftHand = p.equippedLeftHand
-    , equippedRightHand = p.equippedRightHand
+    , equippedWeapon = p.equippedWeapon
     , fightStrategy = p.fightStrategy
     , fightStrategyText = p.fightStrategyText
     , questsActive = p.questsActive
@@ -388,8 +384,7 @@ fromNewChar currentTime auth newChar =
             , availableSkillPoints = 0
             , availablePerks = 0
             , equippedArmor = Nothing
-            , equippedLeftHand = Nothing
-            , equippedRightHand = Nothing
+            , equippedWeapon = Nothing
             , fightStrategy = Tuple.second FightStrategy.default
             , fightStrategyText =
                 Tuple.second FightStrategy.default

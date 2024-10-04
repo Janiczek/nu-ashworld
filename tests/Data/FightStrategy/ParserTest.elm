@@ -1,5 +1,6 @@
 module Data.FightStrategy.ParserTest exposing (..)
 
+import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
 import Data.FightStrategy as FightStrategy
     exposing
@@ -25,23 +26,35 @@ value : Test
 value =
     parserTest "FightStrategy.value"
         FightStrategy.value
-        [ ( "my HP", "my HP", Just MyHP )
-        , ( "my max HP", "my max HP", Just MyMaxHP )
-        , ( "my AP", "my AP", Just MyAP )
-        , ( "distance", "distance", Just Distance )
-        , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount Stimpak) )
-        , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount HealingPowder) )
-        , ( "item count - non-healing item also works", "number of available Metal Armor", Just (MyItemCount MetalArmor) )
-        , ( "healing item count", "number of available healing items", Just MyHealingItemCount )
-        , ( "used Stimpak", "number of used Stimpak", Just (ItemsUsed Stimpak) )
-        , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed HealingPowder) )
-        , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed MetalArmor) )
-        , ( "used healing items", "number of used healing items", Just HealingItemsUsed )
-        , ( "chance to hit NormalShot", "chance to hit (unaimed)", Just (ChanceToHit NormalShot) )
-        , ( "chance to hit AimedShot Head", "chance to hit (head)", Just (ChanceToHit (AimedShot Head)) )
-        , ( "chance to hit AimedShot LeftArm", "chance to hit (left arm)", Just (ChanceToHit (AimedShot LeftArm)) )
-        , ( "chance to hit AimedShot LeftLeg", "chance to hit (left leg)", Just (ChanceToHit (AimedShot LeftLeg)) )
-        ]
+        (List.concat
+            [ [ ( "my HP", "my HP", Just MyHP )
+              , ( "my max HP", "my max HP", Just MyMaxHP )
+              , ( "my AP", "my AP", Just MyAP )
+              , ( "distance", "distance", Just Distance )
+              , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount Stimpak) )
+              , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount HealingPowder) )
+              , ( "item count - non-healing item also works", "number of available Metal Armor", Just (MyItemCount MetalArmor) )
+              , ( "healing item count", "number of available healing items", Just MyHealingItemCount )
+              , ( "used Stimpak", "number of used Stimpak", Just (ItemsUsed Stimpak) )
+              , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed HealingPowder) )
+              , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed MetalArmor) )
+              , ( "used healing items", "number of used healing items", Just HealingItemsUsed )
+              ]
+            , AttackStyle.all
+                |> List.concatMap
+                    (\style ->
+                        [ ( "chance to hit " ++ Debug.toString style
+                          , "chance to hit (" ++ AttackStyle.toString style ++ ")"
+                          , Just (ChanceToHit style)
+                          )
+                        , ( "range needed " ++ Debug.toString style
+                          , "range needed (" ++ AttackStyle.toString style ++ ")"
+                          , Just (RangeNeeded style)
+                          )
+                        ]
+                    )
+            ]
+        )
 
 
 shotType : Test
@@ -77,17 +90,26 @@ command : Test
 command =
     parserTest "FightStrategy.command"
         FightStrategy.command
-        [ ( "attack randomly", "attack randomly", Just AttackRandomly )
-        , ( "move forward", "move forward", Just MoveForward )
-        , ( "do whatever", "do whatever", Just DoWhatever )
-        , ( "attack unaimed", "attack (unaimed)", Just (Attack NormalShot) )
-        , ( "attack eyes", "attack (eyes)", Just (Attack (AimedShot Eyes)) )
-        , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
-        , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
-        , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
-        , ( "heal with anything", "heal with anything", Just HealWithAnything )
-        , ( "skip turn", "skip turn", Just SkipTurn )
-        ]
+        (List.concat
+            [ [ ( "attack randomly", "attack randomly", Just AttackRandomly )
+              , ( "move forward", "move forward", Just MoveForward )
+              , ( "do whatever", "do whatever", Just DoWhatever )
+              , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
+              , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
+              , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
+              , ( "heal with anything", "heal with anything", Just HealWithAnything )
+              , ( "skip turn", "skip turn", Just SkipTurn )
+              ]
+            , AttackStyle.all
+                |> List.map
+                    (\style ->
+                        ( "attack " ++ Debug.toString style
+                        , "attack (" ++ AttackStyle.toString style ++ ")"
+                        , Just (Attack style)
+                        )
+                    )
+            ]
+        )
 
 
 condition : Test

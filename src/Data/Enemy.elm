@@ -12,6 +12,7 @@ module Data.Enemy exposing
     , dropSpec
     , encodeType
     , equippedArmor
+    , equippedWeapon
     , forSmallChunk
     , hp
     , humanAimedShotName
@@ -937,6 +938,58 @@ addedSkillPercentages type_ =
 
 equippedArmor : Type -> Maybe Item.Kind
 equippedArmor type_ =
+    case type_ of
+        Brahmin ->
+            Nothing
+
+        AngryBrahmin ->
+            Nothing
+
+        WeakBrahmin ->
+            Nothing
+
+        WildBrahmin ->
+            Nothing
+
+        GiantAnt ->
+            Nothing
+
+        ToughGiantAnt ->
+            Nothing
+
+        LesserRadscorpion ->
+            Nothing
+
+        Radscorpion ->
+            Nothing
+
+        LesserBlackRadscorpion ->
+            Nothing
+
+        BlackRadscorpion ->
+            Nothing
+
+        SilverGecko ->
+            Nothing
+
+        ToughSilverGecko ->
+            Nothing
+
+        GoldenGecko ->
+            Nothing
+
+        ToughGoldenGecko ->
+            Nothing
+
+        FireGecko ->
+            Nothing
+
+        ToughFireGecko ->
+            Nothing
+
+
+equippedWeapon : Type -> Maybe Item.Kind
+equippedWeapon type_ =
     case type_ of
         Brahmin ->
             Nothing

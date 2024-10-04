@@ -3,11 +3,15 @@ module Logic exposing
     , ItemNotUsableReason(..)
     , actionPoints
     , addedSkillPercentages
+    , aimedShotApCostPenalty
     , armorClass
     , attackApCost
+    , attackStyleAndApCost
     , bookAddedSkillPercentage
     , bookUseTickCost
+    , canBurst
     , canUseItem
+    , chanceToHit
     , damageResistanceNormal
     , damageThresholdNormal
     , healApCost
@@ -24,20 +28,23 @@ module Logic exposing
     , playerCombatCapsGained
     , playerCombatXpGained
     , price
+    , regainConciousnessApCost
     , sequence
     , skillPointCost
     , skillPointsPerLevel
     , tickHealPercentage
     , ticksGivenPerQuestEngagement
     , totalTags
+    , unarmedApCost
     , unarmedAttackStats
     , unarmedBaseCriticalChance
-    , unarmedChanceToHit
+    , unarmedRange
     , xpGained
     )
 
-import Data.Fight.ShotType as ShotType exposing (ShotType)
-import Data.Item as Item
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
+import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Item as Item exposing (Kind(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Quest as Quest exposing (Engagement(..))
 import Data.Skill as Skill exposing (Skill)
@@ -48,34 +55,88 @@ import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
 
+unarmedApCost : Int
+unarmedApCost =
+    3
+
+
 attackApCost :
     { isAimedShot : Bool
     , hasBonusHthAttacksPerk : Bool
+    , hasBonusRateOfFirePerk : Bool
+    , attackStyle : AttackStyle
+    , baseApCost : Int
     }
     -> Int
-attackApCost r_ =
+attackApCost r =
     let
-        baseApCost : Int
-        baseApCost =
-            -- TODO vary this based on weapon / ...
-            3
-
-        fromBonusHthAttacks : Int
-        fromBonusHthAttacks =
-            if r_.hasBonusHthAttacksPerk then
+        withBonusHth : Int
+        withBonusHth =
+            if r.hasBonusHthAttacksPerk then
                 -1
 
             else
                 0
+
+        withBonusRateOfFire : Int
+        withBonusRateOfFire =
+            if r.hasBonusRateOfFirePerk then
+                -1
+
+            else
+                0
+
+        perkBonus : Int
+        perkBonus =
+            case r.attackStyle of
+                UnarmedUnaimed ->
+                    withBonusHth
+
+                UnarmedAimed _ ->
+                    withBonusHth
+
+                MeleeUnaimed ->
+                    withBonusHth
+
+                MeleeAimed _ ->
+                    withBonusHth
+
+                ThrowUnaimed ->
+                    0
+
+                ThrowAimed _ ->
+                    0
+
+                ShootSingleUnaimed ->
+                    withBonusRateOfFire
+
+                ShootSingleAimed _ ->
+                    withBonusRateOfFire
+
+                ShootBurst ->
+                    withBonusRateOfFire
+
+        apCostPenalty : Int
+        apCostPenalty =
+            if r.isAimedShot then
+                aimedShotApCostPenalty
+
+            else
+                0
     in
-    baseApCost
-        + ShotType.apCostPenalty { isAimedShot = r_.isAimedShot }
-        + fromBonusHthAttacks
+    r.baseApCost
+        + apCostPenalty
+        + perkBonus
 
 
 healApCost : Int
 healApCost =
     2
+
+
+regainConciousnessApCost : { maxAP : Int } -> Int
+regainConciousnessApCost r =
+    r.maxAP // 2
 
 
 hitpoints :
@@ -175,6 +236,39 @@ armorClass r =
         + fromUnarmedSkill
 
 
+aimedShotApCostPenalty : Int
+aimedShotApCostPenalty =
+    1
+
+
+aimedShotChanceToHitPenalty : AimedShot -> Int
+aimedShotChanceToHitPenalty aimedShot =
+    case aimedShot of
+        Head ->
+            40
+
+        Torso ->
+            0
+
+        Eyes ->
+            60
+
+        Groin ->
+            30
+
+        LeftArm ->
+            30
+
+        RightArm ->
+            30
+
+        LeftLeg ->
+            20
+
+        RightLeg ->
+            20
+
+
 actionPoints :
     { special : Special
     , hasBruiserTrait : Bool
@@ -198,47 +292,158 @@ actionPoints r =
         + actionBoyBonus
 
 
-distancePenalty : Int -> Int
-distancePenalty distanceHexes =
-    distanceHexes * 4
+distancePenalty :
+    { distanceHexes : Int
+    , equippedWeapon : Maybe Item.Kind
+    , perception : Int
+    }
+    -> Int
+distancePenalty r =
+    let
+        default () =
+            (r.distanceHexes - 1) * 4
+    in
+    case r.equippedWeapon of
+        Nothing ->
+            default ()
+
+        Just equippedWeapon ->
+            if Item.isLongRangeWeapon equippedWeapon then
+                if r.perception >= 5 && r.distanceHexes < ((r.perception - 4) * 2) then
+                    r.perception * 8
+
+                else
+                    (r.perception - 2) * 16 - r.distanceHexes * 4
+
+            else
+                default ()
 
 
-darknessPenalty : Bool -> Int -> Int
-darknessPenalty isItDark distanceHexes =
-    if isItDark then
-        if distanceHexes <= 0 then
-            0
+lightingPenalty :
+    { isItDark : Bool
+    , hasNightVisionPerk : Bool
+    , distanceHexes : Int
+    }
+    -> Int
+lightingPenalty r =
+    if r.isItDark then
+        let
+            base : Int
+            base =
+                if r.distanceHexes <= 1 then
+                    0
 
-        else if distanceHexes == 1 then
-            10
+                else if r.distanceHexes == 2 then
+                    10
 
-        else if distanceHexes == 2 then
-            25
+                else if r.distanceHexes == 3 then
+                    25
 
-        else
-            -- 3+
-            40
+                else
+                    -- 4+
+                    40
+
+            nightVisionBonus : Int
+            nightVisionBonus =
+                if r.hasNightVisionPerk then
+                    20
+
+                else
+                    0
+        in
+        max 0 (base - nightVisionBonus)
 
     else
         0
 
 
-unarmedChanceToHit :
+chanceToHit :
     { attackerAddedSkillPercentages : SeqDict Skill Int
     , attackerSpecial : Special
     , distanceHexes : Int
-    , shotType : ShotType
+    , weaponRange : Int
     , targetArmorClass : Int
+    , attackStyle : AttackStyle
     }
     -> Int
-unarmedChanceToHit r =
-    let
-        -- TODO vary the nighttime
-        isItDark =
-            False
-    in
+chanceToHit r =
+    case r.attackStyle of
+        UnarmedUnaimed ->
+            meleeChanceToHit r
+
+        UnarmedAimed _ ->
+            meleeChanceToHit r
+
+        MeleeUnaimed ->
+            meleeChanceToHit r
+
+        MeleeAimed _ ->
+            meleeChanceToHit r
+
+        ThrowUnaimed ->
+            rangedChanceToHit r
+
+        ThrowAimed _ ->
+            rangedChanceToHit r
+
+        ShootSingleUnaimed ->
+            rangedChanceToHit r
+
+        ShootSingleAimed _ ->
+            rangedChanceToHit r
+
+        ShootBurst ->
+            rangedChanceToHit r
+
+
+{-|
+
+    Chance to Hit =
+        Weapon Skill
+        + 8\*(Perception - 2)
+        + Weapon Perk
+        - distancePenalty
+        - (Target AC + Ammo AC modifier)
+        + Lighting Penalty (use lightingPenalty)
+        + STR requirement penalty
+        + Targeted Shot Penalty
+
+Please note that:
+
+Penalties and Ammo AC modifier are negative numbers and need to be subtracted.
+Apart from the Weapon Long Range perk discussed below, there is also the Weapon Accurate perk that gives +20% chance to hit.
+Not fulfilling a weapon's Strength requirement results in -20% Chance to Hit for each point of Strength that is missing.
+Targeted Shots have a penalty depending on the targeted body part; the penalty's amount is added to Critical Chance.
+Chance to Hit is capped at 95%.
+
+-}
+rangedChanceToHit :
+    { r
+        | attackerAddedSkillPercentages : SeqDict Skill Int
+        , attackerSpecial : Special
+        , distanceHexes : Int
+        , weaponRange : Int
+        , targetArmorClass : Int
+        , attackStyle : AttackStyle
+    }
+    -> Int
+rangedChanceToHit r =
+    ()
+
+
+meleeChanceToHit :
+    { r
+        | attackerAddedSkillPercentages : SeqDict Skill Int
+        , attackerSpecial : Special
+        , distanceHexes : Int
+        , weaponRange : Int
+        , targetArmorClass : Int
+        , attackStyle : AttackStyle
+    }
+    -> Int
+meleeChanceToHit r =
     -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
-    if r.distanceHexes > 0 then
+    if r.distanceHexes > r.weaponRange then
         0
 
     else
@@ -249,17 +454,19 @@ unarmedChanceToHit r =
 
             shotPenalty : Int
             shotPenalty =
-                ShotType.chanceToHitPenalty r.shotType
+                case AttackStyle.toShotType r.attackStyle of
+                    NormalShot ->
+                        0
+
+                    AimedShot aimedShot ->
+                        aimedShotChanceToHitPenalty aimedShot
+
+                    BurstShot ->
+                        burstShotChanceToHitPenalty
         in
         (skillPercentage
             - r.targetArmorClass
             - shotPenalty
-            {- Those two never matter for unarmed fights right now, but let's
-               keep them in case we later tweak the two functions to do something
-               when distance = 0:
-            -}
-            - distancePenalty r.distanceHexes
-            - darknessPenalty isItDark r.distanceHexes
         )
             |> clamp 0 95
 
@@ -815,3 +1022,246 @@ ticksGivenPerQuestEngagement engagement =
 
         Progressing ->
             2
+
+
+burstShotChanceToHitPenalty : Int
+burstShotChanceToHitPenalty =
+    -- TODO we should think more of a penalty, to simulate the cone
+    -- TODO also, every bullet needs to have its own chance to hit
+    20
+
+
+unarmedRange : Int
+unarmedRange =
+    1
+
+
+unarmedAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
+unarmedAttackStyleAndApCost unaimedApCost =
+    unaimedAimedAttackStyleAndApCost UnarmedUnaimed UnarmedAimed unaimedApCost
+
+
+meleeAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
+meleeAttackStyleAndApCost unaimedApCost =
+    unaimedAimedAttackStyleAndApCost MeleeUnaimed MeleeAimed unaimedApCost
+
+
+throwAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
+throwAttackStyleAndApCost unaimedApCost =
+    unaimedAimedAttackStyleAndApCost ThrowUnaimed ThrowAimed unaimedApCost
+
+
+shootAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
+shootAttackStyleAndApCost unaimedApCost =
+    unaimedAimedAttackStyleAndApCost ShootSingleUnaimed ShootSingleAimed unaimedApCost
+
+
+unaimedAimedAttackStyleAndApCost : AttackStyle -> (AimedShot -> AttackStyle) -> Int -> List ( AttackStyle, Int )
+unaimedAimedAttackStyleAndApCost unaimed toAimed unaimedApCost =
+    ( unaimed, unaimedApCost )
+        :: List.map
+            (\aim -> ( toAimed aim, unaimedApCost + aimedShotApCostPenalty ))
+            ShotType.allAimed
+
+
+attackStyleAndApCost : Item.Kind -> List ( AttackStyle, Int )
+attackStyleAndApCost kind =
+    case kind of
+        PowerFist ->
+            unarmedAttackStyleAndApCost 3
+
+        MegaPowerFist ->
+            unarmedAttackStyleAndApCost 3
+
+        SuperSledge ->
+            meleeAttackStyleAndApCost 3
+
+        FragGrenade ->
+            throwAttackStyleAndApCost 4
+
+        Bozar ->
+            [ ( ShootBurst, 6 ) ]
+
+        RedRyderLEBBGun ->
+            shootAttackStyleAndApCost 4
+
+        HuntingRifle ->
+            shootAttackStyleAndApCost 5
+
+        ScopedHuntingRifle ->
+            shootAttackStyleAndApCost 5
+
+        SawedOffShotgun ->
+            shootAttackStyleAndApCost 5
+
+        SniperRifle ->
+            shootAttackStyleAndApCost 6
+
+        AssaultRifle ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        ExpandedAssaultRifle ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        PancorJackhammer ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        HkP90c ->
+            ( ShootBurst, 5 ) :: shootAttackStyleAndApCost 4
+
+        LaserPistol ->
+            shootAttackStyleAndApCost 5
+
+        PlasmaRifle ->
+            shootAttackStyleAndApCost 5
+
+        GatlingLaser ->
+            [ ( ShootBurst, 6 ) ]
+
+        TurboPlasmaRifle ->
+            shootAttackStyleAndApCost 5
+
+        GaussRifle ->
+            shootAttackStyleAndApCost 5
+
+        GaussPistol ->
+            shootAttackStyleAndApCost 4
+
+        PulseRifle ->
+            shootAttackStyleAndApCost 5
+
+        Smg10mm ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        Fruit ->
+            []
+
+        HealingPowder ->
+            []
+
+        MeatJerky ->
+            []
+
+        Beer ->
+            []
+
+        Stimpak ->
+            []
+
+        SuperStimpak ->
+            []
+
+        BigBookOfScience ->
+            []
+
+        DeansElectronics ->
+            []
+
+        FirstAidBook ->
+            []
+
+        GunsAndBullets ->
+            []
+
+        ScoutHandbook ->
+            []
+
+        Robes ->
+            []
+
+        LeatherJacket ->
+            []
+
+        LeatherArmor ->
+            []
+
+        MetalArmor ->
+            []
+
+        TeslaArmor ->
+            []
+
+        CombatArmor ->
+            []
+
+        CombatArmorMk2 ->
+            []
+
+        PowerArmor ->
+            []
+
+        BBAmmo ->
+            []
+
+        SmallEnergyCell ->
+            []
+
+        Fmj223 ->
+            []
+
+        ShotgunShell ->
+            []
+
+        Jhp10mm ->
+            []
+
+        Jhp5mm ->
+            []
+
+        MicrofusionCell ->
+            []
+
+        Ec2mm ->
+            []
+
+        Tool ->
+            []
+
+        LockPicks ->
+            []
+
+        ElectronicLockpick ->
+            []
+
+        AbnormalBrain ->
+            []
+
+        ChimpanzeeBrain ->
+            []
+
+        HumanBrain ->
+            []
+
+        CyberneticBrain ->
+            []
+
+        GECK ->
+            []
+
+        SkynetAim ->
+            []
+
+        MotionSensor ->
+            []
+
+        K9 ->
+            []
+
+        Minigun ->
+            [ ( ShootBurst, 6 ) ]
+
+        RocketLauncher ->
+            -- no aimed!
+            [ ( ShootSingleUnaimed, 6 ) ]
+
+        LaserRifle ->
+            shootAttackStyleAndApCost 5
+
+        LaserRifleExtCap ->
+            shootAttackStyleAndApCost 5
+
+
+canBurst : Item.Kind -> Bool
+canBurst kind =
+    attackStyleAndApCost kind
+        |> List.any (\( style, _ ) -> style == ShootBurst)

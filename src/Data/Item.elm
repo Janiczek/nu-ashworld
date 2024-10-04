@@ -34,15 +34,19 @@ module Data.Item exposing
     , healAmountGenerator
     , healAmountGenerator_
     , isArmor
-    , isHandEquippable
     , isHealing
+    , isLongRangeWeapon
+    , isWeapon
     , kindDecoder
     , name
+    , range
     , typeName
     , type_
     , usageEffects
     )
 
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.ShotType exposing (ShotType(..))
 import Data.Skill as Skill exposing (Skill)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
@@ -54,6 +58,7 @@ import Random exposing (Generator)
 
 
 -- TODO weight : Kind -> Int
+-- TODO strengthRequirement : Kind -> Int
 
 
 type alias Item =
@@ -68,65 +73,220 @@ type alias Id =
 
 
 type Kind
-    = Fruit
+    = -----------------
+      -- CONSUMABLES --
+      -----------------
+      -- Antidote
+      Beer
+      -- Booze
+      -- Buffout
+      -- Cookie
+    | Fruit
+      -- Gamma Gulp Beer
     | HealingPowder
-    | MeatJerky
-    | Beer
-      --
+      -- Hypo
+      -- Iguana Bits
+      -- Iguana-on-a-stick
+      -- Jet
+      -- Jet Antidote
+      -- Mentats
+      -- Monument Chunk
+      -- Nuka-Cola
+      -- Poison
+      -- Psycho
+      -- Rad-X
+      -- RadAway
+      -- Roentgen Rum
+      -- Rot Gut
     | Stimpak
     | SuperStimpak
-      --
+      -----------
+      -- BOOKS --
+      -----------
     | BigBookOfScience
+      -- Cat's Paw Issue no.5
     | DeansElectronics
+      -- Fallout 2 Hintbook
     | FirstAidBook
     | GunsAndBullets
     | ScoutHandbook
-      --
+      -----------
+      -- ARMOR --
+      -----------
     | Robes
+      -- Bridgekeeper's Robes
     | LeatherJacket
+      -- Combat Leather Jacket
     | LeatherArmor
+      -- Leather Armor Mk2
     | MetalArmor
+      -- Metal Armor Mk2
     | TeslaArmor
     | CombatArmor
     | CombatArmorMk2
+      -- Brotherhood Armor
     | PowerArmor
-      --
+      -- Hardened Power Armor
+      -- Advanced Power Armor
+      -- Advanced Power Armor Mk2
+      -------------
+      -- UNARMED --
+      -------------
+      -- Brass Knuckles
+      -- Spiked Knuckles
     | PowerFist
     | MegaPowerFist
-      --
-      -- TODO knives? crowbar? etc
+      -- Rock (also in throwing)
+      -- Gold Nugget (also in throwing)
+      -- Uranium ore (also in throwing)
+      -- Refined uranium ore (also in throwing)
+      -- Boxing Gloves
+      -- Plated Boxing Gloves
+      -------------------
+      -- MELEE WEAPONS --
+      -------------------
+      -- Club
+      -- Wrench
+      -- Crowbar
+      -- Cattle Prod
+      -- Super Cattle Prod
+      -- Shiv
+      -- Switchblade
+      -- Knife
+      -- Combat Knife
+      -- Wakizashi
+      -- "Little Jesus"
+      -- Ripper
+      -- Throwing Knife (also in Throwing)
+      -- Sharpened Pole (also in Throwing)
+      -- Spear (also in Throwing)
+      -- Sharpened Spear (also in Throwing)
+      ------------
+      -- Sledgehammer
     | SuperSledge
-      --
-    | Grenade
-      --
-    | BBGun
-    | HuntingRifle
-    | ScopedHuntingRifle
-    | Bozar
-    | SawedOffShotgun
-    | SniperRifle
+      -- Louisville Slugger
+      ----------------
+      -- SMALL GUNS --
+      ----------------
+      -- 223 Pistol
+      -- 9mm Mauser
+      -- 10mm Pistol
+      -- 14mm Pistol
+      -- Desert Eagle .44
+      -- Desert Eagle (Exp. Mag.)
+      -- 44 Magnum Revolver
+      -- 44 Magnum (Speed Load)
+      -- Needler Pistol
+    | GaussPistol
+      -- Zip Gun
+      ----------
+      -- 10mm SMG
+      -- M3A1 Grease Gun SMG
+      -- Tommy gun
+    | HkP90c
+      -- H&K G11
+      -- H&K G11E
+      -----------
     | AssaultRifle
     | ExpandedAssaultRifle
-    | PancorJackhammer
-    | HkP90c
-    | LaserPistol
-    | PlasmaRifle
-    | GatlingLaser
-    | TurboPlasmaRifle
+      -- XL70E3
+      -- FN FAL
+      -- FN FAL (Night Sight)
+      -- FN FAL HPFA
+    | HuntingRifle
+    | ScopedHuntingRifle
+      -- Pipe Rifle
+      -- Red Ryder BB Gun
+      -- Jonny's BB Gun
+    | RedRyderLEBBGun
+    | SniperRifle
     | GaussRifle
-    | GaussPistol
+      -------------
+      -- Combat Shotgun
+      -- H&K CAWS
+    | PancorJackhammer
+      -- Shotgun
+    | SawedOffShotgun
+      --------------
+      -- BIG GUNS --
+      --------------
+    | Minigun
+      -- AvengerMinigun
+      -- VindicatorMinigun
+      -- LightSupportWeapon
+    | Bozar
+      -- M60
+      -- Flamer
+      -- Improved Flamer
+    | RocketLauncher
+      --------------------
+      -- ENERGY WEAPONS --
+      --------------------
+      -- Alien Blaster
+    | LaserPistol
+      -- Magneto-Laser Pistol
+      -- Plasma Pistol
+      -- Plasma Pistol (Ext. Cap.)
+      -- Phazer
+      -- Solar Scorcher
+      -- YK32 Pulse Pistol
+      ------------
+    | GatlingLaser
+    | LaserRifle
+    | LaserRifleExtCap
+    | PlasmaRifle
+    | TurboPlasmaRifle
     | PulseRifle
-      --
+      --------------
+      -- THROWING --
+      --------------
+      -- Flare
+      -- Plant spike
+    | FragGrenade
+      -- Molotov cocktail
+      -- Plasma grenade
+      -- Pulse grenade
+      -- Holy hand grenade
+      -- Rock
+      -- Gold nugget
+      -- Uranium ore
+      -- Refined uranium ore
+      -- Sharpened pole
+      -- Spear
+      -- Sharpened spear
+      -- Throwing knife
+      ----------
+      -- AMMO --
+      ----------
     | BBAmmo
     | SmallEnergyCell
     | Fmj223
+      -- Fmj44Magnum
+      -- Jhp44Magnum
+      -- Caliber45
+      -- Caseless47mm
+      -- Ap5mm
+      -- Mm762
+      -- Mm9
+      -- Ball9mm
+      -- Ap10mm
+      -- Ap14mm
+      -- ExplosiveRocket
+      -- RocketAp
+      -- FlamethrowerFuel
+      -- FlamethrowerFuelMk2
+      -- HnNeedlerCartridge
+      -- HnApNeedlerCartridge
+      -- SmallEnergyCell
     | ShotgunShell
     | Smg10mm
     | Jhp10mm
     | Jhp5mm
     | MicrofusionCell
     | Ec2mm
-      --
+      ----------
+      -- MISC --
+      ----------
     | Tool
     | LockPicks
     | ElectronicLockpick
@@ -138,6 +298,7 @@ type Kind
     | SkynetAim
     | MotionSensor
     | K9
+    | MeatJerky
 
 
 all : List Kind
@@ -156,7 +317,7 @@ all =
     , LeatherArmor
     , MetalArmor
     , Beer
-    , BBGun
+    , RedRyderLEBBGun
     , BBAmmo
     , ElectronicLockpick
     , AbnormalBrain
@@ -273,7 +434,7 @@ baseValue kind =
         Beer ->
             200
 
-        BBGun ->
+        RedRyderLEBBGun ->
             3500
 
         BBAmmo ->
@@ -324,7 +485,7 @@ baseValue kind =
         MegaPowerFist ->
             3200
 
-        Grenade ->
+        FragGrenade ->
             150
 
         Bozar ->
@@ -411,6 +572,19 @@ baseValue kind =
         LockPicks ->
             150
 
+        Minigun ->
+            3800
+
+        RocketLauncher ->
+            2300
+
+        LaserRifle ->
+            5000
+
+        LaserRifleExtCap ->
+            -- balance?
+            5000
+
 
 armorClass : Kind -> Int
 armorClass kind =
@@ -481,10 +655,10 @@ armorClass kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -593,6 +767,18 @@ armorClass kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -665,10 +851,10 @@ damageThresholdNormal kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -777,6 +963,18 @@ damageThresholdNormal kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -849,10 +1047,10 @@ damageThresholdExplosion kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -961,6 +1159,18 @@ damageThresholdExplosion kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1033,10 +1243,10 @@ damageThresholdElectrical kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -1145,6 +1355,18 @@ damageThresholdElectrical kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1217,10 +1439,10 @@ damageThresholdEMP kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -1329,6 +1551,18 @@ damageThresholdEMP kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1401,10 +1635,10 @@ damageThresholdLaser kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -1513,6 +1747,18 @@ damageThresholdLaser kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1585,10 +1831,10 @@ damageThresholdFire kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -1697,6 +1943,18 @@ damageThresholdFire kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1769,10 +2027,10 @@ damageThresholdPlasma kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -1881,6 +2139,18 @@ damageThresholdPlasma kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -1953,10 +2223,10 @@ damageResistanceNormal kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2065,6 +2335,18 @@ damageResistanceNormal kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -2137,10 +2419,10 @@ damageResistanceExplosion kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2249,6 +2531,18 @@ damageResistanceExplosion kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -2321,10 +2615,10 @@ damageResistanceElectrical kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2433,6 +2727,18 @@ damageResistanceElectrical kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -2505,10 +2811,10 @@ damageResistanceEMP kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2617,6 +2923,18 @@ damageResistanceEMP kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -2689,10 +3007,10 @@ damageResistanceLaser kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2801,6 +3119,18 @@ damageResistanceLaser kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -2873,10 +3203,10 @@ damageResistanceFire kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -2985,6 +3315,18 @@ damageResistanceFire kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -3057,10 +3399,10 @@ damageResistancePlasma kind =
         SuperSledge ->
             0
 
-        Grenade ->
+        FragGrenade ->
             0
 
-        BBGun ->
+        RedRyderLEBBGun ->
             0
 
         HuntingRifle ->
@@ -3169,6 +3511,18 @@ damageResistancePlasma kind =
             0
 
         K9 ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
             0
 
 
@@ -3191,186 +3545,199 @@ decoder =
 
 encodeKind : Kind -> JE.Value
 encodeKind kind =
-    case kind of
-        Fruit ->
-            JE.string "fruit"
+    JE.string <|
+        case kind of
+            Fruit ->
+                "fruit"
 
-        HealingPowder ->
-            JE.string "healing-powder"
+            HealingPowder ->
+                "healing-powder"
 
-        MeatJerky ->
-            JE.string "meat-jerky"
+            MeatJerky ->
+                "meat-jerky"
 
-        Stimpak ->
-            JE.string "stimpak"
+            Stimpak ->
+                "stimpak"
 
-        BigBookOfScience ->
-            JE.string "big-book-of-science"
+            BigBookOfScience ->
+                "big-book-of-science"
 
-        DeansElectronics ->
-            JE.string "deans-electronics"
+            DeansElectronics ->
+                "deans-electronics"
 
-        FirstAidBook ->
-            JE.string "first-aid-book"
+            FirstAidBook ->
+                "first-aid-book"
 
-        GunsAndBullets ->
-            JE.string "guns-and-bullets"
+            GunsAndBullets ->
+                "guns-and-bullets"
 
-        ScoutHandbook ->
-            JE.string "scout-handbook"
+            ScoutHandbook ->
+                "scout-handbook"
 
-        Robes ->
-            JE.string "robes"
+            Robes ->
+                "robes"
 
-        LeatherJacket ->
-            JE.string "leather-jacket"
+            LeatherJacket ->
+                "leather-jacket"
 
-        LeatherArmor ->
-            JE.string "leather-armor"
+            LeatherArmor ->
+                "leather-armor"
 
-        MetalArmor ->
-            JE.string "metal-armor"
+            MetalArmor ->
+                "metal-armor"
 
-        Beer ->
-            JE.string "beer"
+            Beer ->
+                "beer"
 
-        BBGun ->
-            JE.string "bb-gun"
+            RedRyderLEBBGun ->
+                "bb-gun"
 
-        BBAmmo ->
-            JE.string "bb-ammo"
+            BBAmmo ->
+                "bb-ammo"
 
-        ElectronicLockpick ->
-            JE.string "electronic-lockpick"
+            ElectronicLockpick ->
+                "electronic-lockpick"
 
-        AbnormalBrain ->
-            JE.string "abnormal-brain"
+            AbnormalBrain ->
+                "abnormal-brain"
 
-        ChimpanzeeBrain ->
-            JE.string "chimpanzee-brain"
+            ChimpanzeeBrain ->
+                "chimpanzee-brain"
 
-        HumanBrain ->
-            JE.string "human-brain"
+            HumanBrain ->
+                "human-brain"
 
-        CyberneticBrain ->
-            JE.string "cybernetic-brain"
+            CyberneticBrain ->
+                "cybernetic-brain"
 
-        HuntingRifle ->
-            JE.string "hunting-rifle"
+            HuntingRifle ->
+                "hunting-rifle"
 
-        ScopedHuntingRifle ->
-            JE.string "scoped-hunting-rifle"
+            ScopedHuntingRifle ->
+                "scoped-hunting-rifle"
 
-        SuperStimpak ->
-            JE.string "super-stimpak"
+            SuperStimpak ->
+                "super-stimpak"
 
-        TeslaArmor ->
-            JE.string "tesla-armor"
+            TeslaArmor ->
+                "tesla-armor"
 
-        CombatArmor ->
-            JE.string "combat-armor"
+            CombatArmor ->
+                "combat-armor"
 
-        CombatArmorMk2 ->
-            JE.string "combat-armor-mk2"
+            CombatArmorMk2 ->
+                "combat-armor-mk2"
 
-        PowerArmor ->
-            JE.string "power-armor"
+            PowerArmor ->
+                "power-armor"
 
-        SuperSledge ->
-            JE.string "super-sledge"
+            SuperSledge ->
+                "super-sledge"
 
-        PowerFist ->
-            JE.string "power-fist"
+            PowerFist ->
+                "power-fist"
 
-        MegaPowerFist ->
-            JE.string "mega-power-fist"
+            MegaPowerFist ->
+                "mega-power-fist"
 
-        Grenade ->
-            JE.string "grenade"
+            FragGrenade ->
+                "frag-grenade"
 
-        Bozar ->
-            JE.string "bozar"
+            Bozar ->
+                "bozar"
 
-        SawedOffShotgun ->
-            JE.string "sawed-off-shotgun"
+            SawedOffShotgun ->
+                "sawed-off-shotgun"
 
-        SniperRifle ->
-            JE.string "sniper-rifle"
+            SniperRifle ->
+                "sniper-rifle"
 
-        AssaultRifle ->
-            JE.string "assault-rifle"
+            AssaultRifle ->
+                "assault-rifle"
 
-        ExpandedAssaultRifle ->
-            JE.string "expanded-assault-rifle"
+            ExpandedAssaultRifle ->
+                "expanded-assault-rifle"
 
-        PancorJackhammer ->
-            JE.string "pancor-jackhammer"
+            PancorJackhammer ->
+                "pancor-jackhammer"
 
-        HkP90c ->
-            JE.string "hk-p90c"
+            HkP90c ->
+                "hk-p90c"
 
-        LaserPistol ->
-            JE.string "laser-pistol"
+            LaserPistol ->
+                "laser-pistol"
 
-        PlasmaRifle ->
-            JE.string "plasma-rifle"
+            PlasmaRifle ->
+                "plasma-rifle"
 
-        GatlingLaser ->
-            JE.string "gatling-laser"
+            GatlingLaser ->
+                "gatling-laser"
 
-        TurboPlasmaRifle ->
-            JE.string "turbo-plasma-rifle"
+            TurboPlasmaRifle ->
+                "turbo-plasma-rifle"
 
-        GaussRifle ->
-            JE.string "gauss-rifle"
+            GaussRifle ->
+                "gauss-rifle"
 
-        GaussPistol ->
-            JE.string "gauss-pistol"
+            GaussPistol ->
+                "gauss-pistol"
 
-        PulseRifle ->
-            JE.string "pulse-rifle"
+            PulseRifle ->
+                "pulse-rifle"
 
-        SmallEnergyCell ->
-            JE.string "small-energy-cell"
+            SmallEnergyCell ->
+                "small-energy-cell"
 
-        Fmj223 ->
-            JE.string "fmj-223"
+            Fmj223 ->
+                "fmj-223"
 
-        ShotgunShell ->
-            JE.string "shotgun-shell"
+            ShotgunShell ->
+                "shotgun-shell"
 
-        Smg10mm ->
-            JE.string "smg-10mm"
+            Smg10mm ->
+                "smg-10mm"
 
-        Jhp10mm ->
-            JE.string "jhp-10mm"
+            Jhp10mm ->
+                "jhp-10mm"
 
-        Jhp5mm ->
-            JE.string "jhp-5mm"
+            Jhp5mm ->
+                "jhp-5mm"
 
-        MicrofusionCell ->
-            JE.string "microfusion-cell"
+            MicrofusionCell ->
+                "microfusion-cell"
 
-        Ec2mm ->
-            JE.string "ec-2mm"
+            Ec2mm ->
+                "ec-2mm"
 
-        Tool ->
-            JE.string "tool"
+            Tool ->
+                "tool"
 
-        GECK ->
-            JE.string "geck"
+            GECK ->
+                "geck"
 
-        SkynetAim ->
-            JE.string "skynet-aim"
+            SkynetAim ->
+                "skynet-aim"
 
-        MotionSensor ->
-            JE.string "motion-sensor"
+            MotionSensor ->
+                "motion-sensor"
 
-        K9 ->
-            JE.string "k9"
+            K9 ->
+                "k9"
 
-        LockPicks ->
-            JE.string "lock-picks"
+            LockPicks ->
+                "lock-picks"
+
+            Minigun ->
+                "minigun"
+
+            RocketLauncher ->
+                "rocket-launcher"
+
+            LaserRifle ->
+                "laser-rifle"
+
+            LaserRifleExtCap ->
+                "laser-rifle-ext-cap"
 
 
 kindDecoder : Decoder Kind
@@ -3422,7 +3789,7 @@ kindDecoder =
                         JD.succeed Beer
 
                     "bb-gun" ->
-                        JD.succeed BBGun
+                        JD.succeed RedRyderLEBBGun
 
                     "bb-ammo" ->
                         JD.succeed BBAmmo
@@ -3472,8 +3839,8 @@ kindDecoder =
                     "mega-power-fist" ->
                         JD.succeed MegaPowerFist
 
-                    "grenade" ->
-                        JD.succeed Grenade
+                    "frag-grenade" ->
+                        JD.succeed FragGrenade
 
                     "bozar" ->
                         JD.succeed Bozar
@@ -3559,6 +3926,18 @@ kindDecoder =
                     "lock-picks" ->
                         JD.succeed LockPicks
 
+                    "minigun" ->
+                        JD.succeed Minigun
+
+                    "rocket-launcher" ->
+                        JD.succeed RocketLauncher
+
+                    "laser-rifle" ->
+                        JD.succeed LaserRifle
+
+                    "laser-rifle-ext-cap" ->
+                        JD.succeed LaserRifleExtCap
+
                     _ ->
                         JD.fail <| "Unknown item kind: '" ++ kind ++ "'"
             )
@@ -3609,8 +3988,8 @@ name kind =
         Beer ->
             "Beer"
 
-        BBGun ->
-            "BB Gun"
+        RedRyderLEBBGun ->
+            "Red Ryder LE BB Gun"
 
         BBAmmo ->
             "BB Ammo"
@@ -3660,8 +4039,8 @@ name kind =
         MegaPowerFist ->
             "Mega Power Fist"
 
-        Grenade ->
-            "Grenade"
+        FragGrenade ->
+            "Frag Grenade"
 
         Bozar ->
             "Bozar"
@@ -3747,6 +4126,18 @@ name kind =
         LockPicks ->
             "Lock Picks"
 
+        Minigun ->
+            "Minigun"
+
+        RocketLauncher ->
+            "Rocket Launcher"
+
+        LaserRifle ->
+            "Laser Rifle"
+
+        LaserRifleExtCap ->
+            "Laser Rifle (Extended Capacity)"
+
 
 create :
     { lastId : Int
@@ -3822,15 +4213,13 @@ usageEffects kind =
             , RemoveAfterUse
             ]
 
-        MeatJerky ->
-            [ Heal { min = 5, max = 10 }
-            , RemoveAfterUse
-            ]
-
         Stimpak ->
             [ Heal { min = 10, max = 20 }
             , RemoveAfterUse
             ]
+
+        MeatJerky ->
+            []
 
         BigBookOfScience ->
             [ RemoveAfterUse
@@ -3877,7 +4266,7 @@ usageEffects kind =
         Beer ->
             []
 
-        BBGun ->
+        RedRyderLEBBGun ->
             []
 
         BBAmmo ->
@@ -3931,7 +4320,7 @@ usageEffects kind =
         MegaPowerFist ->
             []
 
-        Grenade ->
+        FragGrenade ->
             []
 
         Bozar ->
@@ -4019,9 +4408,21 @@ usageEffects kind =
         LockPicks ->
             []
 
+        Minigun ->
+            []
+
+        RocketLauncher ->
+            []
+
+        LaserRifle ->
+            []
+
+        LaserRifleExtCap ->
+            []
+
 
 type Type
-    = Food
+    = Consumable
     | Armor
     | UnarmedWeapon
     | MeleeWeapon
@@ -4034,10 +4435,10 @@ type Type
     | Ammo
 
 
-isHandEquippableType : Type -> Bool
-isHandEquippableType type__ =
+isWeaponType : Type -> Bool
+isWeaponType type__ =
     case type__ of
-        Food ->
+        Consumable ->
             False
 
         Armor ->
@@ -4075,16 +4476,13 @@ type_ : Kind -> Type
 type_ kind =
     case kind of
         Fruit ->
-            Food
+            Consumable
 
         HealingPowder ->
-            Food
-
-        MeatJerky ->
-            Food
+            Consumable
 
         Stimpak ->
-            Food
+            Consumable
 
         BigBookOfScience ->
             Book
@@ -4116,7 +4514,7 @@ type_ kind =
         Beer ->
             Misc
 
-        BBGun ->
+        RedRyderLEBBGun ->
             SmallGun
 
         BBAmmo ->
@@ -4137,6 +4535,9 @@ type_ kind =
         CyberneticBrain ->
             Misc
 
+        MeatJerky ->
+            Misc
+
         HuntingRifle ->
             SmallGun
 
@@ -4144,7 +4545,7 @@ type_ kind =
             SmallGun
 
         SuperStimpak ->
-            Food
+            Consumable
 
         TeslaArmor ->
             Armor
@@ -4167,7 +4568,7 @@ type_ kind =
         MegaPowerFist ->
             UnarmedWeapon
 
-        Grenade ->
+        FragGrenade ->
             ThrownWeapon
 
         Bozar ->
@@ -4254,10 +4655,22 @@ type_ kind =
         LockPicks ->
             Misc
 
+        Minigun ->
+            BigGun
 
-isHandEquippable : Kind -> Bool
-isHandEquippable kind =
-    isHandEquippableType (type_ kind)
+        RocketLauncher ->
+            BigGun
+
+        LaserRifle ->
+            EnergyWeapon
+
+        LaserRifleExtCap ->
+            EnergyWeapon
+
+
+isWeapon : Kind -> Bool
+isWeapon kind =
+    isWeaponType (type_ kind)
 
 
 isArmor : Kind -> Bool
@@ -4268,8 +4681,8 @@ isArmor kind =
 typeName : Type -> String
 typeName type__ =
     case type__ of
-        Food ->
-            "Food"
+        Consumable ->
+            "Consumable"
 
         Book ->
             "Book"
@@ -4323,3 +4736,803 @@ healAmountGenerator kind =
 healAmountGenerator_ : { min : Int, max : Int } -> Generator Int
 healAmountGenerator_ { min, max } =
     Random.int min max
+
+
+unaimedRange : Kind -> Int
+unaimedRange kind =
+    case kind of
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Stimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        Beer ->
+            0
+
+        RedRyderLEBBGun ->
+            30
+
+        BBAmmo ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        HuntingRifle ->
+            40
+
+        ScopedHuntingRifle ->
+            40
+
+        SuperStimpak ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        SuperSledge ->
+            2
+
+        PowerFist ->
+            1
+
+        MegaPowerFist ->
+            1
+
+        FragGrenade ->
+            15
+
+        Bozar ->
+            35
+
+        SawedOffShotgun ->
+            7
+
+        SniperRifle ->
+            50
+
+        AssaultRifle ->
+            45
+
+        ExpandedAssaultRifle ->
+            45
+
+        PancorJackhammer ->
+            35
+
+        HkP90c ->
+            30
+
+        LaserPistol ->
+            35
+
+        PlasmaRifle ->
+            25
+
+        GatlingLaser ->
+            40
+
+        TurboPlasmaRifle ->
+            35
+
+        GaussRifle ->
+            50
+
+        GaussPistol ->
+            50
+
+        PulseRifle ->
+            30
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+        LockPicks ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            40
+
+        LaserRifle ->
+            45
+
+        LaserRifleExtCap ->
+            45
+
+
+aimedRange : Kind -> Int
+aimedRange kind =
+    case kind of
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Stimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        Beer ->
+            0
+
+        RedRyderLEBBGun ->
+            30
+
+        BBAmmo ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        HuntingRifle ->
+            45
+
+        ScopedHuntingRifle ->
+            40
+
+        SuperStimpak ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        SuperSledge ->
+            2
+
+        PowerFist ->
+            1
+
+        MegaPowerFist ->
+            1
+
+        FragGrenade ->
+            15
+
+        Bozar ->
+            35
+
+        SawedOffShotgun ->
+            7
+
+        SniperRifle ->
+            50
+
+        AssaultRifle ->
+            45
+
+        ExpandedAssaultRifle ->
+            45
+
+        PancorJackhammer ->
+            35
+
+        HkP90c ->
+            30
+
+        LaserPistol ->
+            35
+
+        PlasmaRifle ->
+            25
+
+        GatlingLaser ->
+            40
+
+        TurboPlasmaRifle ->
+            35
+
+        GaussRifle ->
+            50
+
+        GaussPistol ->
+            50
+
+        PulseRifle ->
+            30
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+        LockPicks ->
+            0
+
+        Minigun ->
+            0
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            45
+
+        LaserRifleExtCap ->
+            45
+
+
+burstRange : Kind -> Int
+burstRange kind =
+    case kind of
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        MeatJerky ->
+            0
+
+        Stimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        Beer ->
+            0
+
+        RedRyderLEBBGun ->
+            30
+
+        BBAmmo ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        HuntingRifle ->
+            45
+
+        ScopedHuntingRifle ->
+            40
+
+        SuperStimpak ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        SuperSledge ->
+            2
+
+        PowerFist ->
+            1
+
+        MegaPowerFist ->
+            1
+
+        FragGrenade ->
+            15
+
+        Bozar ->
+            35
+
+        SawedOffShotgun ->
+            7
+
+        SniperRifle ->
+            50
+
+        AssaultRifle ->
+            38
+
+        ExpandedAssaultRifle ->
+            38
+
+        PancorJackhammer ->
+            35
+
+        HkP90c ->
+            25
+
+        LaserPistol ->
+            35
+
+        PlasmaRifle ->
+            25
+
+        GatlingLaser ->
+            40
+
+        TurboPlasmaRifle ->
+            35
+
+        GaussRifle ->
+            50
+
+        GaussPistol ->
+            50
+
+        PulseRifle ->
+            30
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Smg10mm ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+        LockPicks ->
+            0
+
+        Minigun ->
+            35
+
+        RocketLauncher ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
+            0
+
+
+range : ShotType -> Kind -> Int
+range shotType kind =
+    case shotType of
+        NormalShot ->
+            unaimedRange kind
+
+        AimedShot _ ->
+            aimedRange kind
+
+        BurstShot ->
+            burstRange kind
+
+
+{-| In other words, does the Weapon Long Range perk apply?
+-}
+isLongRangeWeapon : Kind -> Bool
+isLongRangeWeapon kind =
+    case kind of
+        AssaultRifle ->
+            True
+
+        ExpandedAssaultRifle ->
+            True
+
+        GatlingLaser ->
+            True
+
+        HuntingRifle ->
+            True
+
+        LaserRifle ->
+            True
+
+        LaserRifleExtCap ->
+            True
+
+        Minigun ->
+            True
+
+        PlasmaRifle ->
+            True
+
+        RedRyderLEBBGun ->
+            True
+
+        RocketLauncher ->
+            True
+
+        SniperRifle ->
+            True
+
+        TurboPlasmaRifle ->
+            True
+
+        -- The rest are Falses
+        Beer ->
+            False
+
+        Fruit ->
+            False
+
+        HealingPowder ->
+            False
+
+        Stimpak ->
+            False
+
+        SuperStimpak ->
+            False
+
+        BigBookOfScience ->
+            False
+
+        DeansElectronics ->
+            False
+
+        FirstAidBook ->
+            False
+
+        GunsAndBullets ->
+            False
+
+        ScoutHandbook ->
+            False
+
+        Robes ->
+            False
+
+        LeatherJacket ->
+            False
+
+        LeatherArmor ->
+            False
+
+        MetalArmor ->
+            False
+
+        TeslaArmor ->
+            False
+
+        CombatArmor ->
+            False
+
+        CombatArmorMk2 ->
+            False
+
+        PowerArmor ->
+            False
+
+        PowerFist ->
+            False
+
+        MegaPowerFist ->
+            False
+
+        SuperSledge ->
+            False
+
+        GaussPistol ->
+            False
+
+        HkP90c ->
+            False
+
+        ScopedHuntingRifle ->
+            False
+
+        GaussRifle ->
+            False
+
+        PancorJackhammer ->
+            False
+
+        SawedOffShotgun ->
+            False
+
+        Bozar ->
+            False
+
+        LaserPistol ->
+            False
+
+        PulseRifle ->
+            False
+
+        FragGrenade ->
+            False
+
+        BBAmmo ->
+            False
+
+        SmallEnergyCell ->
+            False
+
+        Fmj223 ->
+            False
+
+        ShotgunShell ->
+            False
+
+        Smg10mm ->
+            False
+
+        Jhp10mm ->
+            False
+
+        Jhp5mm ->
+            False
+
+        MicrofusionCell ->
+            False
+
+        Ec2mm ->
+            False
+
+        Tool ->
+            False
+
+        LockPicks ->
+            False
+
+        ElectronicLockpick ->
+            False
+
+        AbnormalBrain ->
+            False
+
+        ChimpanzeeBrain ->
+            False
+
+        HumanBrain ->
+            False
+
+        CyberneticBrain ->
+            False
+
+        GECK ->
+            False
+
+        SkynetAim ->
+            False
+
+        MotionSensor ->
+            False
+
+        K9 ->
+            False
+
+        MeatJerky ->
+            False

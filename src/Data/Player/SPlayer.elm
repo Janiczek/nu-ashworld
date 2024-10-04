@@ -9,8 +9,7 @@ module Data.Player.SPlayer exposing
     , canStartProgressing
     , decAvailablePerks
     , equipArmor
-    , equipLeftHand
-    , equipRightHand
+    , equipWeapon
     , healManuallyUsingTick
     , incLosses
     , incPerkRank
@@ -35,8 +34,7 @@ module Data.Player.SPlayer exposing
     , tagSkill
     , tick
     , unequipArmor
-    , unequipLeftHand
-    , unequipRightHand
+    , unequipWeapon
     , updateStrengthForAdrenalineRush
     , useSkillPoints
     )
@@ -602,26 +600,15 @@ unequipArmor player =
                 |> addItem armor
 
 
-unequipLeftHand : SPlayer -> SPlayer
-unequipLeftHand player =
-    case player.equippedLeftHand of
+unequipWeapon : SPlayer -> SPlayer
+unequipWeapon player =
+    case player.equippedWeapon of
         Nothing ->
             player
 
-        Just leftHand ->
-            { player | equippedLeftHand = Nothing }
-                |> addItem leftHand
-
-
-unequipRightHand : SPlayer -> SPlayer
-unequipRightHand player =
-    case player.equippedRightHand of
-        Nothing ->
-            player
-
-        Just rightHand ->
-            { player | equippedRightHand = Nothing }
-                |> addItem rightHand
+        Just weapon ->
+            { player | equippedWeapon = Nothing }
+                |> addItem weapon
 
 
 equipArmor : Item -> SPlayer -> SPlayer
@@ -647,47 +634,24 @@ equipArmor { id } player =
                 player
 
 
-equipLeftHand : Item -> SPlayer -> SPlayer
-equipLeftHand { id } player =
+equipWeapon : Item -> SPlayer -> SPlayer
+equipWeapon { id } player =
     -- just to be sure...
     case Dict.get id player.items of
         Nothing ->
             player
 
         Just item ->
-            if Item.isHandEquippable item.kind then
+            if Item.isWeapon item.kind then
                 player
-                    |> (if player.equippedLeftHand /= Nothing then
-                            unequipLeftHand
+                    |> (if player.equippedWeapon /= Nothing then
+                            unequipWeapon
 
                         else
                             identity
                        )
                     |> removeItem item.id 1
-                    |> (\p -> { p | equippedLeftHand = Just { item | count = 1 } })
-
-            else
-                player
-
-
-equipRightHand : Item -> SPlayer -> SPlayer
-equipRightHand { id } player =
-    -- just to be sure...
-    case Dict.get id player.items of
-        Nothing ->
-            player
-
-        Just item ->
-            if Item.isHandEquippable item.kind then
-                player
-                    |> (if player.equippedRightHand /= Nothing then
-                            unequipRightHand
-
-                        else
-                            identity
-                       )
-                    |> removeItem item.id 1
-                    |> (\p -> { p | equippedRightHand = Just { item | count = 1 } })
+                    |> (\p -> { p | equippedWeapon = Just { item | count = 1 } })
 
             else
                 player

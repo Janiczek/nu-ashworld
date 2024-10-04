@@ -7,7 +7,8 @@ import Data.Fight as Fight
         , OpponentType
         , PlayerOpponent
         )
-import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.ShotType as ShotType
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -107,6 +108,7 @@ opponentFuzzer =
         |> Fuzz.andMap itemsFuzzer
         |> Fuzz.andMap dropsFuzzer
         |> Fuzz.andMap equippedArmorKindFuzzer
+        |> Fuzz.andMap equippedWeaponKindFuzzer
         |> Fuzz.andMap naturalArmorClassFuzzer
         |> Fuzz.andMap attackStatsFuzzer
         |> Fuzz.andMap addedSkillPercentagesFuzzer
@@ -140,7 +142,7 @@ fightStrategyFuzzer r =
 commandFuzzer : Fuzzer Command
 commandFuzzer =
     Fuzz.oneOf
-        [ Fuzz.map Attack shotTypeFuzzer
+        [ Fuzz.map Attack attackStyleFuzzer
         , Fuzz.constant AttackRandomly
         , Fuzz.map Heal healingItemKindFuzzer
         , Fuzz.constant HealWithAnything
@@ -208,17 +210,28 @@ valueFuzzer =
         , Fuzz.constant MyHealingItemCount
         , Fuzz.map ItemsUsed healingItemKindFuzzer
         , Fuzz.constant HealingItemsUsed
-        , Fuzz.map ChanceToHit shotTypeFuzzer
+        , Fuzz.map ChanceToHit attackStyleFuzzer
+        , Fuzz.map RangeNeeded attackStyleFuzzer
         , Fuzz.constant Distance
         , Fuzz.map Number Fuzz.int
         ]
 
 
-shotTypeFuzzer : Fuzzer ShotType
-shotTypeFuzzer =
-    ShotType.all
-        |> List.map Fuzz.constant
-        |> Fuzz.oneOf
+attackStyleFuzzer : Fuzzer AttackStyle
+attackStyleFuzzer =
+    Fuzz.oneOfValues
+        (ShootBurst
+            :: UnarmedUnaimed
+            :: MeleeUnaimed
+            :: ThrowUnaimed
+            :: ShootSingleUnaimed
+            :: List.concatMap (\toAimed -> List.map toAimed ShotType.allAimed)
+                [ UnarmedAimed
+                , MeleeAimed
+                , ThrowAimed
+                , ShootSingleAimed
+                ]
+        )
 
 
 itemKindFuzzer : Fuzzer Item.Kind
@@ -325,10 +338,22 @@ equippedArmorKindFuzzer =
     Fuzz.maybe armorKindFuzzer
 
 
+equippedWeaponKindFuzzer : Fuzzer (Maybe Item.Kind)
+equippedWeaponKindFuzzer =
+    Fuzz.maybe weaponKindFuzzer
+
+
 armorKindFuzzer : Fuzzer Item.Kind
 armorKindFuzzer =
     Item.all
-        |> List.filter (\kind -> Item.type_ kind == Item.Armor)
+        |> List.filter Item.isArmor
+        |> oneOfValues
+
+
+weaponKindFuzzer : Fuzzer Item.Kind
+weaponKindFuzzer =
+    Item.all
+        |> List.filter Item.isWeapon
         |> oneOfValues
 
 

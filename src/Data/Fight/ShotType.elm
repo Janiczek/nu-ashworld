@@ -1,12 +1,12 @@
 module Data.Fight.ShotType exposing
     ( AimedShot(..)
     , ShotType(..)
+    , aimedShotDecoder
     , all
     , allAimed
-    , apCostPenalty
-    , chanceToHitPenalty
     , decoder
     , encode
+    , encodeAimedShot
     , isAimed
     , toAimed
     )
@@ -18,6 +18,7 @@ import Json.Encode as JE
 type ShotType
     = NormalShot
     | AimedShot AimedShot
+    | BurstShot
 
 
 type AimedShot
@@ -40,6 +41,9 @@ isAimed shot =
         AimedShot _ ->
             True
 
+        BurstShot ->
+            False
+
 
 allAimed : List AimedShot
 allAimed =
@@ -57,54 +61,8 @@ allAimed =
 all : List ShotType
 all =
     NormalShot
+        :: BurstShot
         :: List.map AimedShot allAimed
-
-
-apCostPenalty : { isAimedShot : Bool } -> Int
-apCostPenalty { isAimedShot } =
-    if isAimedShot then
-        1
-
-    else
-        0
-
-
-chanceToHitPenalty : ShotType -> Int
-chanceToHitPenalty shot =
-    case shot of
-        NormalShot ->
-            0
-
-        AimedShot aimedShot ->
-            aimedShotPenalty aimedShot
-
-
-aimedShotPenalty : AimedShot -> Int
-aimedShotPenalty shot =
-    case shot of
-        Head ->
-            40
-
-        Torso ->
-            0
-
-        Eyes ->
-            60
-
-        Groin ->
-            30
-
-        LeftArm ->
-            30
-
-        RightArm ->
-            30
-
-        LeftLeg ->
-            20
-
-        RightLeg ->
-            20
 
 
 encode : ShotType -> JE.Value
@@ -112,6 +70,9 @@ encode shotType =
     case shotType of
         NormalShot ->
             JE.object [ ( "type", JE.string "NormalShot" ) ]
+
+        BurstShot ->
+            JE.object [ ( "type", JE.string "BurstShot" ) ]
 
         AimedShot aimed ->
             JE.object
@@ -128,6 +89,9 @@ decoder =
                 case type_ of
                     "NormalShot" ->
                         JD.succeed NormalShot
+
+                    "BurstShot" ->
+                        JD.succeed BurstShot
 
                     "AimedShot" ->
                         JD.map AimedShot (JD.field "aimedShot" aimedShotDecoder)
@@ -204,6 +168,9 @@ toAimed : ShotType -> AimedShot
 toAimed shotType =
     case shotType of
         NormalShot ->
+            Torso
+
+        BurstShot ->
             Torso
 
         AimedShot aimedShot ->

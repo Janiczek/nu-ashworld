@@ -22,18 +22,16 @@ type alias Item =
 items : List Item
 items =
     [ { date = 1614377234
-      , title = "Hello!"
+      , title = "TODOs before release"
       , text =
             """
-This is a test news post. I'll have to **flesh this out.**
+- more "normal" unarmed+melee weapons, and make them part of shops
+- Fast Shot trait -> can't use aimed shots
 
-Check out this [link](https://google.com)!
+- FightStrategy: reload
+- FightStrategy: walk away
 
-Some list:
-
-- one
-- second
-- 3!
+- regain conciousness in fight (cost 1/2 of max AP)
 
 ~janiczek
 """
@@ -54,7 +52,10 @@ formatText class markdown =
 renderer : Markdown.Renderer.Renderer (Html a)
 renderer =
     { defaultHtmlRenderer
-        | link =
+        | paragraph =
+            \children ->
+                H.span [] children
+        , link =
             \{ title, destination } children ->
                 H.a
                     [ HA.class "text-yellow relative no-underline"

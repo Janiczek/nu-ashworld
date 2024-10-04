@@ -222,10 +222,33 @@ view perceptionLevel fight yourName =
                                                                 ++ " closer."
 
                                                 Fight.Attack { damage, remainingHp, shotType, isCritical } ->
+                                                    let
+                                                        burst : String
+                                                        burst =
+                                                            case shotType of
+                                                                BurstShot ->
+                                                                    "burst "
+
+                                                                NormalShot ->
+                                                                    ""
+
+                                                                AimedShot _ ->
+                                                                    ""
+
+                                                        critically =
+                                                            if isCritical then
+                                                                "critically "
+
+                                                            else
+                                                                ""
+                                                    in
                                                     H.span []
                                                         [ H.text <|
                                                             (case shotType of
                                                                 NormalShot ->
+                                                                    ""
+
+                                                                BurstShot ->
                                                                     ""
 
                                                                 AimedShot aimed ->
@@ -234,12 +257,8 @@ view perceptionLevel fight yourName =
                                                                         ++ aimedShotName other aimed
                                                                         ++ " and "
                                                             )
-                                                                ++ (if isCritical then
-                                                                        "critically "
-
-                                                                    else
-                                                                        ""
-                                                                   )
+                                                                ++ critically
+                                                                ++ burst
                                                                 ++ names_.subject.verbPresent "attack"
                                                                 ++ " "
                                                         , highlight names_.object.name
@@ -263,6 +282,9 @@ view perceptionLevel fight yourName =
                                                             (case shotType of
                                                                 NormalShot ->
                                                                     ""
+
+                                                                BurstShot ->
+                                                                    "burst "
 
                                                                 AimedShot aimed ->
                                                                     names_.subject.verbPresent "aim"

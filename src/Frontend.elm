@@ -7,7 +7,7 @@ import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
-import Data.Fight.ShotType as ShotType
+import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.View
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.FightStrategy.Help as FightStrategyHelp
@@ -314,14 +314,9 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| EquipArmor itemId
             )
 
-        AskToEquipLeftHand itemId ->
+        AskToEquipWeapon itemId ->
             ( model
-            , Lamdera.sendToBackend <| EquipLeftHand itemId
-            )
-
-        AskToEquipRightHand itemId ->
-            ( model
-            , Lamdera.sendToBackend <| EquipRightHand itemId
+            , Lamdera.sendToBackend <| EquipWeapon itemId
             )
 
         AskToUnequipArmor ->
@@ -329,14 +324,9 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend UnequipArmor
             )
 
-        AskToUnequipLeftHand ->
+        AskToUnequipWeapon ->
             ( model
-            , Lamdera.sendToBackend UnequipLeftHand
-            )
-
-        AskToUnequipRightHand ->
-            ( model
-            , Lamdera.sendToBackend UnequipRightHand
+            , Lamdera.sendToBackend UnequipWeapon
             )
 
         AskToUseItem itemId ->
@@ -3356,13 +3346,10 @@ inventoryView _ player =
                                     [ H.text "[Equip]" ]
                                 ]
 
-                            else if Item.isHandEquippable item.kind then
+                            else if Item.isWeapon item.kind then
                                 [ UI.button
-                                    [ HE.onClick <| AskToEquipLeftHand item.id ]
-                                    [ H.text "[Equip left]" ]
-                                , UI.button
-                                    [ HE.onClick <| AskToEquipRightHand item.id ]
-                                    [ H.text "[Equip right]" ]
+                                    [ HE.onClick <| AskToEquipWeapon item.id ]
+                                    [ H.text "[Equip]" ]
                                 ]
 
                             else
@@ -3416,15 +3403,15 @@ inventoryView _ player =
                 , npcExtraBonus = 0
                 }
 
-        chanceToHitAtArmorClass0 : Int
-        chanceToHitAtArmorClass0 =
-            Logic.unarmedChanceToHit
+        chanceToHitUnarmedAtArmorClass0 : Int
+        chanceToHitUnarmedAtArmorClass0 =
+            Logic.chanceToHit
                 { attackerAddedSkillPercentages = player.addedSkillPercentages
                 , attackerSpecial = player.special
-                , -- TODO parameterize by this after we get non-unarmed combat
-                  distanceHexes = 0
-                , shotType = ShotType.NormalShot
+                , distanceHexes = 0
                 , targetArmorClass = 0
+                , attackStyle = AttackStyle.UnarmedUnaimed
+                , weaponRange = Logic.unarmedRange
                 }
     in
     [ pageTitleView "Inventory"
@@ -3456,8 +3443,7 @@ inventoryView _ player =
             [ HA.class "text-green-300" ]
             [ H.text "Equipment" ]
         , [ ( player.equippedArmor, "Armor", AskToUnequipArmor )
-          , ( player.equippedLeftHand, "Left hand", AskToUnequipLeftHand )
-          , ( player.equippedRightHand, "Right hand", AskToUnequipRightHand )
+          , ( player.equippedWeapon, "Weapon", AskToUnequipWeapon )
           ]
             |> List.map
                 (\( maybeItem, label, unequipMsg ) ->
@@ -3524,12 +3510,14 @@ inventoryView _ player =
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt attackStats.maxDamage ]
                 ]
+
+            -- TODO show different variants, not just unarmed at AC 0
             , H.li []
                 [ UI.liBullet
-                , H.text "Chance to hit at target armor class 0: "
+                , H.text "Chance to hit unarmed at target armor class 0: "
                 , H.span
                     [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt chanceToHitAtArmorClass0 ++ "%" ]
+                    [ H.text <| String.fromInt chanceToHitUnarmedAtArmorClass0 ++ "%" ]
                 ]
             ]
         ]
@@ -3979,7 +3967,7 @@ newsItemView zone { date, title, text } =
                 |> News.formatDate zone
                 |> H.text
             ]
-        , News.formatText "max-w-[60ch]" text
+        , News.formatText "max-w-[70ch]" text
         ]
 
 
