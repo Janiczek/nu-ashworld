@@ -1,4 +1,55 @@
-module TestHelpers exposing (..)
+module TestHelpers exposing
+    ( addedSkillPercentagesFuzzer
+    , ammoKindFuzzer
+    , armorClassFuzzer
+    , armorKindFuzzer
+    , attackStatsFuzzer
+    , attackStyleFuzzer
+    , capsFuzzer
+    , commandFuzzer
+    , conditionFuzzer
+    , deadEndToString
+    , distanceFuzzer
+    , dropsFuzzer
+    , enemyTypeFuzzer
+    , equippedAmmoKindFuzzer
+    , equippedArmorKindFuzzer
+    , equippedWeaponKindFuzzer
+    , expectEqualParseResult
+    , fightStrategyFuzzer
+    , gunKindFuzzer
+    , healingItemKindFuzzer
+    , hpFuzzer
+    , ifDataFuzzer
+    , itemFuzzer
+    , itemKindFuzzer
+    , itemsFuzzer
+    , maxApFuzzer
+    , maxHpFuzzer
+    , meleeWeaponKindFuzzer
+    , mostlyHealingItemKindFuzzer
+    , multilineInput
+    , naturalArmorClassFuzzer
+    , operatorDataFuzzer
+    , operatorFuzzer
+    , opponentFuzzer
+    , opponentTypeFuzzer
+    , parserTest
+    , perksFuzzer
+    , playerNameFuzzer
+    , playerOpponentFuzzer
+    , posixFuzzer
+    , problemToString
+    , randomSeedFuzzer
+    , removeNewlinesAtEnds
+    , sequenceFuzzer
+    , specialFuzzer
+    , traitsFuzzer
+    , unarmedWeaponKindFuzzer
+    , valueFuzzer
+    , weaponKindFuzzer
+    , xpFuzzer
+    )
 
 import Data.Enemy as Enemy
 import Data.Fight as Fight
@@ -39,14 +90,9 @@ import Test exposing (Test)
 import Time exposing (Posix)
 
 
-oneOfValues : List a -> Fuzzer a
-oneOfValues values =
-    Fuzz.oneOf <| List.map Fuzz.constant values
-
-
 playerNameFuzzer : Fuzzer PlayerName
 playerNameFuzzer =
-    oneOfValues
+    Fuzz.oneOfValues
         [ "janiczek"
         , "djetelina"
         , "Athano"
@@ -82,6 +128,16 @@ hpFuzzer =
 maxHpFuzzer : Fuzzer Int
 maxHpFuzzer =
     Fuzz.intRange 1 200
+
+
+distanceFuzzer : Fuzzer Int
+distanceFuzzer =
+    Fuzz.intRange 1 100
+
+
+armorClassFuzzer : Fuzzer Int
+armorClassFuzzer =
+    Fuzz.intRange 0 50
 
 
 maxApFuzzer : Fuzzer Int
@@ -271,7 +327,7 @@ randomSeedFuzzer =
 
 enemyTypeFuzzer : Fuzzer Enemy.Type
 enemyTypeFuzzer =
-    oneOfValues Enemy.allTypes
+    Fuzz.oneOfValues Enemy.allTypes
 
 
 traitsFuzzer : Fuzzer (SeqSet Trait)
@@ -352,28 +408,58 @@ armorKindFuzzer : Fuzzer Item.Kind
 armorKindFuzzer =
     Item.all
         |> List.filter Item.isArmor
-        |> oneOfValues
+        |> Fuzz.oneOfValues
 
 
 weaponKindFuzzer : Fuzzer Item.Kind
 weaponKindFuzzer =
     Item.all
         |> List.filter Item.isWeapon
-        |> oneOfValues
+        |> Fuzz.oneOfValues
+
+
+meleeWeaponKindFuzzer : Fuzzer Item.Kind
+meleeWeaponKindFuzzer =
+    Item.all
+        |> List.filter (\kind -> List.member Item.MeleeWeapon (Item.types kind))
+        |> Fuzz.oneOfValues
+
+
+unarmedWeaponKindFuzzer : Fuzzer Item.Kind
+unarmedWeaponKindFuzzer =
+    Item.all
+        |> List.filter (\kind -> List.member Item.UnarmedWeapon (Item.types kind))
+        |> Fuzz.oneOfValues
+
+
+gunKindFuzzer : Fuzzer Item.Kind
+gunKindFuzzer =
+    Item.all
+        |> List.filter
+            (\kind ->
+                let
+                    types =
+                        Item.types kind
+                in
+                List.member Item.SmallGun types
+                    || List.member Item.BigGun types
+                    || List.member Item.EnergyWeapon types
+            )
+        |> Fuzz.oneOfValues
 
 
 ammoKindFuzzer : Fuzzer Item.Kind
 ammoKindFuzzer =
     Item.all
         |> List.filter Item.isAmmo
-        |> oneOfValues
+        |> Fuzz.oneOfValues
 
 
 itemFuzzer : Fuzzer Item
 itemFuzzer =
     Fuzz.map3 Item
         (Fuzz.intRange 0 99999)
-        (oneOfValues Item.all)
+        (Fuzz.oneOfValues Item.all)
         (Fuzz.intRange 1 500)
 
 
@@ -402,7 +488,7 @@ addedSkillPercentagesFuzzer =
                     (Fuzz.intRange -10 300)
             )
         |> Fuzz.sequence
-        |> Fuzz.map SeqDict.fromList
+        |> Fuzz.map (List.filter (\( _, pct ) -> pct /= 0) >> SeqDict.fromList)
 
 
 specialFuzzer : Fuzzer Special

@@ -5844,7 +5844,7 @@ unaimedRange kind =
             0
 
         Smg10mm ->
-            0
+            25
 
         Jhp10mm ->
             0
@@ -6070,7 +6070,7 @@ aimedRange kind =
             0
 
         Smg10mm ->
-            0
+            25
 
         Jhp10mm ->
             0
@@ -6522,7 +6522,7 @@ burstRange kind =
             0
 
         Smg10mm ->
-            0
+            20
 
         Jhp10mm ->
             0
