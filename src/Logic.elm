@@ -42,7 +42,6 @@ module Logic exposing
     , xpGained
     )
 
-import Data.Enemy exposing (equippedWeapon)
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item exposing (Kind(..))
@@ -585,9 +584,6 @@ meleeChanceToHit :
     }
     -> Int
 meleeChanceToHit r =
-    -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
-    -- TODO is this all we need to check about the weapon?
-    -- TODO are there derived things in `r` that we can remove and derive from the equipped weapon instead?
     let
         weaponRange : Int
         weaponRange =

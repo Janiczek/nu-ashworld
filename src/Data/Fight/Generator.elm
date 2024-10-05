@@ -1421,9 +1421,8 @@ enemyOpponentGenerator r lastItemId enemyType =
                             , npcExtraBonus = Enemy.meleeDamageBonus enemyType
                             }
                   , addedSkillPercentages = addedSkillPercentages
-                  , special =
-                        -- Enemies never have anything else than base special (no traits, perks, ...)
-                        special
+                  , -- Enemies never have anything else than base special (no traits, perks, ...)
+                    special = special
                   , fightStrategy = FightStrategy.doWhatever
                   }
                 , newItemId
