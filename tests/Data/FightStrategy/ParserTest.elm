@@ -61,7 +61,7 @@ attackStyle : Test
 attackStyle =
     parserTest "FightStrategy.attackStyle"
         FightStrategy.attackStyle
-        [ ( "UnarmedUnaimed", "unaimed", Just UnarmedUnaimed )
+        [ ( "UnarmedUnaimed", "unarmed", Just UnarmedUnaimed )
         , ( "UnarmedAimed Head", "unarmed, head", Just (UnarmedAimed Head) )
         , ( "UnarmedAimed Torso", "unarmed, torso", Just (UnarmedAimed Torso) )
         , ( "UnarmedAimed Eyes", "unarmed, eyes", Just (UnarmedAimed Eyes) )
