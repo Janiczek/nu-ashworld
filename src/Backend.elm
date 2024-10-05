@@ -1895,6 +1895,9 @@ oneTimePerkEffects currentTime =
 
                 Perk.NightVision ->
                     Nothing
+
+                Perk.BonusRangedDamage ->
+                    Nothing
     in
     Perk.all
         |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))

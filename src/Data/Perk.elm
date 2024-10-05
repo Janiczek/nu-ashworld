@@ -43,7 +43,7 @@ type Perk
       -- lvl 6
     | AdrenalineRush
       -- TODO Bonus Move -- would need move-only APs and some intelligent use of movement in combat
-      -- TODO Bonus Ranged Damage -- would need ranged combat
+    | BonusRangedDamage
     | Educated
       -- TODO Empathy -- would need dialogues
     | FortuneFinder
@@ -114,6 +114,7 @@ all =
     , Awareness
     , BetterCriticals
     , BonusHthAttacks
+    , BonusRangedDamage
     , BonusRateOfFire
     , BonusHthDamage
     , CautiousNature
@@ -291,6 +292,9 @@ name perk =
         NightVision ->
             "Night Vision"
 
+        BonusRangedDamage ->
+            "Bonus Ranged Damage"
+
 
 {-| <https://fallout.fandom.com/wiki/Fallout_2_perks>
 -}
@@ -429,6 +433,9 @@ maxRank perk =
         GeckoSkinning ->
             1
 
+        BonusRangedDamage ->
+            2
+
 
 encode : Perk -> JE.Value
 encode perk =
@@ -566,6 +573,9 @@ encode perk =
             GeckoSkinning ->
                 "gecko-skinning"
 
+            BonusRangedDamage ->
+                "bonus-ranged-damage"
+
 
 decoder : Decoder Perk
 decoder =
@@ -573,6 +583,9 @@ decoder =
         |> JD.andThen
             (\perk ->
                 case perk of
+                    "bonus-ranged-damage" ->
+                        JD.succeed BonusRangedDamage
+
                     "earlier-sequence" ->
                         JD.succeed EarlierSequence
 
@@ -878,6 +891,9 @@ isApplicableForLevelup r perk =
 
                 GeckoSkinning ->
                     False
+
+                BonusRangedDamage ->
+                    r.level >= 6 && s.agility >= 6 && s.luck >= 6
            )
 
 
@@ -1016,3 +1032,6 @@ description perk =
 
         GeckoSkinning ->
             "You have the knowledge of how to skin geckos properly to get their hides."
+
+        BonusRangedDamage ->
+            "Your training in firearms and other ranged weapons has made you more deadly in ranged combat. For each level of this Perk, you do +2 points of damage with ranged weapons."

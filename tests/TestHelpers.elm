@@ -327,7 +327,7 @@ randomSeedFuzzer =
 
 enemyTypeFuzzer : Fuzzer Enemy.Type
 enemyTypeFuzzer =
-    Fuzz.oneOfValues Enemy.allTypes
+    Fuzz.oneOfValues Enemy.all
 
 
 traitsFuzzer : Fuzzer (SeqSet Trait)

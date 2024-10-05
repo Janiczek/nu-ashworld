@@ -10,23 +10,25 @@ module Data.Item exposing
     , allHealingNonempty
     , allNonempty
     , ammoArmorClassModifier
+    , ammoDamageModifier
+    , ammoDamageResistanceModifier
     , armorClass
+    , armorDamageResistanceEMP
+    , armorDamageResistanceElectrical
+    , armorDamageResistanceExplosion
+    , armorDamageResistanceFire
+    , armorDamageResistanceLaser
+    , armorDamageResistanceNormal
+    , armorDamageResistancePlasma
+    , armorDamageThresholdEMP
+    , armorDamageThresholdElectrical
+    , armorDamageThresholdExplosion
+    , armorDamageThresholdFire
+    , armorDamageThresholdLaser
+    , armorDamageThresholdNormal
+    , armorDamageThresholdPlasma
     , baseValue
     , create
-    , damageResistanceEMP
-    , damageResistanceElectrical
-    , damageResistanceExplosion
-    , damageResistanceFire
-    , damageResistanceLaser
-    , damageResistanceNormal
-    , damageResistancePlasma
-    , damageThresholdEMP
-    , damageThresholdElectrical
-    , damageThresholdExplosion
-    , damageThresholdFire
-    , damageThresholdLaser
-    , damageThresholdNormal
-    , damageThresholdPlasma
     , decoder
     , encode
     , encodeKind
@@ -40,16 +42,20 @@ module Data.Item exposing
     , isHealing
     , isLongRangeWeapon
     , isWeapon
+    , isWeaponArmorPenetrating
     , kindDecoder
     , name
     , range
-    , strengthRequirement
     , typeName
     , types
+    , usableAmmo
     , usageEffects
+    , weaponDamageType
+    , weaponStrengthRequirement
     )
 
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.DamageType exposing (DamageType(..))
 import Data.Map.Location exposing (Size(..))
 import Data.Skill as Skill exposing (Skill)
 import Dict exposing (Dict)
@@ -157,9 +163,9 @@ type Kind
       -- Switchblade
       -- Knife
       -- Combat Knife
-      -- Wakizashi
-      -- "Little Jesus"
-      -- Ripper
+    | Wakizashi
+    | LittleJesus
+    | Ripper
       -- Throwing Knife (also in Throwing)
       -- Sharpened Pole (also in Throwing)
       -- Spear (also in Throwing)
@@ -171,7 +177,7 @@ type Kind
       ----------------
       -- SMALL GUNS --
       ----------------
-      -- 223 Pistol
+    | Pistol223
     | Mauser9mm
       -- 10mm Pistol
     | Pistol14mm
@@ -179,7 +185,7 @@ type Kind
       -- Desert Eagle (Exp. Mag.)
       -- 44 Magnum Revolver
       -- 44 Magnum (Speed Load)
-      -- Needler Pistol
+    | NeedlerPistol
     | GaussPistol
       -- Zip Gun
       ----------
@@ -227,12 +233,12 @@ type Kind
       --------------------
     | AlienBlaster
     | LaserPistol
-      -- Magneto-Laser Pistol
+    | MagnetoLaserPistol
       -- Plasma Pistol
       -- Plasma Pistol (Ext. Cap.)
       -- Phazer
     | SolarScorcher
-      -- YK32 Pulse Pistol
+    | PulsePistol
       ------------
     | GatlingLaser
     | LaserRifle
@@ -249,7 +255,7 @@ type Kind
       -- Molotov cocktail
       -- Plasma grenade
       -- Pulse grenade
-      -- Holy hand grenade
+    | HolyHandGrenade
       -- Rock
       -- Gold nugget
       -- Uranium ore
@@ -268,19 +274,18 @@ type Kind
       -- Jhp44Magnum
       -- Caliber45
       -- Caseless47mm
-      -- Ap5mm
+    | Ap5mm
       -- Mm762
-      -- Mm9
-      -- Ball9mm
-      -- Ap10mm
-      -- Ap14mm
-      -- ExplosiveRocket
-      -- RocketAp
+    | Mm9
+    | Ball9mm
+    | Ap10mm
+    | Ap14mm
+    | ExplosiveRocket
+    | RocketAp
       -- FlamethrowerFuel
       -- FlamethrowerFuelMk2
-      -- HnNeedlerCartridge
-      -- HnApNeedlerCartridge
-      -- SmallEnergyCell
+    | HnNeedlerCartridge
+    | HnApNeedlerCartridge
     | ShotgunShell
     | Jhp10mm
     | Jhp5mm
@@ -362,6 +367,13 @@ all =
     , BBAmmo
     , SmallEnergyCell
     , Fmj223
+    , Ap5mm
+    , Mm9
+    , Ball9mm
+    , Ap10mm
+    , Ap14mm
+    , ExplosiveRocket
+    , RocketAp
     , ShotgunShell
     , Jhp10mm
     , Jhp5mm
@@ -379,6 +391,18 @@ all =
     , MotionSensor
     , K9
     , MeatJerky
+    , Pistol223
+    , Ripper
+    , Wakizashi
+    , LittleJesus
+    , Ripper
+    , Pistol223
+    , NeedlerPistol
+    , MagnetoLaserPistol
+    , PulsePistol
+    , HolyHandGrenade
+    , HnNeedlerCartridge
+    , HnApNeedlerCartridge
     ]
 
 
@@ -669,7 +693,619 @@ baseValue kind =
         Flare ->
             35
 
+        Ap5mm ->
+            120
 
+        Mm9 ->
+            100
+
+        Ball9mm ->
+            100
+
+        Ap10mm ->
+            100
+
+        Ap14mm ->
+            150
+
+        ExplosiveRocket ->
+            200
+
+        RocketAp ->
+            400
+
+        Pistol223 ->
+            3500
+
+        Wakizashi ->
+            200
+
+        LittleJesus ->
+            200
+
+        Ripper ->
+            900
+
+        NeedlerPistol ->
+            550
+
+        MagnetoLaserPistol ->
+            -- Balance?
+            350
+
+        PulsePistol ->
+            12500
+
+        HolyHandGrenade ->
+            -- Balance?
+            1
+
+        HnNeedlerCartridge ->
+            250
+
+        HnApNeedlerCartridge ->
+            300
+
+
+{-| This can be both positive and negative, so you need to ADD it in calculations, not SUBTRACT.
+-}
+ammoDamageResistanceModifier : Kind -> Int
+ammoDamageResistanceModifier kind =
+    case kind of
+        Beer ->
+            0
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        CattleProd ->
+            0
+
+        SuperCattleProd ->
+            0
+
+        SuperSledge ->
+            0
+
+        Mauser9mm ->
+            0
+
+        Pistol14mm ->
+            0
+
+        GaussPistol ->
+            0
+
+        Smg10mm ->
+            0
+
+        HkP90c ->
+            0
+
+        AssaultRifle ->
+            0
+
+        ExpandedAssaultRifle ->
+            0
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        RedRyderLEBBGun ->
+            0
+
+        SniperRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        CombatShotgun ->
+            0
+
+        HkCaws ->
+            0
+
+        PancorJackhammer ->
+            0
+
+        Shotgun ->
+            0
+
+        SawedOffShotgun ->
+            0
+
+        Minigun ->
+            0
+
+        Bozar ->
+            0
+
+        RocketLauncher ->
+            0
+
+        AlienBlaster ->
+            0
+
+        LaserPistol ->
+            0
+
+        SolarScorcher ->
+            0
+
+        GatlingLaser ->
+            0
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        PulseRifle ->
+            0
+
+        Flare ->
+            0
+
+        FragGrenade ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            -20
+
+        ShotgunShell ->
+            0
+
+        Jhp10mm ->
+            25
+
+        Jhp5mm ->
+            35
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            -20
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+        MeatJerky ->
+            0
+
+        Ap5mm ->
+            -35
+
+        Mm9 ->
+            10
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            -25
+
+        Ap14mm ->
+            -50
+
+        ExplosiveRocket ->
+            -25
+
+        RocketAp ->
+            -50
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+ammoDamageModifier : Kind -> ( Float, Float )
+ammoDamageModifier kind =
+    case kind of
+        BBAmmo ->
+            ( 1, 1 )
+
+        SmallEnergyCell ->
+            ( 1, 1 )
+
+        Fmj223 ->
+            ( 1, 1 )
+
+        Ap5mm ->
+            ( 1, 2 )
+
+        Mm9 ->
+            ( 1, 2 )
+
+        Ball9mm ->
+            ( 1, 1 )
+
+        Ap10mm ->
+            ( 1, 2 )
+
+        Ap14mm ->
+            ( 1, 2 )
+
+        ExplosiveRocket ->
+            ( 1, 1 )
+
+        RocketAp ->
+            ( 1, 1 )
+
+        ShotgunShell ->
+            ( 1, 1 )
+
+        Jhp10mm ->
+            ( 2, 1 )
+
+        Jhp5mm ->
+            ( 2, 1 )
+
+        MicrofusionCell ->
+            ( 1, 1 )
+
+        Ec2mm ->
+            ( 3, 2 )
+
+        --
+        Beer ->
+            ( 1, 1 )
+
+        Fruit ->
+            ( 1, 1 )
+
+        HealingPowder ->
+            ( 1, 1 )
+
+        Stimpak ->
+            ( 1, 1 )
+
+        SuperStimpak ->
+            ( 1, 1 )
+
+        BigBookOfScience ->
+            ( 1, 1 )
+
+        DeansElectronics ->
+            ( 1, 1 )
+
+        FirstAidBook ->
+            ( 1, 1 )
+
+        GunsAndBullets ->
+            ( 1, 1 )
+
+        ScoutHandbook ->
+            ( 1, 1 )
+
+        Robes ->
+            ( 1, 1 )
+
+        LeatherJacket ->
+            ( 1, 1 )
+
+        LeatherArmor ->
+            ( 1, 1 )
+
+        MetalArmor ->
+            ( 1, 1 )
+
+        TeslaArmor ->
+            ( 1, 1 )
+
+        CombatArmor ->
+            ( 1, 1 )
+
+        CombatArmorMk2 ->
+            ( 1, 1 )
+
+        PowerArmor ->
+            ( 1, 1 )
+
+        PowerFist ->
+            ( 1, 1 )
+
+        MegaPowerFist ->
+            ( 1, 1 )
+
+        CattleProd ->
+            ( 1, 1 )
+
+        SuperCattleProd ->
+            ( 1, 1 )
+
+        SuperSledge ->
+            ( 1, 1 )
+
+        Mauser9mm ->
+            ( 1, 1 )
+
+        Pistol14mm ->
+            ( 1, 1 )
+
+        GaussPistol ->
+            ( 1, 1 )
+
+        Smg10mm ->
+            ( 1, 1 )
+
+        HkP90c ->
+            ( 1, 1 )
+
+        AssaultRifle ->
+            ( 1, 1 )
+
+        ExpandedAssaultRifle ->
+            ( 1, 1 )
+
+        HuntingRifle ->
+            ( 1, 1 )
+
+        ScopedHuntingRifle ->
+            ( 1, 1 )
+
+        RedRyderLEBBGun ->
+            ( 1, 1 )
+
+        SniperRifle ->
+            ( 1, 1 )
+
+        GaussRifle ->
+            ( 1, 1 )
+
+        CombatShotgun ->
+            ( 1, 1 )
+
+        HkCaws ->
+            ( 1, 1 )
+
+        PancorJackhammer ->
+            ( 1, 1 )
+
+        Shotgun ->
+            ( 1, 1 )
+
+        SawedOffShotgun ->
+            ( 1, 1 )
+
+        Minigun ->
+            ( 1, 1 )
+
+        Bozar ->
+            ( 1, 1 )
+
+        RocketLauncher ->
+            ( 1, 1 )
+
+        AlienBlaster ->
+            ( 1, 1 )
+
+        LaserPistol ->
+            ( 1, 1 )
+
+        SolarScorcher ->
+            ( 1, 1 )
+
+        GatlingLaser ->
+            ( 1, 1 )
+
+        LaserRifle ->
+            ( 1, 1 )
+
+        LaserRifleExtCap ->
+            ( 1, 1 )
+
+        PlasmaRifle ->
+            ( 1, 1 )
+
+        TurboPlasmaRifle ->
+            ( 1, 1 )
+
+        PulseRifle ->
+            ( 1, 1 )
+
+        Flare ->
+            ( 1, 1 )
+
+        FragGrenade ->
+            ( 1, 1 )
+
+        Tool ->
+            ( 1, 1 )
+
+        LockPicks ->
+            ( 1, 1 )
+
+        ElectronicLockpick ->
+            ( 1, 1 )
+
+        AbnormalBrain ->
+            ( 1, 1 )
+
+        ChimpanzeeBrain ->
+            ( 1, 1 )
+
+        HumanBrain ->
+            ( 1, 1 )
+
+        CyberneticBrain ->
+            ( 1, 1 )
+
+        GECK ->
+            ( 1, 1 )
+
+        SkynetAim ->
+            ( 1, 1 )
+
+        MotionSensor ->
+            ( 1, 1 )
+
+        K9 ->
+            ( 1, 1 )
+
+        MeatJerky ->
+            ( 1, 1 )
+
+        Pistol223 ->
+            ( 1, 1 )
+
+        Wakizashi ->
+            ( 1, 1 )
+
+        LittleJesus ->
+            ( 1, 1 )
+
+        Ripper ->
+            ( 1, 1 )
+
+        NeedlerPistol ->
+            ( 1, 1 )
+
+        MagnetoLaserPistol ->
+            ( 1, 1 )
+
+        PulsePistol ->
+            ( 1, 1 )
+
+        HolyHandGrenade ->
+            ( 1, 1 )
+
+        HnNeedlerCartridge ->
+            ( 1, 1 )
+
+        HnApNeedlerCartridge ->
+            ( 2, 1 )
+
+
+{-| This can be negative, you need to ADD it in calculations, not SUBTRACT.
+-}
 ammoArmorClassModifier : Kind -> Int
 ammoArmorClassModifier kind =
     case kind of
@@ -680,10 +1316,10 @@ ammoArmorClassModifier kind =
             0
 
         Fmj223 ->
-            20
+            -20
 
         ShotgunShell ->
-            10
+            -10
 
         Jhp10mm ->
             0
@@ -695,7 +1331,7 @@ ammoArmorClassModifier kind =
             0
 
         Ec2mm ->
-            30
+            -30
 
         Beer ->
             0
@@ -894,6 +1530,57 @@ ammoArmorClassModifier kind =
 
         Flare ->
             0
+
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            -15
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            -10
+
+        HnApNeedlerCartridge ->
+            -10
 
 
 armorClass : Kind -> Int
@@ -1121,9 +1808,60 @@ armorClass kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdNormal : Kind -> Int
-damageThresholdNormal kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdNormal : Kind -> Int
+armorDamageThresholdNormal kind =
     case kind of
         Robes ->
             0
@@ -1347,9 +2085,60 @@ damageThresholdNormal kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdExplosion : Kind -> Int
-damageThresholdExplosion kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdExplosion : Kind -> Int
+armorDamageThresholdExplosion kind =
     case kind of
         Robes ->
             0
@@ -1573,9 +2362,60 @@ damageThresholdExplosion kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdElectrical : Kind -> Int
-damageThresholdElectrical kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdElectrical : Kind -> Int
+armorDamageThresholdElectrical kind =
     case kind of
         Robes ->
             0
@@ -1799,9 +2639,60 @@ damageThresholdElectrical kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdEMP : Kind -> Int
-damageThresholdEMP kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdEMP : Kind -> Int
+armorDamageThresholdEMP kind =
     case kind of
         Robes ->
             0
@@ -2025,9 +2916,60 @@ damageThresholdEMP kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdLaser : Kind -> Int
-damageThresholdLaser kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdLaser : Kind -> Int
+armorDamageThresholdLaser kind =
     case kind of
         Robes ->
             0
@@ -2251,9 +3193,60 @@ damageThresholdLaser kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdFire : Kind -> Int
-damageThresholdFire kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdFire : Kind -> Int
+armorDamageThresholdFire kind =
     case kind of
         Robes ->
             0
@@ -2477,9 +3470,60 @@ damageThresholdFire kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageThresholdPlasma : Kind -> Int
-damageThresholdPlasma kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageThresholdPlasma : Kind -> Int
+armorDamageThresholdPlasma kind =
     case kind of
         Robes ->
             0
@@ -2703,9 +3747,60 @@ damageThresholdPlasma kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceNormal : Kind -> Int
-damageResistanceNormal kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceNormal : Kind -> Int
+armorDamageResistanceNormal kind =
     case kind of
         Robes ->
             20
@@ -2929,9 +4024,60 @@ damageResistanceNormal kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceExplosion : Kind -> Int
-damageResistanceExplosion kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceExplosion : Kind -> Int
+armorDamageResistanceExplosion kind =
     case kind of
         Robes ->
             20
@@ -3155,9 +4301,60 @@ damageResistanceExplosion kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceElectrical : Kind -> Int
-damageResistanceElectrical kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceElectrical : Kind -> Int
+armorDamageResistanceElectrical kind =
     case kind of
         Robes ->
             40
@@ -3381,9 +4578,60 @@ damageResistanceElectrical kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceEMP : Kind -> Int
-damageResistanceEMP kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceEMP : Kind -> Int
+armorDamageResistanceEMP kind =
     case kind of
         Robes ->
             500
@@ -3607,9 +4855,60 @@ damageResistanceEMP kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceLaser : Kind -> Int
-damageResistanceLaser kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceLaser : Kind -> Int
+armorDamageResistanceLaser kind =
     case kind of
         Robes ->
             25
@@ -3833,9 +5132,60 @@ damageResistanceLaser kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistanceFire : Kind -> Int
-damageResistanceFire kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistanceFire : Kind -> Int
+armorDamageResistanceFire kind =
     case kind of
         Robes ->
             10
@@ -4059,9 +5409,60 @@ damageResistanceFire kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
 
-damageResistancePlasma : Kind -> Int
-damageResistancePlasma kind =
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
+
+armorDamageResistancePlasma : Kind -> Int
+armorDamageResistancePlasma kind =
     case kind of
         Robes ->
             10
@@ -4285,6 +5686,57 @@ damageResistancePlasma kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
 
 encode : Item -> JE.Value
 encode item =
@@ -4372,14 +5824,29 @@ encodeKind kind =
         SuperCattleProd ->
             JE.string "SuperCattleProd"
 
+        Wakizashi ->
+            JE.string "Wakizashi"
+
+        LittleJesus ->
+            JE.string "LittleJesus"
+
+        Ripper ->
+            JE.string "Ripper"
+
         SuperSledge ->
             JE.string "SuperSledge"
+
+        Pistol223 ->
+            JE.string "Pistol223"
 
         Mauser9mm ->
             JE.string "Mauser9mm"
 
         Pistol14mm ->
             JE.string "Pistol14mm"
+
+        NeedlerPistol ->
+            JE.string "NeedlerPistol"
 
         GaussPistol ->
             JE.string "GaussPistol"
@@ -4441,8 +5908,14 @@ encodeKind kind =
         LaserPistol ->
             JE.string "LaserPistol"
 
+        MagnetoLaserPistol ->
+            JE.string "MagnetoLaserPistol"
+
         SolarScorcher ->
             JE.string "SolarScorcher"
+
+        PulsePistol ->
+            JE.string "PulsePistol"
 
         GatlingLaser ->
             JE.string "GatlingLaser"
@@ -4468,6 +5941,9 @@ encodeKind kind =
         FragGrenade ->
             JE.string "FragGrenade"
 
+        HolyHandGrenade ->
+            JE.string "HolyHandGrenade"
+
         BBAmmo ->
             JE.string "BBAmmo"
 
@@ -4476,6 +5952,33 @@ encodeKind kind =
 
         Fmj223 ->
             JE.string "Fmj223"
+
+        Ap5mm ->
+            JE.string "Ap5mm"
+
+        Mm9 ->
+            JE.string "Mm9"
+
+        Ball9mm ->
+            JE.string "Ball9mm"
+
+        Ap10mm ->
+            JE.string "Ap10mm"
+
+        Ap14mm ->
+            JE.string "Ap14mm"
+
+        ExplosiveRocket ->
+            JE.string "ExplosiveRocket"
+
+        RocketAp ->
+            JE.string "RocketAp"
+
+        HnNeedlerCartridge ->
+            JE.string "HnNeedlerCartridge"
+
+        HnApNeedlerCartridge ->
+            JE.string "HnApNeedlerCartridge"
 
         ShotgunShell ->
             JE.string "ShotgunShell"
@@ -4601,14 +6104,29 @@ kindDecoder =
                     "SuperCattleProd" ->
                         JD.succeed SuperCattleProd
 
+                    "Wakizashi" ->
+                        JD.succeed Wakizashi
+
+                    "LittleJesus" ->
+                        JD.succeed LittleJesus
+
+                    "Ripper" ->
+                        JD.succeed Ripper
+
                     "SuperSledge" ->
                         JD.succeed SuperSledge
+
+                    "Pistol223" ->
+                        JD.succeed Pistol223
 
                     "Mauser9mm" ->
                         JD.succeed Mauser9mm
 
                     "Pistol14mm" ->
                         JD.succeed Pistol14mm
+
+                    "NeedlerPistol" ->
+                        JD.succeed NeedlerPistol
 
                     "GaussPistol" ->
                         JD.succeed GaussPistol
@@ -4670,8 +6188,14 @@ kindDecoder =
                     "LaserPistol" ->
                         JD.succeed LaserPistol
 
+                    "MagnetoLaserPistol" ->
+                        JD.succeed MagnetoLaserPistol
+
                     "SolarScorcher" ->
                         JD.succeed SolarScorcher
+
+                    "PulsePistol" ->
+                        JD.succeed PulsePistol
 
                     "GatlingLaser" ->
                         JD.succeed GatlingLaser
@@ -4697,6 +6221,9 @@ kindDecoder =
                     "FragGrenade" ->
                         JD.succeed FragGrenade
 
+                    "HolyHandGrenade" ->
+                        JD.succeed HolyHandGrenade
+
                     "BBAmmo" ->
                         JD.succeed BBAmmo
 
@@ -4705,6 +6232,33 @@ kindDecoder =
 
                     "Fmj223" ->
                         JD.succeed Fmj223
+
+                    "Ap5mm" ->
+                        JD.succeed Ap5mm
+
+                    "Mm9" ->
+                        JD.succeed Mm9
+
+                    "Ball9mm" ->
+                        JD.succeed Ball9mm
+
+                    "Ap10mm" ->
+                        JD.succeed Ap10mm
+
+                    "Ap14mm" ->
+                        JD.succeed Ap14mm
+
+                    "ExplosiveRocket" ->
+                        JD.succeed ExplosiveRocket
+
+                    "RocketAp" ->
+                        JD.succeed RocketAp
+
+                    "HnNeedlerCartridge" ->
+                        JD.succeed HnNeedlerCartridge
+
+                    "HnApNeedlerCartridge" ->
+                        JD.succeed HnApNeedlerCartridge
 
                     "ShotgunShell" ->
                         JD.succeed ShotgunShell
@@ -4901,7 +6455,7 @@ name kind =
             "Gauss Pistol"
 
         PulseRifle ->
-            "Pulse Rifle"
+            "YK42B Pulse Rifle"
 
         SmallEnergyCell ->
             "Small Energy Cell"
@@ -4986,6 +6540,57 @@ name kind =
 
         Flare ->
             "Flare"
+
+        Ap5mm ->
+            "5mm AP"
+
+        Mm9 ->
+            "9mm"
+
+        Ball9mm ->
+            "9mm Ball"
+
+        Ap10mm ->
+            "10mm AP"
+
+        Ap14mm ->
+            "14mm AP"
+
+        ExplosiveRocket ->
+            "Explosive Rocekt"
+
+        RocketAp ->
+            "Rocket AP"
+
+        Pistol223 ->
+            ".223 Pistol"
+
+        Wakizashi ->
+            "Wakizashi"
+
+        LittleJesus ->
+            "\"Little Jesus\""
+
+        Ripper ->
+            "Ripper"
+
+        NeedlerPistol ->
+            "Needler Pistol"
+
+        MagnetoLaserPistol ->
+            "Magneto-Laser Pistol"
+
+        PulsePistol ->
+            "YK32 Pulse Pistol"
+
+        HolyHandGrenade ->
+            "Holy Hand Grenade"
+
+        HnNeedlerCartridge ->
+            "HN Needler Cartridge"
+
+        HnApNeedlerCartridge ->
+            "HN AP Needler Cartridge"
 
 
 create :
@@ -5298,6 +6903,57 @@ usageEffects kind =
 
         Flare ->
             -- Maybe reduce darkness? Probably has no use in this game.
+            []
+
+        Ap5mm ->
+            []
+
+        Mm9 ->
+            []
+
+        Ball9mm ->
+            []
+
+        Ap10mm ->
+            []
+
+        Ap14mm ->
+            []
+
+        ExplosiveRocket ->
+            []
+
+        RocketAp ->
+            []
+
+        Pistol223 ->
+            []
+
+        Wakizashi ->
+            []
+
+        LittleJesus ->
+            []
+
+        Ripper ->
+            []
+
+        NeedlerPistol ->
+            []
+
+        MagnetoLaserPistol ->
+            []
+
+        PulsePistol ->
+            []
+
+        HolyHandGrenade ->
+            []
+
+        HnNeedlerCartridge ->
+            []
+
+        HnApNeedlerCartridge ->
             []
 
 
@@ -5617,6 +7273,57 @@ types kind =
         Flare ->
             [ ThrownWeapon ]
 
+        Ap5mm ->
+            [ Ammo ]
+
+        Mm9 ->
+            [ Ammo ]
+
+        Ball9mm ->
+            [ Ammo ]
+
+        Ap10mm ->
+            [ Ammo ]
+
+        Ap14mm ->
+            [ Ammo ]
+
+        ExplosiveRocket ->
+            [ Ammo ]
+
+        RocketAp ->
+            [ Ammo ]
+
+        Pistol223 ->
+            [ SmallGun ]
+
+        Wakizashi ->
+            [ MeleeWeapon ]
+
+        LittleJesus ->
+            [ MeleeWeapon ]
+
+        Ripper ->
+            [ MeleeWeapon ]
+
+        NeedlerPistol ->
+            [ SmallGun ]
+
+        MagnetoLaserPistol ->
+            [ EnergyWeapon ]
+
+        PulsePistol ->
+            [ EnergyWeapon ]
+
+        HolyHandGrenade ->
+            [ ThrownWeapon ]
+
+        HnNeedlerCartridge ->
+            [ Ammo ]
+
+        HnApNeedlerCartridge ->
+            [ Ammo ]
+
 
 isWeapon : Kind -> Bool
 isWeapon kind =
@@ -5918,6 +7625,57 @@ unaimedRange kind =
         Flare ->
             15
 
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            30
+
+        Wakizashi ->
+            1
+
+        LittleJesus ->
+            1
+
+        Ripper ->
+            1
+
+        NeedlerPistol ->
+            24
+
+        MagnetoLaserPistol ->
+            35
+
+        PulsePistol ->
+            15
+
+        HolyHandGrenade ->
+            20
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
 
 aimedRange : Kind -> Int
 aimedRange kind =
@@ -6142,6 +7900,57 @@ aimedRange kind =
             20
 
         Flare ->
+            0
+
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            30
+
+        Wakizashi ->
+            1
+
+        LittleJesus ->
+            1
+
+        Ripper ->
+            1
+
+        NeedlerPistol ->
+            24
+
+        MagnetoLaserPistol ->
+            35
+
+        PulsePistol ->
+            15
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
             0
 
 
@@ -6370,6 +8179,57 @@ isAccurateWeapon kind =
         MeatJerky ->
             False
 
+        Ap5mm ->
+            False
+
+        Mm9 ->
+            False
+
+        Ball9mm ->
+            False
+
+        Ap10mm ->
+            False
+
+        Ap14mm ->
+            False
+
+        ExplosiveRocket ->
+            False
+
+        RocketAp ->
+            False
+
+        Pistol223 ->
+            False
+
+        Wakizashi ->
+            False
+
+        LittleJesus ->
+            False
+
+        Ripper ->
+            False
+
+        NeedlerPistol ->
+            False
+
+        MagnetoLaserPistol ->
+            False
+
+        PulsePistol ->
+            False
+
+        HolyHandGrenade ->
+            False
+
+        HnNeedlerCartridge ->
+            False
+
+        HnApNeedlerCartridge ->
+            False
+
 
 burstRange : Kind -> Int
 burstRange kind =
@@ -6596,6 +8456,57 @@ burstRange kind =
         Flare ->
             0
 
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        Pistol223 ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        HolyHandGrenade ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0
+
 
 range : AttackStyle -> Kind -> Int
 range attackStyle kind =
@@ -6623,6 +8534,286 @@ range attackStyle kind =
 
         ShootBurst ->
             burstRange kind
+
+
+{-| In other words, does the Weapon Penetrate perk apply?
+-}
+isWeaponArmorPenetrating : Kind -> Bool
+isWeaponArmorPenetrating kind =
+    case kind of
+        Pistol223 ->
+            True
+
+        Wakizashi ->
+            True
+
+        LittleJesus ->
+            True
+
+        Ripper ->
+            True
+
+        NeedlerPistol ->
+            True
+
+        MagnetoLaserPistol ->
+            True
+
+        PulsePistol ->
+            True
+
+        HolyHandGrenade ->
+            True
+
+        PulseRifle ->
+            True
+
+        PowerFist ->
+            True
+
+        MegaPowerFist ->
+            True
+
+        -- The rest are Falses
+        AssaultRifle ->
+            False
+
+        ExpandedAssaultRifle ->
+            False
+
+        GatlingLaser ->
+            False
+
+        HuntingRifle ->
+            False
+
+        LaserRifle ->
+            False
+
+        LaserRifleExtCap ->
+            False
+
+        Minigun ->
+            False
+
+        PlasmaRifle ->
+            False
+
+        RedRyderLEBBGun ->
+            False
+
+        RocketLauncher ->
+            False
+
+        SniperRifle ->
+            False
+
+        TurboPlasmaRifle ->
+            False
+
+        Beer ->
+            False
+
+        Fruit ->
+            False
+
+        HealingPowder ->
+            False
+
+        Stimpak ->
+            False
+
+        SuperStimpak ->
+            False
+
+        BigBookOfScience ->
+            False
+
+        DeansElectronics ->
+            False
+
+        FirstAidBook ->
+            False
+
+        GunsAndBullets ->
+            False
+
+        ScoutHandbook ->
+            False
+
+        Robes ->
+            False
+
+        LeatherJacket ->
+            False
+
+        LeatherArmor ->
+            False
+
+        MetalArmor ->
+            False
+
+        TeslaArmor ->
+            False
+
+        CombatArmor ->
+            False
+
+        CombatArmorMk2 ->
+            False
+
+        PowerArmor ->
+            False
+
+        SuperSledge ->
+            False
+
+        GaussPistol ->
+            False
+
+        HkP90c ->
+            False
+
+        ScopedHuntingRifle ->
+            False
+
+        GaussRifle ->
+            False
+
+        PancorJackhammer ->
+            False
+
+        SawedOffShotgun ->
+            False
+
+        Bozar ->
+            False
+
+        LaserPistol ->
+            False
+
+        FragGrenade ->
+            False
+
+        BBAmmo ->
+            False
+
+        SmallEnergyCell ->
+            False
+
+        Fmj223 ->
+            False
+
+        ShotgunShell ->
+            False
+
+        Smg10mm ->
+            False
+
+        Jhp10mm ->
+            False
+
+        Jhp5mm ->
+            False
+
+        MicrofusionCell ->
+            False
+
+        Ec2mm ->
+            False
+
+        Tool ->
+            False
+
+        LockPicks ->
+            False
+
+        ElectronicLockpick ->
+            False
+
+        AbnormalBrain ->
+            False
+
+        ChimpanzeeBrain ->
+            False
+
+        HumanBrain ->
+            False
+
+        CyberneticBrain ->
+            False
+
+        GECK ->
+            False
+
+        SkynetAim ->
+            False
+
+        MotionSensor ->
+            False
+
+        K9 ->
+            False
+
+        MeatJerky ->
+            False
+
+        CattleProd ->
+            False
+
+        SuperCattleProd ->
+            False
+
+        Mauser9mm ->
+            False
+
+        Pistol14mm ->
+            False
+
+        CombatShotgun ->
+            False
+
+        HkCaws ->
+            False
+
+        Shotgun ->
+            False
+
+        AlienBlaster ->
+            False
+
+        SolarScorcher ->
+            False
+
+        Flare ->
+            False
+
+        Ap5mm ->
+            False
+
+        Mm9 ->
+            False
+
+        Ball9mm ->
+            False
+
+        Ap10mm ->
+            False
+
+        Ap14mm ->
+            False
+
+        ExplosiveRocket ->
+            False
+
+        RocketAp ->
+            False
+
+        HnNeedlerCartridge ->
+            False
+
+        HnApNeedlerCartridge ->
+            False
 
 
 {-| In other words, does the Weapon Long Range perk apply?
@@ -6853,9 +9044,60 @@ isLongRangeWeapon kind =
         Flare ->
             False
 
+        Ap5mm ->
+            False
 
-strengthRequirement : Kind -> Int
-strengthRequirement kind =
+        Mm9 ->
+            False
+
+        Ball9mm ->
+            False
+
+        Ap10mm ->
+            False
+
+        Ap14mm ->
+            False
+
+        ExplosiveRocket ->
+            False
+
+        RocketAp ->
+            False
+
+        Pistol223 ->
+            False
+
+        Wakizashi ->
+            False
+
+        LittleJesus ->
+            False
+
+        Ripper ->
+            False
+
+        NeedlerPistol ->
+            False
+
+        MagnetoLaserPistol ->
+            False
+
+        PulsePistol ->
+            False
+
+        HolyHandGrenade ->
+            False
+
+        HnNeedlerCartridge ->
+            False
+
+        HnApNeedlerCartridge ->
+            False
+
+
+weaponStrengthRequirement : Kind -> Int
+weaponStrengthRequirement kind =
     case kind of
         PowerFist ->
             1
@@ -7078,3 +9320,609 @@ strengthRequirement kind =
 
         Flare ->
             1
+
+        Ap5mm ->
+            1
+
+        Mm9 ->
+            1
+
+        Ball9mm ->
+            1
+
+        Ap10mm ->
+            1
+
+        Ap14mm ->
+            1
+
+        ExplosiveRocket ->
+            1
+
+        RocketAp ->
+            1
+
+        Pistol223 ->
+            5
+
+        Wakizashi ->
+            2
+
+        LittleJesus ->
+            2
+
+        Ripper ->
+            4
+
+        NeedlerPistol ->
+            3
+
+        MagnetoLaserPistol ->
+            3
+
+        PulsePistol ->
+            3
+
+        HolyHandGrenade ->
+            2
+
+        HnNeedlerCartridge ->
+            1
+
+        HnApNeedlerCartridge ->
+            1
+
+
+weaponDamageType : Kind -> Maybe DamageType
+weaponDamageType kind =
+    case kind of
+        PowerFist ->
+            Just NormalDamage
+
+        MegaPowerFist ->
+            Just NormalDamage
+
+        SuperSledge ->
+            Just NormalDamage
+
+        GaussPistol ->
+            Just NormalDamage
+
+        Smg10mm ->
+            Just NormalDamage
+
+        HkP90c ->
+            Just NormalDamage
+
+        AssaultRifle ->
+            Just NormalDamage
+
+        ExpandedAssaultRifle ->
+            Just NormalDamage
+
+        HuntingRifle ->
+            Just NormalDamage
+
+        ScopedHuntingRifle ->
+            Just NormalDamage
+
+        RedRyderLEBBGun ->
+            Just NormalDamage
+
+        SniperRifle ->
+            Just NormalDamage
+
+        GaussRifle ->
+            Just NormalDamage
+
+        PancorJackhammer ->
+            Just NormalDamage
+
+        SawedOffShotgun ->
+            Just NormalDamage
+
+        Minigun ->
+            Just NormalDamage
+
+        Bozar ->
+            Just NormalDamage
+
+        RocketLauncher ->
+            Just Explosion
+
+        LaserPistol ->
+            Just Laser
+
+        GatlingLaser ->
+            Just Laser
+
+        LaserRifle ->
+            Just Laser
+
+        LaserRifleExtCap ->
+            Just Laser
+
+        PlasmaRifle ->
+            Just Plasma
+
+        TurboPlasmaRifle ->
+            Just Plasma
+
+        PulseRifle ->
+            Just Electrical
+
+        FragGrenade ->
+            Just Explosion
+
+        Beer ->
+            Nothing
+
+        Fruit ->
+            Nothing
+
+        HealingPowder ->
+            Nothing
+
+        Stimpak ->
+            Nothing
+
+        SuperStimpak ->
+            Nothing
+
+        BigBookOfScience ->
+            Nothing
+
+        DeansElectronics ->
+            Nothing
+
+        FirstAidBook ->
+            Nothing
+
+        GunsAndBullets ->
+            Nothing
+
+        ScoutHandbook ->
+            Nothing
+
+        Robes ->
+            Nothing
+
+        LeatherJacket ->
+            Nothing
+
+        LeatherArmor ->
+            Nothing
+
+        MetalArmor ->
+            Nothing
+
+        TeslaArmor ->
+            Nothing
+
+        CombatArmor ->
+            Nothing
+
+        CombatArmorMk2 ->
+            Nothing
+
+        PowerArmor ->
+            Nothing
+
+        BBAmmo ->
+            Nothing
+
+        SmallEnergyCell ->
+            Nothing
+
+        Fmj223 ->
+            Nothing
+
+        ShotgunShell ->
+            Nothing
+
+        Jhp10mm ->
+            Nothing
+
+        Jhp5mm ->
+            Nothing
+
+        MicrofusionCell ->
+            Nothing
+
+        Ec2mm ->
+            Nothing
+
+        Tool ->
+            Nothing
+
+        LockPicks ->
+            Nothing
+
+        ElectronicLockpick ->
+            Nothing
+
+        AbnormalBrain ->
+            Nothing
+
+        ChimpanzeeBrain ->
+            Nothing
+
+        HumanBrain ->
+            Nothing
+
+        CyberneticBrain ->
+            Nothing
+
+        GECK ->
+            Nothing
+
+        SkynetAim ->
+            Nothing
+
+        MotionSensor ->
+            Nothing
+
+        K9 ->
+            Nothing
+
+        MeatJerky ->
+            Nothing
+
+        CattleProd ->
+            Just Electrical
+
+        SuperCattleProd ->
+            Just Electrical
+
+        Mauser9mm ->
+            Just NormalDamage
+
+        Pistol14mm ->
+            Just NormalDamage
+
+        CombatShotgun ->
+            Just NormalDamage
+
+        HkCaws ->
+            Just NormalDamage
+
+        Shotgun ->
+            Just NormalDamage
+
+        AlienBlaster ->
+            Just Electrical
+
+        SolarScorcher ->
+            Just Laser
+
+        Flare ->
+            Just NormalDamage
+
+        Ap5mm ->
+            Nothing
+
+        Mm9 ->
+            Nothing
+
+        Ball9mm ->
+            Nothing
+
+        Ap10mm ->
+            Nothing
+
+        Ap14mm ->
+            Nothing
+
+        ExplosiveRocket ->
+            Nothing
+
+        RocketAp ->
+            Nothing
+
+        Pistol223 ->
+            Just NormalDamage
+
+        Wakizashi ->
+            Just NormalDamage
+
+        LittleJesus ->
+            Just NormalDamage
+
+        Ripper ->
+            Just NormalDamage
+
+        NeedlerPistol ->
+            Just NormalDamage
+
+        MagnetoLaserPistol ->
+            Just Laser
+
+        PulsePistol ->
+            Just Electrical
+
+        HolyHandGrenade ->
+            Just Explosion
+
+        HnNeedlerCartridge ->
+            Nothing
+
+        HnApNeedlerCartridge ->
+            Nothing
+
+
+usableAmmo : Kind -> List Kind
+usableAmmo kind =
+    case kind of
+        Beer ->
+            []
+
+        Fruit ->
+            []
+
+        HealingPowder ->
+            []
+
+        Stimpak ->
+            []
+
+        SuperStimpak ->
+            []
+
+        BigBookOfScience ->
+            []
+
+        DeansElectronics ->
+            []
+
+        FirstAidBook ->
+            []
+
+        GunsAndBullets ->
+            []
+
+        ScoutHandbook ->
+            []
+
+        Robes ->
+            []
+
+        LeatherJacket ->
+            []
+
+        LeatherArmor ->
+            []
+
+        MetalArmor ->
+            []
+
+        TeslaArmor ->
+            []
+
+        CombatArmor ->
+            []
+
+        CombatArmorMk2 ->
+            []
+
+        PowerArmor ->
+            []
+
+        PowerFist ->
+            [ SmallEnergyCell ]
+
+        MegaPowerFist ->
+            [ SmallEnergyCell ]
+
+        CattleProd ->
+            [ SmallEnergyCell ]
+
+        SuperCattleProd ->
+            [ SmallEnergyCell ]
+
+        SuperSledge ->
+            []
+
+        Mauser9mm ->
+            [ Mm9, Ball9mm ]
+
+        Pistol14mm ->
+            [ Ap14mm ]
+
+        GaussPistol ->
+            [ Ec2mm ]
+
+        Smg10mm ->
+            [ Ap10mm, Jhp10mm ]
+
+        HkP90c ->
+            [ Ap10mm, Jhp10mm ]
+
+        AssaultRifle ->
+            [ Ap5mm, Jhp5mm ]
+
+        ExpandedAssaultRifle ->
+            [ Ap5mm, Jhp5mm ]
+
+        HuntingRifle ->
+            [ Fmj223 ]
+
+        ScopedHuntingRifle ->
+            [ Fmj223 ]
+
+        RedRyderLEBBGun ->
+            [ BBAmmo ]
+
+        SniperRifle ->
+            [ Fmj223 ]
+
+        GaussRifle ->
+            [ Ec2mm ]
+
+        CombatShotgun ->
+            [ ShotgunShell ]
+
+        HkCaws ->
+            [ ShotgunShell ]
+
+        PancorJackhammer ->
+            [ ShotgunShell ]
+
+        Shotgun ->
+            [ ShotgunShell ]
+
+        SawedOffShotgun ->
+            [ ShotgunShell ]
+
+        Minigun ->
+            [ Ap5mm, Jhp5mm ]
+
+        Bozar ->
+            [ Fmj223 ]
+
+        RocketLauncher ->
+            [ ExplosiveRocket, RocketAp ]
+
+        AlienBlaster ->
+            [ SmallEnergyCell ]
+
+        LaserPistol ->
+            [ SmallEnergyCell ]
+
+        SolarScorcher ->
+            -- TODO if we ever have darkness, this weapon needs to stop working
+            []
+
+        GatlingLaser ->
+            [ MicrofusionCell ]
+
+        LaserRifle ->
+            [ MicrofusionCell ]
+
+        LaserRifleExtCap ->
+            [ MicrofusionCell ]
+
+        PlasmaRifle ->
+            [ MicrofusionCell ]
+
+        TurboPlasmaRifle ->
+            [ MicrofusionCell ]
+
+        PulseRifle ->
+            [ MicrofusionCell ]
+
+        Flare ->
+            []
+
+        FragGrenade ->
+            []
+
+        BBAmmo ->
+            []
+
+        SmallEnergyCell ->
+            []
+
+        Fmj223 ->
+            []
+
+        ShotgunShell ->
+            []
+
+        Jhp10mm ->
+            []
+
+        Jhp5mm ->
+            []
+
+        MicrofusionCell ->
+            []
+
+        Ec2mm ->
+            []
+
+        Tool ->
+            []
+
+        LockPicks ->
+            []
+
+        ElectronicLockpick ->
+            []
+
+        AbnormalBrain ->
+            []
+
+        ChimpanzeeBrain ->
+            []
+
+        HumanBrain ->
+            []
+
+        CyberneticBrain ->
+            []
+
+        GECK ->
+            []
+
+        SkynetAim ->
+            []
+
+        MotionSensor ->
+            []
+
+        K9 ->
+            []
+
+        MeatJerky ->
+            []
+
+        Ap5mm ->
+            []
+
+        Mm9 ->
+            []
+
+        Ball9mm ->
+            []
+
+        Ap10mm ->
+            []
+
+        Ap14mm ->
+            []
+
+        ExplosiveRocket ->
+            []
+
+        RocketAp ->
+            []
+
+        Pistol223 ->
+            [ Fmj223 ]
+
+        Wakizashi ->
+            []
+
+        LittleJesus ->
+            []
+
+        Ripper ->
+            [ SmallEnergyCell ]
+
+        NeedlerPistol ->
+            [ HnNeedlerCartridge, HnApNeedlerCartridge ]
+
+        MagnetoLaserPistol ->
+            [ SmallEnergyCell ]
+
+        PulsePistol ->
+            [ SmallEnergyCell ]
+
+        HolyHandGrenade ->
+            []
+
+        HnNeedlerCartridge ->
+            []
+
+        HnApNeedlerCartridge ->
+            []

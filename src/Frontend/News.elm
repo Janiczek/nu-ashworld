@@ -28,12 +28,16 @@ items =
 - more "normal" unarmed+melee weapons, and make them part of shops
 - Fast Shot trait -> can't use aimed shots
 
+- Are we adding bonus to Critical Chance based on AimedShot?
+
+- Add upgraded unarmed attacks: https://fallout.fandom.com/wiki/Unarmed_(Fallout)
+
 EQUIPPED AMMO
 - show it in the inventory
 - show which types are usable for the current weapon
 - don't allow equipping incompatible ammo
 - when unequipping weapon unequip the ammo too
-- when it runs out during the fight, do we want to default to another compatible ammo? So should it be only preferredAmmo?
+- Use it in the fight, switch to another compatible ammo (even in the SPlayer afterwards!) when it runs out and unequip when it runs out (switching back to unarmed content)
 
 - FightStrategy: walk away
 

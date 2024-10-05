@@ -3,7 +3,7 @@ module Data.Enemy exposing
     , actionPoints
     , addedSkillPercentages
     , aimedShotName
-    , allTypes
+    , all
     , criticalSpec
     , damageResistanceNormal
     , damageThresholdNormal
@@ -17,6 +17,7 @@ module Data.Enemy exposing
     , forSmallChunk
     , hp
     , humanAimedShotName
+    , isLivingCreature
     , manCriticalSpec
     , meleeDamageBonus
     , name
@@ -114,24 +115,24 @@ type Type
     | Radscorpion
 
 
-allTypes : List Type
-allTypes =
-    [ Brahmin
-    , AngryBrahmin
-    , WeakBrahmin
-    , WildBrahmin
-    , GiantAnt
-    , ToughGiantAnt
-    , LesserRadscorpion
-    , Radscorpion
-    , LesserBlackRadscorpion
-    , BlackRadscorpion
-    , SilverGecko
+all : List Type
+all =
+    [ SilverGecko
     , ToughSilverGecko
     , GoldenGecko
     , ToughGoldenGecko
     , FireGecko
     , ToughFireGecko
+    , Brahmin
+    , AngryBrahmin
+    , WeakBrahmin
+    , WildBrahmin
+    , GiantAnt
+    , ToughGiantAnt
+    , BlackRadscorpion
+    , LesserBlackRadscorpion
+    , LesserRadscorpion
+    , Radscorpion
     ]
 
 
@@ -3740,3 +3741,55 @@ dropItemsGenerator { items } =
             )
         |> Random.sequence
         |> Random.map Maybe.values
+
+
+isLivingCreature : Type -> Bool
+isLivingCreature type_ =
+    case type_ of
+        SilverGecko ->
+            True
+
+        ToughSilverGecko ->
+            True
+
+        GoldenGecko ->
+            True
+
+        ToughGoldenGecko ->
+            True
+
+        FireGecko ->
+            True
+
+        ToughFireGecko ->
+            True
+
+        Brahmin ->
+            True
+
+        AngryBrahmin ->
+            True
+
+        WeakBrahmin ->
+            True
+
+        WildBrahmin ->
+            True
+
+        GiantAnt ->
+            True
+
+        ToughGiantAnt ->
+            True
+
+        BlackRadscorpion ->
+            True
+
+        LesserBlackRadscorpion ->
+            True
+
+        LesserRadscorpion ->
+            True
+
+        Radscorpion ->
+            True

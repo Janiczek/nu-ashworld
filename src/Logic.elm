@@ -570,7 +570,7 @@ rangedChanceToHit r =
                             -- weapon long range perk is already factored into the distancePenalty
                             + weaponAccuratePerk
                             - distancePenalty_
-                            - ((r.targetArmorClass * (100 - ammoArmorClassModifier)) // 100)
+                            - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
                             - lightingPenalty_
                             - strengthRequirementPenalty
                             - shotPenalty
@@ -1168,7 +1168,7 @@ damageThresholdNormal r =
     let
         armorDamageThreshold =
             r.equippedArmor
-                |> Maybe.map Item.damageThresholdNormal
+                |> Maybe.map Item.armorDamageThresholdNormal
                 |> Maybe.withDefault 0
     in
     r.naturalDamageThresholdNormal + armorDamageThreshold
@@ -1184,7 +1184,7 @@ damageResistanceNormal r =
     let
         fromArmor =
             r.equippedArmor
-                |> Maybe.map Item.damageResistanceNormal
+                |> Maybe.map Item.armorDamageResistanceNormal
                 |> Maybe.withDefault 0
 
         fromToughnessPerk =
@@ -1481,6 +1481,57 @@ attackStyleAndApCost kind =
         Flare ->
             [ ( Throw, 1 ) ]
 
+        Ap5mm ->
+            []
+
+        Mm9 ->
+            []
+
+        Ball9mm ->
+            []
+
+        Ap10mm ->
+            []
+
+        Ap14mm ->
+            []
+
+        ExplosiveRocket ->
+            []
+
+        RocketAp ->
+            []
+
+        Wakizashi ->
+            meleeAttackStyleAndApCost 3
+
+        LittleJesus ->
+            meleeAttackStyleAndApCost 3
+
+        Ripper ->
+            meleeAttackStyleAndApCost 4
+
+        Pistol223 ->
+            shootAttackStyleAndApCost 5
+
+        NeedlerPistol ->
+            shootAttackStyleAndApCost 5
+
+        MagnetoLaserPistol ->
+            shootAttackStyleAndApCost 5
+
+        PulsePistol ->
+            shootAttackStyleAndApCost 4
+
+        HolyHandGrenade ->
+            [ ( Throw, 4 ) ]
+
+        HnNeedlerCartridge ->
+            []
+
+        HnApNeedlerCartridge ->
+            []
+
 
 canBurst : Item.Kind -> Bool
 canBurst kind =
@@ -1496,6 +1547,6 @@ strengthRequirementChanceToHitPenalty :
 strengthRequirementChanceToHitPenalty r =
     let
         strengthRequirement =
-            Item.strengthRequirement r.equippedWeapon
+            Item.weaponStrengthRequirement r.equippedWeapon
     in
     max 0 (strengthRequirement - r.strength) * 20

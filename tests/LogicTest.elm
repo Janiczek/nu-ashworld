@@ -86,43 +86,6 @@ test =
         ]
 
 
-log :
-    { attackerAddedSkillPercentages : SeqDict Skill Int
-    , attackerPerks : SeqDict Perk Int
-    , attackerSpecial : Special
-    , distanceHexes : Int
-    , equippedWeapon : Maybe Item.Kind
-    , equippedAmmo : Maybe Item.Kind
-    , targetArmorClass : Int
-    , attackStyle : AttackStyle
-    }
-    ->
-        { attackerAddedSkillPercentages : SeqDict Skill Int
-        , attackerPerks : SeqDict Perk Int
-        , attackerSpecial : Special
-        , distanceHexes : Int
-        , equippedWeapon : Maybe Item.Kind
-        , equippedAmmo : Maybe Item.Kind
-        , targetArmorClass : Int
-        , attackStyle : AttackStyle
-        }
-log args =
-    let
-        _ =
-            { attackerAddedSkillPercentages = SeqDict.toList args.attackerAddedSkillPercentages
-            , attackerPerks = SeqDict.toList args.attackerPerks
-            , attackerSpecial = args.attackerSpecial
-            , distanceHexes = args.distanceHexes
-            , equippedWeapon = args.equippedWeapon
-            , equippedAmmo = args.equippedAmmo
-            , targetArmorClass = args.targetArmorClass
-            , attackStyle = args.attackStyle
-            }
-                |> Debug.log "chanceToHit args"
-    in
-    args
-
-
 chanceToHitArgsFuzzer :
     Fuzzer
         { attackerAddedSkillPercentages : SeqDict Skill Int

@@ -1,0 +1,2 @@
+test: elm-test --compiler lamdera
+watch: elm-test --compiler lamdera --watch

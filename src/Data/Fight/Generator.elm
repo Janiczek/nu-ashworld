@@ -11,6 +11,7 @@ import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(.
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Critical as Critical exposing (Critical)
+import Data.Fight.DamageType as DamageType exposing (DamageType)
 import Data.FightStrategy as FightStrategy
     exposing
         ( Command(..)
@@ -19,10 +20,10 @@ import Data.FightStrategy as FightStrategy
         , Operator(..)
         , Value(..)
         )
-import Data.Item as Item exposing (Item)
+import Data.Item as Item exposing (Item, isWeaponArmorPenetrating)
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
-import Data.Skill as Skill exposing (Skill)
+import Data.Skill as Skill exposing (Skill(..))
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp
@@ -175,7 +176,23 @@ updateOpponent who fn ongoing =
             { ongoing | target = fn ongoing.target }
 
 
-rollDamageAndCriticalInfo : Who -> OngoingFight -> AttackStyle -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
+weaponDamageType : Maybe Item.Kind -> Maybe DamageType
+weaponDamageType equippedWeapon =
+    case equippedWeapon of
+        Nothing ->
+            -- unarmed!
+            Just DamageType.NormalDamage
+
+        Just weapon ->
+            Item.weaponDamageType weapon
+
+
+rollDamageAndCriticalInfo :
+    Who
+    -> OngoingFight
+    -> AttackStyle
+    -> Maybe Critical.EffectCategory
+    -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
 rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
     let
         opponent =
@@ -183,6 +200,10 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
 
         otherOpponent =
             opponent_ (Fight.theOther who) ongoing
+
+        usedAmmo_ : UsedAmmo
+        usedAmmo_ =
+            usedAmmo who ongoing
 
         criticalSpec : Maybe Critical.Spec
         criticalSpec =
@@ -213,131 +234,205 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                 Just spec ->
                     Random.map Just <| rollCritical spec otherOpponent
     in
-    Random.map2
-        (\damage maybeCritical ->
-            let
-                -- Damage formulas taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
-                -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
-                damage_ =
-                    toFloat damage
+    case weaponDamageType opponent.equippedWeapon of
+        Nothing ->
+            -- Attacking with something that doesn't have a damage type?
+            Random.constant ( 0, Nothing )
 
-                rangedBonus =
-                    -- TODO ranged attacks and perks
-                    0
+        Just damageType ->
+            Random.map2
+                (\damage maybeCritical ->
+                    let
+                        -- Damage formulas taken from https://falloutmods.fandom.com/wiki/Fallout_engine_calculations#Damage_and_combat_calculations
+                        -- TODO check this against the code in https://fallout-archive.fandom.com/wiki/Fallout_and_Fallout_2_combat#Ranged_combat_2
+                        -- This is also helpful: https://github.com/alexbatalov/fallout2-ce/blob/main/src/combat.cc
+                        damage_ =
+                            toFloat damage
 
-                ammoDamageMultiplier =
-                    -- TODO ammo in combat
-                    1
+                        rangedBonus =
+                            toFloat (Perk.rank Perk.BonusRangedDamage opponent.perks) * 2
 
-                ammoDamageDivisor =
-                    -- TODO ammo in combat
-                    1
+                        ( ammoDamageMultiplier, ammoDamageDivisor ) =
+                            case usedAmmo_ of
+                                PreferredAmmo ammo ->
+                                    Item.ammoDamageModifier ammo
 
-                shouldIgnoreArmor : Bool
-                shouldIgnoreArmor =
-                    -- TODO armor ignoring attacks
-                    False
+                                FallbackAmmo ammo ->
+                                    Item.ammoDamageModifier ammo
 
-                armorIgnore =
-                    -- we'll later divide DT by this
-                    if shouldIgnoreArmor then
-                        5
+                                NoUsableAmmo ->
+                                    ( 1, 1 )
 
-                    else
-                        1
+                                NoAmmoNeeded ->
+                                    ( 1, 1 )
 
-                livingAnatomyBonus =
-                    -- TODO check if the opponent is a living creature
-                    if Perk.rank Perk.LivingAnatomy opponent.perks > 0 then
-                        5
+                        isWeaponArmorPenetrating : Bool
+                        isWeaponArmorPenetrating =
+                            let
+                                allGood () =
+                                    opponent.equippedWeapon
+                                        |> Maybe.map Item.isWeaponArmorPenetrating
+                                        |> Maybe.withDefault False
+                            in
+                            case usedAmmo_ of
+                                PreferredAmmo _ ->
+                                    allGood ()
 
-                    else
-                        0
+                                FallbackAmmo _ ->
+                                    allGood ()
 
-                damageThreshold =
-                    -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-                    toFloat <|
-                        Logic.damageThresholdNormal
-                            { naturalDamageThresholdNormal =
-                                case otherOpponent.type_ of
-                                    Fight.Player _ ->
-                                        0
+                                NoUsableAmmo ->
+                                    False
 
-                                    Fight.Npc enemyType ->
-                                        Enemy.damageThresholdNormal enemyType
-                            , equippedArmor = otherOpponent.equippedArmor
-                            }
+                                NoAmmoNeeded ->
+                                    False
 
-                damageResistance =
-                    -- TODO we're not dealing with plasma/... right now, only _normal_ DR
-                    toFloat <|
-                        Logic.damageResistanceNormal
-                            { naturalDamageResistanceNormal =
-                                case otherOpponent.type_ of
-                                    Fight.Player _ ->
-                                        0
+                        isUnarmedAttackArmorPiercing : Bool
+                        isUnarmedAttackArmorPiercing =
+                            {- TODO upgraded unarmed attacks
 
-                                    Fight.Npc enemyType ->
-                                        Enemy.damageResistanceNormal enemyType
-                            , equippedArmor = otherOpponent.equippedArmor
-                            , toughnessPerkRanks = Perk.rank Perk.Toughness otherOpponent.perks
-                            }
+                               - Dragon Punch (PALM_STRIKE)
+                               - Force Punch (PIERCING_STRIKE)
+                               - Jump Kick (HOOK_KICK)
+                               - Death Blossom Kick (PIERCING_KICK)
+                            -}
+                            False
 
-                ammoDamageResistanceModifier =
-                    -- TODO ammo
-                    0
+                        armorIgnoreDtDivisor =
+                            if
+                                (isCriticalAttackArmorPiercing && not (damageType == DamageType.EMP))
+                                    || isWeaponArmorPenetrating
+                                    || isUnarmedAttackArmorPiercing
+                            then
+                                5
 
-                criticalHitDamageMultiplier : Int
-                criticalHitDamageMultiplier =
-                    maybeCritical
-                        |> Maybe.map .damageMultiplier
-                        |> Maybe.withDefault 2
+                            else
+                                1
 
-                maybeCriticalInfo =
-                    Maybe.map
-                        (\critical -> ( critical.effects, critical.message ))
-                        maybeCritical
+                        criticalAttackDrDivisor =
+                            if isCriticalAttackArmorPiercing && not (damageType == DamageType.EMP) then
+                                5
 
-                finesseDamageResistanceModifier =
-                    if Trait.isSelected Trait.Finesse opponent.traits then
-                        30
+                            else
+                                1
 
-                    else
-                        0
+                        livingAnatomyBonus =
+                            if
+                                (Perk.rank Perk.LivingAnatomy opponent.perks > 0)
+                                    && Fight.isOpponentLivingCreature otherOpponent
+                            then
+                                5
 
-                finalDamageResistance =
-                    -- TODO how should this be ignored by armor-bypassing attacks?
-                    -- TODO beware the +/- signs for the ammo modifier
-                    damageResistance + ammoDamageResistanceModifier + finesseDamageResistanceModifier
+                            else
+                                0
 
-                damageBeforeDamageResistance =
-                    ((damage_ + rangedBonus)
-                        * (ammoDamageMultiplier / ammoDamageDivisor)
-                        * (toFloat criticalHitDamageMultiplier / 2)
+                        damageThreshold =
+                            -- TODO we're not dealing with plasma/... right now, only _normal_ DT
+                            toFloat <|
+                                Logic.damageThresholdNormal
+                                    { naturalDamageThresholdNormal =
+                                        case otherOpponent.type_ of
+                                            Fight.Player _ ->
+                                                0
+
+                                            Fight.Npc enemyType ->
+                                                Enemy.damageThresholdNormal enemyType
+                                    , equippedArmor = otherOpponent.equippedArmor
+                                    }
+
+                        damageResistancePct : Int
+                        damageResistancePct =
+                            -- TODO we're not dealing with plasma/... right now, only _normal_ DR
+                            Logic.damageResistanceNormal
+                                { naturalDamageResistanceNormal =
+                                    case otherOpponent.type_ of
+                                        Fight.Player _ ->
+                                            0
+
+                                        Fight.Npc enemyType ->
+                                            Enemy.damageResistanceNormal enemyType
+                                , equippedArmor = otherOpponent.equippedArmor
+                                , toughnessPerkRanks = Perk.rank Perk.Toughness otherOpponent.perks
+                                }
+
+                        criticalHitDamageMultiplier : Int
+                        criticalHitDamageMultiplier =
+                            maybeCritical
+                                |> Maybe.map .damageMultiplier
+                                |> Maybe.withDefault 2
+
+                        maybeCriticalInfo : Maybe ( List Critical.Effect, String )
+                        maybeCriticalInfo =
+                            maybeCritical
+                                |> Maybe.map (\critical -> ( critical.effects, critical.message ))
+
+                        isCriticalAttackArmorPiercing : Bool
+                        isCriticalAttackArmorPiercing =
+                            maybeCritical
+                                |> Maybe.map (.effects >> List.member Critical.BypassArmor)
+                                |> Maybe.withDefault False
+
+                        ammoDamageResistanceModifierPct : Int
+                        ammoDamageResistanceModifierPct =
+                            case usedAmmo_ of
+                                PreferredAmmo ammo ->
+                                    Item.ammoDamageResistanceModifier ammo
+
+                                FallbackAmmo ammo ->
+                                    Item.ammoDamageResistanceModifier ammo
+
+                                NoUsableAmmo ->
+                                    0
+
+                                NoAmmoNeeded ->
+                                    0
+
+                        finesseDamageResistanceModifierPct : Int
+                        finesseDamageResistanceModifierPct =
+                            if
+                                Trait.isSelected Trait.Finesse opponent.traits
+                                    && (not isCriticalAttackArmorPiercing || damageType == DamageType.EMP)
+                            then
+                                30
+
+                            else
+                                0
+
+                        finalDamageResistancePct : Int
+                        finalDamageResistancePct =
+                            damageResistancePct
+                                + ammoDamageResistanceModifierPct
+                                + finesseDamageResistanceModifierPct
+
+                        damageBeforeDamageResistance =
+                            ((damage_ + rangedBonus)
+                                * (ammoDamageMultiplier / ammoDamageDivisor)
+                                * (toFloat criticalHitDamageMultiplier / 2)
+                            )
+                                - (damageThreshold / armorIgnoreDtDivisor)
+
+                        finalDamage =
+                            livingAnatomyBonus
+                                + (if damageBeforeDamageResistance > 0 then
+                                    max 1 <|
+                                        round <|
+                                            damageBeforeDamageResistance
+                                                / criticalAttackDrDivisor
+                                                * ((100 - min 90 (toFloat finalDamageResistancePct)) / 100)
+
+                                   else
+                                    0
+                                  )
+                    in
+                    ( finalDamage
+                    , maybeCriticalInfo
                     )
-                        - (damageThreshold / armorIgnore)
-
-                finalDamage =
-                    livingAnatomyBonus
-                        + (if damageBeforeDamageResistance > 0 then
-                            max 1 <|
-                                round <|
-                                    damageBeforeDamageResistance
-                                        * ((100 - min 90 finalDamageResistance) / 100)
-
-                           else
-                            0
-                          )
-            in
-            ( finalDamage
-            , maybeCriticalInfo
-            )
-        )
-        (Random.int
-            opponent.attackStats.minDamage
-            opponent.attackStats.maxDamage
-        )
-        criticalGenerator
+                )
+                (Random.int
+                    opponent.attackStats.minDamage
+                    opponent.attackStats.maxDamage
+                )
+                criticalGenerator
 
 
 bothAlive : OngoingFight -> Bool
@@ -1271,20 +1366,104 @@ evalValue who state value =
             n
 
 
+type UsedAmmo
+    = PreferredAmmo Item.Kind
+    | FallbackAmmo Item.Kind
+    | NoUsableAmmo
+    | NoAmmoNeeded
+
+
+{-| When trying to use a weapon, look at the user's preferences (equippedAmmo)
+and their inventory (opponent.items) and choose which ammo will be used.
+-}
+usedAmmo : Who -> OngoingFight -> UsedAmmo
+usedAmmo who ongoingFight =
+    let
+        opponent : Opponent
+        opponent =
+            opponent_ who ongoingFight
+    in
+    case opponent.equippedWeapon of
+        Nothing ->
+            -- This is going to be unarmed combat without anything equipped (so
+            -- no chance of eg. eating cells for Power Fist)
+            NoAmmoNeeded
+
+        Just equippedWeapon ->
+            let
+                usableAmmo : SeqSet Item.Kind
+                usableAmmo =
+                    Item.usableAmmo equippedWeapon
+                        |> SeqSet.fromList
+            in
+            if SeqSet.isEmpty usableAmmo then
+                -- Eg. Solar Scorcher, I guess? Or any unarmed/melee weapon that doesn't eat ammo
+                NoAmmoNeeded
+
+            else
+                let
+                    fallback : () -> UsedAmmo
+                    fallback () =
+                        opponent.items
+                            |> Dict.toList
+                            |> List.filterMap
+                                (\( _, { kind } ) ->
+                                    if SeqSet.member kind usableAmmo then
+                                        Just kind
+
+                                    else
+                                        Nothing
+                                )
+                            |> List.head
+                            |> Maybe.map FallbackAmmo
+                            |> Maybe.withDefault NoUsableAmmo
+                in
+                case opponent.equippedAmmo of
+                    Just equippedAmmo ->
+                        if SeqSet.member equippedAmmo usableAmmo then
+                            -- We can use the preferred ammo (if we have it in our inventory!)
+                            -- NOTE: we'd like it to be that if you sell/consume all of your equippedAmmo, it stops being equipped.
+                            -- That would mean this being Just is a guarantee that it also exists in the inventory.
+                            -- But let's check it exists in inventory anyways.
+                            if Dict.any (\_ item -> item.kind == equippedAmmo) opponent.items then
+                                PreferredAmmo equippedAmmo
+
+                            else
+                                fallback ()
+
+                        else
+                            -- We need to fall back to anything else that's usable and that's in our inventory.
+                            fallback ()
+
+                    Nothing ->
+                        -- We're free to try anything (it's going to be a Fallback ammo)
+                        fallback ()
+
+
 rangeNeeded : AttackStyle -> Who -> StrategyState -> Int
 rangeNeeded attackStyle who state =
     let
         opponent : Opponent
         opponent =
             opponent_ who state.ongoingFight
-
-        equippedWeapon : Maybe Item.Kind
-        equippedWeapon =
-            opponent.equippedWeapon
     in
-    equippedWeapon
-        |> Maybe.map (Item.range attackStyle)
-        |> Maybe.withDefault Logic.unarmedRange
+    case opponent.equippedWeapon of
+        Nothing ->
+            Logic.unarmedRange
+
+        Just equippedWeapon ->
+            case usedAmmo who state.ongoingFight of
+                PreferredAmmo _ ->
+                    Item.range attackStyle equippedWeapon
+
+                FallbackAmmo _ ->
+                    Item.range attackStyle equippedWeapon
+
+                NoAmmoNeeded ->
+                    Item.range attackStyle equippedWeapon
+
+                NoUsableAmmo ->
+                    Logic.unarmedRange
 
 
 operatorFn : Operator -> (Int -> Int -> Bool)

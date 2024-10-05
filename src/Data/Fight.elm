@@ -14,6 +14,7 @@ module Data.Fight exposing
     , isCriticalAttack
     , isMiss
     , isNPC
+    , isOpponentLivingCreature
     , isPlayer
     , opponentName
     , opponentXp
@@ -604,3 +605,13 @@ isMiss action =
 
         _ ->
             False
+
+
+isOpponentLivingCreature : Opponent -> Bool
+isOpponentLivingCreature opponent =
+    case opponent.type_ of
+        Npc enemy ->
+            Enemy.isLivingCreature enemy
+
+        Player _ ->
+            True
