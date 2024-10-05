@@ -11,6 +11,7 @@ module Data.Enemy exposing
     , dropGenerator
     , dropSpec
     , encodeType
+    , equippedAmmo
     , equippedArmor
     , equippedWeapon
     , forSmallChunk
@@ -26,8 +27,8 @@ module Data.Enemy exposing
     , xp
     )
 
+import Data.Fight.AimedShot exposing (AimedShot(..))
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
-import Data.Fight.ShotType exposing (AimedShot(..))
 import Data.Item as Item exposing (Item)
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.SmallChunk exposing (SmallChunk)
@@ -990,6 +991,58 @@ equippedArmor type_ =
 
 equippedWeapon : Type -> Maybe Item.Kind
 equippedWeapon type_ =
+    case type_ of
+        Brahmin ->
+            Nothing
+
+        AngryBrahmin ->
+            Nothing
+
+        WeakBrahmin ->
+            Nothing
+
+        WildBrahmin ->
+            Nothing
+
+        GiantAnt ->
+            Nothing
+
+        ToughGiantAnt ->
+            Nothing
+
+        LesserRadscorpion ->
+            Nothing
+
+        Radscorpion ->
+            Nothing
+
+        LesserBlackRadscorpion ->
+            Nothing
+
+        BlackRadscorpion ->
+            Nothing
+
+        SilverGecko ->
+            Nothing
+
+        ToughSilverGecko ->
+            Nothing
+
+        GoldenGecko ->
+            Nothing
+
+        ToughGoldenGecko ->
+            Nothing
+
+        FireGecko ->
+            Nothing
+
+        ToughFireGecko ->
+            Nothing
+
+
+equippedAmmo : Type -> Maybe Item.Kind
+equippedAmmo type_ =
     case type_ of
         Brahmin ->
             Nothing

@@ -1,7 +1,7 @@
 module Calculator.Meta.Individual exposing (Individual, crossover, generator, mutate)
 
+import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
-import Data.Fight.ShotType as ShotType
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.Item as Item
 import Data.Skill as Skill exposing (Skill)
@@ -87,12 +87,11 @@ attackStyleGenerator =
     Random.uniform ShootBurst
         (UnarmedUnaimed
             :: MeleeUnaimed
-            :: ThrowUnaimed
+            :: Throw
             :: ShootSingleUnaimed
-            :: List.concatMap (\toAimed -> List.map toAimed ShotType.allAimed)
+            :: List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
                 [ UnarmedAimed
                 , MeleeAimed
-                , ThrowAimed
                 , ShootSingleAimed
                 ]
         )
@@ -527,7 +526,7 @@ mutateFightStrategy str =
         mutateCommandDetails cmd =
             case cmd of
                 FightStrategy.Attack _ ->
-                    shotTypeGenerator
+                    attackStyleGenerator
                         |> Random.map FightStrategy.Attack
 
                 FightStrategy.AttackRandomly ->
@@ -536,6 +535,9 @@ mutateFightStrategy str =
                 FightStrategy.Heal _ ->
                     healingItemKindGenerator
                         |> Random.map FightStrategy.Heal
+
+                FightStrategy.HealWithAnything ->
+                    Random.constant FightStrategy.HealWithAnything
 
                 FightStrategy.MoveForward ->
                     Random.constant FightStrategy.MoveForward

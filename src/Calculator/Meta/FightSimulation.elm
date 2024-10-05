@@ -47,6 +47,7 @@ type alias SPlayerSubset =
     , addedSkillPercentages : SeqDict Skill Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
+    , equippedAmmo : Maybe Item
     , fightStrategy : FightStrategy
     , items : Dict Item.Id Item
     }
@@ -90,6 +91,7 @@ individualToPlayer isFirst individual =
     , items = Dict.empty
     , equippedArmor = Nothing
     , equippedWeapon = Nothing
+    , equippedAmmo = Nothing
     , addedSkillPercentages = addedSkillPercentages
     , fightStrategy = individual.fightStrategy
     }

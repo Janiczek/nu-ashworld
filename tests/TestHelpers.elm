@@ -7,8 +7,8 @@ import Data.Fight as Fight
         , OpponentType
         , PlayerOpponent
         )
+import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
-import Data.Fight.ShotType as ShotType
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -109,6 +109,7 @@ opponentFuzzer =
         |> Fuzz.andMap dropsFuzzer
         |> Fuzz.andMap equippedArmorKindFuzzer
         |> Fuzz.andMap equippedWeaponKindFuzzer
+        |> Fuzz.andMap equippedAmmoKindFuzzer
         |> Fuzz.andMap naturalArmorClassFuzzer
         |> Fuzz.andMap attackStatsFuzzer
         |> Fuzz.andMap addedSkillPercentagesFuzzer
@@ -223,12 +224,11 @@ attackStyleFuzzer =
         (ShootBurst
             :: UnarmedUnaimed
             :: MeleeUnaimed
-            :: ThrowUnaimed
+            :: Throw
             :: ShootSingleUnaimed
-            :: List.concatMap (\toAimed -> List.map toAimed ShotType.allAimed)
+            :: List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
                 [ UnarmedAimed
                 , MeleeAimed
-                , ThrowAimed
                 , ShootSingleAimed
                 ]
         )
@@ -343,6 +343,11 @@ equippedWeaponKindFuzzer =
     Fuzz.maybe weaponKindFuzzer
 
 
+equippedAmmoKindFuzzer : Fuzzer (Maybe Item.Kind)
+equippedAmmoKindFuzzer =
+    Fuzz.maybe ammoKindFuzzer
+
+
 armorKindFuzzer : Fuzzer Item.Kind
 armorKindFuzzer =
     Item.all
@@ -354,6 +359,13 @@ weaponKindFuzzer : Fuzzer Item.Kind
 weaponKindFuzzer =
     Item.all
         |> List.filter Item.isWeapon
+        |> oneOfValues
+
+
+ammoKindFuzzer : Fuzzer Item.Kind
+ammoKindFuzzer =
+    Item.all
+        |> List.filter Item.isAmmo
         |> oneOfValues
 
 

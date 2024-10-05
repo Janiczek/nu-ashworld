@@ -8,9 +8,9 @@ module Data.Fight.Generator exposing
 
 import Data.Enemy as Enemy exposing (addedSkillPercentages)
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
+import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Critical as Critical exposing (Critical)
-import Data.Fight.ShotType as ShotType exposing (AimedShot, ShotType(..))
 import Data.FightStrategy as FightStrategy
     exposing
         ( Command(..)
@@ -175,8 +175,8 @@ updateOpponent who fn ongoing =
             { ongoing | target = fn ongoing.target }
 
 
-rollDamageAndCriticalInfo : Who -> OngoingFight -> ShotType -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
-rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
+rollDamageAndCriticalInfo : Who -> OngoingFight -> AttackStyle -> Maybe Critical.EffectCategory -> Generator ( Int, Maybe ( List Critical.Effect, String ) )
+rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
     let
         opponent =
             opponent_ who ongoing
@@ -192,7 +192,8 @@ rollDamageAndCriticalInfo who ongoing shotType_ maybeCriticalEffectCategory =
                         let
                             aimedShot : AimedShot
                             aimedShot =
-                                ShotType.toAimed shotType_
+                                AttackStyle.toAimed attackStyle
+                                    |> Maybe.withDefault AimedShot.Torso
                         in
                         case otherOpponent.type_ of
                             Fight.Player _ ->
@@ -878,8 +879,8 @@ skipTurn who ongoing =
     finalizeCommand nextOngoing
 
 
-chanceToHit : Who -> OngoingFight -> AttackStyle -> ShotType -> Int
-chanceToHit who ongoing attackStyle shot =
+chanceToHit : Who -> OngoingFight -> AttackStyle -> Int
+chanceToHit who ongoing attackStyle =
     let
         opponent =
             opponent_ who ongoing
@@ -902,13 +903,12 @@ chanceToHit who ongoing attackStyle shot =
     Logic.chanceToHit
         { attackerSpecial = opponent.special
         , attackerAddedSkillPercentages = opponent.addedSkillPercentages
+        , attackerPerks = opponent.perks
         , distanceHexes = ongoing.distanceHexes
-        , weaponRange =
-            opponent.equippedWeapon
-                |> Maybe.map (Item.range shot)
-                |> Maybe.withDefault Logic.unarmedRange
         , targetArmorClass = armorClass
         , attackStyle = attackStyle
+        , equippedWeapon = opponent.equippedWeapon
+        , equippedAmmo = opponent.equippedAmmo
         }
 
 
@@ -1010,14 +1010,10 @@ attack_ who ongoing attackStyle baseApCost =
         other =
             Fight.theOther who
 
-        shotType : ShotType
-        shotType =
-            AttackStyle.toShotType attackStyle
-
         apCost_ : Int
         apCost_ =
             Logic.attackApCost
-                { isAimedShot = ShotType.isAimed shotType
+                { isAimedShot = AttackStyle.isAimed attackStyle
                 , hasBonusHthAttacksPerk = Perk.rank Perk.BonusHthAttacks opponent.perks > 0
                 , hasBonusRateOfFirePerk = Perk.rank Perk.BonusRateOfFire opponent.perks > 0
                 , attackStyle = attackStyle
@@ -1026,7 +1022,7 @@ attack_ who ongoing attackStyle baseApCost =
 
         chance : Int
         chance =
-            chanceToHit who ongoing attackStyle shotType
+            chanceToHit who ongoing attackStyle
     in
     if ongoing.distanceHexes /= 0 then
         rejectCommand who Attack_NotCloseEnough ongoing
@@ -1110,7 +1106,7 @@ attack_ who ongoing attackStyle baseApCost =
                                                 Random.constant Nothing
                                     in
                                     criticalEffectCategory
-                                        |> Random.andThen (rollDamageAndCriticalInfo who ongoing shotType)
+                                        |> Random.andThen (rollDamageAndCriticalInfo who ongoing attackStyle)
                                         |> Random.andThen
                                             (\( damage, maybeCriticalEffectsAndMessage ) ->
                                                 let
@@ -1118,7 +1114,7 @@ attack_ who ongoing attackStyle baseApCost =
                                                     action =
                                                         Fight.Attack
                                                             { damage = damage
-                                                            , shotType = shotType
+                                                            , attackStyle = attackStyle
                                                             , remainingHp = .hp (opponent_ other ongoing) - damage
                                                             , isCritical = maybeCriticalEffectsAndMessage /= Nothing
                                                             , apCost = apCost_
@@ -1138,7 +1134,7 @@ attack_ who ongoing attackStyle baseApCost =
                             action : Fight.Action
                             action =
                                 Fight.Miss
-                                    { shotType = shotType
+                                    { attackStyle = attackStyle
                                     , apCost = apCost_
                                     }
                         in
@@ -1250,6 +1246,7 @@ evalValue who state value =
             Logic.chanceToHit
                 { attackerAddedSkillPercentages = state.you.addedSkillPercentages
                 , attackerSpecial = state.you.special
+                , attackerPerks = state.you.perks
                 , distanceHexes = state.distanceHexes
                 , targetArmorClass =
                     Logic.armorClass
@@ -1260,7 +1257,8 @@ evalValue who state value =
                         , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight
                         }
                 , attackStyle = attackStyle
-                , weaponRange = rangeNeeded attackStyle who state
+                , equippedWeapon = state.you.equippedWeapon
+                , equippedAmmo = state.you.equippedAmmo
                 }
 
         RangeNeeded attackStyle ->
@@ -1283,13 +1281,9 @@ rangeNeeded attackStyle who state =
         equippedWeapon : Maybe Item.Kind
         equippedWeapon =
             opponent.equippedWeapon
-
-        shotType : ShotType
-        shotType =
-            AttackStyle.toShotType attackStyle
     in
     equippedWeapon
-        |> Maybe.map (Item.range shotType)
+        |> Maybe.map (Item.range attackStyle)
         |> Maybe.withDefault Logic.unarmedRange
 
 
@@ -1412,6 +1406,7 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , drops = items
                   , equippedArmor = Enemy.equippedArmor enemyType
                   , equippedWeapon = Enemy.equippedWeapon enemyType
+                  , equippedAmmo = Enemy.equippedAmmo enemyType
                   , naturalArmorClass = Enemy.naturalArmorClass enemyType
                   , attackStats =
                         -- TODO for now it's all unarmed
@@ -1449,6 +1444,7 @@ playerOpponent :
         , addedSkillPercentages : SeqDict Skill Int
         , equippedArmor : Maybe Item
         , equippedWeapon : Maybe Item
+        , equippedAmmo : Maybe Item
         , fightStrategy : FightStrategy
         , items : Dict Item.Id Item
     }
@@ -1506,6 +1502,7 @@ playerOpponent player =
     , drops = []
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
+    , equippedAmmo = player.equippedAmmo |> Maybe.map .kind
     , naturalArmorClass = naturalArmorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages

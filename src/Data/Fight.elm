@@ -21,7 +21,7 @@ module Data.Fight exposing
     )
 
 import Data.Enemy as Enemy
-import Data.Fight.ShotType as ShotType exposing (ShotType)
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Perk exposing (Perk)
@@ -70,6 +70,7 @@ type alias Opponent =
     , drops : List Item
     , equippedArmor : Maybe Item.Kind
     , equippedWeapon : Maybe Item.Kind
+    , equippedAmmo : Maybe Item.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : SeqDict Skill Int
@@ -101,13 +102,13 @@ type Action
         }
     | Attack
         { damage : Int
-        , shotType : ShotType
+        , attackStyle : AttackStyle
         , remainingHp : Int
         , isCritical : Bool -- TODO the string
         , apCost : Int
         }
     | Miss
-        { shotType : ShotType
+        { attackStyle : AttackStyle
         , apCost : Int
 
         -- TODO isCritical
@@ -352,7 +353,7 @@ encodeAction action =
             JE.object
                 [ ( "type", JE.string "Attack" )
                 , ( "damage", JE.int r.damage )
-                , ( "shotType", ShotType.encode r.shotType )
+                , ( "attackStyle", AttackStyle.encode r.attackStyle )
                 , ( "remainingHp", JE.int r.remainingHp )
                 , ( "isCritical", JE.bool r.isCritical )
                 , ( "apCost", JE.int r.apCost )
@@ -361,7 +362,7 @@ encodeAction action =
         Miss r ->
             JE.object
                 [ ( "type", JE.string "Miss" )
-                , ( "shotType", ShotType.encode r.shotType )
+                , ( "attackStyle", AttackStyle.encode r.attackStyle )
                 , ( "apCost", JE.int r.apCost )
                 ]
 
@@ -437,13 +438,13 @@ actionDecoder =
 
                     "Miss" ->
                         JD.map2
-                            (\shotType apCost ->
+                            (\attackStyle apCost ->
                                 Miss
-                                    { shotType = shotType
+                                    { attackStyle = attackStyle
                                     , apCost = apCost
                                     }
                             )
-                            (JD.field "shotType" ShotType.decoder)
+                            (JD.field "attackStyle" AttackStyle.decoder)
                             (JD.field "apCost" JD.int)
 
                     "Heal" ->
@@ -507,25 +508,18 @@ commandRejectionReasonDecoder =
 
 attackActionDecoder : Decoder Action
 attackActionDecoder =
-    JD.oneOf
-        [ attackActionDecoderV1
-        ]
-
-
-attackActionDecoderV1 : Decoder Action
-attackActionDecoderV1 =
     JD.map5
-        (\damage shotType remainingHp isCritical apCost ->
+        (\damage attackStyle remainingHp isCritical apCost ->
             Attack
                 { damage = damage
-                , shotType = shotType
+                , attackStyle = attackStyle
                 , remainingHp = remainingHp
                 , isCritical = isCritical
                 , apCost = apCost
                 }
         )
         (JD.field "damage" JD.int)
-        (JD.field "shotType" ShotType.decoder)
+        (JD.field "attackStyle" AttackStyle.decoder)
         (JD.field "remainingHp" JD.int)
         (JD.field "isCritical" JD.bool)
         (JD.field "apCost" JD.int)

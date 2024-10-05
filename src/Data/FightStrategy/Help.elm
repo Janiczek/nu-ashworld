@@ -20,7 +20,7 @@ help =
 
 [COMMAND]                           [VALUE]                        
   - attack randomly                   - my HP                      
-  - attack ([SHOT TYPE])              - my max HP
+  - attack ([ATTACK])                 - my max HP
   - heal ([ITEM])                     - my AP                      
   - heal with anything                - number of available [ITEM] 
   - move forward                      - number of available healing items
@@ -39,10 +39,10 @@ help =
  [OPERATOR]                           - melee              - torso    
    - <   (less than)                  - melee, [AIM]       - groin    
    - <=  (less than or equal)         - throw              - left arm 
-   - ==  (equals)                     - throw, [AIM]       - right arm
-   - !=  (doesn't equal)              - shoot              - left leg 
-   - >=  (greater than or equal)      - shoot, [AIM]       - right leg
-   - >   (greater than)               - burst
+   - ==  (equals)                     - shoot              - right arm
+   - !=  (doesn't equal)              - shoot, [AIM]       - left leg 
+   - >=  (greater than or equal)      - burst              - right leg
+   - >   (greater than)                         
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]

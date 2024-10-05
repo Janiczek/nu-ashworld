@@ -29,7 +29,7 @@ type Perk
       -- TODO Healer - needs usage of First Aid / Doctor skills
     | HereAndNow
       -- TODO Kama Sutra Master - probably not...
-      -- TODO Night Vision - needs darkness tracked and to play a role in fights
+    | NightVision
       -- TODO Presence - would need dialog with NPCs
       -- TODO Quick Pockets - would need inventory handling in combat
       -- TODO Scout - what should it do in NuAshworld?
@@ -141,6 +141,7 @@ all =
     , MoreCriticals
     , MrFixit
     , Negotiator
+    , NightVision
     , Pathfinder
     , Ranger
     , Salesman
@@ -287,28 +288,146 @@ name perk =
         GeckoSkinning ->
             "Gecko Skinning"
 
-
-multipleRankPerks : SeqDict Perk Int
-multipleRankPerks =
-    -- https://fallout.fandom.com/wiki/Fallout_2_perks
-    SeqDict.fromList
-        [ ( EarlierSequence, 3 )
-        , ( Educated, 3 )
-        , ( BonusHthDamage, 3 )
-        , ( FasterHealing, 3 )
-        , ( MoreCriticals, 3 )
-        , ( SwiftLearner, 3 )
-        , ( Toughness, 3 )
-        , ( Pathfinder, 2 )
-        , ( ActionBoy, 2 )
-        , ( Lifegiver, 2 )
-        ]
+        NightVision ->
+            "Night Vision"
 
 
+{-| <https://fallout.fandom.com/wiki/Fallout_2_perks>
+-}
 maxRank : Perk -> Int
 maxRank perk =
-    SeqDict.get perk multipleRankPerks
-        |> Maybe.withDefault 1
+    case perk of
+        EarlierSequence ->
+            3
+
+        Educated ->
+            3
+
+        BonusHthDamage ->
+            3
+
+        FasterHealing ->
+            3
+
+        MoreCriticals ->
+            3
+
+        SwiftLearner ->
+            3
+
+        Toughness ->
+            3
+
+        Pathfinder ->
+            2
+
+        ActionBoy ->
+            2
+
+        Lifegiver ->
+            2
+
+        Awareness ->
+            1
+
+        CautiousNature ->
+            1
+
+        Comprehension ->
+            1
+
+        HereAndNow ->
+            1
+
+        NightVision ->
+            1
+
+        Survivalist ->
+            1
+
+        Thief ->
+            1
+
+        AdrenalineRush ->
+            1
+
+        FortuneFinder ->
+            1
+
+        Gambler ->
+            1
+
+        Negotiator ->
+            1
+
+        Ranger ->
+            1
+
+        Salesman ->
+            1
+
+        BetterCriticals ->
+            1
+
+        Dodger ->
+            1
+
+        Speaker ->
+            1
+
+        GainStrength ->
+            1
+
+        GainPerception ->
+            1
+
+        GainEndurance ->
+            1
+
+        GainCharisma ->
+            1
+
+        GainIntelligence ->
+            1
+
+        GainAgility ->
+            1
+
+        GainLuck ->
+            1
+
+        HthEvade ->
+            1
+
+        LivingAnatomy ->
+            1
+
+        MasterThief ->
+            1
+
+        MasterTrader ->
+            1
+
+        Medic ->
+            1
+
+        MrFixit ->
+            1
+
+        Tag ->
+            1
+
+        BonusHthAttacks ->
+            1
+
+        BonusRateOfFire ->
+            1
+
+        Slayer ->
+            1
+
+        GeckoSkinning ->
+            1
 
 
 encode : Perk -> JE.Value
@@ -344,6 +463,9 @@ encode perk =
 
             HereAndNow ->
                 "here-and-now"
+
+            NightVision ->
+                "night-vision"
 
             Survivalist ->
                 "survivalist"
@@ -480,6 +602,9 @@ decoder =
 
                     "here-and-now" ->
                         JD.succeed HereAndNow
+
+                    "night-vision" ->
+                        JD.succeed NightVision
 
                     "survivalist" ->
                         JD.succeed Survivalist
@@ -636,6 +761,9 @@ isApplicableForLevelup r perk =
 
                 MasterTrader ->
                     r.level >= 12 && s.charisma >= 7 && skill Skill.Barter >= 75
+
+                NightVision ->
+                    r.level >= 3 && s.perception >= 6
 
                 Awareness ->
                     r.level >= 3 && s.perception >= 5
@@ -852,6 +980,9 @@ description perk =
 
         Negotiator ->
             "You are a very skilled negotiator. Not only can you barter with the best of them, but you can talk your way into or out of almost anything. With this Perk you gain +10% to both Barter and Speech."
+
+        NightVision ->
+            "With the Night Vision Perk, you can see in the dark better. This Perk will reduce the overall darkness level by 20%."
 
         Pathfinder ->
             "The Pathfinder is better able to find the shortest route. With this Perk, your travel cost on the World Map is reduced by 25% for each level."

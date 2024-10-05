@@ -1,7 +1,7 @@
 module Data.FightStrategy.ParserTest exposing (..)
 
-import Data.Fight.AttackStyle as AttackStyle
-import Data.Fight.ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Fight.AimedShot exposing (AimedShot(..))
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.FightStrategy as FightStrategy
     exposing
         ( Command(..)
@@ -57,19 +57,39 @@ value =
         )
 
 
-shotType : Test
-shotType =
-    parserTest "FightStrategy.shotType"
-        FightStrategy.shotType
-        [ ( "NormalShot", "unaimed", Just NormalShot )
-        , ( "Head", "head", Just (AimedShot Head) )
-        , ( "Torso", "torso", Just (AimedShot Torso) )
-        , ( "Eyes", "eyes", Just (AimedShot Eyes) )
-        , ( "Groin", "groin", Just (AimedShot Groin) )
-        , ( "LeftArm", "left arm", Just (AimedShot LeftArm) )
-        , ( "RightArm", "right arm", Just (AimedShot RightArm) )
-        , ( "LeftLeg", "left leg", Just (AimedShot LeftLeg) )
-        , ( "RightLeg", "right leg", Just (AimedShot RightLeg) )
+attackStyle : Test
+attackStyle =
+    parserTest "FightStrategy.attackStyle"
+        FightStrategy.attackStyle
+        [ ( "UnarmedUnaimed", "unaimed", Just UnarmedUnaimed )
+        , ( "UnarmedAimed Head", "unarmed, head", Just (UnarmedAimed Head) )
+        , ( "UnarmedAimed Torso", "unarmed, torso", Just (UnarmedAimed Torso) )
+        , ( "UnarmedAimed Eyes", "unarmed, eyes", Just (UnarmedAimed Eyes) )
+        , ( "UnarmedAimed Groin", "unarmed, groin", Just (UnarmedAimed Groin) )
+        , ( "UnarmedAimed LeftArm", "unarmed, left arm", Just (UnarmedAimed LeftArm) )
+        , ( "UnarmedAimed RightArm", "unarmed, right arm", Just (UnarmedAimed RightArm) )
+        , ( "UnarmedAimed LeftLeg", "unarmed, left leg", Just (UnarmedAimed LeftLeg) )
+        , ( "UnarmedAimed RightLeg", "unarmed, right leg", Just (UnarmedAimed RightLeg) )
+        , ( "MeleeUnaimed", "melee", Just MeleeUnaimed )
+        , ( "MeleeAimed Head", "melee, head", Just (MeleeAimed Head) )
+        , ( "MeleeAimed Torso", "melee, torso", Just (MeleeAimed Torso) )
+        , ( "MeleeAimed Eyes", "melee, eyes", Just (MeleeAimed Eyes) )
+        , ( "MeleeAimed Groin", "melee, groin", Just (MeleeAimed Groin) )
+        , ( "MeleeAimed LeftArm", "melee, left arm", Just (MeleeAimed LeftArm) )
+        , ( "MeleeAimed RightArm", "melee, right arm", Just (MeleeAimed RightArm) )
+        , ( "MeleeAimed LeftLeg", "melee, left leg", Just (MeleeAimed LeftLeg) )
+        , ( "MeleeAimed RightLeg", "melee, right leg", Just (MeleeAimed RightLeg) )
+        , ( "Throw", "throw", Just Throw )
+        , ( "ShootSingleUnaimed", "shoot", Just ShootSingleUnaimed )
+        , ( "ShootSingleAimed Head", "shoot, head", Just (ShootSingleAimed Head) )
+        , ( "ShootSingleAimed Torso", "shoot, torso", Just (ShootSingleAimed Torso) )
+        , ( "ShootSingleAimed Eyes", "shoot, eyes", Just (ShootSingleAimed Eyes) )
+        , ( "ShootSingleAimed Groin", "shoot, groin", Just (ShootSingleAimed Groin) )
+        , ( "ShootSingleAimed LeftArm", "shoot, left arm", Just (ShootSingleAimed LeftArm) )
+        , ( "ShootSingleAimed RightArm", "shoot, right arm", Just (ShootSingleAimed RightArm) )
+        , ( "ShootSingleAimed LeftLeg", "shoot, left leg", Just (ShootSingleAimed LeftLeg) )
+        , ( "ShootSingleAimed RightLeg", "shoot, right leg", Just (ShootSingleAimed RightLeg) )
+        , ( "ShootBurst", "burst", Just ShootBurst )
         ]
 
 

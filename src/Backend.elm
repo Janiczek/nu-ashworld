@@ -1892,6 +1892,9 @@ oneTimePerkEffects currentTime =
 
                 Perk.GeckoSkinning ->
                     Nothing
+
+                Perk.NightVision ->
+                    Nothing
     in
     Perk.all
         |> List.filterMap (\perk -> oneTimeEffect perk |> Maybe.map (Tuple.pair perk))

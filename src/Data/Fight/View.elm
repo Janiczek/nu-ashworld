@@ -2,7 +2,8 @@ module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), OpponentType, Who(..))
-import Data.Fight.ShotType exposing (AimedShot, ShotType(..))
+import Data.Fight.AimedShot exposing (AimedShot)
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item exposing (Item)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -221,50 +222,81 @@ view perceptionLevel fight yourName =
                                                             names_.subject.verbPresent "come"
                                                                 ++ " closer."
 
-                                                Fight.Attack { damage, remainingHp, shotType, isCritical } ->
+                                                Fight.Attack { damage, remainingHp, attackStyle, isCritical } ->
                                                     let
-                                                        burst : String
-                                                        burst =
-                                                            case shotType of
-                                                                BurstShot ->
-                                                                    "burst "
-
-                                                                NormalShot ->
-                                                                    ""
-
-                                                                AimedShot _ ->
-                                                                    ""
-
                                                         critically =
                                                             if isCritical then
                                                                 "critically "
 
                                                             else
                                                                 ""
+
+                                                        aimed aim =
+                                                            names_.subject.verbPresent "aim"
+                                                                ++ " for "
+                                                                ++ aimedShotName other aim
+                                                                ++ " and "
                                                     in
                                                     H.span []
                                                         [ H.text <|
-                                                            (case shotType of
-                                                                NormalShot ->
+                                                            (case attackStyle of
+                                                                UnarmedUnaimed ->
                                                                     ""
 
-                                                                BurstShot ->
+                                                                UnarmedAimed aim ->
+                                                                    aimed aim
+
+                                                                MeleeUnaimed ->
                                                                     ""
 
-                                                                AimedShot aimed ->
-                                                                    names_.subject.verbPresent "aim"
-                                                                        ++ " for "
-                                                                        ++ aimedShotName other aimed
-                                                                        ++ " and "
+                                                                MeleeAimed aim ->
+                                                                    aimed aim
+
+                                                                Throw ->
+                                                                    ""
+
+                                                                ShootSingleUnaimed ->
+                                                                    ""
+
+                                                                ShootSingleAimed aim ->
+                                                                    aimed aim
+
+                                                                ShootBurst ->
+                                                                    ""
                                                             )
                                                                 ++ critically
-                                                                ++ burst
                                                                 ++ names_.subject.verbPresent "attack"
                                                                 ++ " "
                                                         , highlight names_.object.name
                                                         , H.text " for "
                                                         , highlight <| String.fromInt damage
-                                                        , H.text " damage."
+                                                        , H.text " damage (attack style: "
+                                                        , H.text <|
+                                                            case attackStyle of
+                                                                UnarmedUnaimed ->
+                                                                    "unarmed"
+
+                                                                UnarmedAimed _ ->
+                                                                    "unarmed"
+
+                                                                MeleeUnaimed ->
+                                                                    "melee"
+
+                                                                MeleeAimed _ ->
+                                                                    "melee"
+
+                                                                Throw ->
+                                                                    "throw"
+
+                                                                ShootSingleUnaimed ->
+                                                                    "shoot"
+
+                                                                ShootSingleAimed _ ->
+                                                                    "shoot"
+
+                                                                ShootBurst ->
+                                                                    "burst"
+                                                        , H.text ")."
                                                         , if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
                                                             H.span []
                                                                 [ H.text " Remaining HP: "
@@ -276,21 +308,40 @@ view perceptionLevel fight yourName =
                                                             H.text ""
                                                         ]
 
-                                                Fight.Miss { shotType } ->
+                                                Fight.Miss { attackStyle } ->
+                                                    let
+                                                        aimed aim =
+                                                            names_.subject.verbPresent "aim"
+                                                                ++ " for "
+                                                                ++ aimedShotName other aim
+                                                                ++ " and "
+                                                    in
                                                     H.span []
                                                         [ H.text <|
-                                                            (case shotType of
-                                                                NormalShot ->
+                                                            (case attackStyle of
+                                                                UnarmedUnaimed ->
                                                                     ""
 
-                                                                BurstShot ->
-                                                                    "burst "
+                                                                UnarmedAimed aim ->
+                                                                    aimed aim
 
-                                                                AimedShot aimed ->
-                                                                    names_.subject.verbPresent "aim"
-                                                                        ++ " for "
-                                                                        ++ aimedShotName other aimed
-                                                                        ++ " and "
+                                                                MeleeUnaimed ->
+                                                                    ""
+
+                                                                MeleeAimed aim ->
+                                                                    aimed aim
+
+                                                                Throw ->
+                                                                    ""
+
+                                                                ShootSingleUnaimed ->
+                                                                    ""
+
+                                                                ShootSingleAimed aim ->
+                                                                    aimed aim
+
+                                                                ShootBurst ->
+                                                                    ""
                                                             )
                                                                 ++ names_.subject.verbPresent "attack"
                                                                 ++ " "

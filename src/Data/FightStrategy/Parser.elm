@@ -1,19 +1,15 @@
 module Data.FightStrategy.Parser exposing
-    ( command
+    ( attackStyle
+    , command
     , condition
     , fightStrategy
     , operator
     , parse
-    , shotType
     , value
     )
 
+import Data.Fight.AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
-import Data.Fight.ShotType
-    exposing
-        ( AimedShot(..)
-        , ShotType(..)
-        )
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -85,15 +81,6 @@ attack =
         |. P.token " ("
         |= attackStyle
         |. P.token ")"
-
-
-shotType : Parser ShotType
-shotType =
-    P.oneOf
-        [ P.map (\_ -> NormalShot) (P.keyword "unaimed")
-        , P.map (\_ -> BurstShot) (P.keyword "burst")
-        , P.map AimedShot aimedShot
-        ]
 
 
 aimedShot : Parser AimedShot
@@ -260,7 +247,7 @@ attackStyle =
     P.oneOf
         [ unaimedAimed "unarmed" UnarmedAimed UnarmedUnaimed
         , unaimedAimed "melee" MeleeAimed MeleeUnaimed
-        , unaimedAimed "throw" ThrowAimed ThrowUnaimed
+        , P.map (\_ -> Throw) <| P.keyword "throw"
         , unaimedAimed "shoot" ShootSingleAimed ShootSingleUnaimed
         , P.map (\_ -> ShootBurst) <| P.keyword "burst"
         ]

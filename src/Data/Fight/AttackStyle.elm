@@ -1,11 +1,16 @@
 module Data.Fight.AttackStyle exposing
     ( AttackStyle(..)
     , all
-    , toShotType
+    , decoder
+    , encode
+    , isAimed
+    , toAimed
     , toString
     )
 
-import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
+import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE
 
 
 type AttackStyle
@@ -13,8 +18,7 @@ type AttackStyle
     | UnarmedAimed AimedShot
     | MeleeUnaimed
     | MeleeAimed AimedShot
-    | ThrowUnaimed
-    | ThrowAimed AimedShot
+    | Throw
     | ShootSingleUnaimed
     | ShootSingleAimed AimedShot
     | ShootBurst
@@ -24,21 +28,78 @@ all : List AttackStyle
 all =
     UnarmedUnaimed
         :: MeleeUnaimed
-        :: ThrowUnaimed
+        :: Throw
         :: ShootSingleUnaimed
         :: ShootBurst
-        :: (ShotType.allAimed
+        :: (AimedShot.all
                 |> List.concatMap
                     (\aimed ->
                         [ UnarmedAimed aimed
                         , MeleeAimed aimed
-                        , ThrowAimed aimed
                         , ShootSingleAimed aimed
                         ]
                     )
            )
 
 
+isAimed : AttackStyle -> Bool
+isAimed style =
+    case style of
+        UnarmedUnaimed ->
+            False
+
+        UnarmedAimed _ ->
+            True
+
+        MeleeUnaimed ->
+            False
+
+        MeleeAimed _ ->
+            True
+
+        Throw ->
+            False
+
+        ShootSingleUnaimed ->
+            False
+
+        ShootSingleAimed _ ->
+            True
+
+        ShootBurst ->
+            False
+
+
+toAimed : AttackStyle -> Maybe AimedShot
+toAimed style =
+    case style of
+        UnarmedUnaimed ->
+            Nothing
+
+        UnarmedAimed aim ->
+            Just aim
+
+        MeleeUnaimed ->
+            Nothing
+
+        MeleeAimed aim ->
+            Just aim
+
+        Throw ->
+            Nothing
+
+        ShootSingleUnaimed ->
+            Nothing
+
+        ShootSingleAimed aim ->
+            Just aim
+
+        ShootBurst ->
+            Nothing
+
+
+{-| TODO What purpose is this string for? Name the function better
+-}
 toString : AttackStyle -> String
 toString style =
     case style of
@@ -46,84 +107,94 @@ toString style =
             "unarmed"
 
         UnarmedAimed aimed ->
-            "unarmed, " ++ aimedShotToString aimed
+            "unarmed, " ++ AimedShot.toString aimed
 
         MeleeUnaimed ->
             "melee"
 
         MeleeAimed aimed ->
-            "melee, " ++ aimedShotToString aimed
+            "melee, " ++ AimedShot.toString aimed
 
-        ThrowUnaimed ->
+        Throw ->
             "throw"
-
-        ThrowAimed aimed ->
-            "throw, " ++ aimedShotToString aimed
 
         ShootSingleUnaimed ->
             "shoot"
 
         ShootSingleAimed aimed ->
-            "shoot, " ++ aimedShotToString aimed
+            "shoot, " ++ AimedShot.toString aimed
 
         ShootBurst ->
             "burst"
 
 
-aimedShotToString : AimedShot -> String
-aimedShotToString aimedShot =
-    case aimedShot of
-        Head ->
-            "head"
+decoder : Decoder AttackStyle
+decoder =
+    JD.field "type" JD.string
+        |> JD.andThen
+            (\type_ ->
+                case type_ of
+                    "UnarmedUnaimed" ->
+                        JD.succeed UnarmedUnaimed
 
-        Torso ->
-            "torso"
+                    "UnarmedAimed" ->
+                        JD.map UnarmedAimed (JD.field "aimedShot" AimedShot.decoder)
 
-        Eyes ->
-            "eyes"
+                    "MeleeUnaimed" ->
+                        JD.succeed MeleeUnaimed
 
-        Groin ->
-            "groin"
+                    "MeleeAimed" ->
+                        JD.map MeleeAimed (JD.field "aimedShot" AimedShot.decoder)
 
-        LeftArm ->
-            "left arm"
+                    "Throw" ->
+                        JD.succeed Throw
 
-        RightArm ->
-            "right arm"
+                    "ShootSingleUnaimed" ->
+                        JD.succeed ShootSingleUnaimed
 
-        LeftLeg ->
-            "left leg"
+                    "ShootSingleAimed" ->
+                        JD.map ShootSingleAimed (JD.field "aimedShot" AimedShot.decoder)
 
-        RightLeg ->
-            "right leg"
+                    "ShootBurst" ->
+                        JD.succeed ShootBurst
+
+                    _ ->
+                        JD.fail <| "Unknown AttackStyle type: " ++ type_
+            )
 
 
-toShotType : AttackStyle -> ShotType
-toShotType attackStyle =
+encode : AttackStyle -> JE.Value
+encode attackStyle =
     case attackStyle of
         UnarmedUnaimed ->
-            NormalShot
+            JE.object [ ( "type", JE.string "UnarmedUnaimed" ) ]
 
-        UnarmedAimed aimed ->
-            AimedShot aimed
+        UnarmedAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "UnarmedAimed" )
+                , ( "aimedShot", AimedShot.encode aimedShot )
+                ]
 
         MeleeUnaimed ->
-            NormalShot
+            JE.object [ ( "type", JE.string "MeleeUnaimed" ) ]
 
-        MeleeAimed aimed ->
-            AimedShot aimed
+        MeleeAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "MeleeAimed" )
+                , ( "aimedShot", AimedShot.encode aimedShot )
+                ]
 
-        ThrowUnaimed ->
-            NormalShot
-
-        ThrowAimed aimed ->
-            AimedShot aimed
+        Throw ->
+            JE.object [ ( "type", JE.string "Throw" ) ]
 
         ShootSingleUnaimed ->
-            NormalShot
+            JE.object [ ( "type", JE.string "ShootSingleUnaimed" ) ]
 
-        ShootSingleAimed aimed ->
-            AimedShot aimed
+        ShootSingleAimed aimedShot ->
+            JE.object
+                [ ( "type", JE.string "ShootSingleAimed" )
+                , ( "aimedShot", AimedShot.encode aimedShot )
+                ]
 
         ShootBurst ->
-            BurstShot
+            JE.object [ ( "type", JE.string "ShootBurst" ) ]

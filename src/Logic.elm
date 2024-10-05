@@ -42,8 +42,9 @@ module Logic exposing
     , xpGained
     )
 
-import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
-import Data.Fight.ShotType as ShotType exposing (AimedShot(..), ShotType(..))
+import Data.Enemy exposing (equippedWeapon)
+import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
+import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item exposing (Kind(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Quest as Quest exposing (Engagement(..))
@@ -101,10 +102,7 @@ attackApCost r =
                 MeleeAimed _ ->
                     withBonusHth
 
-                ThrowUnaimed ->
-                    0
-
-                ThrowAimed _ ->
+                Throw ->
                     0
 
                 ShootSingleUnaimed ->
@@ -359,9 +357,11 @@ lightingPenalty r =
 
 chanceToHit :
     { attackerAddedSkillPercentages : SeqDict Skill Int
+    , attackerPerks : SeqDict Perk Int
     , attackerSpecial : Special
     , distanceHexes : Int
-    , weaponRange : Int
+    , equippedWeapon : Maybe Item.Kind
+    , equippedAmmo : Maybe Item.Kind
     , targetArmorClass : Int
     , attackStyle : AttackStyle
     }
@@ -380,10 +380,7 @@ chanceToHit r =
         MeleeAimed _ ->
             meleeChanceToHit r
 
-        ThrowUnaimed ->
-            rangedChanceToHit r
-
-        ThrowAimed _ ->
+        Throw ->
             rangedChanceToHit r
 
         ShootSingleUnaimed ->
@@ -396,39 +393,185 @@ chanceToHit r =
             rangedChanceToHit r
 
 
-{-|
+neededSkill : AttackStyle -> List Item.Type -> Maybe Skill
+neededSkill attackStyle itemTypes =
+    case attackStyle of
+        UnarmedUnaimed ->
+            -- This is a special one: when not equipping any weapon (-> itemTypes = []), we still want to allow an unarmed attack.
+            Just Skill.Unarmed
 
-    Chance to Hit =
-        Weapon Skill
-        + 8\*(Perception - 2)
-        + Weapon Perk
-        - distancePenalty
-        - (Target AC + Ammo AC modifier)
-        + Lighting Penalty (use lightingPenalty)
-        + STR requirement penalty
-        + Targeted Shot Penalty
+        UnarmedAimed _ ->
+            -- This is a special one: when not equipping any weapon (-> itemTypes = []), we still want to allow an unarmed attack.
+            Just Skill.Unarmed
 
-Please note that:
+        MeleeUnaimed ->
+            if List.member Item.MeleeWeapon itemTypes then
+                Just Skill.MeleeWeapons
 
-Penalties and Ammo AC modifier are negative numbers and need to be subtracted.
-Apart from the Weapon Long Range perk discussed below, there is also the Weapon Accurate perk that gives +20% chance to hit.
-Not fulfilling a weapon's Strength requirement results in -20% Chance to Hit for each point of Strength that is missing.
-Targeted Shots have a penalty depending on the targeted body part; the penalty's amount is added to Critical Chance.
-Chance to Hit is capped at 95%.
+            else
+                Nothing
 
--}
+        MeleeAimed _ ->
+            if List.member Item.MeleeWeapon itemTypes then
+                Just Skill.MeleeWeapons
+
+            else
+                Nothing
+
+        Throw ->
+            if List.member Item.ThrownWeapon itemTypes then
+                Just Skill.Throwing
+
+            else
+                Nothing
+
+        ShootSingleUnaimed ->
+            if List.member Item.SmallGun itemTypes then
+                Just Skill.SmallGuns
+
+            else if List.member Item.BigGun itemTypes then
+                Just Skill.BigGuns
+
+            else if List.member Item.EnergyWeapon itemTypes then
+                Just Skill.EnergyWeapons
+
+            else
+                Nothing
+
+        ShootSingleAimed _ ->
+            if List.member Item.SmallGun itemTypes then
+                Just Skill.SmallGuns
+
+            else if List.member Item.BigGun itemTypes then
+                Just Skill.BigGuns
+
+            else if List.member Item.EnergyWeapon itemTypes then
+                Just Skill.EnergyWeapons
+
+            else
+                Nothing
+
+        ShootBurst ->
+            if List.member Item.SmallGun itemTypes then
+                Just Skill.SmallGuns
+
+            else if List.member Item.BigGun itemTypes then
+                Just Skill.BigGuns
+
+            else if List.member Item.EnergyWeapon itemTypes then
+                Just Skill.EnergyWeapons
+
+            else
+                Nothing
+
+
 rangedChanceToHit :
     { r
         | attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerSpecial : Special
-        , distanceHexes : Int
-        , weaponRange : Int
+        , attackerPerks : SeqDict Perk Int
         , targetArmorClass : Int
+        , distanceHexes : Int
+        , equippedWeapon : Maybe Item.Kind
+        , equippedAmmo : Maybe Item.Kind
         , attackStyle : AttackStyle
     }
     -> Int
 rangedChanceToHit r =
-    ()
+    case r.equippedWeapon of
+        Nothing ->
+            -- Can't have ranged attacks without a weapon
+            0
+
+        Just equippedWeapon ->
+            case neededSkill r.attackStyle (Item.types equippedWeapon) of
+                Nothing ->
+                    -- Wanted to attack in an `attackStyle` the weapon can't do
+                    0
+
+                Just weaponSkill ->
+                    let
+                        weaponSkill_ : Int
+                        weaponSkill_ =
+                            Skill.get r.attackerSpecial r.attackerAddedSkillPercentages weaponSkill
+
+                        distancePenalty_ : Int
+                        distancePenalty_ =
+                            -- This already contains the Weapon Long Range perk calculations.
+                            distancePenalty
+                                { distanceHexes = r.distanceHexes
+                                , equippedWeapon = r.equippedWeapon
+                                , perception = r.attackerSpecial.perception
+                                }
+
+                        ammoArmorClassModifier : Int
+                        ammoArmorClassModifier =
+                            r.equippedAmmo
+                                |> Maybe.map Item.ammoArmorClassModifier
+                                |> Maybe.withDefault 0
+
+                        lightingPenalty_ : Int
+                        lightingPenalty_ =
+                            lightingPenalty
+                                { isItDark = False
+                                , hasNightVisionPerk = Perk.rank Perk.NightVision r.attackerPerks > 0
+                                , distanceHexes = r.distanceHexes
+                                }
+
+                        shotPenalty : Int
+                        shotPenalty =
+                            case r.attackStyle of
+                                Throw ->
+                                    0
+
+                                ShootSingleUnaimed ->
+                                    0
+
+                                ShootSingleAimed aim ->
+                                    aimedShotChanceToHitPenalty aim
+
+                                ShootBurst ->
+                                    burstShotChanceToHitPenalty
+
+                                -- These can't happen in ranged:
+                                UnarmedUnaimed ->
+                                    0
+
+                                UnarmedAimed _ ->
+                                    0
+
+                                MeleeUnaimed ->
+                                    0
+
+                                MeleeAimed _ ->
+                                    0
+
+                        strengthRequirementPenalty : Int
+                        strengthRequirementPenalty =
+                            strengthRequirementChanceToHitPenalty
+                                { strength = r.attackerSpecial.strength
+                                , equippedWeapon = equippedWeapon
+                                }
+
+                        weaponAccuratePerk : Int
+                        weaponAccuratePerk =
+                            if Item.isAccurateWeapon equippedWeapon then
+                                20
+
+                            else
+                                0
+                    in
+                    (weaponSkill_
+                        + (8 * r.attackerSpecial.perception)
+                        -- weapon long range perk is already factored into the distancePenalty
+                        + weaponAccuratePerk
+                        - distancePenalty_
+                        - (r.targetArmorClass + ammoArmorClassModifier)
+                        - lightingPenalty_
+                        - strengthRequirementPenalty
+                        - shotPenalty
+                    )
+                        |> clamp 0 95
 
 
 meleeChanceToHit :
@@ -436,39 +579,90 @@ meleeChanceToHit :
         | attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerSpecial : Special
         , distanceHexes : Int
-        , weaponRange : Int
+        , equippedWeapon : Maybe Item.Kind
         , targetArmorClass : Int
         , attackStyle : AttackStyle
     }
     -> Int
 meleeChanceToHit r =
     -- TODO choose between unarmed and melee. Right now, having no inventory, we choose unarmed
-    if r.distanceHexes > r.weaponRange then
+    -- TODO is this all we need to check about the weapon?
+    -- TODO are there derived things in `r` that we can remove and derive from the equipped weapon instead?
+    let
+        weaponRange : Int
+        weaponRange =
+            r.equippedWeapon
+                |> Maybe.map (Item.range r.attackStyle)
+                |> Maybe.withDefault 1
+    in
+    if r.distanceHexes > weaponRange then
         0
 
     else
-        let
-            skillPercentage : Int
-            skillPercentage =
-                Skill.get r.attackerSpecial r.attackerAddedSkillPercentages Skill.Unarmed
+        case
+            neededSkill r.attackStyle
+                (r.equippedWeapon
+                    |> Maybe.map Item.types
+                    |> Maybe.withDefault []
+                )
+        of
+            Nothing ->
+                -- Wanted to attack in an `attackStyle` the weapon can't do
+                0
 
-            shotPenalty : Int
-            shotPenalty =
-                case AttackStyle.toShotType r.attackStyle of
-                    NormalShot ->
-                        0
+            Just weaponSkill ->
+                let
+                    skillPercentage : Int
+                    skillPercentage =
+                        Skill.get r.attackerSpecial r.attackerAddedSkillPercentages weaponSkill
 
-                    AimedShot aimedShot ->
-                        aimedShotChanceToHitPenalty aimedShot
+                    shotPenalty : Int
+                    shotPenalty =
+                        case r.attackStyle of
+                            UnarmedUnaimed ->
+                                0
 
-                    BurstShot ->
-                        burstShotChanceToHitPenalty
-        in
-        (skillPercentage
-            - r.targetArmorClass
-            - shotPenalty
-        )
-            |> clamp 0 95
+                            UnarmedAimed aim ->
+                                aimedShotChanceToHitPenalty aim
+
+                            MeleeUnaimed ->
+                                0
+
+                            MeleeAimed aim ->
+                                aimedShotChanceToHitPenalty aim
+
+                            -- These can't happen in unarmed/melee:
+                            Throw ->
+                                0
+
+                            ShootSingleUnaimed ->
+                                0
+
+                            ShootSingleAimed _ ->
+                                0
+
+                            ShootBurst ->
+                                0
+
+                    weaponAccuratePerk : Int
+                    weaponAccuratePerk =
+                        case r.equippedWeapon of
+                            Nothing ->
+                                0
+
+                            Just equippedWeapon ->
+                                if Item.isAccurateWeapon equippedWeapon then
+                                    20
+
+                                else
+                                    0
+                in
+                (skillPercentage
+                    + weaponAccuratePerk
+                    - r.targetArmorClass
+                    - shotPenalty
+                )
+                    |> clamp 0 95
 
 
 sequence :
@@ -1046,11 +1240,6 @@ meleeAttackStyleAndApCost unaimedApCost =
     unaimedAimedAttackStyleAndApCost MeleeUnaimed MeleeAimed unaimedApCost
 
 
-throwAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
-throwAttackStyleAndApCost unaimedApCost =
-    unaimedAimedAttackStyleAndApCost ThrowUnaimed ThrowAimed unaimedApCost
-
-
 shootAttackStyleAndApCost : Int -> List ( AttackStyle, Int )
 shootAttackStyleAndApCost unaimedApCost =
     unaimedAimedAttackStyleAndApCost ShootSingleUnaimed ShootSingleAimed unaimedApCost
@@ -1061,7 +1250,7 @@ unaimedAimedAttackStyleAndApCost unaimed toAimed unaimedApCost =
     ( unaimed, unaimedApCost )
         :: List.map
             (\aim -> ( toAimed aim, unaimedApCost + aimedShotApCostPenalty ))
-            ShotType.allAimed
+            AimedShot.all
 
 
 attackStyleAndApCost : Item.Kind -> List ( AttackStyle, Int )
@@ -1077,7 +1266,7 @@ attackStyleAndApCost kind =
             meleeAttackStyleAndApCost 3
 
         FragGrenade ->
-            throwAttackStyleAndApCost 4
+            [ ( Throw, 4 ) ]
 
         Bozar ->
             [ ( ShootBurst, 6 ) ]
@@ -1260,8 +1449,51 @@ attackStyleAndApCost kind =
         LaserRifleExtCap ->
             shootAttackStyleAndApCost 5
 
+        CattleProd ->
+            meleeAttackStyleAndApCost 4
+
+        SuperCattleProd ->
+            meleeAttackStyleAndApCost 4
+
+        Mauser9mm ->
+            shootAttackStyleAndApCost 4
+
+        Pistol14mm ->
+            shootAttackStyleAndApCost 5
+
+        CombatShotgun ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        HkCaws ->
+            ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
+
+        Shotgun ->
+            shootAttackStyleAndApCost 5
+
+        AlienBlaster ->
+            shootAttackStyleAndApCost 4
+
+        SolarScorcher ->
+            shootAttackStyleAndApCost 4
+
+        Flare ->
+            [ ( Throw, 1 ) ]
+
 
 canBurst : Item.Kind -> Bool
 canBurst kind =
     attackStyleAndApCost kind
         |> List.any (\( style, _ ) -> style == ShootBurst)
+
+
+strengthRequirementChanceToHitPenalty :
+    { strength : Int
+    , equippedWeapon : Item.Kind
+    }
+    -> Int
+strengthRequirementChanceToHitPenalty r =
+    let
+        strengthRequirement =
+            Item.strengthRequirement r.equippedWeapon
+    in
+    max 0 (strengthRequirement - r.strength) * 20

@@ -82,6 +82,7 @@ type alias SPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
+    , equippedAmmo : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -110,6 +111,7 @@ type alias CPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
+    , equippedAmmo : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -192,36 +194,30 @@ decoder innerDecoder =
 
 sPlayerDecoder : Decoder SPlayer
 sPlayerDecoder =
-    JD.oneOf
-        [ sPlayerDecoderV1
-        ]
-
-
-sPlayerDecoderV1 : Decoder SPlayer
-sPlayerDecoderV1 =
     JD.succeed SPlayer
         |> JD.andMap (JD.field "name" JD.string)
         |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
         |> JD.andMap (JD.field "worldName" JD.string)
-        |> JD.andMap (JD.field "hp" JD.int)
-        |> JD.andMap (JD.field "maxHp" JD.int)
-        |> JD.andMap (JD.field "xp" JD.int)
+        |> JD.andMap (JD.field "hp" JD.parseInt)
+        |> JD.andMap (JD.field "maxHp" JD.parseInt)
+        |> JD.andMap (JD.field "xp" JD.parseInt)
         |> JD.andMap (JD.field "special" Special.decoder)
-        |> JD.andMap (JD.field "caps" JD.int)
-        |> JD.andMap (JD.field "ticks" JD.int)
-        |> JD.andMap (JD.field "wins" JD.int)
-        |> JD.andMap (JD.field "losses" JD.int)
-        |> JD.andMap (JD.field "location" JD.int)
-        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.int))
+        |> JD.andMap (JD.field "caps" JD.parseInt)
+        |> JD.andMap (JD.field "ticks" JD.parseInt)
+        |> JD.andMap (JD.field "wins" JD.parseInt)
+        |> JD.andMap (JD.field "losses" JD.parseInt)
+        |> JD.andMap (JD.field "location" JD.parseInt)
+        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.parseInt))
         |> JD.andMap (JD.field "messages" Message.dictDecoder)
-        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
+        |> JD.andMap (JD.field "items" (Dict.decoder JD.parseInt Item.decoder))
         |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.int))
+        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.parseInt))
         |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
-        |> JD.andMap (JD.field "availableSkillPoints" JD.int)
-        |> JD.andMap (JD.field "availablePerks" JD.int)
+        |> JD.andMap (JD.field "availableSkillPoints" JD.parseInt)
+        |> JD.andMap (JD.field "availablePerks" JD.parseInt)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "equippedAmmo" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
@@ -249,6 +245,7 @@ serverToClient p =
     , availablePerks = p.availablePerks
     , equippedArmor = p.equippedArmor
     , equippedWeapon = p.equippedWeapon
+    , equippedAmmo = p.equippedAmmo
     , fightStrategy = p.fightStrategy
     , fightStrategyText = p.fightStrategyText
     , questsActive = p.questsActive
@@ -385,6 +382,7 @@ fromNewChar currentTime auth newChar =
             , availablePerks = 0
             , equippedArmor = Nothing
             , equippedWeapon = Nothing
+            , equippedAmmo = Nothing
             , fightStrategy = Tuple.second FightStrategy.default
             , fightStrategyText =
                 Tuple.second FightStrategy.default

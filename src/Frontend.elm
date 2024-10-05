@@ -3408,10 +3408,12 @@ inventoryView _ player =
             Logic.chanceToHit
                 { attackerAddedSkillPercentages = player.addedSkillPercentages
                 , attackerSpecial = player.special
+                , attackerPerks = player.perks
                 , distanceHexes = 0
                 , targetArmorClass = 0
                 , attackStyle = AttackStyle.UnarmedUnaimed
-                , weaponRange = Logic.unarmedRange
+                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
+                , equippedAmmo = player.equippedAmmo |> Maybe.map .kind
                 }
     in
     [ pageTitleView "Inventory"
@@ -3432,7 +3434,7 @@ inventoryView _ player =
                     |> Dict.values
                     |> List.sortBy
                         (\{ kind } ->
-                            ( Item.typeName (Item.type_ kind)
+                            ( List.map Item.typeName (Item.types kind)
                             , Item.baseValue kind
                             , Item.name kind
                             )
@@ -4830,7 +4832,7 @@ adminWorldHiscoresView worldName data =
                           , \p ->
                                 p.items
                                     |> Dict.values
-                                    |> List.filter (\{ kind } -> Item.type_ kind == Item.Book)
+                                    |> List.filter (\{ kind } -> List.member Item.Book (Item.types kind))
                                     |> List.map .count
                                     |> List.sum
                           )

@@ -28,7 +28,13 @@ items =
 - more "normal" unarmed+melee weapons, and make them part of shops
 - Fast Shot trait -> can't use aimed shots
 
-- FightStrategy: reload
+EQUIPPED AMMO
+- show it in the inventory
+- show which types are usable for the current weapon
+- don't allow equipping incompatible ammo
+- when unequipping weapon unequip the ammo too
+- when it runs out during the fight, do we want to default to another compatible ammo? So should it be only preferredAmmo?
+
 - FightStrategy: walk away
 
 - regain conciousness in fight (cost 1/2 of max AP)
