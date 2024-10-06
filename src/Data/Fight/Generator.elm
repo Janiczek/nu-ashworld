@@ -7,7 +7,7 @@ module Data.Fight.Generator exposing
     , targetAlreadyDead
     )
 
-import Data.Enemy as Enemy exposing (addedSkillPercentages)
+import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
@@ -21,7 +21,7 @@ import Data.FightStrategy as FightStrategy
         , Operator(..)
         , Value(..)
         )
-import Data.Item as Item exposing (Item, isWeaponArmorPenetrating)
+import Data.Item as Item exposing (Item)
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill(..))
@@ -37,7 +37,6 @@ import Random.Bool as Random
 import Random.FloatExtra as Random
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
-import Svg.Attributes exposing (x)
 import Time exposing (Posix)
 
 
@@ -155,8 +154,6 @@ subtractAp who action ongoing =
 
 subtractDistance : Int -> OngoingFight -> OngoingFight
 subtractDistance n ongoing =
-    -- TODO TODO TODO TODO still in melee combat, make sure ranges are taken into account: super sledge can hit from 2 hexes away but knives / unarmed needs 1 hex, etc.
-    -- THEN you can probably go for ranged combat.
     { ongoing | distanceHexes = max 1 <| ongoing.distanceHexes - n }
 
 
