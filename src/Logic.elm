@@ -39,6 +39,7 @@ module Logic exposing
     , unarmedAttackStats
     , unarmedBaseCriticalChance
     , unarmedRange
+    , weaponRange
     , xpGained
     )
 
@@ -578,6 +579,17 @@ rangedChanceToHit r =
                             |> clamp 0 95
 
 
+weaponRange : Maybe Item.Kind -> AttackStyle -> Int
+weaponRange equippedWeapon attackStyle =
+    case equippedWeapon of
+        Nothing ->
+            -- Nothing equipped, means this is an unarmed attack
+            1
+
+        Just weapon ->
+            Item.range attackStyle weapon
+
+
 meleeChanceToHit :
     { r
         | attackerAddedSkillPercentages : SeqDict Skill Int
@@ -589,14 +601,7 @@ meleeChanceToHit :
     }
     -> Int
 meleeChanceToHit r =
-    let
-        weaponRange : Int
-        weaponRange =
-            r.equippedWeapon
-                |> Maybe.map (Item.range r.attackStyle)
-                |> Maybe.withDefault 1
-    in
-    if r.distanceHexes > weaponRange then
+    if r.distanceHexes > weaponRange r.equippedWeapon r.attackStyle then
         -- Wanted to attack at a range the weapon can't do
         0
 

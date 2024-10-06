@@ -1,5 +1,6 @@
 module Data.Fight.Generator exposing
     ( Fight
+    , attack_
     , enemyOpponentGenerator
     , generator
     , playerOpponent
@@ -154,9 +155,7 @@ subtractAp who action ongoing =
 
 subtractDistance : Int -> OngoingFight -> OngoingFight
 subtractDistance n ongoing =
-    -- TODO TODO TODO TODO check everywhere that distance is 1, not 0
-    -- THEN go read through the melee combat and make sure no extra penalties are happening
-    -- THEN still in melee combat, make sure ranges are taken into account: super sledge can hit from 2 hexes away but knives / unarmed needs 1 hex, etc.
+    -- TODO TODO TODO TODO still in melee combat, make sure ranges are taken into account: super sledge can hit from 2 hexes away but knives / unarmed needs 1 hex, etc.
     -- THEN you can probably go for ranged combat.
     { ongoing | distanceHexes = max 1 <| ongoing.distanceHexes - n }
 
@@ -948,7 +947,7 @@ moveForward who ongoing =
         let
             maxPossibleMove : Int
             maxPossibleMove =
-                min ongoing.distanceHexes (opponentAp who ongoing)
+                min (ongoing.distanceHexes - 1) (opponentAp who ongoing)
 
             action : Fight.Action
             action =
@@ -1118,8 +1117,12 @@ attack_ who ongoing attackStyle baseApCost =
         chance : Int
         chance =
             chanceToHit who ongoing attackStyle
+
+        weaponRange : Int
+        weaponRange =
+            Logic.weaponRange opponent.equippedWeapon attackStyle
     in
-    if ongoing.distanceHexes /= 0 then
+    if ongoing.distanceHexes > weaponRange then
         rejectCommand who Attack_NotCloseEnough ongoing
 
     else if opponentAp who ongoing < apCost_ then
