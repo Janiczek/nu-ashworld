@@ -59,15 +59,18 @@ test =
                         { args
                             | attackStyle = AttackStyle.MeleeUnaimed
                             , equippedWeapon = Just weapon
-                            , distanceHexes = args.distanceHexes + 1
+                            , distanceHexes = args.distanceHexes + 2
                         }
                         |> Expect.equal 0
-            , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.gunKindFuzzer "Ranged + good range: can hit" <|
+            , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.smallGunKindFuzzer "Ranged + good range: can hit" <|
                 \args weapon ->
                     Logic.chanceToHit
                         { args
                             | attackStyle = AttackStyle.ShootSingleUnaimed
                             , attackerSpecial = args.attackerSpecial |> Special.set Special.Strength 10
+                            , attackerAddedSkillPercentages =
+                                args.attackerAddedSkillPercentages
+                                    |> SeqDict.insert SmallGuns 20
                             , equippedWeapon = Just weapon
                             , distanceHexes = 1
                             , targetArmorClass = 0

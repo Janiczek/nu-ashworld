@@ -43,6 +43,7 @@ module TestHelpers exposing
     , randomSeedFuzzer
     , removeNewlinesAtEnds
     , sequenceFuzzer
+    , smallGunKindFuzzer
     , specialFuzzer
     , traitsFuzzer
     , unarmedWeaponKindFuzzer
@@ -445,6 +446,13 @@ gunKindFuzzer =
                     || List.member Item.BigGun types
                     || List.member Item.EnergyWeapon types
             )
+        |> Fuzz.oneOfValues
+
+
+smallGunKindFuzzer : Fuzzer Item.Kind
+smallGunKindFuzzer =
+    Item.all
+        |> List.filter (\kind -> List.member Item.SmallGun (Item.types kind))
         |> Fuzz.oneOfValues
 
 
