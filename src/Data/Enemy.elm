@@ -11,7 +11,6 @@ module Data.Enemy exposing
     , dropGenerator
     , dropSpec
     , encodeType
-    , equippedAmmo
     , equippedArmor
     , equippedWeapon
     , forSmallChunk
@@ -22,6 +21,7 @@ module Data.Enemy exposing
     , meleeDamageBonus
     , name
     , naturalArmorClass
+    , preferredAmmo
     , sequence
     , special
     , typeDecoder
@@ -1042,8 +1042,8 @@ equippedWeapon type_ =
             Nothing
 
 
-equippedAmmo : Type -> Maybe Item.Kind
-equippedAmmo type_ =
+preferredAmmo : Type -> Maybe Item.Kind
+preferredAmmo type_ =
     case type_ of
         Brahmin ->
             Nothing

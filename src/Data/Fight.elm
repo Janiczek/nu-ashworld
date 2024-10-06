@@ -71,7 +71,7 @@ type alias Opponent =
     , drops : List Item
     , equippedArmor : Maybe Item.Kind
     , equippedWeapon : Maybe Item.Kind
-    , equippedAmmo : Maybe Item.Kind
+    , preferredAmmo : Maybe Item.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : SeqDict Skill Int
@@ -132,6 +132,7 @@ type CommandRejectionReason
     | MoveForward_AlreadyNextToEachOther
     | Attack_NotCloseEnough
     | Attack_NotEnoughAP
+    | Attack_NoUsableAmmo
 
 
 theOther : Who -> Who
@@ -409,6 +410,9 @@ encodeAction action =
 
                             Attack_NotEnoughAP ->
                                 "Attack_NotEnoughAP"
+
+                            Attack_NoUsableAmmo ->
+                                "Attack_NoUsableAmmo"
                   )
                 ]
 
@@ -498,6 +502,9 @@ commandRejectionReasonDecoder =
 
                     "Attack_NotEnoughAP" ->
                         JD.succeed Attack_NotEnoughAP
+
+                    "Attack_NoUsableAmmo" ->
+                        JD.succeed Attack_NoUsableAmmo
 
                     "MoveForward_AlreadyNextToEachOther" ->
                         JD.succeed MoveForward_AlreadyNextToEachOther

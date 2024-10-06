@@ -30,6 +30,8 @@ items =
 
 - Are we adding bonus to Critical Chance based on AimedShot?
 
+- Don't use ranged weapon's dmg/... when using the fallback unarmed attack when no ammo
+
 - Add upgraded unarmed attacks: https://fallout.fandom.com/wiki/Unarmed_(Fallout)
 
 EQUIPPED AMMO

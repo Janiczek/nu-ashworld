@@ -96,19 +96,19 @@ chanceToHitArgsFuzzer :
         , attackerSpecial : Special
         , distanceHexes : Int
         , equippedWeapon : Maybe Item.Kind
-        , equippedAmmo : Maybe Item.Kind
+        , preferredAmmo : Maybe Item.Kind
         , targetArmorClass : Int
         , attackStyle : AttackStyle
         }
 chanceToHitArgsFuzzer =
     Fuzz.map8
-        (\attackerAddedSkillPercentages attackerPerks attackerSpecial distanceHexes equippedWeapon equippedAmmo targetArmorClass attackStyle ->
+        (\attackerAddedSkillPercentages attackerPerks attackerSpecial distanceHexes equippedWeapon preferredAmmo targetArmorClass attackStyle ->
             { attackerAddedSkillPercentages = attackerAddedSkillPercentages
             , attackerPerks = attackerPerks
             , attackerSpecial = attackerSpecial
             , distanceHexes = distanceHexes
             , equippedWeapon = equippedWeapon
-            , equippedAmmo = equippedAmmo
+            , preferredAmmo = preferredAmmo
             , targetArmorClass = targetArmorClass
             , attackStyle = attackStyle
             }
@@ -118,6 +118,6 @@ chanceToHitArgsFuzzer =
         TestHelpers.specialFuzzer
         TestHelpers.distanceFuzzer
         TestHelpers.equippedWeaponKindFuzzer
-        TestHelpers.equippedAmmoKindFuzzer
+        TestHelpers.preferredAmmoKindFuzzer
         TestHelpers.armorClassFuzzer
         TestHelpers.attackStyleFuzzer

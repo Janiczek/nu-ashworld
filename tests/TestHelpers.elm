@@ -12,7 +12,6 @@ module TestHelpers exposing
     , distanceFuzzer
     , dropsFuzzer
     , enemyTypeFuzzer
-    , equippedAmmoKindFuzzer
     , equippedArmorKindFuzzer
     , equippedWeaponKindFuzzer
     , expectEqualParseResult
@@ -39,6 +38,7 @@ module TestHelpers exposing
     , playerNameFuzzer
     , playerOpponentFuzzer
     , posixFuzzer
+    , preferredAmmoKindFuzzer
     , problemToString
     , randomSeedFuzzer
     , removeNewlinesAtEnds
@@ -166,7 +166,7 @@ opponentFuzzer =
         |> Fuzz.andMap dropsFuzzer
         |> Fuzz.andMap equippedArmorKindFuzzer
         |> Fuzz.andMap equippedWeaponKindFuzzer
-        |> Fuzz.andMap equippedAmmoKindFuzzer
+        |> Fuzz.andMap preferredAmmoKindFuzzer
         |> Fuzz.andMap naturalArmorClassFuzzer
         |> Fuzz.andMap attackStatsFuzzer
         |> Fuzz.andMap addedSkillPercentagesFuzzer
@@ -400,8 +400,8 @@ equippedWeaponKindFuzzer =
     Fuzz.maybe weaponKindFuzzer
 
 
-equippedAmmoKindFuzzer : Fuzzer (Maybe Item.Kind)
-equippedAmmoKindFuzzer =
+preferredAmmoKindFuzzer : Fuzzer (Maybe Item.Kind)
+preferredAmmoKindFuzzer =
     Fuzz.maybe ammoKindFuzzer
 
 

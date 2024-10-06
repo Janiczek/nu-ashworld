@@ -3413,7 +3413,7 @@ inventoryView _ player =
                 , targetArmorClass = 0
                 , attackStyle = AttackStyle.UnarmedUnaimed
                 , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , equippedAmmo = player.equippedAmmo |> Maybe.map .kind
+                , preferredAmmo = player.preferredAmmo |> Maybe.map .kind
                 }
     in
     [ pageTitleView "Inventory"

@@ -7,6 +7,7 @@ module Logic exposing
     , armorClass
     , attackApCost
     , attackStyleAndApCost
+    , baseCriticalChance
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canBurst
@@ -37,7 +38,6 @@ module Logic exposing
     , totalTags
     , unarmedApCost
     , unarmedAttackStats
-    , unarmedBaseCriticalChance
     , unarmedRange
     , weaponRange
     , xpGained
@@ -361,7 +361,7 @@ chanceToHit :
     , attackerSpecial : Special
     , distanceHexes : Int
     , equippedWeapon : Maybe Item.Kind
-    , equippedAmmo : Maybe Item.Kind
+    , preferredAmmo : Maybe Item.Kind
     , targetArmorClass : Int
     , attackStyle : AttackStyle
     }
@@ -473,7 +473,7 @@ rangedChanceToHit :
         , targetArmorClass : Int
         , distanceHexes : Int
         , equippedWeapon : Maybe Item.Kind
-        , equippedAmmo : Maybe Item.Kind
+        , preferredAmmo : Maybe Item.Kind
         , attackStyle : AttackStyle
     }
     -> Int
@@ -511,7 +511,7 @@ rangedChanceToHit r =
 
                             ammoArmorClassModifier : Int
                             ammoArmorClassModifier =
-                                r.equippedAmmo
+                                r.preferredAmmo
                                     |> Maybe.map Item.ammoArmorClassModifier
                                     |> Maybe.withDefault 0
 
@@ -822,6 +822,18 @@ unarmedAttackStats r =
     }
 
 
+baseCriticalChance :
+    { special : Special
+    , hasFinesseTrait : Bool
+    , moreCriticalPerkRanks : Int
+    , hasSlayerPerk : Bool
+    }
+    -> Int
+baseCriticalChance r =
+    -- TODO sniper perk and non-unarmed combat
+    unarmedBaseCriticalChance r
+
+
 unarmedBaseCriticalChance :
     { special : Special
     , hasFinesseTrait : Bool
@@ -830,7 +842,6 @@ unarmedBaseCriticalChance :
     }
     -> Int
 unarmedBaseCriticalChance r =
-    -- TODO sniper perk and non-unarmed combat
     let
         fromSpecial =
             r.special.luck

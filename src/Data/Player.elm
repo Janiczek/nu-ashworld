@@ -82,7 +82,7 @@ type alias SPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , equippedAmmo : Maybe Item
+    , preferredAmmo : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -111,7 +111,7 @@ type alias CPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , equippedAmmo : Maybe Item
+    , preferredAmmo : Maybe Item
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -217,7 +217,7 @@ sPlayerDecoder =
         |> JD.andMap (JD.field "availablePerks" JD.parseInt)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "equippedAmmo" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
@@ -245,7 +245,7 @@ serverToClient p =
     , availablePerks = p.availablePerks
     , equippedArmor = p.equippedArmor
     , equippedWeapon = p.equippedWeapon
-    , equippedAmmo = p.equippedAmmo
+    , preferredAmmo = p.preferredAmmo
     , fightStrategy = p.fightStrategy
     , fightStrategyText = p.fightStrategyText
     , questsActive = p.questsActive
@@ -382,7 +382,7 @@ fromNewChar currentTime auth newChar =
             , availablePerks = 0
             , equippedArmor = Nothing
             , equippedWeapon = Nothing
-            , equippedAmmo = Nothing
+            , preferredAmmo = Nothing
             , fightStrategy = Tuple.second FightStrategy.default
             , fightStrategyText =
                 Tuple.second FightStrategy.default

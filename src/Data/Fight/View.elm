@@ -400,6 +400,9 @@ view perceptionLevel fight yourName =
                                                                 Attack_NotEnoughAP ->
                                                                     ( "attack", "not enough AP" )
 
+                                                                Attack_NoUsableAmmo ->
+                                                                    ( "attack", "no usable ammo" )
+
                                                                 MoveForward_AlreadyNextToEachOther ->
                                                                     ( "move forward", "already next to each other" )
                                                     in

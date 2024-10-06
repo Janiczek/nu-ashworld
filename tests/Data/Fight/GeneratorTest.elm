@@ -2,7 +2,7 @@ module Data.Fight.GeneratorTest exposing (suite)
 
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.AttackStyle as AttackStyle
-import Data.Fight.Generator exposing (Fight)
+import Data.Fight.Generator as FightGen exposing (Fight)
 import Data.FightStrategy exposing (..)
 import Data.Item as Item
 import Data.Special as Special
@@ -20,10 +20,56 @@ import TestHelpers exposing (..)
 suite : Test
 suite =
     Test.describe "Data.Fight.Generator"
-        [ damageNeverNegative
-        , meleeAttackAtDistance2WithRange2
-        , meleeAttackAtDistance2WithRange1
+        [ Test.describe "generator"
+            [ damageNeverNegative
+            ]
+        , Test.describe "attack_"
+            [ meleeAttackSucceedsAtDistance2WithRange2
+            , meleeAttackFailsAtDistance2WithRange1
+            , rangedAttackFailsWithoutAmmo
+            , rangedAttackSucceedsAtDistance15WithRange30
+            , rangedAttackSucceedsWithWrongPreferredAmmo
+            , rangedAttackUsesPreferredAmmo
+            , rangedAttackFailsAtDistance30WithRange7
+            ]
         ]
+
+
+baseOpponent : Opponent
+baseOpponent =
+    { type_ = Fight.Player { name = "Opponent", xp = 0 }
+    , hp = 100
+    , maxHp = 100
+    , maxAp = 10
+    , sequence = 5
+    , traits = SeqSet.empty
+    , perks = SeqDict.empty
+    , caps = 50
+    , items = Dict.empty
+    , drops = []
+    , equippedArmor = Nothing
+    , equippedWeapon = Nothing
+    , preferredAmmo = Nothing
+    , naturalArmorClass = 5
+    , attackStats = Logic.unarmedAttackStats { special = Special.init, unarmedSkill = 50, traits = SeqSet.empty, perks = SeqDict.empty, level = 1, npcExtraBonus = 0 }
+    , addedSkillPercentages = SeqDict.empty
+    , special = Special.init
+    , fightStrategy = Command DoWhatever
+    }
+
+
+baseOngoingFight : Opponent -> FightGen.OngoingFight
+baseOngoingFight opponent =
+    { distanceHexes = 1
+    , attacker = opponent
+    , attackerAp = 10
+    , attackerItemsUsed = SeqDict.empty
+    , target = opponent
+    , targetAp = 10
+    , targetItemsUsed = SeqDict.empty
+    , reverseLog = []
+    , actionsTaken = 0
+    }
 
 
 damageNeverNegative : Test
@@ -38,55 +84,25 @@ damageNeverNegative =
                 |> Expect.onFail "Expected the list of negative damage actions in a fight to be empty"
 
 
-meleeAttackAtDistance2WithRange2 : Test
-meleeAttackAtDistance2WithRange2 =
-    let
-        strategy : FightStrategy
-        strategy =
-            If
-                { condition = Operator { lhs = Distance, op = GT_, rhs = Number 2 }
-                , then_ = Command MoveForward
-                , else_ = Command AttackRandomly
-                }
-    in
+meleeAttackSucceedsAtDistance2WithRange2 : Test
+meleeAttackSucceedsAtDistance2WithRange2 =
     Test.test "Melee combat at distance 2 with weapon with range 2 should work" <|
         \() ->
             let
                 opponent =
-                    { type_ = Fight.Player { name = "Opponent", xp = 0 }
-                    , hp = 100
-                    , maxHp = 100
-                    , maxAp = 10
-                    , sequence = 5
-                    , traits = SeqSet.empty
-                    , perks = SeqDict.empty
-                    , caps = 50
-                    , items = Dict.empty
-                    , drops = []
-                    , equippedArmor = Nothing
-                    , equippedWeapon = Just Item.SuperSledge
-                    , equippedAmmo = Nothing
-                    , naturalArmorClass = 5
-                    , attackStats = Logic.unarmedAttackStats { special = Special.init, unarmedSkill = 50, traits = SeqSet.empty, perks = SeqDict.empty, level = 1, npcExtraBonus = 0 }
-                    , addedSkillPercentages = SeqDict.empty
-                    , special = Special.init
-                    , fightStrategy = strategy
-                    }
+                    { baseOpponent | equippedWeapon = Just Item.SuperSledge }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 2 }
 
                 result =
                     Random.step
-                        (Data.Fight.Generator.attack_
+                        (FightGen.attack_
                             Fight.Attacker
-                            { distanceHexes = 2
-                            , attacker = opponent
-                            , attackerAp = 10
-                            , attackerItemsUsed = SeqDict.empty
-                            , target = opponent
-                            , targetAp = 10
-                            , targetItemsUsed = SeqDict.empty
-                            , reverseLog = []
-                            , actionsTaken = 0
-                            }
+                            ongoingFight
                             AttackStyle.MeleeUnaimed
                             4
                         )
@@ -98,59 +114,25 @@ meleeAttackAtDistance2WithRange2 =
                 |> Expect.onFail "Expected the attack to succeed"
 
 
-meleeAttackAtDistance2WithRange1 : Test
-meleeAttackAtDistance2WithRange1 =
-    let
-        strategy : FightStrategy
-        strategy =
-            If
-                { condition = Operator { lhs = Distance, op = GT_, rhs = Number 2 }
-                , then_ = Command MoveForward
-                , else_ = Command AttackRandomly
-                }
-    in
+meleeAttackFailsAtDistance2WithRange1 : Test
+meleeAttackFailsAtDistance2WithRange1 =
     Test.test "Melee combat at distance 2 with weapon with range 1 shouldn't work" <|
         \() ->
             let
                 opponent =
-                    { type_ =
-                        Fight.Player
-                            { name = "Opponent"
-                            , xp = 0
-                            }
-                    , hp = 100
-                    , maxHp = 100
-                    , maxAp = 10
-                    , sequence = 5
-                    , traits = SeqSet.empty
-                    , perks = SeqDict.empty
-                    , caps = 50
-                    , items = Dict.empty
-                    , drops = []
-                    , equippedArmor = Nothing
-                    , equippedWeapon = Just Item.Wakizashi
-                    , equippedAmmo = Nothing
-                    , naturalArmorClass = 5
-                    , attackStats = Logic.unarmedAttackStats { special = Special.init, unarmedSkill = 50, traits = SeqSet.empty, perks = SeqDict.empty, level = 1, npcExtraBonus = 0 }
-                    , addedSkillPercentages = SeqDict.empty
-                    , special = Special.init
-                    , fightStrategy = strategy
-                    }
+                    { baseOpponent | equippedWeapon = Just Item.Wakizashi }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 2 }
 
                 result =
                     Random.step
-                        (Data.Fight.Generator.attack_
+                        (FightGen.attack_
                             Fight.Attacker
-                            { distanceHexes = 2
-                            , attacker = opponent
-                            , attackerAp = 10
-                            , attackerItemsUsed = SeqDict.empty
-                            , target = opponent
-                            , targetAp = 10
-                            , targetItemsUsed = SeqDict.empty
-                            , reverseLog = []
-                            , actionsTaken = 0
-                            }
+                            ongoingFight
                             AttackStyle.MeleeUnaimed
                             4
                         )
@@ -162,6 +144,195 @@ meleeAttackAtDistance2WithRange1 =
                 |> Expect.onFail "Expected the attack to fail"
 
 
+rangedAttackFailsWithoutAmmo : Test
+rangedAttackFailsWithoutAmmo =
+    Test.test "Ranged attack fails without ammo" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.RedRyderLEBBGun
+                        , preferredAmmo = Nothing
+                        , items = Dict.empty
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 15 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result.ranCommandSuccessfully
+                |> Expect.equal False
+                |> Expect.onFail "Expected the attack to fail"
+
+
+rangedAttackSucceedsAtDistance15WithRange30 : Test
+rangedAttackSucceedsAtDistance15WithRange30 =
+    Test.test "Ranged attack succeeds at distance 15 with range 30" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.RedRyderLEBBGun
+                        , preferredAmmo = Nothing
+                        , items = Dict.singleton 1 { id = 1, kind = Item.BBAmmo, count = 1 }
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 15 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result.ranCommandSuccessfully
+                |> Expect.equal True
+                |> Expect.onFail "Expected the attack to succeed"
+
+
+rangedAttackFailsAtDistance30WithRange7 : Test
+rangedAttackFailsAtDistance30WithRange7 =
+    Test.test "Ranged attack fails at distance 30 with range 7" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.SawedOffShotgun
+                        , preferredAmmo = Nothing
+                        , items = Dict.singleton 1 { id = 1, kind = Item.ShotgunShell, count = 1 }
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 30 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result.ranCommandSuccessfully
+                |> Expect.equal False
+                |> Expect.onFail "Expected the attack to fail"
+
+
+rangedAttackSucceedsWithWrongPreferredAmmo : Test
+rangedAttackSucceedsWithWrongPreferredAmmo =
+    Test.test "Ranged attack succeeds with wrong preferred ammo" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.RedRyderLEBBGun
+                        , preferredAmmo = Just Item.Ap10mm -- This shouldn't ever happen in game but let's test it anyway
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = Item.BBAmmo, count = 1 } )
+                                , ( 2, { id = 2, kind = Item.Ap10mm, count = 1 } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 15 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result.ranCommandSuccessfully
+                |> Expect.equal True
+                |> Expect.onFail "Expected the attack to succeed"
+
+
+rangedAttackUsesPreferredAmmo : Test
+rangedAttackUsesPreferredAmmo =
+    Test.test "Ranged attack uses the preferred ammo" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.Smg10mm
+                        , preferredAmmo = Just Item.Ap10mm
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = Item.Jhp10mm, count = 1 } )
+                                , ( 2, { id = 2, kind = Item.Ap10mm, count = 1 } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 15 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result
+                |> Expect.all
+                    [ \r ->
+                        r.nextOngoing.attackerItemsUsed
+                            |> SeqDict.member Item.Ap10mm
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to add the preferred ammo to attackerItemsUsed"
+                    , \r ->
+                        r.nextOngoing.attacker.items
+                            |> Dict.filter (\_ { kind } -> kind == Item.Ap10mm)
+                            |> Dict.isEmpty
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to result in Ap10mm not being in attacker's inventory"
+                    ]
+
+
 fightFuzzer :
     { attacker : Fuzzer Opponent
     , target : Fuzzer Opponent
@@ -171,7 +342,7 @@ fightFuzzer r =
     Fuzz.constant
         (\a t currentTime seed ->
             Random.step
-                (Data.Fight.Generator.generator
+                (FightGen.generator
                     { attacker = a
                     , target = t
                     , currentTime = currentTime
