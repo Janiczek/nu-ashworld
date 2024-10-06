@@ -132,7 +132,6 @@ type CommandRejectionReason
     | MoveForward_AlreadyNextToEachOther
     | Attack_NotCloseEnough
     | Attack_NotEnoughAP
-    | Attack_NoUsableAmmo
 
 
 theOther : Who -> Who
@@ -410,9 +409,6 @@ encodeAction action =
 
                             Attack_NotEnoughAP ->
                                 "Attack_NotEnoughAP"
-
-                            Attack_NoUsableAmmo ->
-                                "Attack_NoUsableAmmo"
                   )
                 ]
 
@@ -502,9 +498,6 @@ commandRejectionReasonDecoder =
 
                     "Attack_NotEnoughAP" ->
                         JD.succeed Attack_NotEnoughAP
-
-                    "Attack_NoUsableAmmo" ->
-                        JD.succeed Attack_NoUsableAmmo
 
                     "MoveForward_AlreadyNextToEachOther" ->
                         JD.succeed MoveForward_AlreadyNextToEachOther

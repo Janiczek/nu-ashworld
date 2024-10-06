@@ -830,7 +830,6 @@ heal who ongoing itemKind =
         rejectCommand who Fight.Heal_ItemNotPresent ongoing
 
     else if not <| Item.isHealing itemKind then
-        -- TODO validate strategies and tell user the item cannot heal when defining the strategy?
         {- We're not using <= because there might later be usages for items that
            damage you instead of healing? Who knows
         -}
@@ -939,11 +938,6 @@ moveForward who ongoing =
         rejectCommand who MoveForward_AlreadyNextToEachOther ongoing
 
     else
-        -- TODO based on equipped weapon choose whether you need to move nearer to the opponent or whether it's good enough now
-        -- Eg. unarmed needs distance 1
-        -- Melee might need distance <=2 and might prefer distance 1
-        -- Small guns might need distance <=35 and prefer the largest where the chance to hit is ~95% or something
-        -- TODO currently everything is unarmed.
         let
             maxPossibleMove : Int
             maxPossibleMove =
@@ -1268,7 +1262,12 @@ attack_ who ongoing attackStyle baseApCost =
                 continueAttack Nothing
 
             NoUsableAmmo ->
-                rejectCommand who Attack_NoUsableAmmo ongoing
+                -- fall back to an unarmed attack
+                attack_
+                    who
+                    (ongoing |> updateOpponent who unequipWeapon)
+                    (Tuple.first unarmedAttackStyle)
+                    (Tuple.second unarmedAttackStyle)
 
 
 type alias StrategyState =
@@ -1559,6 +1558,11 @@ targetAlreadyDead r =
     , messageForTarget = messageForTarget
     , messageForAttacker = messageForAttacker
     }
+
+
+unequipWeapon : Opponent -> Opponent
+unequipWeapon opponent =
+    { opponent | equippedWeapon = Nothing }
 
 
 subtractHp : Int -> Opponent -> Opponent

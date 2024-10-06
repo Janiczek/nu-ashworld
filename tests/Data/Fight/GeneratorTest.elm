@@ -26,11 +26,12 @@ suite =
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
             , meleeAttackFailsAtDistance2WithRange1
-            , rangedAttackFailsWithoutAmmo
+            , rangedAttackFailsWithoutAmmoAndOutOfRange
             , rangedAttackSucceedsAtDistance15WithRange30
             , rangedAttackSucceedsWithWrongPreferredAmmo
             , rangedAttackUsesPreferredAmmo
             , rangedAttackFailsAtDistance30WithRange7
+            , unarmedAttackUsedWhenNoAmmoAndInRange
             ]
         ]
 
@@ -144,9 +145,9 @@ meleeAttackFailsAtDistance2WithRange1 =
                 |> Expect.onFail "Expected the attack to fail"
 
 
-rangedAttackFailsWithoutAmmo : Test
-rangedAttackFailsWithoutAmmo =
-    Test.test "Ranged attack fails without ammo" <|
+rangedAttackFailsWithoutAmmoAndOutOfRange : Test
+rangedAttackFailsWithoutAmmoAndOutOfRange =
+    Test.test "Ranged attack fails without ammo and out of range" <|
         \() ->
             let
                 opponent =
@@ -244,6 +245,40 @@ rangedAttackFailsAtDistance30WithRange7 =
             result.ranCommandSuccessfully
                 |> Expect.equal False
                 |> Expect.onFail "Expected the attack to fail"
+
+
+unarmedAttackUsedWhenNoAmmoAndInRange : Test
+unarmedAttackUsedWhenNoAmmoAndInRange =
+    Test.test "Unarmed attack used when no ammo and in range" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.SawedOffShotgun
+                        , preferredAmmo = Nothing
+                        , items = Dict.empty
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 1 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result.ranCommandSuccessfully
+                |> Expect.equal True
+                |> Expect.onFail "Expected the attack to succeed"
 
 
 rangedAttackSucceedsWithWrongPreferredAmmo : Test
@@ -368,6 +403,4 @@ randomFightFuzzer =
 
 -- TODO items in inventory decrease after finished fight where they were used
 -- TODO thrown items decrease after throwing
--- TODO ammo decreases after using
--- TODO fallback ammo used
 -- TODO unarmed combat after all ammo used
