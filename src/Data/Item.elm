@@ -9650,6 +9650,9 @@ weaponDamageType kind =
             Nothing
 
 
+{-| One gotcha: in case of thrown weapons they themselves are their own ammo.
+This makes throwing work more or less the same as ranged weapons.
+-}
 usableAmmo : Kind -> List Kind
 usableAmmo kind =
     case kind of
@@ -9811,10 +9814,10 @@ usableAmmo kind =
             [ MicrofusionCell ]
 
         Flare ->
-            []
+            [ Flare ]
 
         FragGrenade ->
-            []
+            [ FragGrenade ]
 
         BBAmmo ->
             []
@@ -9919,7 +9922,7 @@ usableAmmo kind =
             [ SmallEnergyCell ]
 
         HolyHandGrenade ->
-            []
+            [ HolyHandGrenade ]
 
         HnNeedlerCartridge ->
             []

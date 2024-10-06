@@ -32,6 +32,7 @@ suite =
             , rangedAttackUsesPreferredAmmo
             , rangedAttackFailsAtDistance30WithRange7
             , unarmedAttackUsedWhenNoAmmoAndInRange
+            , thrownAttackUsesUpWeapon
             ]
         ]
 
@@ -281,6 +282,58 @@ unarmedAttackUsedWhenNoAmmoAndInRange =
                 |> Expect.onFail "Expected the attack to succeed"
 
 
+thrownAttackUsesUpWeapon : Test
+thrownAttackUsesUpWeapon =
+    Test.test "Thrown attack uses up weapon" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.FragGrenade
+                        , preferredAmmo = Nothing
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = Item.FragGrenade, count = 1 } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 10 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.Throw
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result
+                |> Expect.all
+                    [ \r ->
+                        r.ranCommandSuccessfully
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to succeed"
+                    , \r ->
+                        r.nextOngoing.attackerItemsUsed
+                            |> SeqDict.member Item.FragGrenade
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to add the thrown weapon to attackerItemsUsed"
+                    , \r ->
+                        r.nextOngoing.attacker.items
+                            |> Dict.filter (\_ { kind } -> kind == Item.FragGrenade)
+                            |> Dict.isEmpty
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to result in FragGrenade not being in attacker's inventory"
+                    ]
+
+
 rangedAttackSucceedsWithWrongPreferredAmmo : Test
 rangedAttackSucceedsWithWrongPreferredAmmo =
     Test.test "Ranged attack succeeds with wrong preferred ammo" <|
@@ -398,9 +451,3 @@ randomFightFuzzer =
         { attacker = opponentFuzzer
         , target = opponentFuzzer
         }
-
-
-
--- TODO items in inventory decrease after finished fight where they were used
--- TODO thrown items decrease after throwing
--- TODO unarmed combat after all ammo used
