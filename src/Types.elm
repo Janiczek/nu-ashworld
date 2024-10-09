@@ -125,6 +125,7 @@ type FrontendMsg
     | OpenMessage Message.Id
     | AskToRemoveMessage Message.Id
     | AskToRemoveFightMessages
+    | AskToRemoveAllMessages
     | BarterMsg BarterMsg
     | HoverItem HoveredItem
     | StopHoveringItem
@@ -176,6 +177,7 @@ type ToBackend
     | MessageWasRead Message.Id
     | RemoveMessage Message.Id
     | RemoveFightMessages
+    | RemoveAllMessages
     | Barter Barter.State
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name

@@ -16,9 +16,11 @@ module Data.FightStrategy exposing
 
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item
+import Data.Trait as Trait exposing (Trait)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import SeqSet exposing (SeqSet)
 
 
 type FightStrategy
@@ -580,14 +582,70 @@ doWhatever =
 
 type ValidationWarning
     = ItemDoesntHeal Item.Kind
+    | YouCantUseAimedShots
 
 
-warnings : FightStrategy -> List ValidationWarning
-warnings strategy =
+warnings : SeqSet Trait -> FightStrategy -> List ValidationWarning
+warnings traits strategy =
+    List.concat
+        [ healingWithNonHealingItemsWarnings strategy
+        , youCantUseAimedShots traits strategy
+        ]
+
+
+youCantUseAimedShots : SeqSet Trait -> FightStrategy -> List ValidationWarning
+youCantUseAimedShots traits strategy =
+    if
+        SeqSet.member Trait.FastShot traits
+            && anyCommand isAimedCommand strategy
+    then
+        [ YouCantUseAimedShots ]
+
+    else
+        []
+
+
+healingWithNonHealingItemsWarnings : FightStrategy -> List ValidationWarning
+healingWithNonHealingItemsWarnings strategy =
     strategy
         |> extractItems
         |> List.filter (not << Item.isHealing)
         |> List.map ItemDoesntHeal
+
+
+anyCommand : (Command -> Bool) -> FightStrategy -> Bool
+anyCommand predicate strategy =
+    case strategy of
+        If { then_, else_ } ->
+            anyCommand predicate then_ || anyCommand predicate else_
+
+        Command command ->
+            predicate command
+
+
+isAimedCommand : Command -> Bool
+isAimedCommand command =
+    case command of
+        Attack attackStyle ->
+            AttackStyle.isAimed attackStyle
+
+        AttackRandomly ->
+            False
+
+        Heal _ ->
+            False
+
+        HealWithAnything ->
+            False
+
+        MoveForward ->
+            False
+
+        DoWhatever ->
+            False
+
+        SkipTurn ->
+            False
 
 
 extractItems : FightStrategy -> List Item.Kind

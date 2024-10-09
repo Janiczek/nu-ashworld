@@ -166,6 +166,11 @@ encodeToBackendMsg msg =
                 [ ( "type", JE.string "RemoveFightMessages" )
                 ]
 
+        RemoveAllMessages ->
+            JE.object
+                [ ( "type", JE.string "RemoveAllMessages" )
+                ]
+
         Barter barterState ->
             JE.object
                 [ ( "type", JE.string "Barter" )

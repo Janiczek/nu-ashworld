@@ -13,34 +13,35 @@ import Json.Encode as JE
 import SeqSet exposing (SeqSet)
 
 
-
-{- TODO go through
-   https://fallout.fandom.com/wiki/Fallout_2_traits
-   and implement all missing and applicable
--}
--- TODO Small Frame - carry weight
-
-
 type Trait
-    = Kamikaze
-    | Bruiser
-    | Gifted
-    | SmallFrame
-    | Skilled
-    | HeavyHanded
+    = -- Bloody Mess
+      Bruiser
+      -- Chem Reliant
+      -- Chem Resistant
+      -- Fast Metabolism
+    | FastShot
     | Finesse
+    | Gifted
+      -- Good Natured
+    | HeavyHanded
+      -- Jinxed
+    | Kamikaze
+      -- One Hander
+      -- Sex Appeal
+    | Skilled
+    | SmallFrame
 
 
 all : List Trait
 all =
-    -- TODO sort them according to F2
     [ Bruiser
-    , Kamikaze
-    , Gifted
-    , SmallFrame
-    , Skilled
-    , HeavyHanded
+    , FastShot
     , Finesse
+    , Gifted
+    , HeavyHanded
+    , Kamikaze
+    , Skilled
+    , SmallFrame
     ]
 
 
@@ -68,6 +69,9 @@ name trait =
         Finesse ->
             "Finesse"
 
+        FastShot ->
+            "Fast Shot"
+
 
 encode : Trait -> JE.Value
 encode trait =
@@ -93,6 +97,9 @@ encode trait =
 
             Finesse ->
                 "finesse"
+
+            FastShot ->
+                "fast-shot"
 
 
 decoder : Decoder Trait
@@ -121,6 +128,9 @@ decoder =
 
                     "finesse" ->
                         JD.succeed Finesse
+
+                    "fast-shot" ->
+                        JD.succeed FastShot
 
                     _ ->
                         JD.fail <| "unknown Trait: '" ++ trait ++ "'"
@@ -195,4 +205,13 @@ but you cause more critical hits.
 
 * +10% critical chance
 * -30% damage
+"""
+
+        FastShot ->
+            """You don't have time to aim for a targeted attack, because you attack
+faster than normal people. It costs you one less action point for guns and
+thrown weapons.
+
+* All gun and thrown weapon attacks cost 1 less AP
+* Unable to aim attacks
 """

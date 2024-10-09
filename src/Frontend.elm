@@ -72,8 +72,11 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
-import Logic exposing (AttackStats, ItemNotUsableReason(..))
+import Logic exposing (AttackStats, ItemNotUsableReason(..), canBurst)
 import Markdown
+import Markdown.Block
+import Markdown.Parser
+import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Parser
 import Result.Extra as Result
 import SeqDict exposing (SeqDict)
@@ -529,6 +532,11 @@ update msg ({ loginForm } as model) =
         AskToRemoveFightMessages ->
             ( model
             , Lamdera.sendToBackend RemoveFightMessages
+            )
+
+        AskToRemoveAllMessages ->
+            ( model
+            , Lamdera.sendToBackend RemoveAllMessages
             )
 
         BarterMsg barterMsg ->
@@ -1229,7 +1237,7 @@ adminMapView worldName adminData =
                 , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
                 , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
                 ]
-                (locationsView Nothing
+                (locationsView
                     :: List.map mapMarkerView playerCoords
                 )
 
@@ -1461,7 +1469,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
-            [ locationsView (Just playerCoords)
+            [ locationsView
             , mapMarkerView playerCoords
             , bigChunkLayerView
                 |> H.viewIfLazy showAreaDanger
@@ -1511,8 +1519,8 @@ tileClass =
     HA.class "absolute left-0 top-0 w-[var(--map-cell-size)] h-[var(--map-cell-size)] translate-x-[calc(var(--map-cell-size)*var(--tile-coord-x))] translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y))]"
 
 
-locationView : Maybe TileCoords -> Location -> Html FrontendMsg
-locationView maybePlayer location =
+locationView : Location -> Html FrontendMsg
+locationView location =
     let
         ( x, y ) =
             Location.coords location
@@ -1524,14 +1532,6 @@ locationView maybePlayer location =
         name : String
         name =
             Location.name location
-
-        hasVendor : Bool
-        hasVendor =
-            Vendor.isInLocation location
-
-        isCurrent : Bool
-        isCurrent =
-            maybePlayer == Just ( x, y )
 
         borderWidth : String
         borderWidth =
@@ -1547,11 +1547,8 @@ locationView maybePlayer location =
     in
     H.div
         [ tileClass
-        , HA.class "opacity-50 text-green-100 absolute inset-0"
-        , HA.classList
-            [ ( "!opacity-100", hasVendor || isCurrent ) ]
+        , HA.class "text-green-100 absolute inset-0"
         , HA.attribute "data-location-name" name
-        , TW.mod "hover" "opacity-100"
         , TW.mod "before" <|
             "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
                 ++ borderWidth
@@ -1582,10 +1579,10 @@ locationView maybePlayer location =
         []
 
 
-locationsView : Maybe TileCoords -> Html FrontendMsg
-locationsView maybePlayer =
+locationsView : Html FrontendMsg
+locationsView =
     Location.allLocations
-        |> List.map (locationView maybePlayer)
+        |> List.map locationView
         |> H.div [ HA.class "absolute inset-0 bg-black-transparent" ]
 
 
@@ -1656,7 +1653,7 @@ mapLoggedOutView =
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
-            [ locationsView Nothing ]
+            [ locationsView ]
         ]
     ]
 
@@ -2548,12 +2545,16 @@ newCharHelpView maybeHoveredItem =
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div [ HA.class "max-w-[50ch]" ]
+                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-2" ]
                         [ H.h4
                             [ HA.class "text-yellow" ]
                             [ H.text title ]
-                        , -- TODO formatting of lists etc.
-                          Markdown.toHtml [] description
+                        , description
+                            |> Markdown.Parser.parse
+                            |> Result.mapError (\_ -> "")
+                            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
+                            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+                            |> H.div [ HA.class "flex flex-col gap-2" ]
                         ]
     in
     H.div
@@ -2563,6 +2564,33 @@ newCharHelpView maybeHoveredItem =
             [ H.text "Help" ]
         , helpContent
         ]
+
+
+hoveredItemRenderer : Markdown.Renderer.Renderer (Html a)
+hoveredItemRenderer =
+    { defaultHtmlRenderer
+        | paragraph =
+            \children ->
+                H.span [] children
+        , link =
+            \{ title, destination } children ->
+                H.a
+                    [ HA.class "text-yellow relative no-underline"
+                    , TW.mod "after" "absolute content-[''] bg-yellow-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
+                    , TW.mod "hover:after" "bottom-0 h-full"
+                    , HA.href destination
+                    , HA.attributeMaybe HA.title title
+                    ]
+                    children
+        , unorderedList =
+            \list ->
+                list
+                    |> List.map
+                        (\(Markdown.Block.ListItem _ children) ->
+                            H.li [] (UI.liBullet :: children)
+                        )
+                    |> H.ul [ HA.class "flex flex-col" ]
+    }
 
 
 newCharDerivedStatsView : NewChar -> Html FrontendMsg
@@ -2948,11 +2976,16 @@ charHelpView maybeHoveredItem =
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div [ HA.class "max-w-[50ch]" ]
+                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-2" ]
                         [ H.h4
                             [ HA.class "text-yellow" ]
                             [ H.text title ]
-                        , Markdown.toHtml [] description
+                        , description
+                            |> Markdown.Parser.parse
+                            |> Result.mapError (\_ -> "")
+                            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
+                            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+                            |> H.div [ HA.class "flex flex-col gap-2" ]
                         ]
     in
     H.div
@@ -3542,7 +3575,11 @@ messagesView currentTime zone _ player =
                     [ H.th [ HA.title "Unread" ] [ H.text "U" ]
                     , H.th [] [ H.text "Summary" ]
                     , H.th [] [ H.text "Date" ]
-                    , H.th [ HA.title "Remove" ] [ H.text "X" ]
+                    , H.th
+                        [ HA.title "Remove all"
+                        , HE.onClick AskToRemoveAllMessages
+                        ]
+                        [ H.text "X" ]
                     ]
                 ]
             , H.tbody []
@@ -3724,6 +3761,9 @@ settingsFightStrategyView fightStrategyText _ player =
                     case warning of
                         FightStrategy.ItemDoesntHeal itemKind ->
                             "Item doesn't heal: " ++ Item.name itemKind
+
+                        FightStrategy.YouCantUseAimedShots ->
+                            "You can't use aimed shots (due to the Fast Shot trait)"
                 ]
 
         viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
@@ -3818,7 +3858,7 @@ settingsFightStrategyView fightStrategyText _ player =
         warnings : List FightStrategy.ValidationWarning
         warnings =
             parseResult
-                |> Result.map FightStrategy.warnings
+                |> Result.map (FightStrategy.warnings player.traits)
                 |> Result.withDefault []
     in
     [ pageTitleView "Settings: Fight Strategy"

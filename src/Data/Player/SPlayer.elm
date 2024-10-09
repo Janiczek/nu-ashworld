@@ -19,6 +19,7 @@ module Data.Player.SPlayer exposing
     , questEngagement
     , readMessage
     , recalculateHp
+    , removeAllMessages
     , removeFightMessages
     , removeItem
     , removeItems
@@ -392,6 +393,11 @@ removeFightMessages player =
             player.messages
                 |> Dict.filter (\_ message -> not (Message.isFightMessage message.content))
     }
+
+
+removeAllMessages : SPlayer -> SPlayer
+removeAllMessages player =
+    { player | messages = Dict.empty }
 
 
 addItems : List Item -> SPlayer -> SPlayer
