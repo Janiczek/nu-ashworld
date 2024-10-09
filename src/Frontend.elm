@@ -3442,6 +3442,7 @@ inventoryView _ player =
                 { attackerAddedSkillPercentages = player.addedSkillPercentages
                 , attackerSpecial = player.special
                 , attackerPerks = player.perks
+                , attackerTraits = player.traits
                 , distanceHexes = 0
                 , targetArmorClass = 0
                 , attackStyle = AttackStyle.UnarmedUnaimed
@@ -3755,7 +3756,7 @@ settingsFightStrategyView fightStrategyText _ player =
         viewWarning : FightStrategy.ValidationWarning -> Html FrontendMsg
         viewWarning warning =
             H.li
-                [ TW.mod "hover" "text-green-100" ]
+                [ HA.class "text-yellow" ]
                 [ UI.liBullet
                 , H.text <|
                     case warning of

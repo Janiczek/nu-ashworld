@@ -1,5 +1,6 @@
 module TestHelpers exposing
     ( addedSkillPercentagesFuzzer
+    , aimedAttackStyleFuzzer
     , ammoKindFuzzer
     , armorClassFuzzer
     , armorKindFuzzer
@@ -288,6 +289,17 @@ attackStyleFuzzer =
                 , MeleeAimed
                 , ShootSingleAimed
                 ]
+        )
+
+
+aimedAttackStyleFuzzer : Fuzzer AttackStyle
+aimedAttackStyleFuzzer =
+    Fuzz.oneOfValues
+        (List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
+            [ UnarmedAimed
+            , MeleeAimed
+            , ShootSingleAimed
+            ]
         )
 
 

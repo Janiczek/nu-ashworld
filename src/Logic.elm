@@ -44,7 +44,7 @@ module Logic exposing
     )
 
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
-import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item exposing (Kind(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Quest as Quest exposing (Engagement(..))
@@ -358,6 +358,7 @@ lightingPenalty r =
 chanceToHit :
     { attackerAddedSkillPercentages : SeqDict Skill Int
     , attackerPerks : SeqDict Perk Int
+    , attackerTraits : SeqSet Trait
     , attackerSpecial : Special
     , distanceHexes : Int
     , equippedWeapon : Maybe Item.Kind
@@ -470,6 +471,7 @@ rangedChanceToHit :
         | attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerSpecial : Special
         , attackerPerks : SeqDict Perk Int
+        , attackerTraits : SeqSet Trait
         , targetArmorClass : Int
         , distanceHexes : Int
         , equippedWeapon : Maybe Item.Kind
@@ -478,105 +480,110 @@ rangedChanceToHit :
     }
     -> Int
 rangedChanceToHit r =
-    case r.equippedWeapon of
-        Nothing ->
-            -- Can't have ranged attacks without a weapon
-            0
+    if SeqSet.member Trait.FastShot r.attackerTraits && AttackStyle.isAimed r.attackStyle then
+        -- FastShot doesn't work with aimed attacks
+        0
 
-        Just equippedWeapon ->
-            if r.distanceHexes > Item.range r.attackStyle equippedWeapon then
-                -- Wanted to attack at a range the weapon can't do
+    else
+        case r.equippedWeapon of
+            Nothing ->
+                -- Can't have ranged attacks without a weapon
                 0
 
-            else
-                case neededSkill r.attackStyle (Item.types equippedWeapon) of
-                    Nothing ->
-                        -- Wanted to attack in an `attackStyle` the weapon can't do
-                        0
+            Just equippedWeapon ->
+                if r.distanceHexes > Item.range r.attackStyle equippedWeapon then
+                    -- Wanted to attack at a range the weapon can't do
+                    0
 
-                    Just weaponSkill ->
-                        let
-                            weaponSkill_ : Int
-                            weaponSkill_ =
-                                Skill.get r.attackerSpecial r.attackerAddedSkillPercentages weaponSkill
+                else
+                    case neededSkill r.attackStyle (Item.types equippedWeapon) of
+                        Nothing ->
+                            -- Wanted to attack in an `attackStyle` the weapon can't do
+                            0
 
-                            distancePenalty_ : Int
-                            distancePenalty_ =
-                                -- This already contains the Weapon Long Range perk calculations.
-                                distancePenalty
-                                    { distanceHexes = r.distanceHexes
-                                    , equippedWeapon = r.equippedWeapon
-                                    , perception = r.attackerSpecial.perception
-                                    }
+                        Just weaponSkill ->
+                            let
+                                weaponSkill_ : Int
+                                weaponSkill_ =
+                                    Skill.get r.attackerSpecial r.attackerAddedSkillPercentages weaponSkill
 
-                            ammoArmorClassModifier : Int
-                            ammoArmorClassModifier =
-                                r.preferredAmmo
-                                    |> Maybe.map Item.ammoArmorClassModifier
-                                    |> Maybe.withDefault 0
+                                distancePenalty_ : Int
+                                distancePenalty_ =
+                                    -- This already contains the Weapon Long Range perk calculations.
+                                    distancePenalty
+                                        { distanceHexes = r.distanceHexes
+                                        , equippedWeapon = r.equippedWeapon
+                                        , perception = r.attackerSpecial.perception
+                                        }
 
-                            lightingPenalty_ : Int
-                            lightingPenalty_ =
-                                lightingPenalty
-                                    { isItDark = False
-                                    , hasNightVisionPerk = Perk.rank Perk.NightVision r.attackerPerks > 0
-                                    , distanceHexes = r.distanceHexes
-                                    }
+                                ammoArmorClassModifier : Int
+                                ammoArmorClassModifier =
+                                    r.preferredAmmo
+                                        |> Maybe.map Item.ammoArmorClassModifier
+                                        |> Maybe.withDefault 0
 
-                            shotPenalty : Int
-                            shotPenalty =
-                                case r.attackStyle of
-                                    Throw ->
+                                lightingPenalty_ : Int
+                                lightingPenalty_ =
+                                    lightingPenalty
+                                        { isItDark = False
+                                        , hasNightVisionPerk = Perk.rank Perk.NightVision r.attackerPerks > 0
+                                        , distanceHexes = r.distanceHexes
+                                        }
+
+                                shotPenalty : Int
+                                shotPenalty =
+                                    case r.attackStyle of
+                                        Throw ->
+                                            0
+
+                                        ShootSingleUnaimed ->
+                                            0
+
+                                        ShootSingleAimed aim ->
+                                            aimedShotChanceToHitPenalty aim
+
+                                        ShootBurst ->
+                                            burstShotChanceToHitPenalty
+
+                                        -- These can't happen in ranged:
+                                        UnarmedUnaimed ->
+                                            0
+
+                                        UnarmedAimed _ ->
+                                            0
+
+                                        MeleeUnaimed ->
+                                            0
+
+                                        MeleeAimed _ ->
+                                            0
+
+                                strengthRequirementPenalty : Int
+                                strengthRequirementPenalty =
+                                    strengthRequirementChanceToHitPenalty
+                                        { strength = r.attackerSpecial.strength
+                                        , equippedWeapon = equippedWeapon
+                                        }
+
+                                weaponAccuratePerk : Int
+                                weaponAccuratePerk =
+                                    if Item.isAccurateWeapon equippedWeapon then
+                                        20
+
+                                    else
                                         0
-
-                                    ShootSingleUnaimed ->
-                                        0
-
-                                    ShootSingleAimed aim ->
-                                        aimedShotChanceToHitPenalty aim
-
-                                    ShootBurst ->
-                                        burstShotChanceToHitPenalty
-
-                                    -- These can't happen in ranged:
-                                    UnarmedUnaimed ->
-                                        0
-
-                                    UnarmedAimed _ ->
-                                        0
-
-                                    MeleeUnaimed ->
-                                        0
-
-                                    MeleeAimed _ ->
-                                        0
-
-                            strengthRequirementPenalty : Int
-                            strengthRequirementPenalty =
-                                strengthRequirementChanceToHitPenalty
-                                    { strength = r.attackerSpecial.strength
-                                    , equippedWeapon = equippedWeapon
-                                    }
-
-                            weaponAccuratePerk : Int
-                            weaponAccuratePerk =
-                                if Item.isAccurateWeapon equippedWeapon then
-                                    20
-
-                                else
-                                    0
-                        in
-                        (weaponSkill_
-                            + (8 * r.attackerSpecial.perception)
-                            -- weapon long range perk is already factored into the distancePenalty
-                            + weaponAccuratePerk
-                            - distancePenalty_
-                            - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
-                            - lightingPenalty_
-                            - strengthRequirementPenalty
-                            - shotPenalty
-                        )
-                            |> clamp 0 95
+                            in
+                            (weaponSkill_
+                                + (8 * r.attackerSpecial.perception)
+                                -- weapon long range perk is already factored into the distancePenalty
+                                + weaponAccuratePerk
+                                - distancePenalty_
+                                - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
+                                - lightingPenalty_
+                                - strengthRequirementPenalty
+                                - shotPenalty
+                            )
+                                |> clamp 0 95
 
 
 weaponRange : Maybe Item.Kind -> AttackStyle -> Int
@@ -594,6 +601,7 @@ meleeChanceToHit :
     { r
         | attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerSpecial : Special
+        , attackerTraits : SeqSet Trait
         , distanceHexes : Int
         , equippedWeapon : Maybe Item.Kind
         , targetArmorClass : Int
@@ -601,7 +609,11 @@ meleeChanceToHit :
     }
     -> Int
 meleeChanceToHit r =
-    if r.distanceHexes > weaponRange r.equippedWeapon r.attackStyle then
+    if SeqSet.member Trait.FastShot r.attackerTraits && AttackStyle.isAimed r.attackStyle then
+        -- FastShot doesn't work with aimed attacks
+        0
+
+    else if r.distanceHexes > weaponRange r.equippedWeapon r.attackStyle then
         -- Wanted to attack at a range the weapon can't do
         0
 

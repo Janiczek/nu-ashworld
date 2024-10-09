@@ -26,7 +26,6 @@ items =
       , text =
             """
 - more "normal" unarmed+melee weapons, and make them part of shops
-- Fast Shot trait -> can't use aimed shots
 
 - Are we adding bonus to Critical Chance based on AimedShot?
 

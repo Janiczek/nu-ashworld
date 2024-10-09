@@ -5,10 +5,12 @@ import Data.Item as Item exposing (Kind(..))
 import Data.Perk exposing (Perk)
 import Data.Skill exposing (Skill(..))
 import Data.Special as Special exposing (Special)
+import Data.Trait as Trait exposing (Trait)
 import Expect
 import Fuzz exposing (Fuzzer)
 import Logic
 import SeqDict exposing (SeqDict)
+import SeqSet exposing (SeqSet)
 import Test exposing (Test)
 import TestHelpers
 
@@ -85,6 +87,14 @@ test =
                             , distanceHexes = args.distanceHexes + 80
                         }
                         |> Expect.equal 0
+            , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.aimedAttackStyleFuzzer "FastShot + aimed attack: cannot hit" <|
+                \args attackStyle ->
+                    Logic.chanceToHit
+                        { args
+                            | attackStyle = attackStyle
+                            , attackerTraits = args.attackerTraits |> SeqSet.insert Trait.FastShot
+                        }
+                        |> Expect.equal 0
             ]
         ]
 
@@ -94,6 +104,7 @@ chanceToHitArgsFuzzer :
         { attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerPerks : SeqDict Perk Int
         , attackerSpecial : Special
+        , attackerTraits : SeqSet Trait
         , distanceHexes : Int
         , equippedWeapon : Maybe Item.Kind
         , preferredAmmo : Maybe Item.Kind
@@ -101,11 +112,12 @@ chanceToHitArgsFuzzer :
         , attackStyle : AttackStyle
         }
 chanceToHitArgsFuzzer =
-    Fuzz.map8
-        (\attackerAddedSkillPercentages attackerPerks attackerSpecial distanceHexes equippedWeapon preferredAmmo targetArmorClass attackStyle ->
+    Fuzz.constant
+        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon preferredAmmo targetArmorClass attackStyle ->
             { attackerAddedSkillPercentages = attackerAddedSkillPercentages
             , attackerPerks = attackerPerks
             , attackerSpecial = attackerSpecial
+            , attackerTraits = attackerTraits
             , distanceHexes = distanceHexes
             , equippedWeapon = equippedWeapon
             , preferredAmmo = preferredAmmo
@@ -113,11 +125,12 @@ chanceToHitArgsFuzzer =
             , attackStyle = attackStyle
             }
         )
-        TestHelpers.addedSkillPercentagesFuzzer
-        TestHelpers.perksFuzzer
-        TestHelpers.specialFuzzer
-        TestHelpers.distanceFuzzer
-        TestHelpers.equippedWeaponKindFuzzer
-        TestHelpers.preferredAmmoKindFuzzer
-        TestHelpers.armorClassFuzzer
-        TestHelpers.attackStyleFuzzer
+        |> Fuzz.andMap TestHelpers.addedSkillPercentagesFuzzer
+        |> Fuzz.andMap TestHelpers.perksFuzzer
+        |> Fuzz.andMap TestHelpers.specialFuzzer
+        |> Fuzz.andMap TestHelpers.traitsFuzzer
+        |> Fuzz.andMap TestHelpers.distanceFuzzer
+        |> Fuzz.andMap TestHelpers.equippedWeaponKindFuzzer
+        |> Fuzz.andMap TestHelpers.preferredAmmoKindFuzzer
+        |> Fuzz.andMap TestHelpers.armorClassFuzzer
+        |> Fuzz.andMap TestHelpers.attackStyleFuzzer
