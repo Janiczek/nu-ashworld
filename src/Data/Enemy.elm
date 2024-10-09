@@ -5,8 +5,20 @@ module Data.Enemy exposing
     , aimedShotName
     , all
     , criticalSpec
+    , damageResistanceEMP
+    , damageResistanceElectrical
+    , damageResistanceExplosion
+    , damageResistanceFire
+    , damageResistanceLaser
     , damageResistanceNormal
+    , damageResistancePlasma
+    , damageThresholdEMP
+    , damageThresholdElectrical
+    , damageThresholdExplosion
+    , damageThresholdFire
+    , damageThresholdLaser
     , damageThresholdNormal
+    , damageThresholdPlasma
     , default
     , dropGenerator
     , dropSpec
@@ -3793,3 +3805,627 @@ isLivingCreature type_ =
 
         Radscorpion ->
             True
+
+
+damageResistanceEMP : Type -> Int
+damageResistanceEMP type_ =
+    case type_ of
+        SilverGecko ->
+            500
+
+        ToughSilverGecko ->
+            500
+
+        GoldenGecko ->
+            500
+
+        ToughGoldenGecko ->
+            500
+
+        FireGecko ->
+            500
+
+        ToughFireGecko ->
+            500
+
+        Brahmin ->
+            500
+
+        AngryBrahmin ->
+            500
+
+        WeakBrahmin ->
+            500
+
+        WildBrahmin ->
+            500
+
+        GiantAnt ->
+            500
+
+        ToughGiantAnt ->
+            500
+
+        BlackRadscorpion ->
+            500
+
+        LesserBlackRadscorpion ->
+            500
+
+        LesserRadscorpion ->
+            500
+
+        Radscorpion ->
+            500
+
+
+damageThresholdEMP : Type -> Int
+damageThresholdEMP type_ =
+    case type_ of
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            0
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            0
+
+        ToughFireGecko ->
+            0
+
+        LesserBlackRadscorpion ->
+            0
+
+        BlackRadscorpion ->
+            0
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
+
+
+damageResistanceElectrical : Type -> Int
+damageResistanceElectrical type_ =
+    case type_ of
+        LesserRadscorpion ->
+            15
+
+        Radscorpion ->
+            30
+
+        Brahmin ->
+            30
+
+        SilverGecko ->
+            30
+
+        ToughSilverGecko ->
+            30
+
+        GoldenGecko ->
+            30
+
+        ToughGoldenGecko ->
+            30
+
+        WeakBrahmin ->
+            30
+
+        WildBrahmin ->
+            30
+
+        FireGecko ->
+            50
+
+        ToughFireGecko ->
+            50
+
+        LesserBlackRadscorpion ->
+            30
+
+        BlackRadscorpion ->
+            35
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            10
+
+        AngryBrahmin ->
+            30
+
+
+damageThresholdElectrical : Type -> Int
+damageThresholdElectrical type_ =
+    case type_ of
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            0
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            2
+
+        ToughFireGecko ->
+            2
+
+        LesserBlackRadscorpion ->
+            0
+
+        BlackRadscorpion ->
+            0
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
+
+
+damageResistanceExplosion : Type -> Int
+damageResistanceExplosion type_ =
+    case type_ of
+        LesserRadscorpion ->
+            10
+
+        Radscorpion ->
+            20
+
+        Brahmin ->
+            10
+
+        SilverGecko ->
+            20
+
+        ToughSilverGecko ->
+            20
+
+        GoldenGecko ->
+            20
+
+        ToughGoldenGecko ->
+            20
+
+        WeakBrahmin ->
+            10
+
+        WildBrahmin ->
+            20
+
+        FireGecko ->
+            40
+
+        ToughFireGecko ->
+            40
+
+        LesserBlackRadscorpion ->
+            20
+
+        BlackRadscorpion ->
+            30
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            10
+
+        AngryBrahmin ->
+            20
+
+
+damageThresholdExplosion : Type -> Int
+damageThresholdExplosion type_ =
+    case type_ of
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            2
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            6
+
+        ToughFireGecko ->
+            6
+
+        LesserBlackRadscorpion ->
+            0
+
+        BlackRadscorpion ->
+            0
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
+
+
+damageResistanceFire : Type -> Int
+damageResistanceFire type_ =
+    case type_ of
+        LesserRadscorpion ->
+            10
+
+        Radscorpion ->
+            10
+
+        Brahmin ->
+            20
+
+        SilverGecko ->
+            10
+
+        ToughSilverGecko ->
+            10
+
+        GoldenGecko ->
+            20
+
+        ToughGoldenGecko ->
+            20
+
+        WeakBrahmin ->
+            20
+
+        WildBrahmin ->
+            20
+
+        FireGecko ->
+            500
+
+        ToughFireGecko ->
+            500
+
+        LesserBlackRadscorpion ->
+            10
+
+        BlackRadscorpion ->
+            20
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            20
+
+
+damageThresholdFire : Type -> Int
+damageThresholdFire type_ =
+    case type_ of
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            2
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            20
+
+        ToughFireGecko ->
+            20
+
+        LesserBlackRadscorpion ->
+            2
+
+        BlackRadscorpion ->
+            3
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
+
+
+damageResistanceLaser : Type -> Int
+damageResistanceLaser type_ =
+    case type_ of
+        LesserRadscorpion ->
+            30
+
+        Radscorpion ->
+            50
+
+        Brahmin ->
+            20
+
+        SilverGecko ->
+            20
+
+        ToughSilverGecko ->
+            20
+
+        GoldenGecko ->
+            20
+
+        ToughGoldenGecko ->
+            20
+
+        WeakBrahmin ->
+            20
+
+        WildBrahmin ->
+            20
+
+        FireGecko ->
+            60
+
+        ToughFireGecko ->
+            60
+
+        LesserBlackRadscorpion ->
+            50
+
+        BlackRadscorpion ->
+            60
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            10
+
+        AngryBrahmin ->
+            20
+
+
+damageThresholdLaser : Type -> Int
+damageThresholdLaser type_ =
+    case type_ of
+        LesserRadscorpion ->
+            2
+
+        Radscorpion ->
+            4
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            8
+
+        ToughFireGecko ->
+            8
+
+        LesserBlackRadscorpion ->
+            4
+
+        BlackRadscorpion ->
+            5
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
+
+
+damageResistancePlasma : Type -> Int
+damageResistancePlasma type_ =
+    case type_ of
+        LesserRadscorpion ->
+            10
+
+        Radscorpion ->
+            10
+
+        Brahmin ->
+            10
+
+        SilverGecko ->
+            10
+
+        ToughSilverGecko ->
+            10
+
+        GoldenGecko ->
+            10
+
+        ToughGoldenGecko ->
+            10
+
+        WeakBrahmin ->
+            10
+
+        WildBrahmin ->
+            10
+
+        FireGecko ->
+            50
+
+        ToughFireGecko ->
+            50
+
+        LesserBlackRadscorpion ->
+            10
+
+        BlackRadscorpion ->
+            20
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            10
+
+
+damageThresholdPlasma : Type -> Int
+damageThresholdPlasma type_ =
+    case type_ of
+        LesserRadscorpion ->
+            0
+
+        Radscorpion ->
+            2
+
+        Brahmin ->
+            0
+
+        SilverGecko ->
+            0
+
+        ToughSilverGecko ->
+            0
+
+        GoldenGecko ->
+            0
+
+        ToughGoldenGecko ->
+            0
+
+        WeakBrahmin ->
+            0
+
+        WildBrahmin ->
+            0
+
+        FireGecko ->
+            4
+
+        ToughFireGecko ->
+            4
+
+        LesserBlackRadscorpion ->
+            2
+
+        BlackRadscorpion ->
+            3
+
+        GiantAnt ->
+            0
+
+        ToughGiantAnt ->
+            0
+
+        AngryBrahmin ->
+            0
