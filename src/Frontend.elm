@@ -3766,44 +3766,63 @@ settingsFightStrategyView fightStrategyText _ player =
                             "You can't use aimed shots (due to the Fast Shot trait)"
                 ]
 
-        viewDeadEnd : Parser.DeadEnd -> Html FrontendMsg
+        viewDeadEnd : Parser.DeadEnd -> List (Html FrontendMsg)
         viewDeadEnd deadEnd =
             let
                 wrapped : String -> String
                 wrapped string =
                     "\"" ++ string ++ "\""
 
-                item : String
-                item =
+                fixAttack : String -> List String
+                fixAttack str =
+                    List.map wrapped <|
+                        if str == "unarmed" then
+                            [ "unarmed", "unarmed, ..." ]
+
+                        else if str == "melee" then
+                            [ "melee", "melee, ..." ]
+
+                        else if str == "shoot" then
+                            [ "shoot", "shoot, ..." ]
+
+                        else
+                            [ str ]
+
+                items : List String
+                items =
                     case deadEnd.problem of
                         Parser.ExpectingInt ->
-                            "a number"
+                            [ "a number" ]
 
                         Parser.Expecting string ->
-                            wrapped string
+                            fixAttack string
 
                         Parser.ExpectingSymbol string ->
-                            wrapped string
+                            fixAttack string
 
                         Parser.ExpectingKeyword string ->
-                            wrapped string
+                            fixAttack string
 
                         Parser.ExpectingEnd ->
-                            "end of the strategy"
+                            [ "end of the strategy" ]
 
                         Parser.UnexpectedChar ->
                             -- we're only using `chompIf` for whitespace in nonemptySpaces
-                            "a space"
+                            [ "a space" ]
 
                         _ ->
-                            "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>"
+                            [ "<HEY YOU FOUND A BUG, PLEASE SHARE ON DISCORD>" ]
             in
             -- TODO when user clicks the dead end, splice it into the program
-            H.li
-                [ TW.mod "hover" "text-green-100" ]
-                [ UI.liBullet
-                , H.text item
-                ]
+            items
+                |> List.map
+                    (\item ->
+                        H.li
+                            [ TW.mod "hover" "text-green-100" ]
+                            [ UI.liBullet
+                            , H.text item
+                            ]
+                    )
 
         deadEndCategorization : Parser.DeadEnd -> ( ( Int, Int ), String, String )
         deadEndCategorization deadEnd =
@@ -3978,7 +3997,7 @@ settingsFightStrategyView fightStrategyText _ player =
                         , H.ul []
                             (deadEnds
                                 |> List.sortBy deadEndCategorization
-                                |> List.map viewDeadEnd
+                                |> List.concatMap viewDeadEnd
                             )
                         ]
                    )
