@@ -5,20 +5,8 @@ module Data.Enemy exposing
     , aimedShotName
     , all
     , criticalSpec
-    , damageResistanceEMP
-    , damageResistanceElectrical
-    , damageResistanceExplosion
-    , damageResistanceFire
-    , damageResistanceLaser
-    , damageResistanceNormal
-    , damageResistancePlasma
-    , damageThresholdEMP
-    , damageThresholdElectrical
-    , damageThresholdExplosion
-    , damageThresholdFire
-    , damageThresholdLaser
-    , damageThresholdNormal
-    , damageThresholdPlasma
+    , damageResistance
+    , damageThreshold
     , default
     , dropGenerator
     , dropSpec
@@ -42,6 +30,7 @@ module Data.Enemy exposing
 
 import Data.Fight.AimedShot exposing (AimedShot(..))
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
+import Data.Fight.DamageType exposing (DamageType(..))
 import Data.Item as Item exposing (Item)
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.SmallChunk exposing (SmallChunk)
@@ -531,6 +520,56 @@ meleeDamageBonus type_ =
 
         ToughFireGecko ->
             15
+
+
+damageResistance : DamageType -> Type -> Int
+damageResistance damageType type_ =
+    case damageType of
+        NormalDamage ->
+            damageResistanceNormal type_
+
+        Fire ->
+            damageResistanceFire type_
+
+        Plasma ->
+            damageResistancePlasma type_
+
+        Laser ->
+            damageResistanceLaser type_
+
+        Explosion ->
+            damageResistanceExplosion type_
+
+        Electrical ->
+            damageResistanceElectrical type_
+
+        EMP ->
+            damageResistanceEMP type_
+
+
+damageThreshold : DamageType -> Type -> Int
+damageThreshold damageType type_ =
+    case damageType of
+        NormalDamage ->
+            damageThresholdNormal type_
+
+        Fire ->
+            damageThresholdFire type_
+
+        Plasma ->
+            damageThresholdPlasma type_
+
+        Laser ->
+            damageThresholdLaser type_
+
+        Explosion ->
+            damageThresholdExplosion type_
+
+        Electrical ->
+            damageThresholdElectrical type_
+
+        EMP ->
+            damageThresholdEMP type_
 
 
 damageThresholdNormal : Type -> Int

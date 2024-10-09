@@ -3,8 +3,6 @@ module Data.Fight exposing
     , CommandRejectionReason(..)
     , Info
     , Opponent
-    , OpponentType(..)
-    , PlayerOpponent
     , Result(..)
     , Who(..)
     , attackDamage
@@ -23,10 +21,10 @@ module Data.Fight exposing
 
 import Data.Enemy as Enemy
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
+import Data.Fight.OpponentType as OpponentType exposing (OpponentType(..))
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Perk exposing (Perk)
-import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait exposing (Trait)
@@ -44,17 +42,6 @@ type alias Info =
     , target : OpponentType
     , log : List ( Who, Action )
     , result : Result
-    }
-
-
-type OpponentType
-    = Npc Enemy.Type
-    | Player PlayerOpponent
-
-
-type alias PlayerOpponent =
-    { name : PlayerName
-    , xp : Int
     }
 
 
@@ -154,8 +141,8 @@ infoDecoder =
                 (JD.field "action" actionDecoder)
     in
     JD.succeed Info
-        |> JD.andMap (JD.field "attacker" opponentTypeDecoder)
-        |> JD.andMap (JD.field "target" opponentTypeDecoder)
+        |> JD.andMap (JD.field "attacker" OpponentType.decoder)
+        |> JD.andMap (JD.field "target" OpponentType.decoder)
         |> JD.andMap (JD.field "log" (JD.list logItemDecoder))
         |> JD.andMap (JD.field "result" resultDecoder)
 
@@ -171,52 +158,11 @@ encodeInfo info =
                 ]
     in
     JE.object
-        [ ( "attacker", encodeOpponentType info.attacker )
-        , ( "target", encodeOpponentType info.target )
+        [ ( "attacker", OpponentType.encode info.attacker )
+        , ( "target", OpponentType.encode info.target )
         , ( "log", JE.list encodeLogItem info.log )
         , ( "result", encodeResult info.result )
         ]
-
-
-encodeOpponentType : OpponentType -> JE.Value
-encodeOpponentType opponentType =
-    case opponentType of
-        Npc enemyType ->
-            JE.object
-                [ ( "type", JE.string "npc" )
-                , ( "enemyType", Enemy.encodeType enemyType )
-                ]
-
-        Player { name, xp } ->
-            JE.object
-                [ ( "type", JE.string "player" )
-                , ( "name", JE.string name )
-                , ( "xp", JE.int xp )
-                ]
-
-
-opponentTypeDecoder : Decoder OpponentType
-opponentTypeDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "npc" ->
-                        JD.map Npc Enemy.typeDecoder
-
-                    "player" ->
-                        JD.map Player
-                            (JD.succeed PlayerOpponent
-                                |> JD.andMap (JD.field "name" JD.string)
-                                |> JD.andMap
-                                    (JD.maybe (JD.field "xp" JD.int)
-                                        |> JD.map (Maybe.withDefault 1)
-                                    )
-                            )
-
-                    _ ->
-                        JD.fail <| "Unknown Opponent type: '" ++ type_ ++ "'"
-            )
 
 
 encodeResult : Result -> JE.Value

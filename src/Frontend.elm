@@ -8,6 +8,8 @@ import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Fight.AttackStyle as AttackStyle
+import Data.Fight.DamageType exposing (DamageType)
+import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Fight.View
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.FightStrategy.Help as FightStrategyHelp
@@ -72,7 +74,7 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
-import Logic exposing (AttackStats, ItemNotUsableReason(..), canBurst)
+import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Markdown.Block
 import Markdown.Parser
@@ -2511,7 +2513,7 @@ newCharView hoveredItem newChar =
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.class "grid grid-cols-[42ch_42ch_minmax(0,1fr)] gap-5" ]
+        [ HA.class "grid grid-cols-[42ch_42ch_38ch] gap-5" ]
         [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
@@ -3408,19 +3410,32 @@ inventoryView _ player =
                 , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed
                 }
 
+        damageType : DamageType
+        damageType =
+            player.equippedWeapon
+                |> Maybe.map .kind
+                |> Logic.weaponDamageType
+
+        opponentType : OpponentType
+        opponentType =
+            OpponentType.Player
+                { xp = 0
+                , name = "Opponent"
+                }
+
         damageThreshold : Int
         damageThreshold =
-            -- TODO we're not dealing with plasma/... right now, only _normal_ DT
-            Logic.damageThresholdNormal
-                { naturalDamageThresholdNormal = 0
+            Logic.damageThreshold
+                { damageType = damageType
+                , opponentType = opponentType
                 , equippedArmor = player.equippedArmor |> Maybe.map .kind
                 }
 
         damageResistance : Int
         damageResistance =
-            -- TODO we're not dealing with plasma/... right now, only _normal_ DR
-            Logic.damageResistanceNormal
-                { naturalDamageResistanceNormal = 0
+            Logic.damageResistance
+                { damageType = damageType
+                , opponentType = opponentType
                 , equippedArmor = player.equippedArmor |> Maybe.map .kind
                 , toughnessPerkRanks = Perk.rank Perk.Toughness player.perks
                 }
@@ -4051,10 +4066,10 @@ fightView maybeFight _ player =
             let
                 youAreAttacker =
                     case fight.attacker of
-                        Fight.Player { name } ->
+                        OpponentType.Player { name } ->
                             name == player.name
 
-                        Fight.Npc _ ->
+                        OpponentType.Npc _ ->
                             False
 
                 perceptionLevel =

@@ -13,20 +13,8 @@ module Data.Item exposing
     , ammoDamageModifier
     , ammoDamageResistanceModifier
     , armorClass
-    , armorDamageResistanceEMP
-    , armorDamageResistanceElectrical
-    , armorDamageResistanceExplosion
-    , armorDamageResistanceFire
-    , armorDamageResistanceLaser
-    , armorDamageResistanceNormal
-    , armorDamageResistancePlasma
-    , armorDamageThresholdEMP
-    , armorDamageThresholdElectrical
-    , armorDamageThresholdExplosion
-    , armorDamageThresholdFire
-    , armorDamageThresholdLaser
-    , armorDamageThresholdNormal
-    , armorDamageThresholdPlasma
+    , armorDamageResistance
+    , armorDamageThreshold
     , baseValue
     , create
     , decoder
@@ -1858,6 +1846,56 @@ armorClass kind =
 
         HnApNeedlerCartridge ->
             0
+
+
+armorDamageResistance : DamageType -> Kind -> Int
+armorDamageResistance damageType kind =
+    case damageType of
+        NormalDamage ->
+            armorDamageResistanceNormal kind
+
+        Fire ->
+            armorDamageResistanceFire kind
+
+        Plasma ->
+            armorDamageResistancePlasma kind
+
+        Laser ->
+            armorDamageResistanceLaser kind
+
+        Explosion ->
+            armorDamageResistanceExplosion kind
+
+        Electrical ->
+            armorDamageResistanceElectrical kind
+
+        EMP ->
+            armorDamageResistanceEMP kind
+
+
+armorDamageThreshold : DamageType -> Kind -> Int
+armorDamageThreshold damageType kind =
+    case damageType of
+        NormalDamage ->
+            armorDamageThresholdNormal kind
+
+        Fire ->
+            armorDamageThresholdFire kind
+
+        Plasma ->
+            armorDamageThresholdPlasma kind
+
+        Laser ->
+            armorDamageThresholdLaser kind
+
+        Explosion ->
+            armorDamageThresholdExplosion kind
+
+        Electrical ->
+            armorDamageThresholdElectrical kind
+
+        EMP ->
+            armorDamageThresholdEMP kind
 
 
 armorDamageThresholdNormal : Kind -> Int

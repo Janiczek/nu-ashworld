@@ -13,6 +13,7 @@ import Data.Barter as Barter
 import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.Generator as FightGen
+import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Ladder as Ladder
@@ -1635,10 +1636,10 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
         updateIfPlayer : (SPlayer -> SPlayer) -> Opponent -> Model -> Model
         updateIfPlayer fn opponent =
             case opponent.type_ of
-                Fight.Npc _ ->
+                OpponentType.Npc _ ->
                     identity
 
-                Fight.Player player ->
+                OpponentType.Player player ->
                     updatePlayer worldName player.name fn
 
         newModel =

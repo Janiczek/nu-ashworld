@@ -38,7 +38,6 @@ EQUIPPED AMMO
 - show which types are usable for the current weapon
 - don't allow equipping incompatible ammo
 - when unequipping weapon unequip the ammo too
-- Use it in the fight, switch to another compatible ammo (even in the SPlayer afterwards!) when it runs out and unequip when it runs out (switching back to unarmed content)
 
 - FightStrategy: walk away
 

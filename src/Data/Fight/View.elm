@@ -1,9 +1,10 @@
 module Data.Fight.View exposing (view)
 
 import Data.Enemy as Enemy
-import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), OpponentType, Who(..))
+import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), Who(..))
 import Data.Fight.AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Item as Item exposing (Item)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -153,10 +154,10 @@ view perceptionLevel fight yourName =
                             fight.target
             in
             case opponentType of
-                Fight.Player _ ->
+                OpponentType.Player _ ->
                     Enemy.humanAimedShotName aimedShot
 
-                Fight.Npc enemyType ->
+                OpponentType.Npc enemyType ->
                     Enemy.aimedShotName enemyType aimedShot
     in
     H.div [ HA.class "flex flex-col gap-4" ]

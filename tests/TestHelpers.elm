@@ -54,14 +54,10 @@ module TestHelpers exposing
     )
 
 import Data.Enemy as Enemy
-import Data.Fight as Fight
-    exposing
-        ( Opponent
-        , OpponentType
-        , PlayerOpponent
-        )
+import Data.Fight exposing (Opponent)
 import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.OpponentType as OpponentType exposing (OpponentType(..), PlayerOpponent)
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -105,8 +101,8 @@ playerNameFuzzer =
 opponentTypeFuzzer : Fuzzer OpponentType
 opponentTypeFuzzer =
     Fuzz.oneOf
-        [ Fuzz.map Fight.Npc enemyTypeFuzzer
-        , Fuzz.map Fight.Player playerOpponentFuzzer
+        [ Fuzz.map OpponentType.Npc enemyTypeFuzzer
+        , Fuzz.map OpponentType.Player playerOpponentFuzzer
         ]
 
 

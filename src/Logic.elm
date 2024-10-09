@@ -13,8 +13,8 @@ module Logic exposing
     , canBurst
     , canUseItem
     , chanceToHit
-    , damageResistanceNormal
-    , damageThresholdNormal
+    , damageResistance
+    , damageThreshold
     , healApCost
     , healPerTick
     , hitpoints
@@ -39,12 +39,16 @@ module Logic exposing
     , unarmedApCost
     , unarmedAttackStats
     , unarmedRange
+    , weaponDamageType
     , weaponRange
     , xpGained
     )
 
+import Data.Enemy as Enemy
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
+import Data.Fight.DamageType as DamageType exposing (DamageType(..))
+import Data.Fight.OpponentType exposing (OpponentType(..))
 import Data.Item as Item exposing (Kind(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Quest as Quest exposing (Engagement(..))
@@ -1187,38 +1191,73 @@ canUseItem p kind =
             effects
 
 
-damageThresholdNormal :
-    { naturalDamageThresholdNormal : Int
+naturalDamageThreshold :
+    { r
+        | damageType : DamageType
+        , opponentType : OpponentType
+    }
+    -> Int
+naturalDamageThreshold r =
+    case r.opponentType of
+        Npc enemy ->
+            Enemy.damageThreshold r.damageType enemy
+
+        Player _ ->
+            0
+
+
+damageThreshold :
+    { damageType : DamageType
+    , opponentType : OpponentType
     , equippedArmor : Maybe Item.Kind
     }
     -> Int
-damageThresholdNormal r =
+damageThreshold r =
     let
         armorDamageThreshold =
             r.equippedArmor
-                |> Maybe.map Item.armorDamageThresholdNormal
+                |> Maybe.map (Item.armorDamageThreshold r.damageType)
                 |> Maybe.withDefault 0
     in
-    r.naturalDamageThresholdNormal + armorDamageThreshold
+    naturalDamageThreshold r
+        + armorDamageThreshold
 
 
-damageResistanceNormal :
-    { naturalDamageResistanceNormal : Int
+naturalDamageResistance :
+    { r
+        | damageType : DamageType
+        , opponentType : OpponentType
+    }
+    -> Int
+naturalDamageResistance r =
+    case r.opponentType of
+        Npc enemy ->
+            Enemy.damageResistance r.damageType enemy
+
+        Player _ ->
+            0
+
+
+damageResistance :
+    { damageType : DamageType
+    , opponentType : OpponentType
     , equippedArmor : Maybe Item.Kind
     , toughnessPerkRanks : Int
     }
     -> Int
-damageResistanceNormal r =
+damageResistance r =
     let
         fromArmor =
             r.equippedArmor
-                |> Maybe.map Item.armorDamageResistanceNormal
+                |> Maybe.map (Item.armorDamageResistance r.damageType)
                 |> Maybe.withDefault 0
 
         fromToughnessPerk =
             r.toughnessPerkRanks * 10
     in
-    r.naturalDamageResistanceNormal + fromArmor + fromToughnessPerk
+    naturalDamageResistance r
+        + fromArmor
+        + fromToughnessPerk
 
 
 mainWorldName : String
@@ -1578,3 +1617,15 @@ strengthRequirementChanceToHitPenalty r =
             Item.weaponStrengthRequirement r.equippedWeapon
     in
     max 0 (strengthRequirement - r.strength) * 20
+
+
+weaponDamageType : Maybe Item.Kind -> DamageType
+weaponDamageType equippedWeapon =
+    case equippedWeapon of
+        Nothing ->
+            -- unarmed!
+            DamageType.NormalDamage
+
+        Just weapon ->
+            Item.weaponDamageType weapon
+                |> Maybe.withDefault DamageType.NormalDamage

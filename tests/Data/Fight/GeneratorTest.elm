@@ -3,6 +3,7 @@ module Data.Fight.GeneratorTest exposing (suite)
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.Generator as FightGen exposing (Fight)
+import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (..)
 import Data.Item as Item
 import Data.Special as Special
@@ -39,7 +40,7 @@ suite =
 
 baseOpponent : Opponent
 baseOpponent =
-    { type_ = Fight.Player { name = "Opponent", xp = 0 }
+    { type_ = OpponentType.Player { name = "Opponent", xp = 0 }
     , hp = 100
     , maxHp = 100
     , maxAp = 10
@@ -418,6 +419,10 @@ rangedAttackUsesPreferredAmmo =
                             |> Dict.isEmpty
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to result in Ap10mm not being in attacker's inventory"
+                    , \r ->
+                        r.nextOngoing.attacker.preferredAmmo
+                            |> Expect.equal Nothing
+                            |> Expect.onFail "Expected the preferred ammo to be unset after it's used up"
                     ]
 
 
