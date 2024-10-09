@@ -8,7 +8,7 @@ module Data.Fight.Generator exposing
     , targetAlreadyDead
     )
 
-import Data.Enemy as Enemy
+import Data.Enemy as Enemy exposing (equippedWeapon)
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
@@ -1600,9 +1600,13 @@ enemyOpponentGenerator r lastItemId enemyType =
                     special =
                         Enemy.special enemyType
 
-                    unarmedSkill : Int
-                    unarmedSkill =
-                        Skill.get special addedSkillPercentages Skill.Unarmed
+                    equippedWeapon : Maybe Item.Kind
+                    equippedWeapon =
+                        Enemy.equippedWeapon enemyType
+
+                    preferredAmmo : Maybe Item.Kind
+                    preferredAmmo =
+                        Enemy.preferredAmmo enemyType
                 in
                 ( { type_ = OpponentType.Npc enemyType
                   , hp = hp
@@ -1615,16 +1619,19 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , items = Dict.empty
                   , drops = items
                   , equippedArmor = Enemy.equippedArmor enemyType
-                  , equippedWeapon = Enemy.equippedWeapon enemyType
-                  , preferredAmmo = Enemy.preferredAmmo enemyType
+                  , equippedWeapon = equippedWeapon
+                  , preferredAmmo = preferredAmmo
                   , naturalArmorClass = Enemy.naturalArmorClass enemyType
                   , attackStats =
-                        -- TODO for now it's all unarmed
-                        Logic.unarmedAttackStats
+                        Logic.attackStats
                             { special = special
-                            , unarmedSkill = unarmedSkill
+                            , addedSkillPercentages =
+                                -- TODO define this for enemies
+                                SeqDict.empty
                             , traits = traits
                             , perks = SeqDict.empty
+                            , equippedWeapon = equippedWeapon
+                            , preferredAmmo = preferredAmmo
                             , level =
                                 -- TODO what to do? What damage ranges do enemies really have in FO2?
                                 1
@@ -1653,7 +1660,7 @@ playerOpponent :
         , addedSkillPercentages : SeqDict Skill Int
         , equippedArmor : Maybe Item
         , equippedWeapon : Maybe Item
-        , preferredAmmo : Maybe Item
+        , preferredAmmo : Maybe Item.Kind
         , fightStrategy : FightStrategy
         , items : Dict Item.Id Item
     }
@@ -1686,12 +1693,14 @@ playerOpponent player =
 
         attackStats : AttackStats
         attackStats =
-            Logic.unarmedAttackStats
+            Logic.attackStats
                 { special = player.special
-                , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed
+                , addedSkillPercentages = player.addedSkillPercentages
                 , level = Xp.currentLevel player.xp
                 , perks = player.perks
                 , traits = player.traits
+                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
+                , preferredAmmo = player.preferredAmmo
                 , npcExtraBonus = 0
                 }
     in
@@ -1711,7 +1720,7 @@ playerOpponent player =
     , drops = []
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-    , preferredAmmo = player.preferredAmmo |> Maybe.map .kind
+    , preferredAmmo = player.preferredAmmo
     , naturalArmorClass = naturalArmorClass
     , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages

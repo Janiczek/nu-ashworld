@@ -861,11 +861,17 @@ updateFromFrontend sessionId clientId msg model =
         EquipWeapon itemId ->
             withLoggedInCreatedPlayer <| equipWeapon itemId
 
+        PreferAmmo itemKind ->
+            withLoggedInCreatedPlayer <| preferAmmo itemKind
+
         UnequipArmor ->
             withLoggedInCreatedPlayer unequipArmor
 
         UnequipWeapon ->
             withLoggedInCreatedPlayer unequipWeapon
+
+        ClearPreferredAmmo ->
+            withLoggedInCreatedPlayer clearPreferredAmmo
 
         SetFightStrategy ( strategy, text ) ->
             withLoggedInCreatedPlayer <| setFightStrategy ( strategy, text )
@@ -1469,6 +1475,17 @@ equipWeapon itemId clientId _ worldName player model =
                 ( model, Cmd.none )
 
 
+preferAmmo : Item.Kind -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+preferAmmo itemKind clientId _ worldName player model =
+    if Item.isAmmo itemKind then
+        model
+            |> updatePlayer worldName player.name (SPlayer.preferAmmo itemKind)
+            |> sendCurrentWorld worldName player.name clientId
+
+    else
+        ( model, Cmd.none )
+
+
 setFightStrategy : ( FightStrategy, String ) -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 setFightStrategy ( strategy, text ) clientId _ worldName player model =
     model
@@ -1570,6 +1587,18 @@ unequipWeapon clientId _ worldName player model =
         Just _ ->
             model
                 |> updatePlayer worldName player.name SPlayer.unequipWeapon
+                |> sendCurrentWorld worldName player.name clientId
+
+
+clearPreferredAmmo : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+clearPreferredAmmo clientId _ worldName player model =
+    case player.preferredAmmo of
+        Nothing ->
+            ( model, Cmd.none )
+
+        Just _ ->
+            model
+                |> updatePlayer worldName player.name SPlayer.clearPreferredAmmo
                 |> sendCurrentWorld worldName player.name clientId
 
 

@@ -47,7 +47,7 @@ type alias SPlayerSubset =
     , addedSkillPercentages : SeqDict Skill Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item
+    , preferredAmmo : Maybe Item.Kind
     , fightStrategy : FightStrategy
     , items : Dict Item.Id Item
     }

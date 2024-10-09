@@ -6,6 +6,7 @@ module Logic exposing
     , aimedShotApCostPenalty
     , armorClass
     , attackApCost
+    , attackStats
     , attackStyleAndApCost
     , baseCriticalChance
     , bookAddedSkillPercentage
@@ -37,7 +38,6 @@ module Logic exposing
     , ticksGivenPerQuestEngagement
     , totalTags
     , unarmedApCost
-    , unarmedAttackStats
     , unarmedRange
     , weaponDamageType
     , weaponRange
@@ -768,6 +768,29 @@ type alias AttackStats =
     , maxDamage : Int
     , criticalChanceBonus : Int
     }
+
+
+attackStats :
+    { special : Special
+    , addedSkillPercentages : SeqDict Skill Int
+    , traits : SeqSet Trait
+    , perks : SeqDict Perk Int
+    , level : Int
+    , equippedWeapon : Maybe Item.Kind
+    , preferredAmmo : Maybe Item.Kind
+    , npcExtraBonus : Int
+    }
+    -> AttackStats
+attackStats r =
+    -- TODO melee/thrown/shot
+    unarmedAttackStats
+        { special = r.special
+        , unarmedSkill = Skill.get r.special r.addedSkillPercentages Skill.Unarmed
+        , traits = r.traits
+        , perks = r.perks
+        , level = r.level
+        , npcExtraBonus = r.npcExtraBonus
+        }
 
 
 unarmedAttackStats :

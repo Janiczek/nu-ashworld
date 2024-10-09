@@ -7,6 +7,7 @@ module Data.Player.SPlayer exposing
     , addSkillPercentage
     , addXp
     , canStartProgressing
+    , clearPreferredAmmo
     , decAvailablePerks
     , equipArmor
     , equipWeapon
@@ -16,6 +17,7 @@ module Data.Player.SPlayer exposing
     , incSpecial
     , incWins
     , levelUpHereAndNow
+    , preferAmmo
     , questEngagement
     , readMessage
     , recalculateHp
@@ -617,6 +619,16 @@ unequipWeapon player =
                 |> addItem weapon
 
 
+clearPreferredAmmo : SPlayer -> SPlayer
+clearPreferredAmmo player =
+    case player.preferredAmmo of
+        Nothing ->
+            player
+
+        Just _ ->
+            { player | preferredAmmo = Nothing }
+
+
 equipArmor : Item -> SPlayer -> SPlayer
 equipArmor { id } player =
     -- just to be sure...
@@ -661,6 +673,15 @@ equipWeapon { id } player =
 
             else
                 player
+
+
+preferAmmo : Item.Kind -> SPlayer -> SPlayer
+preferAmmo itemKind player =
+    if Item.isAmmo itemKind then
+        { player | preferredAmmo = Just itemKind }
+
+    else
+        player
 
 
 setFightStrategy : ( FightStrategy, String ) -> SPlayer -> SPlayer

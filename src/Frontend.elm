@@ -324,6 +324,11 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| EquipWeapon itemId
             )
 
+        AskToPreferAmmo itemKind ->
+            ( model
+            , Lamdera.sendToBackend <| PreferAmmo itemKind
+            )
+
         AskToUnequipArmor ->
             ( model
             , Lamdera.sendToBackend UnequipArmor
@@ -332,6 +337,11 @@ update msg ({ loginForm } as model) =
         AskToUnequipWeapon ->
             ( model
             , Lamdera.sendToBackend UnequipWeapon
+            )
+
+        AskToClearPreferredAmmo ->
+            ( model
+            , Lamdera.sendToBackend ClearPreferredAmmo
             )
 
         AskToUseItem itemId ->
@@ -3343,9 +3353,21 @@ inventoryView _ player =
                 Just { kind, count } ->
                     Item.baseValue kind * count
 
+        equippedWeaponValue : Int
+        equippedWeaponValue =
+            case player.equippedWeapon of
+                Nothing ->
+                    0
+
+                Just { kind, count } ->
+                    Item.baseValue kind * count
+
         totalValue : Int
         totalValue =
-            inventoryTotalValue + equippedArmorValue + player.caps
+            inventoryTotalValue
+                + equippedArmorValue
+                + equippedWeaponValue
+                + player.caps
 
         itemView : Item -> Html FrontendMsg
         itemView item =
@@ -3365,35 +3387,42 @@ inventoryView _ player =
                             Just "You're at full HP."
             in
             H.li
-                [ HA.class "flex flex-row gap-[1ch]" ]
+                [ HA.class "flex flex-row gap-[1ch] group" ]
                 [ UI.liBullet
                 , H.span
-                    [ HA.class "flex flex-row gap-[2ch]" ]
-                    (UI.button
+                    [ HA.class "flex flex-row" ]
+                    [ UI.button
                         [ HE.onClick <| AskToUseItem item.id
                         , HA.disabled <| disabledTooltip /= Nothing
                         , HA.attributeMaybe HA.title disabledTooltip
                         ]
                         [ H.text "[Use]" ]
-                        :: (if Item.isArmor item.kind then
-                                [ UI.button
-                                    [ HE.onClick <| AskToEquipArmor item.id ]
-                                    [ H.text "[Equip]" ]
-                                ]
+                    ]
+                , H.span [] [ H.text <| String.fromInt item.count ++ "x " ]
+                , H.span [ HA.class "text-green-100" ] [ H.text <| Item.name item.kind ]
+                , if Item.isArmor item.kind then
+                    UI.button
+                        [ HE.onClick <| AskToEquipArmor item.id ]
+                        [ H.text "[Equip]" ]
 
-                            else if Item.isWeapon item.kind then
-                                [ UI.button
-                                    [ HE.onClick <| AskToEquipWeapon item.id ]
-                                    [ H.text "[Equip]" ]
-                                ]
+                  else if Item.isWeapon item.kind then
+                    UI.button
+                        [ HE.onClick <| AskToEquipWeapon item.id ]
+                        [ H.text "[Equip]" ]
+
+                  else
+                    case player.equippedWeapon of
+                        Nothing ->
+                            H.text ""
+
+                        Just weapon ->
+                            if Item.isAmmo item.kind && Item.isUsableAmmoFor weapon.kind item.kind then
+                                UI.button
+                                    [ HE.onClick <| AskToPreferAmmo item.kind ]
+                                    [ H.text "[Prefer]" ]
 
                             else
-                                []
-                           )
-                    )
-                , H.span
-                    [ HA.class "inventory-item-label" ]
-                    [ H.text <| String.fromInt item.count ++ "x " ++ Item.name item.kind ]
+                                H.text ""
                 ]
 
         armorClass =
@@ -3442,11 +3471,13 @@ inventoryView _ player =
 
         attackStats : AttackStats
         attackStats =
-            Logic.unarmedAttackStats
+            Logic.attackStats
                 { special = player.special
-                , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed
                 , traits = player.traits
                 , perks = player.perks
+                , addedSkillPercentages = player.addedSkillPercentages
+                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
+                , preferredAmmo = player.preferredAmmo
                 , level = Xp.currentLevel player.xp
                 , npcExtraBonus = 0
                 }
@@ -3462,7 +3493,7 @@ inventoryView _ player =
                 , targetArmorClass = 0
                 , attackStyle = AttackStyle.UnarmedUnaimed
                 , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , preferredAmmo = player.preferredAmmo |> Maybe.map .kind
+                , preferredAmmo = player.preferredAmmo
                 }
     in
     [ pageTitleView "Inventory"
@@ -3493,29 +3524,49 @@ inventoryView _ player =
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Equipment" ]
-        , [ ( player.equippedArmor, "Armor", AskToUnequipArmor )
-          , ( player.equippedWeapon, "Weapon", AskToUnequipWeapon )
-          ]
-            |> List.map
-                (\( maybeItem, label, unequipMsg ) ->
-                    H.div []
-                        [ UI.liBullet
-                        , H.text <| label ++ ": "
-                        , H.span [ HA.class "text-green-100" ] <|
-                            case maybeItem of
-                                Nothing ->
-                                    [ H.text "None" ]
+        , [ [ ( player.equippedArmor, "Armor", ( AskToUnequipArmor, "[Unequip]" ) )
+            , ( player.equippedWeapon, "Weapon", ( AskToUnequipWeapon, "[Unequip]" ) )
+            ]
+                |> List.map
+                    (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
+                        H.div []
+                            [ UI.liBullet
+                            , H.text <| label ++ ": "
+                            , H.span [ HA.class "text-green-100" ] <|
+                                case maybeItem of
+                                    Nothing ->
+                                        [ H.text "None" ]
 
-                                Just item ->
-                                    [ H.text <| Item.name item.kind
-                                    , UI.button
-                                        [ HE.onClick unequipMsg
-                                        , HA.class "ml-[1ch]"
+                                    Just item ->
+                                        [ H.text <| Item.name item.kind
+                                        , UI.button
+                                            [ HE.onClick unequipMsg
+                                            , HA.class "ml-[1ch]"
+                                            ]
+                                            [ H.text unequipLabel ]
                                         ]
-                                        [ H.text "[Unequip]" ]
-                                    ]
-                        ]
-                )
+                            ]
+                    )
+          , [ H.div []
+                [ UI.liBullet
+                , H.text "Preferred ammo: "
+                , H.span [ HA.class "text-green-100" ] <|
+                    case player.preferredAmmo of
+                        Nothing ->
+                            [ H.text "None" ]
+
+                        Just ammo ->
+                            [ H.text <| Item.name ammo
+                            , UI.button
+                                [ HE.onClick AskToClearPreferredAmmo
+                                , HA.class "ml-[1ch]"
+                                ]
+                                [ H.text "[Clear]" ]
+                            ]
+                ]
+            ]
+          ]
+            |> List.concat
             |> H.ul []
         , H.h3
             [ HA.class "text-green-300" ]

@@ -82,7 +82,7 @@ type alias SPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item
+    , preferredAmmo : Maybe Item.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -111,7 +111,7 @@ type alias CPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item
+    , preferredAmmo : Maybe Item.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -217,7 +217,7 @@ sPlayerDecoder =
         |> JD.andMap (JD.field "availablePerks" JD.parseInt)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe Item.decoder))
+        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe Item.kindDecoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
@@ -370,7 +370,14 @@ fromNewChar currentTime auth newChar =
                 [ Message.new 0 currentTime Message.Welcome ]
                     |> List.map (\message -> ( message.id, message ))
                     |> Dict.fromList
-            , items = Dict.empty
+            , items =
+                -- Dict.empty
+                Dict.fromList
+                    [ ( 1, Item.create { lastId = 0, uniqueKey = { kind = Item.Jhp10mm }, count = 5 } |> Tuple.first )
+                    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = Item.Ap10mm }, count = 5 } |> Tuple.first )
+                    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = Item.Fmj223 }, count = 5 } |> Tuple.first )
+                    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = Item.Smg10mm }, count = 5 } |> Tuple.first )
+                    ]
             , traits = newChar.traits
             , addedSkillPercentages =
                 Logic.addedSkillPercentages

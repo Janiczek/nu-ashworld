@@ -29,6 +29,7 @@ module Data.Item exposing
     , isArmor
     , isHealing
     , isLongRangeWeapon
+    , isUsableAmmoFor
     , isWeapon
     , isWeaponArmorPenetrating
     , kindDecoder
@@ -9967,3 +9968,8 @@ usableAmmo kind =
 
         HnApNeedlerCartridge ->
             []
+
+
+isUsableAmmoFor : Kind -> Kind -> Bool
+isUsableAmmoFor weapon ammo =
+    List.member ammo (usableAmmo weapon)

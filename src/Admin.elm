@@ -8,6 +8,7 @@ import BiDict
 import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.FightStrategy as FightStrategy
+import Data.Item as Item
 import Data.Map as Map
 import Data.NewChar as NewChar
 import Data.Perk as Perk
@@ -111,6 +112,12 @@ encodeToBackendMsg msg =
                 , ( "itemId", JE.int itemId )
                 ]
 
+        PreferAmmo kind ->
+            JE.object
+                [ ( "type", JE.string "PreferAmmo" )
+                , ( "itemKind", Item.encodeKind kind )
+                ]
+
         UnequipArmor ->
             JE.object
                 [ ( "type", JE.string "UnequipArmor" ) ]
@@ -118,6 +125,10 @@ encodeToBackendMsg msg =
         UnequipWeapon ->
             JE.object
                 [ ( "type", JE.string "UnequipWeapon" ) ]
+
+        ClearPreferredAmmo ->
+            JE.object
+                [ ( "type", JE.string "ClearPreferredAmmo" ) ]
 
         SetFightStrategy ( strategy, text ) ->
             JE.object

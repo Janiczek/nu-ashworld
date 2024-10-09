@@ -100,8 +100,10 @@ type FrontendMsg
     | AskToChoosePerk Perk
     | AskToEquipArmor Item.Id
     | AskToEquipWeapon Item.Id
+    | AskToPreferAmmo Item.Kind
     | AskToUnequipArmor
     | AskToUnequipWeapon
+    | AskToClearPreferredAmmo
     | AskToSetFightStrategy ( FightStrategy, String )
     | AskForExport
     | ImportButtonClicked
@@ -166,9 +168,11 @@ type ToBackend
     | Wander
     | EquipArmor Item.Id
     | EquipWeapon Item.Id
+    | PreferAmmo Item.Kind
     | SetFightStrategy ( FightStrategy, String )
     | UnequipArmor
     | UnequipWeapon
+    | ClearPreferredAmmo
     | RefreshPlease
     | TagSkill Skill
     | UseSkillPoints Skill
