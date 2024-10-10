@@ -1159,6 +1159,7 @@ attack_ who ongoing attackStyle baseApCost =
                                 |> Random.andThen
                                     (\isCritical ->
                                         let
+                                            criticalEffectCategory : Generator (Maybe Critical.EffectCategory)
                                             criticalEffectCategory =
                                                 if isCritical then
                                                     let

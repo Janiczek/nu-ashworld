@@ -6,6 +6,7 @@ import Data.Fight.Generator as FightGen exposing (Fight)
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (..)
 import Data.Item as Item
+import Data.Skill as Skill
 import Data.Special as Special
 import Dict
 import Expect
@@ -31,6 +32,7 @@ suite =
             , rangedAttackSucceedsAtDistance15WithRange30
             , rangedAttackSucceedsWithWrongPreferredAmmo
             , rangedAttackUsesPreferredAmmo
+            , rangedAttackUsesOnlyOnePieceOfAmmo
             , rangedAttackFailsAtDistance30WithRange7
             , unarmedAttackUsedWhenNoAmmoAndInRange
             , thrownAttackUsesUpWeapon
@@ -54,7 +56,17 @@ baseOpponent =
     , equippedWeapon = Nothing
     , preferredAmmo = Nothing
     , naturalArmorClass = 5
-    , attackStats = Logic.unarmedAttackStats { special = Special.init, unarmedSkill = 50, traits = SeqSet.empty, perks = SeqDict.empty, level = 1, npcExtraBonus = 0 }
+    , attackStats =
+        Logic.attackStats
+            { special = Special.init
+            , addedSkillPercentages = SeqDict.singleton Skill.Unarmed 50
+            , traits = SeqSet.empty
+            , perks = SeqDict.empty
+            , equippedWeapon = Nothing
+            , preferredAmmo = Nothing
+            , level = 1
+            , npcExtraBonus = 0
+            }
     , addedSkillPercentages = SeqDict.empty
     , special = Special.init
     , fightStrategy = Command DoWhatever
@@ -423,6 +435,58 @@ rangedAttackUsesPreferredAmmo =
                         r.nextOngoing.attacker.preferredAmmo
                             |> Expect.equal Nothing
                             |> Expect.onFail "Expected the preferred ammo to be unset after it's used up"
+                    ]
+
+
+rangedAttackUsesOnlyOnePieceOfAmmo : Test
+rangedAttackUsesOnlyOnePieceOfAmmo =
+    Test.test "Ranged attack uses only one piece of ammo" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just Item.Smg10mm
+                        , preferredAmmo = Just Item.Jhp10mm
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = Item.Jhp10mm, count = 5 } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 15 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootSingleUnaimed
+                            4
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result
+                |> Expect.all
+                    [ \r ->
+                        r.nextOngoing.attackerItemsUsed
+                            |> SeqDict.member Item.Jhp10mm
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to add the preferred ammo to attackerItemsUsed"
+                    , \r ->
+                        r.nextOngoing.attacker.items
+                            |> Dict.filter (\_ { kind } -> kind == Item.Jhp10mm)
+                            |> Dict.values
+                            |> Expect.equal [ { id = 1, kind = Item.Jhp10mm, count = 4 } ]
+                            |> Expect.onFail "Expected the attack to result in Jhp10mm still being in attacker's inventory, just one less"
+                    , \r ->
+                        r.nextOngoing.attacker.preferredAmmo
+                            |> Expect.equal (Just Item.Jhp10mm)
+                            |> Expect.onFail "Expected the preferred ammo still be set if we still have some in the inventory"
                     ]
 
 

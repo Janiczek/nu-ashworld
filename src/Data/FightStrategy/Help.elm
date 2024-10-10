@@ -18,31 +18,31 @@ help =
   - if [CONDITION] then [STRATEGY] else [STRATEGY]
 
 
-[COMMAND]                           [VALUE]                        
-  - attack randomly                   - my HP                      
+[COMMAND]                           [VALUE]
+  - attack randomly                   - my HP
   - attack ([ATTACK])                 - my max HP
-  - heal ([ITEM])                     - my AP                      
-  - heal with anything                - number of available [ITEM] 
+  - heal ([ITEM])                     - my AP
+  - heal with anything                - number of available [ITEM]
   - move forward                      - number of available healing items
-  - do whatever                       - number of used [ITEM]      
+  - do whatever                       - number of used [ITEM]
   - skip turn                         - number of used healing items
-                                      - opponent's level           
+                                      - opponent's level
                                       - chance to hit ([ATTACK])
  [CONDITION]                          - range needed ([ATTACK])
-   - opponent is player               - distance 
+   - opponent is player               - distance
    - opponent is NPC                  - [NUMBER]
-   - [VALUE] [OPERATOR] [VALUE]      
-   - ([CONDITION] or [CONDITION])    
+   - [VALUE] [OPERATOR] [VALUE]
+   - ([CONDITION] or [CONDITION])
    - ([CONDITION] and [CONDITION])  [ATTACK]             [AIM]
-                                      - unarmed            - head      
-                                      - unarmed, [AIM]     - eyes     
- [OPERATOR]                           - melee              - torso    
-   - <   (less than)                  - melee, [AIM]       - groin    
-   - <=  (less than or equal)         - throw              - left arm 
+                                      - unarmed            - head
+                                      - unarmed, [AIM]     - eyes
+ [OPERATOR]                           - melee              - torso
+   - <   (less than)                  - melee, [AIM]       - groin
+   - <=  (less than or equal)         - throw              - left arm
    - ==  (equals)                     - shoot              - right arm
-   - !=  (doesn't equal)              - shoot, [AIM]       - left leg 
+   - !=  (doesn't equal)              - shoot, [AIM]       - left leg
    - >=  (greater than or equal)      - burst              - right leg
-   - >   (greater than)                         
+   - >   (greater than)
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -160,14 +160,14 @@ referenceDescription ref =
 
 Examples:
 - do whatever
-- if distance > 0
+- if distance > 1
     then move forward
     else do whatever"""
 
         Command ->
             """The end result of applying your strategy to your current situation.
 
-The 'do whatever' command is a shortcut for 'if distance > 0 then move forward else attack randomly'.
+The 'do whatever' command is a shortcut for 'if distance > 1 then move forward else attack randomly'.
 
 Examples:
 - heal (Stimpak)
@@ -178,7 +178,7 @@ Examples:
 
         Condition ->
             """Examples:
-- distance > 0
+- distance > 1
 - my AP == 2
 - my HP < 300
 - chance to hit (eyes) >= 80
@@ -225,7 +225,7 @@ Example usage:
 
         Operator ->
             """Example usage:
-- distance > 0
+- distance > 1
 - my HP <= 80
 - my AP == 3
 """

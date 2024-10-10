@@ -30,6 +30,7 @@ module Data.Player.SPlayer exposing
     , setHp
     , setItems
     , setLocation
+    , setPreferredAmmo
     , startProgressing
     , stopProgressing
     , subtractCaps
@@ -698,6 +699,11 @@ setFightStrategy ( strategy, text ) player =
 setItems : Dict Item.Id Item -> SPlayer -> SPlayer
 setItems items player =
     { player | items = items }
+
+
+setPreferredAmmo : Maybe Item.Kind -> SPlayer -> SPlayer
+setPreferredAmmo preferredAmmo player =
+    { player | preferredAmmo = preferredAmmo }
 
 
 questEngagement : SPlayer -> Quest.Name -> Quest.Engagement

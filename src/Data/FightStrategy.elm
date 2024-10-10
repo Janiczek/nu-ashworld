@@ -608,7 +608,7 @@ youCantUseAimedShots traits strategy =
 healingWithNonHealingItemsWarnings : FightStrategy -> List ValidationWarning
 healingWithNonHealingItemsWarnings strategy =
     strategy
-        |> extractItems
+        |> extractItemsUsedForHealing
         |> List.filter (not << Item.isHealing)
         |> List.map ItemDoesntHeal
 
@@ -648,45 +648,9 @@ isAimedCommand command =
             False
 
 
-extractItems : FightStrategy -> List Item.Kind
-extractItems strategy =
+extractItemsUsedForHealing : FightStrategy -> List Item.Kind
+extractItemsUsedForHealing strategy =
     let
-        fromValue : Value -> List Item.Kind
-        fromValue value =
-            case value of
-                MyHP ->
-                    []
-
-                MyMaxHP ->
-                    []
-
-                MyAP ->
-                    []
-
-                MyItemCount kind ->
-                    [ kind ]
-
-                MyHealingItemCount ->
-                    []
-
-                ItemsUsed kind ->
-                    [ kind ]
-
-                HealingItemsUsed ->
-                    []
-
-                ChanceToHit _ ->
-                    []
-
-                RangeNeeded _ ->
-                    []
-
-                Distance ->
-                    []
-
-                Number _ ->
-                    []
-
         fromCommand : Command -> List Item.Kind
         fromCommand command =
             case command of
@@ -726,8 +690,8 @@ extractItems strategy =
                 OpponentIsNPC ->
                     []
 
-                Operator { lhs, rhs } ->
-                    fromValue lhs ++ fromValue rhs
+                Operator _ ->
+                    []
     in
     case strategy of
         Command command ->
@@ -735,5 +699,5 @@ extractItems strategy =
 
         If { condition, then_, else_ } ->
             fromCondition condition
-                ++ extractItems then_
-                ++ extractItems else_
+                ++ extractItemsUsedForHealing then_
+                ++ extractItemsUsedForHealing else_

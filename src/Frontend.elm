@@ -7,7 +7,6 @@ import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
-import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.DamageType exposing (DamageType)
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Fight.View
@@ -3481,20 +3480,6 @@ inventoryView _ player =
                 , level = Xp.currentLevel player.xp
                 , npcExtraBonus = 0
                 }
-
-        chanceToHitUnarmedAtArmorClass0 : Int
-        chanceToHitUnarmedAtArmorClass0 =
-            Logic.chanceToHit
-                { attackerAddedSkillPercentages = player.addedSkillPercentages
-                , attackerSpecial = player.special
-                , attackerPerks = player.perks
-                , attackerTraits = player.traits
-                , distanceHexes = 0
-                , targetArmorClass = 0
-                , attackStyle = AttackStyle.UnarmedUnaimed
-                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , preferredAmmo = player.preferredAmmo
-                }
     in
     [ pageTitleView "Inventory"
     , H.div [ HA.class "flex flex-col gap-4" ]
@@ -3611,15 +3596,6 @@ inventoryView _ player =
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt attackStats.maxDamage ]
-                ]
-
-            -- TODO show different variants, not just unarmed at AC 0
-            , H.li []
-                [ UI.liBullet
-                , H.text "Chance to hit unarmed at target armor class 0: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt chanceToHitUnarmedAtArmorClass0 ++ "%" ]
                 ]
             ]
         ]
@@ -3971,7 +3947,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
-                    , HA.class "!bg-green-800 w-[75ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] whitespace-pre-wrap font-mono"
+                    , HA.class "!bg-green-800 w-[75ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] overflow-x-auto whitespace-pre font-mono"
                     , HA.value fightStrategyText
                     ]
                     []

@@ -1683,6 +1683,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
                             |> SPlayer.setHp fight_.finalAttacker.hp
                             |> SPlayer.subtractTicks 1
                             |> SPlayer.setItems fight_.finalAttacker.items
+                            |> SPlayer.setPreferredAmmo fight_.finalAttacker.preferredAmmo
                             |> (if targetIsPlayer then
                                     SPlayer.addMessage
                                         { read = True }
@@ -1699,6 +1700,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
                         player
                             |> SPlayer.setHp fight_.finalTarget.hp
                             |> SPlayer.setItems fight_.finalTarget.items
+                            |> SPlayer.setPreferredAmmo fight_.finalTarget.preferredAmmo
                             |> SPlayer.addMessage
                                 { read = False }
                                 model.time
