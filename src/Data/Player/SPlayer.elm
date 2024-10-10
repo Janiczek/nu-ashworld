@@ -45,6 +45,7 @@ module Data.Player.SPlayer exposing
 
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Map exposing (TileNum)
 import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
@@ -641,7 +642,7 @@ equipArmor { id } player =
             player
 
         Just item ->
-            if Item.isArmor item.kind then
+            if ItemKind.isArmor item.kind then
                 player
                     |> (if player.equippedArmor /= Nothing then
                             unequipArmor
@@ -664,7 +665,7 @@ equipWeapon { id } player =
             player
 
         Just item ->
-            if Item.isWeapon item.kind then
+            if ItemKind.isWeapon item.kind then
                 player
                     |> (if player.equippedWeapon /= Nothing then
                             unequipWeapon
@@ -679,9 +680,9 @@ equipWeapon { id } player =
                 player
 
 
-preferAmmo : Item.Kind -> SPlayer -> SPlayer
+preferAmmo : ItemKind.Kind -> SPlayer -> SPlayer
 preferAmmo itemKind player =
-    if Item.isAmmo itemKind then
+    if ItemKind.isAmmo itemKind then
         { player | preferredAmmo = Just itemKind }
 
     else
@@ -701,7 +702,7 @@ setItems items player =
     { player | items = items }
 
 
-setPreferredAmmo : Maybe Item.Kind -> SPlayer -> SPlayer
+setPreferredAmmo : Maybe ItemKind.Kind -> SPlayer -> SPlayer
 setPreferredAmmo preferredAmmo player =
     { player | preferredAmmo = preferredAmmo }
 
@@ -732,7 +733,7 @@ questEngagement player quest =
                 ItemRequirementOneOf items ->
                     -- TODO consume the items once adding the quest? Only in some of these cases (chimpanzee brain) and not in others (lockpick)?
                     let
-                        playerItemKinds : SeqSet Item.Kind
+                        playerItemKinds : SeqSet ItemKind.Kind
                         playerItemKinds =
                             player.items
                                 |> Dict.values

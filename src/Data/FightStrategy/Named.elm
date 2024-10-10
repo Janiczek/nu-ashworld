@@ -12,7 +12,6 @@ import Data.FightStrategy
         , Operator(..)
         , Value(..)
         )
-import Data.Item exposing (Kind(..))
 
 
 default : ( String, FightStrategy )

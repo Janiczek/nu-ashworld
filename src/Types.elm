@@ -8,6 +8,7 @@ import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Data.Map exposing (TileCoords)
 import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
@@ -100,7 +101,7 @@ type FrontendMsg
     | AskToChoosePerk Perk
     | AskToEquipArmor Item.Id
     | AskToEquipWeapon Item.Id
-    | AskToPreferAmmo Item.Kind
+    | AskToPreferAmmo ItemKind.Kind
     | AskToUnequipArmor
     | AskToUnequipWeapon
     | AskToClearPreferredAmmo
@@ -168,7 +169,7 @@ type ToBackend
     | Wander
     | EquipArmor Item.Id
     | EquipWeapon Item.Id
-    | PreferAmmo Item.Kind
+    | PreferAmmo ItemKind.Kind
     | SetFightStrategy ( FightStrategy, String )
     | UnequipArmor
     | UnequipWeapon

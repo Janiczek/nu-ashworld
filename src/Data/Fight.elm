@@ -24,6 +24,7 @@ import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType(..))
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Perk exposing (Perk)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
@@ -56,9 +57,9 @@ type alias Opponent =
     , caps : Int
     , items : Dict Item.Id Item
     , drops : List Item
-    , equippedArmor : Maybe Item.Kind
-    , equippedWeapon : Maybe Item.Kind
-    , preferredAmmo : Maybe Item.Kind
+    , equippedArmor : Maybe ItemKind.Kind
+    , equippedWeapon : Maybe ItemKind.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , naturalArmorClass : Int
     , attackStats : AttackStats
     , addedSkillPercentages : SeqDict Skill Int
@@ -102,7 +103,7 @@ type Action
         -- TODO isCritical
         }
     | Heal
-        { itemKind : Item.Kind
+        { itemKind : ItemKind.Kind
         , healedHp : Int
         , newHp : Int
         }
@@ -316,7 +317,7 @@ encodeAction action =
         Heal r ->
             JE.object
                 [ ( "type", JE.string "Heal" )
-                , ( "itemKind", Item.encodeKind r.itemKind )
+                , ( "itemKind", ItemKind.encode r.itemKind )
                 , ( "healedHp", JE.int r.healedHp )
                 , ( "newHp", JE.int r.newHp )
                 ]
@@ -403,7 +404,7 @@ actionDecoder =
                                     , newHp = newHp
                                     }
                             )
-                            (JD.field "itemKind" Item.kindDecoder)
+                            (JD.field "itemKind" ItemKind.decoder)
                             (JD.field "healedHp" JD.int)
                             (JD.field "newHp" JD.int)
 

@@ -16,6 +16,8 @@ import Data.FightStrategy.Named as FightStrategy
 import Data.FightStrategy.Parser as FightStrategy
 import Data.HealthStatus as HealthStatus
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
+import Data.Item.Type as ItemType
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
@@ -1969,7 +1971,7 @@ townStoreView barter location world player =
                         |> List.filterMap
                             (\( id, count ) ->
                                 Dict.get id player.items
-                                    |> Maybe.map (\{ kind } -> Item.baseValue kind * count)
+                                    |> Maybe.map (\{ kind } -> ItemKind.baseValue kind * count)
                             )
                         |> List.sum
 
@@ -1986,7 +1988,7 @@ townStoreView barter location world player =
                                     |> Maybe.map
                                         (\{ kind } ->
                                             Logic.price
-                                                { baseValue = count * Item.baseValue kind
+                                                { baseValue = count * ItemKind.baseValue kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
@@ -2207,7 +2209,7 @@ townStoreView barter location world player =
                                     "<BUG>"
 
                                 Just item ->
-                                    Item.name item.kind
+                                    ItemKind.name item.kind
 
                         position : Barter.TransferNPosition
                         position =
@@ -3340,7 +3342,7 @@ inventoryView _ player =
         inventoryTotalValue =
             player.items
                 |> Dict.values
-                |> List.map (\{ kind, count } -> Item.baseValue kind * count)
+                |> List.map (\{ kind, count } -> ItemKind.baseValue kind * count)
                 |> List.sum
 
         equippedArmorValue : Int
@@ -3350,7 +3352,7 @@ inventoryView _ player =
                     0
 
                 Just { kind, count } ->
-                    Item.baseValue kind * count
+                    ItemKind.baseValue kind * count
 
         equippedWeaponValue : Int
         equippedWeaponValue =
@@ -3359,7 +3361,7 @@ inventoryView _ player =
                     0
 
                 Just { kind, count } ->
-                    Item.baseValue kind * count
+                    ItemKind.baseValue kind * count
 
         totalValue : Int
         totalValue =
@@ -3398,13 +3400,13 @@ inventoryView _ player =
                         [ H.text "[Use]" ]
                     ]
                 , H.span [] [ H.text <| String.fromInt item.count ++ "x " ]
-                , H.span [ HA.class "text-green-100" ] [ H.text <| Item.name item.kind ]
-                , if Item.isArmor item.kind then
+                , H.span [ HA.class "text-green-100" ] [ H.text <| ItemKind.name item.kind ]
+                , if ItemKind.isArmor item.kind then
                     UI.button
                         [ HE.onClick <| AskToEquipArmor item.id ]
                         [ H.text "[Equip]" ]
 
-                  else if Item.isWeapon item.kind then
+                  else if ItemKind.isWeapon item.kind then
                     UI.button
                         [ HE.onClick <| AskToEquipWeapon item.id ]
                         [ H.text "[Equip]" ]
@@ -3415,7 +3417,7 @@ inventoryView _ player =
                             H.text ""
 
                         Just weapon ->
-                            if Item.isAmmo item.kind && Item.isUsableAmmoFor weapon.kind item.kind then
+                            if ItemKind.isAmmo item.kind && ItemKind.isUsableAmmoForWeapon weapon.kind item.kind then
                                 UI.button
                                     [ HE.onClick <| AskToPreferAmmo item.kind ]
                                     [ H.text "[Prefer]" ]
@@ -3499,9 +3501,9 @@ inventoryView _ player =
                     |> Dict.values
                     |> List.sortBy
                         (\{ kind } ->
-                            ( List.map Item.typeName (Item.types kind)
-                            , Item.baseValue kind
-                            , Item.name kind
+                            ( List.map ItemType.name (ItemKind.types kind)
+                            , ItemKind.baseValue kind
+                            , ItemKind.name kind
                             )
                         )
                     |> List.map itemView
@@ -3523,7 +3525,7 @@ inventoryView _ player =
                                         [ H.text "None" ]
 
                                     Just item ->
-                                        [ H.text <| Item.name item.kind
+                                        [ H.text <| ItemKind.name item.kind
                                         , UI.button
                                             [ HE.onClick unequipMsg
                                             , HA.class "ml-[1ch]"
@@ -3541,7 +3543,7 @@ inventoryView _ player =
                             [ H.text "None" ]
 
                         Just ammo ->
-                            [ H.text <| Item.name ammo
+                            [ H.text <| ItemKind.name ammo
                             , UI.button
                                 [ HE.onClick AskToClearPreferredAmmo
                                 , HA.class "ml-[1ch]"
@@ -3803,7 +3805,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 , H.text <|
                     case warning of
                         FightStrategy.ItemDoesntHeal itemKind ->
-                            "Item doesn't heal: " ++ Item.name itemKind
+                            "Item doesn't heal: " ++ ItemKind.name itemKind
 
                         FightStrategy.YouCantUseAimedShots ->
                             "You can't use aimed shots (due to the Fast Shot trait)"
@@ -4926,7 +4928,7 @@ adminWorldHiscoresView worldName data =
                                 p.caps
                                     + (p.items
                                         |> Dict.values
-                                        |> List.map (\{ count, kind } -> Item.baseValue kind * count)
+                                        |> List.map (\{ count, kind } -> ItemKind.baseValue kind * count)
                                         |> List.sum
                                       )
                           )
@@ -4934,7 +4936,7 @@ adminWorldHiscoresView worldName data =
                           , \p ->
                                 p.items
                                     |> Dict.values
-                                    |> List.filter (\{ kind } -> List.member Item.Book (Item.types kind))
+                                    |> List.filter (\{ kind } -> List.member ItemType.Book (ItemKind.types kind))
                                     |> List.map .count
                                     |> List.sum
                           )

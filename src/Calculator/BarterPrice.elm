@@ -87,7 +87,7 @@ view model =
             in
             H.li
                 [ HE.onClick <| SetBasePriceInput basePrice ]
-                [ H.text <| Item.name kind ++ " ($" ++ basePrice ++ ")" ]
+                [ H.text <| ItemKind.name kind ++ " ($" ++ basePrice ++ ")" ]
 
         vendorView : Vendor.Name -> Html Msg
         vendorView vendor =

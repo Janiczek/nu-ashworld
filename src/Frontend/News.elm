@@ -25,6 +25,8 @@ items =
       , title = "TODOs before release"
       , text =
             """
+- remove the OP starting items
+
 - more "normal" unarmed+melee weapons, and make them part of shops
 
 - Are we adding bonus to Critical Chance based on AimedShot?

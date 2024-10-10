@@ -20,7 +20,7 @@ import Data.FightStrategy
         , OperatorData
         , Value(..)
         )
-import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Parser as P exposing ((|.), (|=), Parser)
 
 
@@ -106,10 +106,10 @@ heal =
         |. P.token ")"
 
 
-itemKind : Parser Item.Kind
+itemKind : Parser ItemKind.Kind
 itemKind =
-    Item.all
-        |> List.map (\kind -> P.map (\_ -> kind) (P.keyword (Item.name kind)))
+    ItemKind.all
+        |> List.map (\kind -> P.map (\_ -> kind) (P.keyword (ItemKind.name kind)))
         |> P.oneOf
 
 

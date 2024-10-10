@@ -27,6 +27,7 @@ import Data.FightStrategy as FightStrategy exposing (FightStrategy)
 import Data.FightStrategy.Named as FightStrategy
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.Message as Message exposing (Message)
@@ -82,7 +83,7 @@ type alias SPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -111,7 +112,7 @@ type alias CPlayer =
     , availablePerks : Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
@@ -217,7 +218,7 @@ sPlayerDecoder =
         |> JD.andMap (JD.field "availablePerks" JD.parseInt)
         |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
         |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe Item.kindDecoder))
+        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe ItemKind.decoder))
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
@@ -372,11 +373,12 @@ fromNewChar currentTime auth newChar =
                     |> Dict.fromList
             , items =
                 -- Dict.empty
+                -- TODO this should be only temporary while I test things
                 Dict.fromList
-                    [ ( 1, Item.create { lastId = 0, uniqueKey = { kind = Item.Jhp10mm }, count = 5 } |> Tuple.first )
-                    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = Item.Ap10mm }, count = 5 } |> Tuple.first )
-                    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = Item.Fmj223 }, count = 5 } |> Tuple.first )
-                    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = Item.Smg10mm }, count = 5 } |> Tuple.first )
+                    [ ( 1, Item.create { lastId = 0, uniqueKey = { kind = ItemKind.Jhp10mm }, count = 5 } |> Tuple.first )
+                    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = ItemKind.Ap10mm }, count = 5 } |> Tuple.first )
+                    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = ItemKind.Fmj223 }, count = 5 } |> Tuple.first )
+                    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = ItemKind.Smg10mm }, count = 5 } |> Tuple.first )
                     ]
             , traits = newChar.traits
             , addedSkillPercentages =

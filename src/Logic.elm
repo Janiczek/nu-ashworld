@@ -16,6 +16,8 @@ module Logic exposing
     , chanceToHit
     , damageResistance
     , damageThreshold
+    , healAmountGenerator
+    , healAmountGenerator_
     , healApCost
     , healPerTick
     , hitpoints
@@ -49,13 +51,16 @@ import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Fight.DamageType as DamageType exposing (DamageType(..))
 import Data.Fight.OpponentType exposing (OpponentType(..))
-import Data.Item as Item exposing (Kind(..))
+import Data.Item.Effect as ItemEffect
+import Data.Item.Kind as ItemKind
+import Data.Item.Type as ItemType
 import Data.Perk as Perk exposing (Perk)
 import Data.Quest as Quest exposing (Engagement(..))
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp exposing (BaseXp(..))
+import Random exposing (Generator)
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
@@ -202,7 +207,7 @@ naturalArmorClass r =
 
 armorClass :
     { naturalArmorClass : Int
-    , equippedArmor : Maybe Item.Kind
+    , equippedArmor : Maybe ItemKind.Kind
     , hasHthEvadePerk : Bool
     , unarmedSkill : Int
     , apFromPreviousTurn : Int
@@ -212,7 +217,7 @@ armorClass r =
     let
         fromArmor =
             r.equippedArmor
-                |> Maybe.map Item.armorClass
+                |> Maybe.map ItemKind.armorClass
                 |> Maybe.withDefault 0
 
         unusedApMultiplier =
@@ -296,7 +301,7 @@ actionPoints r =
 
 distancePenalty :
     { distanceHexes : Int
-    , equippedWeapon : Maybe Item.Kind
+    , equippedWeapon : Maybe ItemKind.Kind
     , perception : Int
     }
     -> Int
@@ -310,7 +315,7 @@ distancePenalty r =
             default ()
 
         Just equippedWeapon ->
-            if Item.isLongRangeWeapon equippedWeapon then
+            if ItemKind.isLongRangeWeapon equippedWeapon then
                 if r.perception >= 5 && r.distanceHexes < ((r.perception - 4) * 2) then
                     r.perception * 8
 
@@ -365,8 +370,8 @@ chanceToHit :
     , attackerTraits : SeqSet Trait
     , attackerSpecial : Special
     , distanceHexes : Int
-    , equippedWeapon : Maybe Item.Kind
-    , preferredAmmo : Maybe Item.Kind
+    , equippedWeapon : Maybe ItemKind.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , targetArmorClass : Int
     , attackStyle : AttackStyle
     }
@@ -398,7 +403,7 @@ chanceToHit r =
             rangedChanceToHit r
 
 
-neededSkill : AttackStyle -> List Item.Type -> Maybe Skill
+neededSkill : AttackStyle -> List ItemType.Type -> Maybe Skill
 neededSkill attackStyle itemTypes =
     case attackStyle of
         UnarmedUnaimed ->
@@ -410,60 +415,60 @@ neededSkill attackStyle itemTypes =
             Just Skill.Unarmed
 
         MeleeUnaimed ->
-            if List.member Item.MeleeWeapon itemTypes then
+            if List.member ItemType.MeleeWeapon itemTypes then
                 Just Skill.MeleeWeapons
 
             else
                 Nothing
 
         MeleeAimed _ ->
-            if List.member Item.MeleeWeapon itemTypes then
+            if List.member ItemType.MeleeWeapon itemTypes then
                 Just Skill.MeleeWeapons
 
             else
                 Nothing
 
         Throw ->
-            if List.member Item.ThrownWeapon itemTypes then
+            if List.member ItemType.ThrownWeapon itemTypes then
                 Just Skill.Throwing
 
             else
                 Nothing
 
         ShootSingleUnaimed ->
-            if List.member Item.SmallGun itemTypes then
+            if List.member ItemType.SmallGun itemTypes then
                 Just Skill.SmallGuns
 
-            else if List.member Item.BigGun itemTypes then
+            else if List.member ItemType.BigGun itemTypes then
                 Just Skill.BigGuns
 
-            else if List.member Item.EnergyWeapon itemTypes then
+            else if List.member ItemType.EnergyWeapon itemTypes then
                 Just Skill.EnergyWeapons
 
             else
                 Nothing
 
         ShootSingleAimed _ ->
-            if List.member Item.SmallGun itemTypes then
+            if List.member ItemType.SmallGun itemTypes then
                 Just Skill.SmallGuns
 
-            else if List.member Item.BigGun itemTypes then
+            else if List.member ItemType.BigGun itemTypes then
                 Just Skill.BigGuns
 
-            else if List.member Item.EnergyWeapon itemTypes then
+            else if List.member ItemType.EnergyWeapon itemTypes then
                 Just Skill.EnergyWeapons
 
             else
                 Nothing
 
         ShootBurst ->
-            if List.member Item.SmallGun itemTypes then
+            if List.member ItemType.SmallGun itemTypes then
                 Just Skill.SmallGuns
 
-            else if List.member Item.BigGun itemTypes then
+            else if List.member ItemType.BigGun itemTypes then
                 Just Skill.BigGuns
 
-            else if List.member Item.EnergyWeapon itemTypes then
+            else if List.member ItemType.EnergyWeapon itemTypes then
                 Just Skill.EnergyWeapons
 
             else
@@ -478,8 +483,8 @@ rangedChanceToHit :
         , attackerTraits : SeqSet Trait
         , targetArmorClass : Int
         , distanceHexes : Int
-        , equippedWeapon : Maybe Item.Kind
-        , preferredAmmo : Maybe Item.Kind
+        , equippedWeapon : Maybe ItemKind.Kind
+        , preferredAmmo : Maybe ItemKind.Kind
         , attackStyle : AttackStyle
     }
     -> Int
@@ -495,12 +500,12 @@ rangedChanceToHit r =
                 0
 
             Just equippedWeapon ->
-                if r.distanceHexes > Item.range r.attackStyle equippedWeapon then
+                if r.distanceHexes > ItemKind.range r.attackStyle equippedWeapon then
                     -- Wanted to attack at a range the weapon can't do
                     0
 
                 else
-                    case neededSkill r.attackStyle (Item.types equippedWeapon) of
+                    case neededSkill r.attackStyle (ItemKind.types equippedWeapon) of
                         Nothing ->
                             -- Wanted to attack in an `attackStyle` the weapon can't do
                             0
@@ -523,7 +528,7 @@ rangedChanceToHit r =
                                 ammoArmorClassModifier : Int
                                 ammoArmorClassModifier =
                                     r.preferredAmmo
-                                        |> Maybe.map Item.ammoArmorClassModifier
+                                        |> Maybe.map ItemKind.ammoArmorClassModifier
                                         |> Maybe.withDefault 0
 
                                 lightingPenalty_ : Int
@@ -571,7 +576,7 @@ rangedChanceToHit r =
 
                                 weaponAccuratePerk : Int
                                 weaponAccuratePerk =
-                                    if Item.isAccurateWeapon equippedWeapon then
+                                    if ItemKind.isAccurateWeapon equippedWeapon then
                                         20
 
                                     else
@@ -590,7 +595,7 @@ rangedChanceToHit r =
                                 |> clamp 0 95
 
 
-weaponRange : Maybe Item.Kind -> AttackStyle -> Int
+weaponRange : Maybe ItemKind.Kind -> AttackStyle -> Int
 weaponRange equippedWeapon attackStyle =
     case equippedWeapon of
         Nothing ->
@@ -598,7 +603,7 @@ weaponRange equippedWeapon attackStyle =
             1
 
         Just weapon ->
-            Item.range attackStyle weapon
+            ItemKind.range attackStyle weapon
 
 
 meleeChanceToHit :
@@ -607,7 +612,7 @@ meleeChanceToHit :
         , attackerSpecial : Special
         , attackerTraits : SeqSet Trait
         , distanceHexes : Int
-        , equippedWeapon : Maybe Item.Kind
+        , equippedWeapon : Maybe ItemKind.Kind
         , targetArmorClass : Int
         , attackStyle : AttackStyle
     }
@@ -625,7 +630,7 @@ meleeChanceToHit r =
         case
             neededSkill r.attackStyle
                 (r.equippedWeapon
-                    |> Maybe.map Item.types
+                    |> Maybe.map ItemKind.types
                     |> Maybe.withDefault []
                 )
         of
@@ -674,7 +679,7 @@ meleeChanceToHit r =
                                 0
 
                             Just equippedWeapon ->
-                                if Item.isAccurateWeapon equippedWeapon then
+                                if ItemKind.isAccurateWeapon equippedWeapon then
                                     20
 
                                 else
@@ -776,8 +781,8 @@ attackStats :
     , traits : SeqSet Trait
     , perks : SeqDict Perk Int
     , level : Int
-    , equippedWeapon : Maybe Item.Kind
-    , preferredAmmo : Maybe Item.Kind
+    , equippedWeapon : Maybe ItemKind.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , npcExtraBonus : Int
     }
     -> AttackStats
@@ -1162,7 +1167,7 @@ canUseItem :
         , traits : SeqSet Trait
         , ticks : Int
     }
-    -> Item.Kind
+    -> ItemKind.Kind
     -> Result ItemNotUsableReason ()
 canUseItem p kind =
     let
@@ -1171,31 +1176,31 @@ canUseItem p kind =
             bookUseTickCost
                 { intelligence = p.special.intelligence }
 
-        checkEffect : Item.Effect -> Result ItemNotUsableReason ()
+        checkEffect : ItemEffect.Effect -> Result ItemNotUsableReason ()
         checkEffect eff =
             case eff of
-                Item.Heal _ ->
+                ItemEffect.Heal _ ->
                     if p.hp >= p.maxHp then
                         Err YoureAtFullHp
 
                     else
                         Ok ()
 
-                Item.RemoveAfterUse ->
+                ItemEffect.RemoveAfterUse ->
                     Ok ()
 
-                Item.BookRemoveTicks ->
+                ItemEffect.BookRemoveTicks ->
                     if p.ticks < bookUseTickCost_ then
                         Err <| YouNeedTicks bookUseTickCost_
 
                     else
                         Ok ()
 
-                Item.BookAddSkillPercent _ ->
+                ItemEffect.BookAddSkillPercent _ ->
                     Ok ()
 
         effects =
-            Item.usageEffects kind
+            ItemKind.usageEffects kind
     in
     if List.isEmpty effects then
         Err ItemCannotBeUsedDirectly
@@ -1232,14 +1237,14 @@ naturalDamageThreshold r =
 damageThreshold :
     { damageType : DamageType
     , opponentType : OpponentType
-    , equippedArmor : Maybe Item.Kind
+    , equippedArmor : Maybe ItemKind.Kind
     }
     -> Int
 damageThreshold r =
     let
         armorDamageThreshold =
             r.equippedArmor
-                |> Maybe.map (Item.armorDamageThreshold r.damageType)
+                |> Maybe.map (ItemKind.armorDamageThreshold r.damageType)
                 |> Maybe.withDefault 0
     in
     naturalDamageThreshold r
@@ -1264,7 +1269,7 @@ naturalDamageResistance r =
 damageResistance :
     { damageType : DamageType
     , opponentType : OpponentType
-    , equippedArmor : Maybe Item.Kind
+    , equippedArmor : Maybe ItemKind.Kind
     , toughnessPerkRanks : Int
     }
     -> Int
@@ -1272,7 +1277,7 @@ damageResistance r =
     let
         fromArmor =
             r.equippedArmor
-                |> Maybe.map (Item.armorDamageResistance r.damageType)
+                |> Maybe.map (ItemKind.armorDamageResistance r.damageType)
                 |> Maybe.withDefault 0
 
         fromToughnessPerk =
@@ -1345,285 +1350,285 @@ unaimedAimedAttackStyleAndApCost unaimed toAimed unaimedApCost =
             AimedShot.all
 
 
-attackStyleAndApCost : Item.Kind -> List ( AttackStyle, Int )
+attackStyleAndApCost : ItemKind.Kind -> List ( AttackStyle, Int )
 attackStyleAndApCost kind =
     case kind of
-        PowerFist ->
+        ItemKind.PowerFist ->
             unarmedAttackStyleAndApCost 3
 
-        MegaPowerFist ->
+        ItemKind.MegaPowerFist ->
             unarmedAttackStyleAndApCost 3
 
-        SuperSledge ->
+        ItemKind.SuperSledge ->
             meleeAttackStyleAndApCost 3
 
-        FragGrenade ->
+        ItemKind.FragGrenade ->
             [ ( Throw, 4 ) ]
 
-        Bozar ->
+        ItemKind.Bozar ->
             [ ( ShootBurst, 6 ) ]
 
-        RedRyderLEBBGun ->
+        ItemKind.RedRyderLEBBGun ->
             shootAttackStyleAndApCost 4
 
-        HuntingRifle ->
+        ItemKind.HuntingRifle ->
             shootAttackStyleAndApCost 5
 
-        ScopedHuntingRifle ->
+        ItemKind.ScopedHuntingRifle ->
             shootAttackStyleAndApCost 5
 
-        SawedOffShotgun ->
+        ItemKind.SawedOffShotgun ->
             shootAttackStyleAndApCost 5
 
-        SniperRifle ->
+        ItemKind.SniperRifle ->
             shootAttackStyleAndApCost 6
 
-        AssaultRifle ->
+        ItemKind.AssaultRifle ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        ExpandedAssaultRifle ->
+        ItemKind.ExpandedAssaultRifle ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        PancorJackhammer ->
+        ItemKind.PancorJackhammer ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        HkP90c ->
+        ItemKind.HkP90c ->
             ( ShootBurst, 5 ) :: shootAttackStyleAndApCost 4
 
-        LaserPistol ->
+        ItemKind.LaserPistol ->
             shootAttackStyleAndApCost 5
 
-        PlasmaRifle ->
+        ItemKind.PlasmaRifle ->
             shootAttackStyleAndApCost 5
 
-        GatlingLaser ->
+        ItemKind.GatlingLaser ->
             [ ( ShootBurst, 6 ) ]
 
-        TurboPlasmaRifle ->
+        ItemKind.TurboPlasmaRifle ->
             shootAttackStyleAndApCost 5
 
-        GaussRifle ->
+        ItemKind.GaussRifle ->
             shootAttackStyleAndApCost 5
 
-        GaussPistol ->
+        ItemKind.GaussPistol ->
             shootAttackStyleAndApCost 4
 
-        PulseRifle ->
+        ItemKind.PulseRifle ->
             shootAttackStyleAndApCost 5
 
-        Smg10mm ->
+        ItemKind.Smg10mm ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        Fruit ->
-            []
-
-        HealingPowder ->
-            []
-
-        MeatJerky ->
-            []
-
-        Beer ->
-            []
-
-        Stimpak ->
-            []
-
-        SuperStimpak ->
-            []
-
-        BigBookOfScience ->
-            []
-
-        DeansElectronics ->
-            []
-
-        FirstAidBook ->
-            []
-
-        GunsAndBullets ->
-            []
-
-        ScoutHandbook ->
-            []
-
-        Robes ->
-            []
-
-        LeatherJacket ->
-            []
-
-        LeatherArmor ->
-            []
-
-        MetalArmor ->
-            []
-
-        TeslaArmor ->
-            []
-
-        CombatArmor ->
-            []
-
-        CombatArmorMk2 ->
-            []
-
-        PowerArmor ->
-            []
-
-        BBAmmo ->
-            []
-
-        SmallEnergyCell ->
-            []
-
-        Fmj223 ->
-            []
-
-        ShotgunShell ->
-            []
-
-        Jhp10mm ->
-            []
-
-        Jhp5mm ->
-            []
-
-        MicrofusionCell ->
-            []
-
-        Ec2mm ->
-            []
-
-        Tool ->
-            []
-
-        LockPicks ->
-            []
-
-        ElectronicLockpick ->
-            []
-
-        AbnormalBrain ->
-            []
-
-        ChimpanzeeBrain ->
-            []
-
-        HumanBrain ->
-            []
-
-        CyberneticBrain ->
-            []
-
-        GECK ->
-            []
-
-        SkynetAim ->
-            []
-
-        MotionSensor ->
-            []
-
-        K9 ->
-            []
-
-        Minigun ->
+        ItemKind.Minigun ->
             [ ( ShootBurst, 6 ) ]
 
-        RocketLauncher ->
+        ItemKind.RocketLauncher ->
             -- no aimed!
             [ ( ShootSingleUnaimed, 6 ) ]
 
-        LaserRifle ->
+        ItemKind.LaserRifle ->
             shootAttackStyleAndApCost 5
 
-        LaserRifleExtCap ->
+        ItemKind.LaserRifleExtCap ->
             shootAttackStyleAndApCost 5
 
-        CattleProd ->
+        ItemKind.CattleProd ->
             meleeAttackStyleAndApCost 4
 
-        SuperCattleProd ->
+        ItemKind.SuperCattleProd ->
             meleeAttackStyleAndApCost 4
 
-        Mauser9mm ->
+        ItemKind.Mauser9mm ->
             shootAttackStyleAndApCost 4
 
-        Pistol14mm ->
+        ItemKind.Pistol14mm ->
             shootAttackStyleAndApCost 5
 
-        CombatShotgun ->
+        ItemKind.CombatShotgun ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        HkCaws ->
+        ItemKind.HkCaws ->
             ( ShootBurst, 6 ) :: shootAttackStyleAndApCost 5
 
-        Shotgun ->
+        ItemKind.Shotgun ->
             shootAttackStyleAndApCost 5
 
-        AlienBlaster ->
+        ItemKind.AlienBlaster ->
             shootAttackStyleAndApCost 4
 
-        SolarScorcher ->
+        ItemKind.SolarScorcher ->
             shootAttackStyleAndApCost 4
 
-        Flare ->
+        ItemKind.Flare ->
             [ ( Throw, 1 ) ]
 
-        Ap5mm ->
-            []
-
-        Mm9 ->
-            []
-
-        Ball9mm ->
-            []
-
-        Ap10mm ->
-            []
-
-        Ap14mm ->
-            []
-
-        ExplosiveRocket ->
-            []
-
-        RocketAp ->
-            []
-
-        Wakizashi ->
+        ItemKind.Wakizashi ->
             meleeAttackStyleAndApCost 3
 
-        LittleJesus ->
+        ItemKind.LittleJesus ->
             meleeAttackStyleAndApCost 3
 
-        Ripper ->
+        ItemKind.Ripper ->
             meleeAttackStyleAndApCost 4
 
-        Pistol223 ->
+        ItemKind.Pistol223 ->
             shootAttackStyleAndApCost 5
 
-        NeedlerPistol ->
+        ItemKind.NeedlerPistol ->
             shootAttackStyleAndApCost 5
 
-        MagnetoLaserPistol ->
+        ItemKind.MagnetoLaserPistol ->
             shootAttackStyleAndApCost 5
 
-        PulsePistol ->
+        ItemKind.PulsePistol ->
             shootAttackStyleAndApCost 4
 
-        HolyHandGrenade ->
+        ItemKind.HolyHandGrenade ->
             [ ( Throw, 4 ) ]
 
-        HnNeedlerCartridge ->
+        ItemKind.Fruit ->
             []
 
-        HnApNeedlerCartridge ->
+        ItemKind.HealingPowder ->
+            []
+
+        ItemKind.MeatJerky ->
+            []
+
+        ItemKind.Beer ->
+            []
+
+        ItemKind.Stimpak ->
+            []
+
+        ItemKind.SuperStimpak ->
+            []
+
+        ItemKind.BigBookOfScience ->
+            []
+
+        ItemKind.DeansElectronics ->
+            []
+
+        ItemKind.FirstAidBook ->
+            []
+
+        ItemKind.GunsAndBullets ->
+            []
+
+        ItemKind.ScoutHandbook ->
+            []
+
+        ItemKind.Robes ->
+            []
+
+        ItemKind.LeatherJacket ->
+            []
+
+        ItemKind.LeatherArmor ->
+            []
+
+        ItemKind.MetalArmor ->
+            []
+
+        ItemKind.TeslaArmor ->
+            []
+
+        ItemKind.CombatArmor ->
+            []
+
+        ItemKind.CombatArmorMk2 ->
+            []
+
+        ItemKind.PowerArmor ->
+            []
+
+        ItemKind.BBAmmo ->
+            []
+
+        ItemKind.SmallEnergyCell ->
+            []
+
+        ItemKind.Fmj223 ->
+            []
+
+        ItemKind.ShotgunShell ->
+            []
+
+        ItemKind.Jhp10mm ->
+            []
+
+        ItemKind.Jhp5mm ->
+            []
+
+        ItemKind.MicrofusionCell ->
+            []
+
+        ItemKind.Ec2mm ->
+            []
+
+        ItemKind.Tool ->
+            []
+
+        ItemKind.LockPicks ->
+            []
+
+        ItemKind.ElectronicLockpick ->
+            []
+
+        ItemKind.AbnormalBrain ->
+            []
+
+        ItemKind.ChimpanzeeBrain ->
+            []
+
+        ItemKind.HumanBrain ->
+            []
+
+        ItemKind.CyberneticBrain ->
+            []
+
+        ItemKind.GECK ->
+            []
+
+        ItemKind.SkynetAim ->
+            []
+
+        ItemKind.MotionSensor ->
+            []
+
+        ItemKind.K9 ->
+            []
+
+        ItemKind.Ap5mm ->
+            []
+
+        ItemKind.Mm9 ->
+            []
+
+        ItemKind.Ball9mm ->
+            []
+
+        ItemKind.Ap10mm ->
+            []
+
+        ItemKind.Ap14mm ->
+            []
+
+        ItemKind.ExplosiveRocket ->
+            []
+
+        ItemKind.RocketAp ->
+            []
+
+        ItemKind.HnNeedlerCartridge ->
+            []
+
+        ItemKind.HnApNeedlerCartridge ->
             []
 
 
-canBurst : Item.Kind -> Bool
+canBurst : ItemKind.Kind -> Bool
 canBurst kind =
     attackStyleAndApCost kind
         |> List.any (\( style, _ ) -> style == ShootBurst)
@@ -1631,18 +1636,18 @@ canBurst kind =
 
 strengthRequirementChanceToHitPenalty :
     { strength : Int
-    , equippedWeapon : Item.Kind
+    , equippedWeapon : ItemKind.Kind
     }
     -> Int
 strengthRequirementChanceToHitPenalty r =
     let
         strengthRequirement =
-            Item.weaponStrengthRequirement r.equippedWeapon
+            ItemKind.weaponStrengthRequirement r.equippedWeapon
     in
     max 0 (strengthRequirement - r.strength) * 20
 
 
-weaponDamageType : Maybe Item.Kind -> DamageType
+weaponDamageType : Maybe ItemKind.Kind -> DamageType
 weaponDamageType equippedWeapon =
     case equippedWeapon of
         Nothing ->
@@ -1650,5 +1655,20 @@ weaponDamageType equippedWeapon =
             DamageType.NormalDamage
 
         Just weapon ->
-            Item.weaponDamageType weapon
+            ItemKind.weaponDamageType weapon
                 |> Maybe.withDefault DamageType.NormalDamage
+
+
+healAmountGenerator_ : { min : Int, max : Int } -> Generator Int
+healAmountGenerator_ { min, max } =
+    Random.int min max
+
+
+healAmountGenerator : ItemKind.Kind -> Generator Int
+healAmountGenerator kind =
+    case ItemKind.healAmount kind of
+        Just r ->
+            healAmountGenerator_ r
+
+        Nothing ->
+            Random.constant 0

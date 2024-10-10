@@ -5,7 +5,7 @@ import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.Generator as FightGen exposing (Fight)
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (..)
-import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Data.Skill as Skill
 import Data.Special as Special
 import Dict
@@ -105,7 +105,7 @@ meleeAttackSucceedsAtDistance2WithRange2 =
         \() ->
             let
                 opponent =
-                    { baseOpponent | equippedWeapon = Just Item.SuperSledge }
+                    { baseOpponent | equippedWeapon = Just ItemKind.SuperSledge }
 
                 baseOngoingFight_ =
                     baseOngoingFight opponent
@@ -135,7 +135,7 @@ meleeAttackFailsAtDistance2WithRange1 =
         \() ->
             let
                 opponent =
-                    { baseOpponent | equippedWeapon = Just Item.Wakizashi }
+                    { baseOpponent | equippedWeapon = Just ItemKind.Wakizashi }
 
                 baseOngoingFight_ =
                     baseOngoingFight opponent
@@ -166,7 +166,7 @@ rangedAttackFailsWithoutAmmoAndOutOfRange =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.RedRyderLEBBGun
+                        | equippedWeapon = Just ItemKind.RedRyderLEBBGun
                         , preferredAmmo = Nothing
                         , items = Dict.empty
                     }
@@ -200,9 +200,9 @@ rangedAttackSucceedsAtDistance15WithRange30 =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.RedRyderLEBBGun
+                        | equippedWeapon = Just ItemKind.RedRyderLEBBGun
                         , preferredAmmo = Nothing
-                        , items = Dict.singleton 1 { id = 1, kind = Item.BBAmmo, count = 1 }
+                        , items = Dict.singleton 1 { id = 1, kind = ItemKind.BBAmmo, count = 1 }
                     }
 
                 baseOngoingFight_ =
@@ -234,9 +234,9 @@ rangedAttackFailsAtDistance30WithRange7 =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.SawedOffShotgun
+                        | equippedWeapon = Just ItemKind.SawedOffShotgun
                         , preferredAmmo = Nothing
-                        , items = Dict.singleton 1 { id = 1, kind = Item.ShotgunShell, count = 1 }
+                        , items = Dict.singleton 1 { id = 1, kind = ItemKind.ShotgunShell, count = 1 }
                     }
 
                 baseOngoingFight_ =
@@ -268,7 +268,7 @@ unarmedAttackUsedWhenNoAmmoAndInRange =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.SawedOffShotgun
+                        | equippedWeapon = Just ItemKind.SawedOffShotgun
                         , preferredAmmo = Nothing
                         , items = Dict.empty
                     }
@@ -302,11 +302,11 @@ thrownAttackUsesUpWeapon =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.FragGrenade
+                        | equippedWeapon = Just ItemKind.FragGrenade
                         , preferredAmmo = Nothing
                         , items =
                             Dict.fromList
-                                [ ( 1, { id = 1, kind = Item.FragGrenade, count = 1 } )
+                                [ ( 1, { id = 1, kind = ItemKind.FragGrenade, count = 1 } )
                                 ]
                     }
 
@@ -335,12 +335,12 @@ thrownAttackUsesUpWeapon =
                             |> Expect.onFail "Expected the attack to succeed"
                     , \r ->
                         r.nextOngoing.attackerItemsUsed
-                            |> SeqDict.member Item.FragGrenade
+                            |> SeqDict.member ItemKind.FragGrenade
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to add the thrown weapon to attackerItemsUsed"
                     , \r ->
                         r.nextOngoing.attacker.items
-                            |> Dict.filter (\_ { kind } -> kind == Item.FragGrenade)
+                            |> Dict.filter (\_ { kind } -> kind == ItemKind.FragGrenade)
                             |> Dict.isEmpty
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to result in FragGrenade not being in attacker's inventory"
@@ -354,12 +354,12 @@ rangedAttackSucceedsWithWrongPreferredAmmo =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.RedRyderLEBBGun
-                        , preferredAmmo = Just Item.Ap10mm -- This shouldn't ever happen in game but let's test it anyway
+                        | equippedWeapon = Just ItemKind.RedRyderLEBBGun
+                        , preferredAmmo = Just ItemKind.Ap10mm -- This shouldn't ever happen in game but let's test it anyway
                         , items =
                             Dict.fromList
-                                [ ( 1, { id = 1, kind = Item.BBAmmo, count = 1 } )
-                                , ( 2, { id = 2, kind = Item.Ap10mm, count = 1 } )
+                                [ ( 1, { id = 1, kind = ItemKind.BBAmmo, count = 1 } )
+                                , ( 2, { id = 2, kind = ItemKind.Ap10mm, count = 1 } )
                                 ]
                     }
 
@@ -392,12 +392,12 @@ rangedAttackUsesPreferredAmmo =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.Smg10mm
-                        , preferredAmmo = Just Item.Ap10mm
+                        | equippedWeapon = Just ItemKind.Smg10mm
+                        , preferredAmmo = Just ItemKind.Ap10mm
                         , items =
                             Dict.fromList
-                                [ ( 1, { id = 1, kind = Item.Jhp10mm, count = 1 } )
-                                , ( 2, { id = 2, kind = Item.Ap10mm, count = 1 } )
+                                [ ( 1, { id = 1, kind = ItemKind.Jhp10mm, count = 1 } )
+                                , ( 2, { id = 2, kind = ItemKind.Ap10mm, count = 1 } )
                                 ]
                     }
 
@@ -422,12 +422,12 @@ rangedAttackUsesPreferredAmmo =
                 |> Expect.all
                     [ \r ->
                         r.nextOngoing.attackerItemsUsed
-                            |> SeqDict.member Item.Ap10mm
+                            |> SeqDict.member ItemKind.Ap10mm
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to add the preferred ammo to attackerItemsUsed"
                     , \r ->
                         r.nextOngoing.attacker.items
-                            |> Dict.filter (\_ { kind } -> kind == Item.Ap10mm)
+                            |> Dict.filter (\_ { kind } -> kind == ItemKind.Ap10mm)
                             |> Dict.isEmpty
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to result in Ap10mm not being in attacker's inventory"
@@ -445,11 +445,11 @@ rangedAttackUsesOnlyOnePieceOfAmmo =
             let
                 opponent =
                     { baseOpponent
-                        | equippedWeapon = Just Item.Smg10mm
-                        , preferredAmmo = Just Item.Jhp10mm
+                        | equippedWeapon = Just ItemKind.Smg10mm
+                        , preferredAmmo = Just ItemKind.Jhp10mm
                         , items =
                             Dict.fromList
-                                [ ( 1, { id = 1, kind = Item.Jhp10mm, count = 5 } )
+                                [ ( 1, { id = 1, kind = ItemKind.Jhp10mm, count = 5 } )
                                 ]
                     }
 
@@ -474,18 +474,18 @@ rangedAttackUsesOnlyOnePieceOfAmmo =
                 |> Expect.all
                     [ \r ->
                         r.nextOngoing.attackerItemsUsed
-                            |> SeqDict.member Item.Jhp10mm
+                            |> SeqDict.member ItemKind.Jhp10mm
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to add the preferred ammo to attackerItemsUsed"
                     , \r ->
                         r.nextOngoing.attacker.items
-                            |> Dict.filter (\_ { kind } -> kind == Item.Jhp10mm)
+                            |> Dict.filter (\_ { kind } -> kind == ItemKind.Jhp10mm)
                             |> Dict.values
-                            |> Expect.equal [ { id = 1, kind = Item.Jhp10mm, count = 4 } ]
+                            |> Expect.equal [ { id = 1, kind = ItemKind.Jhp10mm, count = 4 } ]
                             |> Expect.onFail "Expected the attack to result in Jhp10mm still being in attacker's inventory, just one less"
                     , \r ->
                         r.nextOngoing.attacker.preferredAmmo
-                            |> Expect.equal (Just Item.Jhp10mm)
+                            |> Expect.equal (Just ItemKind.Jhp10mm)
                             |> Expect.onFail "Expected the preferred ammo still be set if we still have some in the inventory"
                     ]
 

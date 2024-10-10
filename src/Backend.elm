@@ -16,6 +16,8 @@ import Data.Fight.Generator as FightGen
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
+import Data.Item.Effect as ItemEffect
+import Data.Item.Kind as ItemKind
 import Data.Ladder as Ladder
 import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
@@ -1054,7 +1056,7 @@ barter barterState clientId world worldName location player model =
                         |> List.filterMap
                             (\( itemId, count ) ->
                                 Dict.get itemId player.items
-                                    |> Maybe.map (\item -> Item.baseValue item.kind * count)
+                                    |> Maybe.map (\item -> ItemKind.baseValue item.kind * count)
                             )
                         |> List.sum
 
@@ -1068,7 +1070,7 @@ barter barterState clientId world worldName location player model =
                                     |> Maybe.map
                                         (\item ->
                                             Logic.price
-                                                { baseValue = count * Item.baseValue item.kind
+                                                { baseValue = count * ItemKind.baseValue item.kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
                                                 , traderBarterSkill = vendor.barterSkill
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
@@ -1450,7 +1452,7 @@ equipArmor itemId clientId _ worldName player model =
             ( model, Cmd.none )
 
         Just item ->
-            if Item.isArmor item.kind then
+            if ItemKind.isArmor item.kind then
                 model
                     |> updatePlayer worldName player.name (SPlayer.equipArmor item)
                     |> sendCurrentWorld worldName player.name clientId
@@ -1466,7 +1468,7 @@ equipWeapon itemId clientId _ worldName player model =
             ( model, Cmd.none )
 
         Just item ->
-            if Item.isWeapon item.kind then
+            if ItemKind.isWeapon item.kind then
                 model
                     |> updatePlayer worldName player.name (SPlayer.equipWeapon item)
                     |> sendCurrentWorld worldName player.name clientId
@@ -1475,9 +1477,9 @@ equipWeapon itemId clientId _ worldName player model =
                 ( model, Cmd.none )
 
 
-preferAmmo : Item.Kind -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+preferAmmo : ItemKind.Kind -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 preferAmmo itemKind clientId _ worldName player model =
-    if Item.isAmmo itemKind then
+    if ItemKind.isAmmo itemKind then
         model
             |> updatePlayer worldName player.name (SPlayer.preferAmmo itemKind)
             |> sendCurrentWorld worldName player.name clientId
@@ -1514,9 +1516,9 @@ useItem itemId clientId _ worldName player model =
 
             else
                 let
-                    effects : List Item.Effect
+                    effects : List ItemEffect.Effect
                     effects =
-                        Item.usageEffects item.kind
+                        ItemKind.usageEffects item.kind
                 in
                 case Logic.canUseItem player item.kind of
                     Err _ ->
@@ -1524,23 +1526,23 @@ useItem itemId clientId _ worldName player model =
 
                     Ok () ->
                         let
-                            handleEffect : Item.Effect -> Generator (SPlayer -> SPlayer)
+                            handleEffect : ItemEffect.Effect -> Generator (SPlayer -> SPlayer)
                             handleEffect effect =
                                 case effect of
-                                    Item.Heal r ->
-                                        Item.healAmountGenerator_ r
+                                    ItemEffect.Heal r ->
+                                        Logic.healAmountGenerator_ r
                                             |> Random.map SPlayer.addHp
 
-                                    Item.RemoveAfterUse ->
+                                    ItemEffect.RemoveAfterUse ->
                                         SPlayer.removeItem itemId 1
                                             |> Random.constant
 
-                                    Item.BookRemoveTicks ->
+                                    ItemEffect.BookRemoveTicks ->
                                         SPlayer.subtractTicks
                                             (Logic.bookUseTickCost { intelligence = player.special.intelligence })
                                             |> Random.constant
 
-                                    Item.BookAddSkillPercent skill ->
+                                    ItemEffect.BookAddSkillPercent skill ->
                                         SPlayer.addSkillPercentage
                                             (Logic.bookAddedSkillPercentage
                                                 { currentPercentage = Skill.get player.special player.addedSkillPercentages skill

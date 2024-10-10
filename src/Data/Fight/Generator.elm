@@ -24,6 +24,7 @@ import Data.FightStrategy as FightStrategy
         , Value(..)
         )
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill(..))
@@ -55,10 +56,10 @@ type alias OngoingFight =
     { distanceHexes : Int
     , attacker : Opponent
     , attackerAp : Int
-    , attackerItemsUsed : SeqDict Item.Kind Int
+    , attackerItemsUsed : SeqDict ItemKind.Kind Int
     , target : Opponent
     , targetAp : Int
-    , targetItemsUsed : SeqDict Item.Kind Int
+    , targetItemsUsed : SeqDict ItemKind.Kind Int
     , reverseLog : List ( Who, Fight.Action )
     , actionsTaken : Int
     }
@@ -89,7 +90,7 @@ opponentAp who ongoing =
             ongoing.targetAp
 
 
-opponentItemsUsed : Who -> OngoingFight -> SeqDict Item.Kind Int
+opponentItemsUsed : Who -> OngoingFight -> SeqDict ItemKind.Kind Int
 opponentItemsUsed who ongoing =
     case who of
         Attacker ->
@@ -240,10 +241,10 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                 ( ammoDamageMultiplier, ammoDamageDivisor ) =
                     case usedAmmo_ of
                         PreferredAmmo ( _, ammoKind ) ->
-                            Item.ammoDamageModifier ammoKind
+                            ItemKind.ammoDamageModifier ammoKind
 
                         FallbackAmmo ( _, ammoKind ) ->
-                            Item.ammoDamageModifier ammoKind
+                            ItemKind.ammoDamageModifier ammoKind
 
                         NoUsableAmmo ->
                             ( 1, 1 )
@@ -256,7 +257,7 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                     let
                         allGood () =
                             opponent.equippedWeapon
-                                |> Maybe.map Item.isWeaponArmorPenetrating
+                                |> Maybe.map ItemKind.isWeaponArmorPenetrating
                                 |> Maybe.withDefault False
                     in
                     case usedAmmo_ of
@@ -353,10 +354,10 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                 ammoDamageResistanceModifierPct =
                     case usedAmmo_ of
                         PreferredAmmo ( _, ammoKind ) ->
-                            Item.ammoDamageResistanceModifier ammoKind
+                            ItemKind.ammoDamageResistanceModifier ammoKind
 
                         FallbackAmmo ( _, ammoKind ) ->
-                            Item.ammoDamageResistanceModifier ammoKind
+                            ItemKind.ammoDamageResistanceModifier ammoKind
 
                         NoUsableAmmo ->
                             0
@@ -800,7 +801,7 @@ finalizeCommand ongoing =
         }
 
 
-heal : Who -> OngoingFight -> Item.Kind -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+heal : Who -> OngoingFight -> ItemKind.Kind -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 heal who ongoing itemKind =
     let
         opponent =
@@ -809,7 +810,7 @@ heal who ongoing itemKind =
     if itemCount itemKind opponent <= 0 then
         rejectCommand who Fight.Heal_ItemNotPresent ongoing
 
-    else if not <| Item.isHealing itemKind then
+    else if not <| ItemKind.isHealing itemKind then
         {- We're not using <= because there might later be usages for items that
            damage you instead of healing? Who knows
         -}
@@ -819,7 +820,7 @@ heal who ongoing itemKind =
         rejectCommand who Fight.Heal_AlreadyFullyHealed ongoing
 
     else
-        Item.healAmountGenerator itemKind
+        Logic.healAmountGenerator itemKind
             |> Random.andThen
                 (\healedHp ->
                     let
@@ -854,7 +855,7 @@ healWithAnything who ongoing =
         rejectCommand who Fight.HealWithAnything_AlreadyFullyHealed ongoing
 
     else
-        case Dict.find (\_ item -> Item.isHealing item.kind) opponent.items of
+        case Dict.find (\_ item -> ItemKind.isHealing item.kind) opponent.items of
             Nothing ->
                 rejectCommand who HealWithAnything_NoHealingItem ongoing
 
@@ -862,9 +863,9 @@ healWithAnything who ongoing =
                 heal who ongoing healingItem.kind
 
 
-{-| TODO require an Item.Id argument and do a Dict.update, or make player.items be SeqDict Item.Kind Item or something?
+{-| TODO require an Item.Id argument and do a Dict.update, or make player.items be SeqDict ItemKind.Kind Item or something?
 -}
-decItem : Item.Kind -> Opponent -> Opponent
+decItem : ItemKind.Kind -> Opponent -> Opponent
 decItem kind opponent =
     let
         isPreferredAmmo =
@@ -894,7 +895,7 @@ decItem kind opponent =
     }
 
 
-incItemsUsed : Who -> Item.Kind -> OngoingFight -> OngoingFight
+incItemsUsed : Who -> ItemKind.Kind -> OngoingFight -> OngoingFight
 incItemsUsed who itemKind ongoing =
     let
         inc dict =
@@ -917,7 +918,7 @@ incItemsUsed who itemKind ongoing =
             { ongoing | targetItemsUsed = inc ongoing.targetItemsUsed }
 
 
-itemCount : Item.Kind -> Opponent -> Int
+itemCount : ItemKind.Kind -> Opponent -> Int
 itemCount kind opponent =
     opponent.items
         |> Dict.find (\_ item -> item.kind == kind)
@@ -999,7 +1000,7 @@ unarmedAttackStyle =
     ( AttackStyle.UnarmedUnaimed, Logic.unarmedApCost )
 
 
-randomAttackStyle : Int -> Maybe Item.Kind -> Generator ( AttackStyle, Int )
+randomAttackStyle : Int -> Maybe ItemKind.Kind -> Generator ( AttackStyle, Int )
 randomAttackStyle availableAp equippedWeapon =
     case equippedWeapon of
         Nothing ->
@@ -1110,7 +1111,7 @@ attack_ who ongoing attackStyle baseApCost =
         weaponRange =
             Logic.weaponRange opponent.equippedWeapon attackStyle
 
-        continueAttack : Maybe ( Item.Id, Item.Kind ) -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+        continueAttack : Maybe ( Item.Id, ItemKind.Kind ) -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
         continueAttack usedAmmo_ =
             let
                 useAmmo ong =
@@ -1270,7 +1271,7 @@ type alias StrategyState =
     , them : Opponent
     , themWho : Who
     , yourAp : Int
-    , yourItemsUsed : SeqDict Item.Kind Int
+    , yourItemsUsed : SeqDict ItemKind.Kind Int
     , distanceHexes : Int
     , ongoingFight : OngoingFight
     }
@@ -1336,7 +1337,7 @@ evalValue who state value =
                 |> Dict.toList
                 |> List.filterMap
                     (\( _, item ) ->
-                        if Item.isHealing item.kind then
+                        if ItemKind.isHealing item.kind then
                             Just item.count
 
                         else
@@ -1354,7 +1355,7 @@ evalValue who state value =
                 |> SeqDict.toList
                 |> List.filterMap
                     (\( kind, count ) ->
-                        if Item.isHealing kind then
+                        if ItemKind.isHealing kind then
                             Just count
 
                         else
@@ -1393,8 +1394,8 @@ evalValue who state value =
 
 
 type UsedAmmo
-    = PreferredAmmo ( Item.Id, Item.Kind )
-    | FallbackAmmo ( Item.Id, Item.Kind )
+    = PreferredAmmo ( Item.Id, ItemKind.Kind )
+    | FallbackAmmo ( Item.Id, ItemKind.Kind )
     | NoUsableAmmo
     | NoAmmoNeeded
 
@@ -1417,9 +1418,9 @@ usedAmmo who ongoingFight =
 
         Just equippedWeapon ->
             let
-                usableAmmo : SeqSet Item.Kind
+                usableAmmo : SeqSet ItemKind.Kind
                 usableAmmo =
-                    Item.usableAmmo equippedWeapon
+                    ItemKind.usableAmmoForWeapon equippedWeapon
                         |> SeqSet.fromList
             in
             if SeqSet.isEmpty usableAmmo then
@@ -1481,13 +1482,13 @@ rangeNeeded attackStyle who state =
         Just equippedWeapon ->
             case usedAmmo who state.ongoingFight of
                 PreferredAmmo _ ->
-                    Item.range attackStyle equippedWeapon
+                    ItemKind.range attackStyle equippedWeapon
 
                 FallbackAmmo _ ->
-                    Item.range attackStyle equippedWeapon
+                    ItemKind.range attackStyle equippedWeapon
 
                 NoAmmoNeeded ->
-                    Item.range attackStyle equippedWeapon
+                    ItemKind.range attackStyle equippedWeapon
 
                 NoUsableAmmo ->
                     Logic.unarmedRange
@@ -1601,11 +1602,11 @@ enemyOpponentGenerator r lastItemId enemyType =
                     special =
                         Enemy.special enemyType
 
-                    equippedWeapon : Maybe Item.Kind
+                    equippedWeapon : Maybe ItemKind.Kind
                     equippedWeapon =
                         Enemy.equippedWeapon enemyType
 
-                    preferredAmmo : Maybe Item.Kind
+                    preferredAmmo : Maybe ItemKind.Kind
                     preferredAmmo =
                         Enemy.preferredAmmo enemyType
                 in
@@ -1661,7 +1662,7 @@ playerOpponent :
         , addedSkillPercentages : SeqDict Skill Int
         , equippedArmor : Maybe Item
         , equippedWeapon : Maybe Item
-        , preferredAmmo : Maybe Item.Kind
+        , preferredAmmo : Maybe ItemKind.Kind
         , fightStrategy : FightStrategy
         , items : Dict Item.Id Item
     }

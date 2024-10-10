@@ -16,6 +16,7 @@ module Data.FightStrategy exposing
 
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Data.Trait as Trait exposing (Trait)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
@@ -63,9 +64,9 @@ type Value
     = MyHP
     | MyMaxHP
     | MyAP
-    | MyItemCount Item.Kind
+    | MyItemCount ItemKind.Kind
     | MyHealingItemCount
-    | ItemsUsed Item.Kind
+    | ItemsUsed ItemKind.Kind
     | HealingItemsUsed
     | ChanceToHit AttackStyle
     | RangeNeeded AttackStyle
@@ -76,7 +77,7 @@ type Value
 type Command
     = Attack AttackStyle
     | AttackRandomly
-    | Heal Item.Kind
+    | Heal ItemKind.Kind
     | HealWithAnything
     | MoveForward
     | DoWhatever
@@ -111,7 +112,7 @@ toString strategy =
                     "attack randomly"
 
                 Heal itemKind ->
-                    "heal (" ++ Item.name itemKind ++ ")"
+                    "heal (" ++ ItemKind.name itemKind ++ ")"
 
                 HealWithAnything ->
                     "heal with anything"
@@ -171,14 +172,14 @@ valueToString value =
 
         MyItemCount kind ->
             "number of available "
-                ++ Item.name kind
+                ++ ItemKind.name kind
 
         MyHealingItemCount ->
             "number of available healing items"
 
         ItemsUsed kind ->
             "number of used "
-                ++ Item.name kind
+                ++ ItemKind.name kind
 
         HealingItemsUsed ->
             "number of used healing items"
@@ -257,7 +258,7 @@ encodeCommand command =
         Heal itemKind ->
             JE.object
                 [ ( "type", JE.string "Heal" )
-                , ( "itemKind", Item.encodeKind itemKind )
+                , ( "itemKind", ItemKind.encode itemKind )
                 ]
 
         HealWithAnything ->
@@ -361,7 +362,7 @@ encodeValue value =
         MyItemCount itemKind ->
             JE.object
                 [ ( "type", JE.string "MyItemCount" )
-                , ( "item", Item.encodeKind itemKind )
+                , ( "item", ItemKind.encode itemKind )
                 ]
 
         MyHealingItemCount ->
@@ -372,7 +373,7 @@ encodeValue value =
         ItemsUsed itemKind ->
             JE.object
                 [ ( "type", JE.string "ItemsUsed" )
-                , ( "item", Item.encodeKind itemKind )
+                , ( "item", ItemKind.encode itemKind )
                 ]
 
         HealingItemsUsed ->
@@ -477,14 +478,14 @@ valueDecoder =
 
                     "MyItemCount" ->
                         JD.succeed MyItemCount
-                            |> JD.andMap (JD.field "item" Item.kindDecoder)
+                            |> JD.andMap (JD.field "item" ItemKind.decoder)
 
                     "MyHealingItemCount" ->
                         JD.succeed MyHealingItemCount
 
                     "ItemsUsed" ->
                         JD.succeed ItemsUsed
-                            |> JD.andMap (JD.field "item" Item.kindDecoder)
+                            |> JD.andMap (JD.field "item" ItemKind.decoder)
 
                     "HealingItemsUsed" ->
                         JD.succeed HealingItemsUsed
@@ -523,7 +524,7 @@ commandDecoder =
 
                     "Heal" ->
                         JD.succeed Heal
-                            |> JD.andMap (JD.field "itemKind" Item.kindDecoder)
+                            |> JD.andMap (JD.field "itemKind" ItemKind.decoder)
 
                     "HealWithAnything" ->
                         JD.succeed HealWithAnything
@@ -581,7 +582,7 @@ doWhatever =
 
 
 type ValidationWarning
-    = ItemDoesntHeal Item.Kind
+    = ItemDoesntHeal ItemKind.Kind
     | YouCantUseAimedShots
 
 
@@ -609,7 +610,7 @@ healingWithNonHealingItemsWarnings : FightStrategy -> List ValidationWarning
 healingWithNonHealingItemsWarnings strategy =
     strategy
         |> extractItemsUsedForHealing
-        |> List.filter (not << Item.isHealing)
+        |> List.filter (not << ItemKind.isHealing)
         |> List.map ItemDoesntHeal
 
 
@@ -648,10 +649,10 @@ isAimedCommand command =
             False
 
 
-extractItemsUsedForHealing : FightStrategy -> List Item.Kind
+extractItemsUsedForHealing : FightStrategy -> List ItemKind.Kind
 extractItemsUsedForHealing strategy =
     let
-        fromCommand : Command -> List Item.Kind
+        fromCommand : Command -> List ItemKind.Kind
         fromCommand command =
             case command of
                 Attack _ ->
@@ -675,7 +676,7 @@ extractItemsUsedForHealing strategy =
                 SkipTurn ->
                     []
 
-        fromCondition : Condition -> List Item.Kind
+        fromCondition : Condition -> List ItemKind.Kind
         fromCondition condition =
             case condition of
                 Or c1 c2 ->

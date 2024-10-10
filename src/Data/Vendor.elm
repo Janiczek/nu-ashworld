@@ -19,6 +19,7 @@ module Data.Vendor exposing
     )
 
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Map.Location as Location exposing (Location)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
@@ -72,50 +73,50 @@ spec name_ =
         ArroyoHakunin ->
             { caps = { average = 50, maxDeviation = 20 }
             , stock =
-                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 4 }
-                , { uniqueKey = { kind = Item.Robes }, maxCount = 1 }
+                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 4 }
+                , { uniqueKey = { kind = ItemKind.Robes }, maxCount = 1 }
                 ]
             }
 
         KlamathMaidaBuckner ->
             { caps = { average = 150, maxDeviation = 80 }
             , stock =
-                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 3 }
-                , { uniqueKey = { kind = Item.Stimpak }, maxCount = 2 }
-                , { uniqueKey = { kind = Item.BigBookOfScience }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.DeansElectronics }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.Robes }, maxCount = 2 }
+                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 3 }
+                , { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 2 }
+                , { uniqueKey = { kind = ItemKind.BigBookOfScience }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.DeansElectronics }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.Robes }, maxCount = 2 }
                 ]
             }
 
         DenFlick ->
             { caps = { average = 280, maxDeviation = 120 }
             , stock =
-                [ { uniqueKey = { kind = Item.HealingPowder }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.Stimpak }, maxCount = 3 }
-                , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.LeatherJacket }, maxCount = 1 }
+                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 3 }
+                , { uniqueKey = { kind = ItemKind.ScoutHandbook }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.GunsAndBullets }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.LeatherJacket }, maxCount = 1 }
                 ]
             }
 
         ModocJo ->
             { caps = { average = 500, maxDeviation = 200 }
             , stock =
-                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 5 }
-                , { uniqueKey = { kind = Item.GunsAndBullets }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.FirstAidBook }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.LeatherJacket }, maxCount = 1 }
-                , { uniqueKey = { kind = Item.LeatherArmor }, maxCount = 1 }
+                [ { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 5 }
+                , { uniqueKey = { kind = ItemKind.GunsAndBullets }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.FirstAidBook }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.LeatherJacket }, maxCount = 1 }
+                , { uniqueKey = { kind = ItemKind.LeatherArmor }, maxCount = 1 }
                 ]
             }
 
         VaultCityHappyHarry ->
             { caps = { average = 300, maxDeviation = 120 }
             , stock =
-                [ { uniqueKey = { kind = Item.Stimpak }, maxCount = 4 }
-                , { uniqueKey = { kind = Item.ScoutHandbook }, maxCount = 2 }
-                , { uniqueKey = { kind = Item.MetalArmor }, maxCount = 1 }
+                [ { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 4 }
+                , { uniqueKey = { kind = ItemKind.ScoutHandbook }, maxCount = 2 }
+                , { uniqueKey = { kind = ItemKind.MetalArmor }, maxCount = 1 }
                 ]
             }
 

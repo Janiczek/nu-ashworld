@@ -69,6 +69,8 @@ import Data.FightStrategy
         , Value(..)
         )
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
+import Data.Item.Type as ItemType
 import Data.Perk as Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill as Skill exposing (Skill)
@@ -299,21 +301,21 @@ aimedAttackStyleFuzzer =
         )
 
 
-itemKindFuzzer : Fuzzer Item.Kind
+itemKindFuzzer : Fuzzer ItemKind.Kind
 itemKindFuzzer =
-    Item.all
+    ItemKind.all
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
 
 
-healingItemKindFuzzer : Fuzzer Item.Kind
+healingItemKindFuzzer : Fuzzer ItemKind.Kind
 healingItemKindFuzzer =
-    Item.allHealing
+    ItemKind.allHealing
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
 
 
-mostlyHealingItemKindFuzzer : Fuzzer Item.Kind
+mostlyHealingItemKindFuzzer : Fuzzer ItemKind.Kind
 mostlyHealingItemKindFuzzer =
     Fuzz.frequency
         [ ( 9, healingItemKindFuzzer )
@@ -398,76 +400,76 @@ dropsFuzzer =
     Fuzz.list itemFuzzer
 
 
-equippedArmorKindFuzzer : Fuzzer (Maybe Item.Kind)
+equippedArmorKindFuzzer : Fuzzer (Maybe ItemKind.Kind)
 equippedArmorKindFuzzer =
     Fuzz.maybe armorKindFuzzer
 
 
-equippedWeaponKindFuzzer : Fuzzer (Maybe Item.Kind)
+equippedWeaponKindFuzzer : Fuzzer (Maybe ItemKind.Kind)
 equippedWeaponKindFuzzer =
     Fuzz.maybe weaponKindFuzzer
 
 
-preferredAmmoKindFuzzer : Fuzzer (Maybe Item.Kind)
+preferredAmmoKindFuzzer : Fuzzer (Maybe ItemKind.Kind)
 preferredAmmoKindFuzzer =
     Fuzz.maybe ammoKindFuzzer
 
 
-armorKindFuzzer : Fuzzer Item.Kind
+armorKindFuzzer : Fuzzer ItemKind.Kind
 armorKindFuzzer =
-    Item.all
-        |> List.filter Item.isArmor
+    ItemKind.all
+        |> List.filter ItemKind.isArmor
         |> Fuzz.oneOfValues
 
 
-weaponKindFuzzer : Fuzzer Item.Kind
+weaponKindFuzzer : Fuzzer ItemKind.Kind
 weaponKindFuzzer =
-    Item.all
-        |> List.filter Item.isWeapon
+    ItemKind.all
+        |> List.filter ItemKind.isWeapon
         |> Fuzz.oneOfValues
 
 
-meleeWeaponKindFuzzer : Fuzzer Item.Kind
+meleeWeaponKindFuzzer : Fuzzer ItemKind.Kind
 meleeWeaponKindFuzzer =
-    Item.all
-        |> List.filter (\kind -> List.member Item.MeleeWeapon (Item.types kind))
+    ItemKind.all
+        |> List.filter (\kind -> List.member ItemType.MeleeWeapon (ItemKind.types kind))
         |> Fuzz.oneOfValues
 
 
-unarmedWeaponKindFuzzer : Fuzzer Item.Kind
+unarmedWeaponKindFuzzer : Fuzzer ItemKind.Kind
 unarmedWeaponKindFuzzer =
-    Item.all
-        |> List.filter (\kind -> List.member Item.UnarmedWeapon (Item.types kind))
+    ItemKind.all
+        |> List.filter (\kind -> List.member ItemType.UnarmedWeapon (ItemKind.types kind))
         |> Fuzz.oneOfValues
 
 
-gunKindFuzzer : Fuzzer Item.Kind
+gunKindFuzzer : Fuzzer ItemKind.Kind
 gunKindFuzzer =
-    Item.all
+    ItemKind.all
         |> List.filter
             (\kind ->
                 let
                     types =
-                        Item.types kind
+                        ItemKind.types kind
                 in
-                List.member Item.SmallGun types
-                    || List.member Item.BigGun types
-                    || List.member Item.EnergyWeapon types
+                List.member ItemType.SmallGun types
+                    || List.member ItemType.BigGun types
+                    || List.member ItemType.EnergyWeapon types
             )
         |> Fuzz.oneOfValues
 
 
-smallGunKindFuzzer : Fuzzer Item.Kind
+smallGunKindFuzzer : Fuzzer ItemKind.Kind
 smallGunKindFuzzer =
-    Item.all
-        |> List.filter (\kind -> List.member Item.SmallGun (Item.types kind))
+    ItemKind.all
+        |> List.filter (\kind -> List.member ItemType.SmallGun (ItemKind.types kind))
         |> Fuzz.oneOfValues
 
 
-ammoKindFuzzer : Fuzzer Item.Kind
+ammoKindFuzzer : Fuzzer ItemKind.Kind
 ammoKindFuzzer =
-    Item.all
-        |> List.filter Item.isAmmo
+    ItemKind.all
+        |> List.filter ItemKind.isAmmo
         |> Fuzz.oneOfValues
 
 
@@ -475,7 +477,7 @@ itemFuzzer : Fuzzer Item
 itemFuzzer =
     Fuzz.map3 Item
         (Fuzz.intRange 0 99999)
-        (Fuzz.oneOfValues Item.all)
+        (Fuzz.oneOfValues ItemKind.all)
         (Fuzz.intRange 1 500)
 
 

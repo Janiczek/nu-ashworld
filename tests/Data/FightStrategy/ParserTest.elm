@@ -11,7 +11,7 @@ import Data.FightStrategy as FightStrategy
         , Value(..)
         )
 import Data.FightStrategy.Parser as FightStrategy
-import Data.Item exposing (Kind(..))
+import Data.Item.Kind as ItemKind
 import Expect
 import Test exposing (Test)
 import TestHelpers
@@ -31,13 +31,13 @@ value =
               , ( "my max HP", "my max HP", Just MyMaxHP )
               , ( "my AP", "my AP", Just MyAP )
               , ( "distance", "distance", Just Distance )
-              , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount Stimpak) )
-              , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount HealingPowder) )
-              , ( "item count - non-healing item also works", "number of available Metal Armor", Just (MyItemCount MetalArmor) )
+              , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount ItemKind.Stimpak) )
+              , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount ItemKind.HealingPowder) )
+              , ( "item count - non-healing item also works", "number of available Metal Armor", Just (MyItemCount ItemKind.MetalArmor) )
               , ( "healing item count", "number of available healing items", Just MyHealingItemCount )
-              , ( "used Stimpak", "number of used Stimpak", Just (ItemsUsed Stimpak) )
-              , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed HealingPowder) )
-              , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed MetalArmor) )
+              , ( "used Stimpak", "number of used Stimpak", Just (ItemsUsed ItemKind.Stimpak) )
+              , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed ItemKind.HealingPowder) )
+              , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed ItemKind.MetalArmor) )
               , ( "used healing items", "number of used healing items", Just HealingItemsUsed )
               ]
             , AttackStyle.all
@@ -114,9 +114,9 @@ command =
             [ [ ( "attack randomly", "attack randomly", Just AttackRandomly )
               , ( "move forward", "move forward", Just MoveForward )
               , ( "do whatever", "do whatever", Just DoWhatever )
-              , ( "heal Stimpak", "heal (Stimpak)", Just (Heal Stimpak) )
-              , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal HealingPowder) )
-              , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal MetalArmor) )
+              , ( "heal Stimpak", "heal (Stimpak)", Just (Heal ItemKind.Stimpak) )
+              , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal ItemKind.HealingPowder) )
+              , ( "heal - non-healing item", "heal (Metal Armor)", Just (Heal ItemKind.MetalArmor) )
               , ( "heal with anything", "heal with anything", Just HealWithAnything )
               , ( "skip turn", "skip turn", Just SkipTurn )
               ]
@@ -197,10 +197,10 @@ condition =
                 (And
                     (Operator { lhs = MyHP, op = LT_, rhs = Number 100 })
                     (And
-                        (Operator { lhs = ItemsUsed Stimpak, op = LT_, rhs = Number 50 })
+                        (Operator { lhs = ItemsUsed ItemKind.Stimpak, op = LT_, rhs = Number 50 })
                         (Or
-                            (Operator { lhs = ItemsUsed HealingPowder, op = LT_, rhs = Number 50 })
-                            (Operator { lhs = ItemsUsed Fruit, op = LT_, rhs = Number 50 })
+                            (Operator { lhs = ItemsUsed ItemKind.HealingPowder, op = LT_, rhs = Number 50 })
+                            (Operator { lhs = ItemsUsed ItemKind.Fruit, op = LT_, rhs = Number 50 })
                         )
                     )
                 )
@@ -218,7 +218,7 @@ fightStrategy =
           , Just
                 (If
                     { condition = Operator { lhs = MyHP, op = LT_, rhs = Number 10 }
-                    , then_ = Command (Heal Fruit)
+                    , then_ = Command (Heal ItemKind.Fruit)
                     , else_ = Command DoWhatever
                     }
                 )
@@ -233,11 +233,11 @@ fightStrategy =
           , Just
                 (If
                     { condition = Operator { lhs = MyHP, op = LT_, rhs = Number 10 }
-                    , then_ = Command (Heal Fruit)
+                    , then_ = Command (Heal ItemKind.Fruit)
                     , else_ =
                         If
-                            { condition = Operator { lhs = ItemsUsed Fruit, op = GT_, rhs = Number 200 }
-                            , then_ = Command (Heal Stimpak)
+                            { condition = Operator { lhs = ItemsUsed ItemKind.Fruit, op = GT_, rhs = Number 200 }
+                            , then_ = Command (Heal ItemKind.Stimpak)
                             , else_ = Command AttackRandomly
                             }
                     }

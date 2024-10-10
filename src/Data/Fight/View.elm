@@ -6,6 +6,7 @@ import Data.Fight.AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
@@ -57,7 +58,7 @@ viewLoot itemsGained =
             (\item ->
                 String.fromInt item.count
                     ++ "x "
-                    ++ Item.name item.kind
+                    ++ ItemKind.name item.kind
             )
             itemsGained
         )
@@ -357,7 +358,7 @@ view perceptionLevel fight yourName =
                                                     H.text <|
                                                         names_.subject.verbPresent "heal"
                                                             ++ " with "
-                                                            ++ Item.name r.itemKind
+                                                            ++ ItemKind.name r.itemKind
                                                             ++ " for "
                                                             ++ String.fromInt r.healedHp
                                                             ++ " HP."

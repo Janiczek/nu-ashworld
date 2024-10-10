@@ -1,7 +1,7 @@
 module LogicTest exposing (test)
 
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
-import Data.Item as Item exposing (Kind(..))
+import Data.Item.Kind as ItemKind
 import Data.Perk exposing (Perk)
 import Data.Skill exposing (Skill(..))
 import Data.Special as Special exposing (Special)
@@ -106,8 +106,8 @@ chanceToHitArgsFuzzer :
         , attackerSpecial : Special
         , attackerTraits : SeqSet Trait
         , distanceHexes : Int
-        , equippedWeapon : Maybe Item.Kind
-        , preferredAmmo : Maybe Item.Kind
+        , equippedWeapon : Maybe ItemKind.Kind
+        , preferredAmmo : Maybe ItemKind.Kind
         , targetArmorClass : Int
         , attackStyle : AttackStyle
         }

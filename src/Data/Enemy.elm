@@ -32,6 +32,7 @@ import Data.Fight.AimedShot exposing (AimedShot(..))
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..))
 import Data.Fight.DamageType exposing (DamageType(..))
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.SmallChunk exposing (SmallChunk)
 import Data.Skill exposing (Skill(..))
@@ -989,7 +990,7 @@ addedSkillPercentages type_ =
                 ]
 
 
-equippedArmor : Type -> Maybe Item.Kind
+equippedArmor : Type -> Maybe ItemKind.Kind
 equippedArmor type_ =
     case type_ of
         Brahmin ->
@@ -1041,7 +1042,7 @@ equippedArmor type_ =
             Nothing
 
 
-equippedWeapon : Type -> Maybe Item.Kind
+equippedWeapon : Type -> Maybe ItemKind.Kind
 equippedWeapon type_ =
     case type_ of
         Brahmin ->
@@ -1093,7 +1094,7 @@ equippedWeapon type_ =
             Nothing
 
 
-preferredAmmo : Type -> Maybe Item.Kind
+preferredAmmo : Type -> Maybe ItemKind.Kind
 preferredAmmo type_ =
     case type_ of
         Brahmin ->
@@ -3584,7 +3585,7 @@ dropSpec type_ =
             , [ ( 0.8, Random.normallyDistributedInt r ) ]
             )
 
-        item : Float -> Item.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
+        item : Float -> ItemKind.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
         item probability kind count =
             ( probability
             , { uniqueKey = { kind = kind }
@@ -3595,126 +3596,126 @@ dropSpec type_ =
     case type_ of
         Brahmin ->
             { caps = commonCaps { average = 20, maxDeviation = 10 }
-            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 1 } ]
+            , items = [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 1 } ]
             }
 
         AngryBrahmin ->
             { caps = commonCaps { average = 80, maxDeviation = 30 }
             , items =
-                [ item 0.2 Item.Fruit { average = 2, maxDeviation = 2 }
-                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 2 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                [ item 0.2 ItemKind.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
                 ]
             }
 
         WeakBrahmin ->
             { caps = commonCaps { average = 15, maxDeviation = 8 }
-            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 } ]
+            , items = [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 0 } ]
             }
 
         WildBrahmin ->
             { caps = commonCaps { average = 50, maxDeviation = 10 }
             , items =
-                [ item 0.15 Item.Fruit { average = 2, maxDeviation = 1 }
-                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 1 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                [ item 0.15 ItemKind.Fruit { average = 2, maxDeviation = 1 }
+                , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
                 ]
             }
 
         GiantAnt ->
             { caps = commonCaps { average = 10, maxDeviation = 5 }
-            , items = [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 } ]
+            , items = [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 0 } ]
             }
 
         ToughGiantAnt ->
             { caps = commonCaps { average = 20, maxDeviation = 12 }
             , items =
-                [ item 0.1 Item.Fruit { average = 1, maxDeviation = 0 }
-                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 0 }
+                [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 0 }
+                , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 0 }
                 ]
             }
 
         LesserRadscorpion ->
             { caps = commonCaps { average = 25, maxDeviation = 13 }
             , items =
-                [ item 0.15 Item.Fruit { average = 2, maxDeviation = 1 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 0 }
+                [ item 0.15 ItemKind.Fruit { average = 2, maxDeviation = 1 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 0 }
                 ]
             }
 
         Radscorpion ->
             { caps = commonCaps { average = 60, maxDeviation = 30 }
             , items =
-                [ item 0.1 Item.HealingPowder { average = 2, maxDeviation = 1 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                [ item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
                 ]
             }
 
         LesserBlackRadscorpion ->
             { caps = commonCaps { average = 50, maxDeviation = 20 }
             , items =
-                [ item 0.2 Item.Fruit { average = 2, maxDeviation = 2 }
-                , item 0.1 Item.HealingPowder { average = 2, maxDeviation = 1 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 1 }
+                [ item 0.2 ItemKind.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
                 ]
             }
 
         BlackRadscorpion ->
             { caps = commonCaps { average = 110, maxDeviation = 40 }
             , items =
-                [ item 0.1 Item.Fruit { average = 2, maxDeviation = 3 }
-                , item 0.2 Item.HealingPowder { average = 2, maxDeviation = 2 }
-                , item 0.1 Item.Stimpak { average = 1, maxDeviation = 2 }
+                [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 3 }
+                , item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
                 ]
             }
 
         SilverGecko ->
             { caps = commonCaps { average = 50, maxDeviation = 20 }
             , items =
-                [ item 0.2 Item.Fruit { average = 1, maxDeviation = 2 }
-                , item 0.1 Item.HealingPowder { average = 1, maxDeviation = 1 }
+                [ item 0.2 ItemKind.Fruit { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
                 ]
             }
 
         ToughSilverGecko ->
             { caps = commonCaps { average = 60, maxDeviation = 30 }
             , items =
-                [ item 0.25 Item.Fruit { average = 2, maxDeviation = 2 }
-                , item 0.15 Item.HealingPowder { average = 2, maxDeviation = 1 }
+                [ item 0.25 ItemKind.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
                 ]
             }
 
         GoldenGecko ->
             { caps = commonCaps { average = 100, maxDeviation = 40 }
             , items =
-                [ item 0.1 Item.Fruit { average = 2, maxDeviation = 2 }
-                , item 0.15 Item.HealingPowder { average = 1, maxDeviation = 1 }
-                , item 0.05 Item.Stimpak { average = 1, maxDeviation = 2 }
+                [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.15 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
+                , item 0.05 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
                 ]
             }
 
         ToughGoldenGecko ->
             { caps = commonCaps { average = 130, maxDeviation = 40 }
             , items =
-                [ item 0.05 Item.Fruit { average = 3, maxDeviation = 2 }
-                , item 0.15 Item.HealingPowder { average = 2, maxDeviation = 2 }
-                , item 0.1 Item.Stimpak { average = 2, maxDeviation = 2 }
+                [ item 0.05 ItemKind.Fruit { average = 3, maxDeviation = 2 }
+                , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
                 ]
             }
 
         FireGecko ->
             { caps = commonCaps { average = 150, maxDeviation = 50 }
             , items =
-                [ item 0.2 Item.HealingPowder { average = 2, maxDeviation = 2 }
-                , item 0.2 Item.Stimpak { average = 2, maxDeviation = 2 }
+                [ item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
+                , item 0.2 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
                 ]
             }
 
         ToughFireGecko ->
             { caps = commonCaps { average = 200, maxDeviation = 60 }
             , items =
-                [ item 0.1 Item.HealingPowder { average = 2, maxDeviation = 3 }
-                , item 0.3 Item.Stimpak { average = 2, maxDeviation = 3 }
+                [ item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 3 }
+                , item 0.3 ItemKind.Stimpak { average = 2, maxDeviation = 3 }
                 ]
             }
 
