@@ -3,7 +3,7 @@ module Calculator.Meta.Individual exposing (Individual, crossover, generator, mu
 import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
-import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -64,20 +64,20 @@ commandGenerator =
         |> Random.andThen identity
 
 
-healingItemKindGenerator : Generator Item.Kind
+healingItemKindGenerator : Generator ItemKind.Kind
 healingItemKindGenerator =
     let
         ( x, xs ) =
-            Item.allHealingNonempty
+            ItemKind.allHealingNonempty
     in
     Random.uniform x xs
 
 
-itemKindGenerator : Generator Item.Kind
+itemKindGenerator : Generator ItemKind.Kind
 itemKindGenerator =
     let
         ( x, xs ) =
-            Item.allNonempty
+            ItemKind.allNonempty
     in
     Random.uniform x xs
 

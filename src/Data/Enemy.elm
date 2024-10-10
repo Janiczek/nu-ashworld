@@ -18,13 +18,13 @@ module Data.Enemy exposing
     , humanAimedShotName
     , isLivingCreature
     , manCriticalSpec
-    , meleeDamageBonus
     , name
     , naturalArmorClass
     , preferredAmmo
     , sequence
     , special
     , typeDecoder
+    , unarmedDamageBonus
     , xp
     )
 
@@ -52,7 +52,6 @@ import SeqDict exposing (SeqDict)
 
 -- TODO criticalChance : Type -> Int
 -- TODO carry weight
--- TODO all other kinds (plasma, ...) of damage threshold and resistance
 
 
 type Type
@@ -471,8 +470,8 @@ actionPoints type_ =
             12
 
 
-meleeDamageBonus : Type -> Int
-meleeDamageBonus type_ =
+unarmedDamageBonus : Type -> Int
+unarmedDamageBonus type_ =
     case type_ of
         Brahmin ->
             7

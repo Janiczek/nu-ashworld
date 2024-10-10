@@ -15,7 +15,6 @@ module Data.FightStrategy exposing
     )
 
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
-import Data.Item as Item
 import Data.Item.Kind as ItemKind
 import Data.Trait as Trait exposing (Trait)
 import Json.Decode as JD exposing (Decoder)

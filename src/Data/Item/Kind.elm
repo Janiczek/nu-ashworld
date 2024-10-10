@@ -10,7 +10,8 @@ module Data.Item.Kind exposing
     , isArmor
     , armorClass, armorDamageResistance, armorDamageThreshold
     , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
-    , range, weaponDamageType, weaponStrengthRequirement
+    , range, weaponStrengthRequirement
+    , weaponDamageType, weaponDamage
     , usableAmmoForWeapon, isUsableAmmoForWeapon
     )
 
@@ -44,7 +45,8 @@ module Data.Item.Kind exposing
 ## Weapons
 
 @docs isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
-@docs range, weaponDamageType, weaponStrengthRequirement
+@docs range, weaponStrengthRequirement
+@docs weaponDamageType, weaponDamage
 @docs usableAmmoForWeapon, isUsableAmmoForWeapon
 
 TODO weight : Kind -> Int
@@ -58,7 +60,6 @@ import Data.Item.Type as Type exposing (Type)
 import Data.Skill as Skill
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
-import Random exposing (Generator)
 
 
 type Kind
@@ -9720,3 +9721,284 @@ healAmount kind =
         |> usageEffects
         |> List.filterMap Effect.getHealing
         |> List.head
+
+
+weaponDamage : Kind -> { min : Int, max : Int }
+weaponDamage kind =
+    let
+        mk min max =
+            { min = min, max = max }
+    in
+    case kind of
+        PowerFist ->
+            mk 12 24
+
+        MegaPowerFist ->
+            mk 20 40
+
+        SuperSledge ->
+            mk 18 36
+
+        GaussPistol ->
+            mk 22 32
+
+        Smg10mm ->
+            mk 5 12
+
+        HkP90c ->
+            mk 12 16
+
+        AssaultRifle ->
+            mk 8 16
+
+        ExpandedAssaultRifle ->
+            mk 8 16
+
+        HuntingRifle ->
+            mk 8 20
+
+        ScopedHuntingRifle ->
+            mk 8 20
+
+        RedRyderLEBBGun ->
+            mk 25 25
+
+        SniperRifle ->
+            mk 14 34
+
+        GaussRifle ->
+            mk 32 43
+
+        PancorJackhammer ->
+            mk 18 29
+
+        SawedOffShotgun ->
+            mk 12 24
+
+        Minigun ->
+            mk 7 11
+
+        Bozar ->
+            mk 25 35
+
+        RocketLauncher ->
+            mk 35 100
+
+        LaserPistol ->
+            mk 10 22
+
+        GatlingLaser ->
+            mk 20 40
+
+        LaserRifle ->
+            mk 25 50
+
+        LaserRifleExtCap ->
+            mk 25 50
+
+        PlasmaRifle ->
+            mk 30 65
+
+        TurboPlasmaRifle ->
+            mk 35 70
+
+        PulseRifle ->
+            mk 54 78
+
+        FragGrenade ->
+            mk 20 35
+
+        CattleProd ->
+            mk 12 20
+
+        SuperCattleProd ->
+            mk 20 32
+
+        Mauser9mm ->
+            mk 5 10
+
+        Pistol14mm ->
+            mk 12 22
+
+        CombatShotgun ->
+            mk 15 25
+
+        HkCaws ->
+            mk 15 25
+
+        Shotgun ->
+            mk 12 22
+
+        AlienBlaster ->
+            mk 30 90
+
+        SolarScorcher ->
+            mk 20 60
+
+        Flare ->
+            mk 1 1
+
+        Pistol223 ->
+            mk 20 30
+
+        Wakizashi ->
+            mk 4 12
+
+        LittleJesus ->
+            mk 5 14
+
+        Ripper ->
+            mk 15 32
+
+        NeedlerPistol ->
+            mk 12 24
+
+        MagnetoLaserPistol ->
+            mk 10 22
+
+        PulsePistol ->
+            mk 32 46
+
+        HolyHandGrenade ->
+            mk 300 500
+
+        Beer ->
+            mk 0 0
+
+        Fruit ->
+            mk 0 0
+
+        HealingPowder ->
+            mk 0 0
+
+        Stimpak ->
+            mk 0 0
+
+        SuperStimpak ->
+            mk 0 0
+
+        BigBookOfScience ->
+            mk 0 0
+
+        DeansElectronics ->
+            mk 0 0
+
+        FirstAidBook ->
+            mk 0 0
+
+        GunsAndBullets ->
+            mk 0 0
+
+        ScoutHandbook ->
+            mk 0 0
+
+        Robes ->
+            mk 0 0
+
+        LeatherJacket ->
+            mk 0 0
+
+        LeatherArmor ->
+            mk 0 0
+
+        MetalArmor ->
+            mk 0 0
+
+        TeslaArmor ->
+            mk 0 0
+
+        CombatArmor ->
+            mk 0 0
+
+        CombatArmorMk2 ->
+            mk 0 0
+
+        PowerArmor ->
+            mk 0 0
+
+        BBAmmo ->
+            mk 0 0
+
+        SmallEnergyCell ->
+            mk 0 0
+
+        Fmj223 ->
+            mk 0 0
+
+        ShotgunShell ->
+            mk 0 0
+
+        Jhp10mm ->
+            mk 0 0
+
+        Jhp5mm ->
+            mk 0 0
+
+        MicrofusionCell ->
+            mk 0 0
+
+        Ec2mm ->
+            mk 0 0
+
+        Tool ->
+            mk 0 0
+
+        LockPicks ->
+            mk 0 0
+
+        ElectronicLockpick ->
+            mk 0 0
+
+        AbnormalBrain ->
+            mk 0 0
+
+        ChimpanzeeBrain ->
+            mk 0 0
+
+        HumanBrain ->
+            mk 0 0
+
+        CyberneticBrain ->
+            mk 0 0
+
+        GECK ->
+            mk 0 0
+
+        SkynetAim ->
+            mk 0 0
+
+        MotionSensor ->
+            mk 0 0
+
+        K9 ->
+            mk 0 0
+
+        MeatJerky ->
+            mk 0 0
+
+        Ap5mm ->
+            mk 0 0
+
+        Mm9 ->
+            mk 0 0
+
+        Ball9mm ->
+            mk 0 0
+
+        Ap10mm ->
+            mk 0 0
+
+        Ap14mm ->
+            mk 0 0
+
+        ExplosiveRocket ->
+            mk 0 0
+
+        RocketAp ->
+            mk 0 0
+
+        HnNeedlerCartridge ->
+            mk 0 0
+
+        HnApNeedlerCartridge ->
+            mk 0 0

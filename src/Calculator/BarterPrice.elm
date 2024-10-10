@@ -1,7 +1,7 @@
 module Calculator.BarterPrice exposing (main)
 
 import Browser
-import Data.Item as Item
+import Data.Item.Kind as ItemKind
 import Data.Vendor as Vendor
 import Html as H exposing (Html)
 import Html.Attributes as HA
@@ -79,11 +79,11 @@ view model =
                 (String.toInt model.vendorBarterInput)
                 (String.toInt model.basePriceInput)
 
-        itemView : Item.Kind -> Html Msg
+        itemView : ItemKind.Kind -> Html Msg
         itemView kind =
             let
                 basePrice =
-                    String.fromInt <| Item.baseValue kind
+                    String.fromInt <| ItemKind.baseValue kind
             in
             H.li
                 [ HE.onClick <| SetBasePriceInput basePrice ]
@@ -154,7 +154,7 @@ view model =
             , H.div [ HA.class "column" ]
                 [ H.h3 [] [ H.text "Items" ]
                 , H.p [] [ H.text "Click on an item to use its base price." ]
-                , H.ul [] (List.map itemView Item.all)
+                , H.ul [] (List.map itemView ItemKind.all)
                 ]
             , H.div [ HA.class "column" ]
                 [ H.h3 [] [ H.text "Vendor" ]

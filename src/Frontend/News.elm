@@ -27,6 +27,8 @@ items =
             """
 - remove the OP starting items
 
+- burst: multiple bullets, each with a chance to hit
+
 - more "normal" unarmed+melee weapons, and make them part of shops
 
 - Are we adding bonus to Critical Chance based on AimedShot?

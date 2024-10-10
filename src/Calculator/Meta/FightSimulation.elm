@@ -4,6 +4,7 @@ import Calculator.Meta.Individual exposing (Individual)
 import Data.Fight.Generator as FightGen
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
+import Data.Item.Kind as ItemKind
 import Data.Perk exposing (Perk)
 import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
@@ -47,7 +48,7 @@ type alias SPlayerSubset =
     , addedSkillPercentages : SeqDict Skill Int
     , equippedArmor : Maybe Item
     , equippedWeapon : Maybe Item
-    , preferredAmmo : Maybe Item.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
     , fightStrategy : FightStrategy
     , items : Dict Item.Id Item
     }

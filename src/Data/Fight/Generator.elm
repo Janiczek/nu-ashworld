@@ -235,9 +235,6 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                 damage_ =
                     toFloat damage
 
-                rangedBonus =
-                    toFloat (Perk.rank Perk.BonusRangedDamage opponent.perks) * 2
-
                 ( ammoDamageMultiplier, ammoDamageDivisor ) =
                     case usedAmmo_ of
                         PreferredAmmo ( _, ammoKind ) ->
@@ -383,7 +380,7 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                         + finesseDamageResistanceModifierPct
 
                 damageBeforeDamageResistance =
-                    ((damage_ + rangedBonus)
+                    (damage_
                         * (ammoDamageMultiplier / ammoDamageDivisor)
                         * (toFloat criticalHitDamageMultiplier / 2)
                     )
@@ -1056,6 +1053,15 @@ attack who ongoing wantedAttackStyle =
                 List.member wantedAttackStyle
                     (List.map Tuple.first possibleAttackStyles)
             then
+                case possibleAttackStyles of
+                    [] ->
+                        -- This can probably only happpen if we somehow allow user to equip a non-weapon?
+                        Random.constant unarmedAttackStyle
+
+                    x :: xs ->
+                        Random.uniform x xs
+
+            else
                 {- TODO can this happen? Eg. when we have equipped a
                    spear but want to do Burst?  Should we let the
                    player know something weird happened?
@@ -1067,15 +1073,6 @@ attack who ongoing wantedAttackStyle =
                    attack.
                 -}
                 Random.constant unarmedAttackStyle
-
-            else
-                case possibleAttackStyles of
-                    [] ->
-                        -- This can probably only happpen if we somehow allow user to equip a non-weapon?
-                        Random.constant unarmedAttackStyle
-
-                    x :: xs ->
-                        Random.uniform x xs
     )
         |> Random.andThen
             (\( attackStyle, baseApCost ) ->
@@ -1633,11 +1630,10 @@ enemyOpponentGenerator r lastItemId enemyType =
                             , traits = traits
                             , perks = SeqDict.empty
                             , equippedWeapon = equippedWeapon
-                            , preferredAmmo = preferredAmmo
                             , level =
                                 -- TODO what to do? What damage ranges do enemies really have in FO2?
                                 1
-                            , npcExtraBonus = Enemy.meleeDamageBonus enemyType
+                            , unarmedDamageBonus = Enemy.unarmedDamageBonus enemyType
                             }
                   , addedSkillPercentages = addedSkillPercentages
                   , -- Enemies never have anything else than base special (no traits, perks, ...)
@@ -1702,8 +1698,7 @@ playerOpponent player =
                 , perks = player.perks
                 , traits = player.traits
                 , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , preferredAmmo = player.preferredAmmo
-                , npcExtraBonus = 0
+                , unarmedDamageBonus = 0
                 }
     in
     { type_ =

@@ -5,7 +5,7 @@ import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), Who(..)
 import Data.Fight.AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
-import Data.Item as Item exposing (Item)
+import Data.Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -267,47 +267,53 @@ view perceptionLevel fight yourName =
                                                                     ""
                                                             )
                                                                 ++ critically
-                                                                ++ names_.subject.verbPresent "attack"
+                                                                ++ names_.subject.verbPresent
+                                                                    (case attackStyle of
+                                                                        UnarmedUnaimed ->
+                                                                            "attack"
+
+                                                                        UnarmedAimed _ ->
+                                                                            "attack"
+
+                                                                        MeleeUnaimed ->
+                                                                            "attack"
+
+                                                                        MeleeAimed _ ->
+                                                                            "attack"
+
+                                                                        Throw ->
+                                                                            "attack"
+
+                                                                        ShootSingleUnaimed ->
+                                                                            "shoot"
+
+                                                                        ShootSingleAimed _ ->
+                                                                            "shoot"
+
+                                                                        ShootBurst ->
+                                                                            "shoot"
+                                                                    )
                                                                 ++ " "
                                                         , highlight names_.object.name
                                                         , H.text " for "
                                                         , highlight <| String.fromInt damage
-                                                        , H.text " damage (attack style: "
-                                                        , H.text <|
-                                                            case attackStyle of
-                                                                UnarmedUnaimed ->
-                                                                    "unarmed"
-
-                                                                UnarmedAimed _ ->
-                                                                    "unarmed"
-
-                                                                MeleeUnaimed ->
-                                                                    "melee"
-
-                                                                MeleeAimed _ ->
-                                                                    "melee"
-
-                                                                Throw ->
-                                                                    "throw"
-
-                                                                ShootSingleUnaimed ->
-                                                                    "shoot"
-
-                                                                ShootSingleAimed _ ->
-                                                                    "shoot"
-
-                                                                ShootBurst ->
-                                                                    "burst"
-                                                        , H.text ")."
-                                                        , if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
+                                                        , H.text " damage"
+                                                        , if remainingHp <= 0 then
                                                             H.span []
-                                                                [ H.text " Remaining HP: "
+                                                                [ H.text ", resulting in "
+                                                                , H.span [ HA.class "text-yellow" ] [ H.text "death" ]
+                                                                , H.text "."
+                                                                ]
+
+                                                          else if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
+                                                            H.span []
+                                                                [ H.text ". Remaining HP: "
                                                                 , highlight <| String.fromInt remainingHp
                                                                 , H.text "."
                                                                 ]
 
                                                           else
-                                                            H.text ""
+                                                            H.text "."
                                                         ]
 
                                                 Fight.Miss { attackStyle } ->
@@ -345,7 +351,32 @@ view perceptionLevel fight yourName =
                                                                 ShootBurst ->
                                                                     ""
                                                             )
-                                                                ++ names_.subject.verbPresent "attack"
+                                                                ++ names_.subject.verbPresent
+                                                                    (case attackStyle of
+                                                                        UnarmedUnaimed ->
+                                                                            "attack"
+
+                                                                        UnarmedAimed _ ->
+                                                                            "attack"
+
+                                                                        MeleeUnaimed ->
+                                                                            "attack"
+
+                                                                        MeleeAimed _ ->
+                                                                            "attack"
+
+                                                                        Throw ->
+                                                                            "attack"
+
+                                                                        ShootSingleUnaimed ->
+                                                                            "shoot"
+
+                                                                        ShootSingleAimed _ ->
+                                                                            "shoot"
+
+                                                                        ShootBurst ->
+                                                                            "shoot"
+                                                                    )
                                                                 ++ " "
                                                         , highlight names_.object.name
                                                         , H.text <|

@@ -3478,9 +3478,8 @@ inventoryView _ player =
                 , perks = player.perks
                 , addedSkillPercentages = player.addedSkillPercentages
                 , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , preferredAmmo = player.preferredAmmo
                 , level = Xp.currentLevel player.xp
-                , npcExtraBonus = 0
+                , unarmedDamageBonus = 0
                 }
     in
     [ pageTitleView "Inventory"

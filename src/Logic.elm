@@ -782,20 +782,48 @@ attackStats :
     , perks : SeqDict Perk Int
     , level : Int
     , equippedWeapon : Maybe ItemKind.Kind
-    , preferredAmmo : Maybe ItemKind.Kind
-    , npcExtraBonus : Int
+    , unarmedDamageBonus : Int
     }
     -> AttackStats
 attackStats r =
-    -- TODO melee/thrown/shot
-    unarmedAttackStats
-        { special = r.special
-        , unarmedSkill = Skill.get r.special r.addedSkillPercentages Skill.Unarmed
-        , traits = r.traits
-        , perks = r.perks
-        , level = r.level
-        , npcExtraBonus = r.npcExtraBonus
-        }
+    case r.equippedWeapon of
+        Nothing ->
+            unarmedAttackStats
+                { special = r.special
+                , unarmedSkill = Skill.get r.special r.addedSkillPercentages Skill.Unarmed
+                , traits = r.traits
+                , perks = r.perks
+                , level = r.level
+                , unarmedDamageBonus = r.unarmedDamageBonus
+                }
+
+        Just weapon ->
+            armedAttackStats
+                { bonusRangedDamagePerkRank = Perk.rank Perk.BonusRangedDamage r.perks
+                , equippedWeapon = weapon
+                }
+
+
+armedAttackStats :
+    { bonusRangedDamagePerkRank : Int
+    , equippedWeapon : ItemKind.Kind
+    }
+    -> AttackStats
+armedAttackStats r =
+    let
+        weapon : { min : Int, max : Int }
+        weapon =
+            ItemKind.weaponDamage r.equippedWeapon
+
+        rangedDamagePerkBonus : Int
+        rangedDamagePerkBonus =
+            2 * r.bonusRangedDamagePerkRank
+    in
+    -- TODO Pyromaniac - +5 damage if weapon damage type is Fire
+    { minDamage = weapon.min + rangedDamagePerkBonus
+    , maxDamage = weapon.max + rangedDamagePerkBonus
+    , criticalChanceBonus = 0
+    }
 
 
 unarmedAttackStats :
@@ -804,7 +832,7 @@ unarmedAttackStats :
     , traits : SeqSet Trait
     , perks : SeqDict Perk Int
     , level : Int
-    , npcExtraBonus : Int
+    , unarmedDamageBonus : Int
     }
     -> AttackStats
 unarmedAttackStats r =
@@ -855,7 +883,7 @@ unarmedAttackStats r =
 
         maxDamage : Int
         maxDamage =
-            minDamage + bonusMeleeDamage + r.npcExtraBonus
+            minDamage + bonusMeleeDamage + r.unarmedDamageBonus
     in
     -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
     -- TODO return a list of possible attacks

@@ -63,9 +63,8 @@ baseOpponent =
             , traits = SeqSet.empty
             , perks = SeqDict.empty
             , equippedWeapon = Nothing
-            , preferredAmmo = Nothing
             , level = 1
-            , npcExtraBonus = 0
+            , unarmedDamageBonus = 0
             }
     , addedSkillPercentages = SeqDict.empty
     , special = Special.init
