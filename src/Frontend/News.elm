@@ -33,12 +33,6 @@ items =
 
 - Add upgraded unarmed attacks: https://fallout.fandom.com/wiki/Unarmed_(Fallout)
 
-EQUIPPED AMMO
-- show it in the inventory
-- show which types are usable for the current weapon
-- don't allow equipping incompatible ammo
-- when unequipping weapon unequip the ammo too
-
 - FightStrategy: walk away
 
 - regain conciousness in fight (cost 1/2 of max AP)

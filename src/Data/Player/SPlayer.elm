@@ -615,7 +615,10 @@ unequipWeapon player =
             player
 
         Just weapon ->
-            { player | equippedWeapon = Nothing }
+            { player
+                | equippedWeapon = Nothing
+                , preferredAmmo = Nothing
+            }
                 |> addItem weapon
 
 
