@@ -574,7 +574,7 @@ operatorDecoder =
 doWhatever : FightStrategy
 doWhatever =
     If
-        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 0 }
+        { condition = Operator { lhs = Distance, op = GT_, rhs = Number 1 }
         , then_ = Command MoveForward
         , else_ = Command AttackRandomly
         }
