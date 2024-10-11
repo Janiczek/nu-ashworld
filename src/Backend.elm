@@ -40,6 +40,7 @@ import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Vendor as Vendor exposing (Vendor)
+import Data.Vendor.Shop as Shop exposing (Shop)
 import Data.World as World exposing (World)
 import Data.WorldData
     exposing
@@ -293,6 +294,7 @@ getPlayerData_ worldName world player =
                     , ticksGivenByPlayer = ticksGivenByPlayer
                     }
                 )
+    , questRewardShops = world.questRewardShops
     }
 
 
@@ -940,8 +942,8 @@ updateFromFrontend sessionId clientId msg model =
         RemoveAllMessages ->
             withLoggedInCreatedPlayer removeAllMessages
 
-        Barter barterState ->
-            withLocation (barter barterState)
+        Barter barterState shop ->
+            withLocation (barter barterState shop)
 
         AdminToBackend adminMsg ->
             withAdmin (updateAdmin clientId adminMsg)
@@ -1008,134 +1010,145 @@ isAdmin sessionId clientId model =
     model.adminLoggedIn == Just ( sessionId, clientId )
 
 
-barter : Barter.State -> ClientId -> World -> World.Name -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-barter barterState clientId world worldName location player model =
-    case Maybe.map (Vendor.getFrom world.vendors) (Vendor.forLocation location) of
-        Nothing ->
-            ( model, Cmd.none )
+barter : Barter.State -> Shop -> ClientId -> World -> World.Name -> Location -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+barter barterState shop clientId world worldName location player model =
+    if Shop.isAvailable world.questRewardShops shop then
+        let
+            vendor : Vendor
+            vendor =
+                Vendor.getFrom world.vendors shop
+        in
+        let
+            shopInLocation : Bool
+            shopInLocation =
+                Shop.forLocation location
+                    |> List.member shop
 
-        Just vendor ->
-            let
-                barterNotEmpty : Bool
-                barterNotEmpty =
-                    barterState /= Barter.empty
+            barterNotEmpty : Bool
+            barterNotEmpty =
+                barterState /= Barter.empty
 
-                hasItem : Dict Item.Id Item -> Item.Id -> Int -> Bool
-                hasItem ownedItems itemId neededQuantity =
-                    case Dict.get itemId ownedItems of
-                        Nothing ->
-                            False
+            hasItem : Dict Item.Id Item -> Item.Id -> Int -> Bool
+            hasItem ownedItems itemId neededQuantity =
+                case Dict.get itemId ownedItems of
+                    Nothing ->
+                        False
 
-                        Just { count } ->
-                            neededQuantity <= count
+                    Just { count } ->
+                        neededQuantity <= count
 
-                vendorHasEnoughItems : Bool
-                vendorHasEnoughItems =
-                    Dict.all (hasItem vendor.items) barterState.vendorItems
+            vendorHasEnoughItems : Bool
+            vendorHasEnoughItems =
+                Dict.all (hasItem vendor.items) barterState.vendorItems
 
-                playerHasEnoughItems : Bool
-                playerHasEnoughItems =
-                    Dict.all (hasItem player.items) barterState.playerItems
+            playerHasEnoughItems : Bool
+            playerHasEnoughItems =
+                Dict.all (hasItem player.items) barterState.playerItems
 
-                vendorHasEnoughCaps : Bool
-                vendorHasEnoughCaps =
-                    barterState.vendorCaps <= vendor.caps
+            vendorHasEnoughCaps : Bool
+            vendorHasEnoughCaps =
+                barterState.vendorCaps <= vendor.caps
 
-                playerHasEnoughCaps : Bool
-                playerHasEnoughCaps =
-                    barterState.playerCaps <= player.caps
+            playerHasEnoughCaps : Bool
+            playerHasEnoughCaps =
+                barterState.playerCaps <= player.caps
 
-                capsNonnegative : Bool
-                capsNonnegative =
-                    barterState.playerCaps >= 0 && barterState.vendorCaps >= 0
+            capsNonnegative : Bool
+            capsNonnegative =
+                barterState.playerCaps >= 0 && barterState.vendorCaps >= 0
 
-                playerItemsPrice : Int
-                playerItemsPrice =
-                    barterState.playerItems
-                        |> Dict.toList
-                        |> List.filterMap
-                            (\( itemId, count ) ->
-                                Dict.get itemId player.items
-                                    |> Maybe.map (\item -> ItemKind.baseValue item.kind * count)
-                            )
-                        |> List.sum
-
-                vendorItemsPrice : Int
-                vendorItemsPrice =
-                    barterState.vendorItems
-                        |> Dict.toList
-                        |> List.filterMap
-                            (\( itemId, count ) ->
-                                Dict.get itemId vendor.items
-                                    |> Maybe.map
-                                        (\item ->
-                                            Logic.price
-                                                { baseValue = count * ItemKind.baseValue item.kind
-                                                , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
-                                                , traderBarterSkill = vendor.barterSkill
-                                                , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
-                                                }
-                                        )
-                            )
-                        |> List.sum
-
-                playerValue : Int
-                playerValue =
-                    playerItemsPrice + barterState.playerCaps
-
-                vendorValue : Int
-                vendorValue =
-                    vendorItemsPrice + barterState.vendorCaps
-
-                playerOfferValuableEnough : Bool
-                playerOfferValuableEnough =
-                    playerValue >= vendorValue
-            in
-            if
-                List.all identity
-                    [ barterNotEmpty
-                    , capsNonnegative
-                    , vendorHasEnoughItems
-                    , playerHasEnoughItems
-                    , vendorHasEnoughCaps
-                    , playerHasEnoughCaps
-                    , playerOfferValuableEnough
-                    ]
-            then
-                let
-                    newModel =
-                        barterAfterValidation barterState vendor world worldName location player model
-                in
-                getPlayerData worldName player.name newModel
-                    |> Maybe.map
-                        (\data ->
-                            ( newModel
-                            , Lamdera.sendToFrontend clientId <|
-                                BarterDone
-                                    ( data
-                                    , if vendorValue == 0 then
-                                        Just Barter.YouGaveStuffForFree
-
-                                      else
-                                        Nothing
-                                    )
-                            )
+            playerItemsPrice : Int
+            playerItemsPrice =
+                barterState.playerItems
+                    |> Dict.toList
+                    |> List.filterMap
+                        (\( itemId, count ) ->
+                            Dict.get itemId player.items
+                                |> Maybe.map (\item -> ItemKind.baseValue item.kind * count)
                         )
-                    |> Maybe.withDefault ( model, Cmd.none )
+                    |> List.sum
 
-            else
-                ( model
-                , -- TODO somehow generate and filter this during all the checks above?
-                  if not barterNotEmpty then
-                    Lamdera.sendToFrontend clientId <| BarterMessage Barter.BarterIsEmpty
+            vendorItemsPrice : Int
+            vendorItemsPrice =
+                barterState.vendorItems
+                    |> Dict.toList
+                    |> List.filterMap
+                        (\( itemId, count ) ->
+                            Dict.get itemId vendor.items
+                                |> Maybe.map
+                                    (\item ->
+                                        Logic.price
+                                            { baseValue = count * ItemKind.baseValue item.kind
+                                            , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
+                                            , traderBarterSkill = Shop.barterSkill shop
+                                            , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
+                                            , discountPct = vendor.discountPct
+                                            }
+                                    )
+                        )
+                    |> List.sum
 
-                  else if not playerOfferValuableEnough then
-                    Lamdera.sendToFrontend clientId <| BarterMessage Barter.PlayerOfferNotValuableEnough
+            playerValue : Int
+            playerValue =
+                playerItemsPrice + barterState.playerCaps
 
-                  else
-                    -- silent error ... somebody's trying to hack probably
-                    Cmd.none
-                )
+            vendorValue : Int
+            vendorValue =
+                vendorItemsPrice + barterState.vendorCaps
+
+            playerOfferValuableEnough : Bool
+            playerOfferValuableEnough =
+                playerValue >= vendorValue
+        in
+        if
+            List.all identity
+                [ shopInLocation
+                , barterNotEmpty
+                , capsNonnegative
+                , vendorHasEnoughItems
+                , playerHasEnoughItems
+                , vendorHasEnoughCaps
+                , playerHasEnoughCaps
+                , playerOfferValuableEnough
+                ]
+        then
+            let
+                newModel =
+                    barterAfterValidation barterState vendor world worldName location player model
+            in
+            getPlayerData worldName player.name newModel
+                |> Maybe.map
+                    (\data ->
+                        ( newModel
+                        , Lamdera.sendToFrontend clientId <|
+                            BarterDone
+                                ( data
+                                , if vendorValue == 0 then
+                                    Just Barter.YouGaveStuffForFree
+
+                                  else
+                                    Nothing
+                                )
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
+
+        else
+            ( model
+            , -- TODO somehow generate and filter this during all the checks above?
+              if not barterNotEmpty then
+                Lamdera.sendToFrontend clientId <| BarterMessage Barter.BarterIsEmpty
+
+              else if not playerOfferValuableEnough then
+                Lamdera.sendToFrontend clientId <| BarterMessage Barter.PlayerOfferNotValuableEnough
+
+              else
+                -- silent error ... somebody's trying to hack probably
+                Cmd.none
+            )
+
+    else
+        ( model, Cmd.none )
 
 
 barterAfterValidation : Barter.State -> Vendor -> World -> World.Name -> Location -> SPlayer -> Model -> Model
@@ -1151,11 +1164,11 @@ barterAfterValidation barterState vendor _ worldName location player model =
 
         removeVendorCaps : Int -> Model -> Model
         removeVendorCaps amount =
-            updateVendor worldName location (Vendor.subtractCaps amount)
+            updateVendor vendor.shop worldName location (Vendor.subtractCaps amount)
 
         addVendorCaps : Int -> Model -> Model
         addVendorCaps amount =
-            updateVendor worldName location (Vendor.addCaps amount)
+            updateVendor vendor.shop worldName location (Vendor.addCaps amount)
 
         removePlayerItems : Dict Item.Id Int -> Model -> Model
         removePlayerItems items model_ =
@@ -1176,6 +1189,7 @@ barterAfterValidation barterState vendor _ worldName location player model =
                 |> Dict.foldl
                     (\id count accModel ->
                         updateVendor
+                            vendor.shop
                             worldName
                             location
                             (Vendor.removeItem id count)
@@ -1197,6 +1211,7 @@ barterAfterValidation barterState vendor _ worldName location player model =
 
                             Just item ->
                                 updateVendor
+                                    vendor.shop
                                     worldName
                                     location
                                     (Vendor.addItem { item | count = count })
@@ -2111,20 +2126,20 @@ updatePlayer worldName playerName fn model =
             )
 
 
-updateVendor : World.Name -> Location -> (Vendor -> Vendor) -> Model -> Model
-updateVendor worldName location fn model =
+updateVendor : Shop -> World.Name -> Location -> (Vendor -> Vendor) -> Model -> Model
+updateVendor shop worldName location fn model =
     model
         |> updateWorld
             worldName
             (\world ->
                 { world
                     | vendors =
-                        case Vendor.forLocation location of
-                            Nothing ->
-                                world.vendors
+                        if List.member shop (Shop.forLocation location) then
+                            world.vendors
+                                |> SeqDict.update shop (Maybe.map fn)
 
-                            Just vendorName ->
-                                SeqDict.update vendorName (Maybe.map fn) world.vendors
+                        else
+                            world.vendors
                 }
             )
 

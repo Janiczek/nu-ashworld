@@ -11,6 +11,7 @@ module Frontend.Route exposing
     )
 
 import Data.Message as Message
+import Data.Vendor.Shop as Shop exposing (Shop)
 import Data.World as World
 import Url exposing (Url)
 import Url.Parser as P exposing ((</>), Parser)
@@ -32,7 +33,7 @@ type PlayerRoute
     | Inventory
     | Ladder
     | TownMainSquare
-    | TownStore
+    | TownStore Shop
     | Fight
     | Messages
     | Message Message.Id
@@ -132,7 +133,7 @@ isMessagesRelatedRoute route =
                 TownMainSquare ->
                     False
 
-                TownStore ->
+                TownStore _ ->
                     False
 
                 Fight ->
@@ -187,7 +188,7 @@ playerParser =
         , P.map Inventory <| P.s "inventory"
         , P.map Ladder <| P.s "ladder"
         , P.map TownMainSquare <| P.s "town"
-        , P.map TownStore <| P.s "town" </> P.s "store"
+        , P.map TownStore <| P.s "town" </> P.s "store" </> shop
         , P.map Fight <| P.s "fight"
         , P.map Messages <| P.s "messages"
         , P.map Message <| P.s "messages" </> P.int
@@ -195,6 +196,74 @@ playerParser =
         , P.map SettingsFightStrategy <| P.s "settings" </> P.s "fight-strategy"
         , P.map SettingsFightStrategySyntaxHelp <| P.s "settings" </> P.s "fight-strategy" </> P.s "help"
         ]
+
+
+shop : Parser (Shop -> a) a
+shop =
+    Shop.all
+        |> List.map (\shop_ -> P.map shop_ (P.s (shopUrlFragment shop_)))
+        |> P.oneOf
+
+
+shopUrlFragment : Shop -> String
+shopUrlFragment shop_ =
+    case shop_ of
+        Shop.ArroyoHakunin ->
+            "hakunin"
+
+        Shop.KlamathMaida ->
+            "maida"
+
+        Shop.KlamathVic ->
+            "vic"
+
+        Shop.DenFlick ->
+            "flick"
+
+        Shop.ModocJo ->
+            "jo"
+
+        Shop.VaultCityRandal ->
+            "randal"
+
+        Shop.VaultCityHappyHarry ->
+            "happy-harry"
+
+        Shop.GeckoSurvivalGearPercy ->
+            "percy"
+
+        Shop.ReddingAscorti ->
+            "ascorti"
+
+        Shop.BrokenHillsGeneralStoreLiz ->
+            "liz"
+
+        Shop.BrokenHillsChemistJacob ->
+            "jacob"
+
+        Shop.NewRenoArmsEldridge ->
+            "eldridge"
+
+        Shop.NewRenoRenescoPharmacy ->
+            "renesco"
+
+        Shop.NCRBuster ->
+            "buster"
+
+        Shop.NCRDuppo ->
+            "duppo"
+
+        Shop.SanFranciscoFlyingDragon8LaoChou ->
+            "lao-chou"
+
+        Shop.SanFranciscoRed888GunsMaiDaChiang ->
+            "mai-da-chiang"
+
+        Shop.SanFranciscoPunksCal ->
+            "cal"
+
+        Shop.SanFranciscoPunksJenna ->
+            "jenna"
 
 
 toString : Route -> String
@@ -235,8 +304,8 @@ toString route =
                                 TownMainSquare ->
                                     "town"
 
-                                TownStore ->
-                                    "town/store"
+                                TownStore shop_ ->
+                                    "town/store/" ++ shopUrlFragment shop_
 
                                 Fight ->
                                     "fight"

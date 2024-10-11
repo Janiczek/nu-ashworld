@@ -14,6 +14,7 @@ import Data.NewChar as NewChar
 import Data.Perk as Perk
 import Data.Quest as Quest
 import Data.Skill as Skill
+import Data.Vendor.Shop as Shop
 import Data.World as World
 import Dict
 import Dict.ExtraExtra as Dict
@@ -182,10 +183,11 @@ encodeToBackendMsg msg =
                 [ ( "type", JE.string "RemoveAllMessages" )
                 ]
 
-        Barter barterState ->
+        Barter barterState shop ->
             JE.object
                 [ ( "type", JE.string "Barter" )
                 , ( "barterState", Barter.encode barterState )
+                , ( "shop", Shop.encode shop )
                 ]
 
         ChoosePerk perk ->

@@ -1,17 +1,10 @@
 module Data.Vendor exposing
-    ( Name(..)
-    , Vendor
+    ( Vendor
     , addCaps
     , addItem
-    , all
-    , barterSkill
     , emptyVendors
     , encodeVendors
-    , forLocation
     , getFrom
-    , isInLocation
-    , name
-    , nameWithLocation
     , removeItem
     , restockVendors
     , subtractCaps
@@ -19,8 +12,7 @@ module Data.Vendor exposing
     )
 
 import Data.Item as Item exposing (Item)
-import Data.Item.Kind as ItemKind
-import Data.Map.Location as Location exposing (Location)
+import Data.Vendor.Shop as Shop exposing (Shop, ShopSpec)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
 import Json.Decode as JD exposing (Decoder)
@@ -28,146 +20,53 @@ import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
-import Random.FloatExtra as Random exposing (NormalIntSpec)
+import Random.FloatExtra as Random
 import Random.List
 import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
 import SeqSet exposing (SeqSet)
 
 
-type Name
-    = ArroyoHakunin
-    | KlamathMaidaBuckner
-    | DenFlick
-    | ModocJo
-    | VaultCityHappyHarry
-
-
+{-| The currentSpec is Shop.initialSpec + any global quest rewards
+-}
 type alias Vendor =
-    { name : Name
+    { shop : Shop
+    , currentSpec : ShopSpec
     , items : Dict Item.Id Item
     , caps : Int
-    , barterSkill : Int
+    , discountPct : Int
     }
 
 
-type alias VendorSpec =
-    { caps : NormalIntSpec
-    , stock : List { uniqueKey : Item.UniqueKey, maxCount : Int }
-    }
+getFrom : SeqDict Shop Vendor -> Shop -> Vendor
+getFrom vendors shop =
+    SeqDict.get shop vendors
+        |> Maybe.withDefault (emptyVendor shop)
 
 
-all : List Name
-all =
-    [ ArroyoHakunin
-    , KlamathMaidaBuckner
-    , DenFlick
-    , ModocJo
-    , VaultCityHappyHarry
-    ]
-
-
-spec : Name -> VendorSpec
-spec name_ =
-    case name_ of
-        ArroyoHakunin ->
-            { caps = { average = 50, maxDeviation = 20 }
-            , stock =
-                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 4 }
-                , { uniqueKey = { kind = ItemKind.Robes }, maxCount = 1 }
-                ]
-            }
-
-        KlamathMaidaBuckner ->
-            { caps = { average = 150, maxDeviation = 80 }
-            , stock =
-                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 3 }
-                , { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 2 }
-                , { uniqueKey = { kind = ItemKind.BigBookOfScience }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.DeansElectronics }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.Robes }, maxCount = 2 }
-                ]
-            }
-
-        DenFlick ->
-            { caps = { average = 280, maxDeviation = 120 }
-            , stock =
-                [ { uniqueKey = { kind = ItemKind.HealingPowder }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 3 }
-                , { uniqueKey = { kind = ItemKind.ScoutHandbook }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.GunsAndBullets }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.LeatherJacket }, maxCount = 1 }
-                ]
-            }
-
-        ModocJo ->
-            { caps = { average = 500, maxDeviation = 200 }
-            , stock =
-                [ { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 5 }
-                , { uniqueKey = { kind = ItemKind.GunsAndBullets }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.FirstAidBook }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.LeatherJacket }, maxCount = 1 }
-                , { uniqueKey = { kind = ItemKind.LeatherArmor }, maxCount = 1 }
-                ]
-            }
-
-        VaultCityHappyHarry ->
-            { caps = { average = 300, maxDeviation = 120 }
-            , stock =
-                [ { uniqueKey = { kind = ItemKind.Stimpak }, maxCount = 4 }
-                , { uniqueKey = { kind = ItemKind.ScoutHandbook }, maxCount = 2 }
-                , { uniqueKey = { kind = ItemKind.MetalArmor }, maxCount = 1 }
-                ]
-            }
-
-
-barterSkill : Name -> Int
-barterSkill name_ =
-    case name_ of
-        ArroyoHakunin ->
-            30
-
-        KlamathMaidaBuckner ->
-            55
-
-        DenFlick ->
-            80
-
-        ModocJo ->
-            100
-
-        VaultCityHappyHarry ->
-            80
-
-
-getFrom : SeqDict Name Vendor -> Name -> Vendor
-getFrom vendors name_ =
-    SeqDict.get name_ vendors
-        |> Maybe.withDefault (emptyVendor name_)
-
-
-emptyVendors : SeqDict Name Vendor
+emptyVendors : SeqDict Shop Vendor
 emptyVendors =
-    all
+    Shop.all
         |> List.map (\name_ -> ( name_, emptyVendor name_ ))
         |> SeqDict.fromList
 
 
-emptyVendor : Name -> Vendor
-emptyVendor name_ =
-    { items = Dict.empty
+emptyVendor : Shop -> Vendor
+emptyVendor shop =
+    { shop = shop
+    , currentSpec = Shop.initialSpec shop
+    , items = Dict.empty
     , caps = 0
-    , barterSkill = barterSkill name_
-    , name = name_
+    , discountPct = 0
     }
 
 
-capsGenerator : VendorSpec -> Generator Int
+capsGenerator : ShopSpec -> Generator Int
 capsGenerator { caps } =
     Random.normallyDistributedInt caps
 
 
-stockGenerator : VendorSpec -> Generator (List ( Item.UniqueKey, Int ))
+stockGenerator : ShopSpec -> Generator (List ( Item.UniqueKey, Int ))
 stockGenerator { stock } =
     let
         listLength =
@@ -191,15 +90,15 @@ stockGenerator { stock } =
         |> Random.map (List.filter (\( _, count ) -> count > 0))
 
 
-restockVendors : Int -> SeqDict Name Vendor -> Generator ( SeqDict Name Vendor, Int )
+restockVendors : Int -> SeqDict Shop Vendor -> Generator ( SeqDict Shop Vendor, Int )
 restockVendors lastItemId vendors =
     let
-        restockVendor : Int -> VendorSpec -> Vendor -> Generator ( Vendor, Int )
-        restockVendor lastItemId_ spec_ vendor =
+        restockVendor : Int -> Vendor -> Generator ( Vendor, Int )
+        restockVendor lastItemId_ vendor =
             let
                 stockKeys : SeqSet Item.UniqueKey
                 stockKeys =
-                    spec_.stock
+                    vendor.currentSpec.stock
                         |> List.map .uniqueKey
                         |> SeqSet.fromList
             in
@@ -238,10 +137,10 @@ restockVendors lastItemId vendors =
                     , newLastId
                     )
                 )
-                (capsGenerator spec_)
-                (stockGenerator spec_)
+                (capsGenerator vendor.currentSpec)
+                (stockGenerator vendor.currentSpec)
     in
-    all
+    Shop.all
         |> List.foldl
             (\name_ accGenerator ->
                 accGenerator
@@ -249,7 +148,6 @@ restockVendors lastItemId vendors =
                         (\( accVendors, lastItemId_ ) ->
                             restockVendor
                                 lastItemId_
-                                (spec name_)
                                 (getFrom accVendors name_)
                                 |> Random.map
                                     (\( restockedVendor, idAfterVendor ) ->
@@ -262,79 +160,35 @@ restockVendors lastItemId vendors =
             (Random.constant ( vendors, lastItemId ))
 
 
-encodeVendors : SeqDict Name Vendor -> JE.Value
+encodeVendors : SeqDict Shop Vendor -> JE.Value
 encodeVendors vendors =
-    SeqDict.encode encodeName encode vendors
+    SeqDict.encode Shop.encode encode vendors
 
 
-vendorsDecoder : Decoder (SeqDict Name Vendor)
+vendorsDecoder : Decoder (SeqDict Shop Vendor)
 vendorsDecoder =
-    SeqDict.decoder nameDecoder decoder
-
-
-encodeName : Name -> JE.Value
-encodeName name_ =
-    JE.string <|
-        case name_ of
-            ArroyoHakunin ->
-                "arroyo-hakunin"
-
-            KlamathMaidaBuckner ->
-                "klamath-maida-buckner"
-
-            DenFlick ->
-                "den-flick"
-
-            ModocJo ->
-                "modoc-jo"
-
-            VaultCityHappyHarry ->
-                "vault-city-happy-harry"
-
-
-nameDecoder : Decoder Name
-nameDecoder =
-    JD.string
-        |> JD.andThen
-            (\name_ ->
-                case name_ of
-                    "arroyo-hakunin" ->
-                        JD.succeed ArroyoHakunin
-
-                    "klamath-maida-buckner" ->
-                        JD.succeed KlamathMaidaBuckner
-
-                    "den-flick" ->
-                        JD.succeed DenFlick
-
-                    "modoc-jo" ->
-                        JD.succeed ModocJo
-
-                    "vault-city-happy-harry" ->
-                        JD.succeed VaultCityHappyHarry
-
-                    _ ->
-                        JD.fail <| "unknown Vendor.Name: '" ++ name_ ++ "'"
-            )
+    SeqDict.decoder Shop.decoder decoder
 
 
 encode : Vendor -> JE.Value
 encode vendor =
     JE.object
-        [ ( "name", encodeName vendor.name )
+        [ ( "shop", Shop.encode vendor.shop )
+        , ( "currentSpec", Shop.encodeSpec vendor.currentSpec )
         , ( "items", Dict.encode JE.int Item.encode vendor.items )
         , ( "caps", JE.int vendor.caps )
-        , ( "barterSkill", JE.int vendor.barterSkill )
+        , ( "discountPct", JE.int vendor.discountPct )
         ]
 
 
 decoder : Decoder Vendor
 decoder =
     JD.succeed Vendor
-        |> JD.andMap (JD.field "name" nameDecoder)
+        |> JD.andMap (JD.field "shop" Shop.decoder)
+        |> JD.andMap (JD.field "currentSpec" Shop.specDecoder)
         |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
         |> JD.andMap (JD.field "caps" JD.int)
-        |> JD.andMap (JD.field "barterSkill" JD.int)
+        |> JD.andMap (JD.field "discountPct" JD.int)
 
 
 subtractCaps : Int -> Vendor -> Vendor
@@ -385,77 +239,3 @@ addItem item vendor =
                                 Just { oldItem | count = oldItem.count + item.count }
                     )
     }
-
-
-name : Name -> String
-name name_ =
-    case name_ of
-        ArroyoHakunin ->
-            "Hakunin"
-
-        KlamathMaidaBuckner ->
-            "Maida Buckner"
-
-        DenFlick ->
-            "Flick"
-
-        ModocJo ->
-            "Jo"
-
-        VaultCityHappyHarry ->
-            "Happy Harry"
-
-
-nameWithLocation : Name -> String
-nameWithLocation name_ =
-    case name_ of
-        ArroyoHakunin ->
-            "Hakunin (Arroyo)"
-
-        KlamathMaidaBuckner ->
-            "Maida Buckner (Klamath)"
-
-        DenFlick ->
-            "Flick (Den)"
-
-        ModocJo ->
-            "Jo (Modoc)"
-
-        VaultCityHappyHarry ->
-            "Happy Harry (Vault City)"
-
-
-location : Name -> Location
-location name_ =
-    case name_ of
-        ArroyoHakunin ->
-            Location.Arroyo
-
-        KlamathMaidaBuckner ->
-            Location.Klamath
-
-        DenFlick ->
-            Location.Den
-
-        ModocJo ->
-            Location.Modoc
-
-        VaultCityHappyHarry ->
-            Location.VaultCity
-
-
-locationsWithVendors : SeqDict Location Name
-locationsWithVendors =
-    all
-        |> List.map (\name_ -> ( location name_, name_ ))
-        |> SeqDict.fromList
-
-
-forLocation : Location -> Maybe Name
-forLocation loc =
-    SeqDict.get loc locationsWithVendors
-
-
-isInLocation : Location -> Bool
-isInLocation loc =
-    SeqDict.member loc locationsWithVendors

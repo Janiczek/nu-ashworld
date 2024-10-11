@@ -41,7 +41,8 @@ import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Tick as Tick
 import Data.Trait as Trait exposing (Trait)
-import Data.Vendor as Vendor
+import Data.Vendor as Vendor exposing (Vendor)
+import Data.Vendor.Shop as Shop exposing (Shop)
 import Data.Version as Version
 import Data.World as World
 import Data.WorldData as WorldData
@@ -226,9 +227,9 @@ update msg ({ loginForm } as model) =
             , Nav.pushUrl model.key (Route.toString finalRoute)
             )
 
-        GoToTownStore ->
+        GoToTownStore shop ->
             { model | barter = Barter.empty }
-                |> update (GoToRoute (PlayerRoute Route.TownStore))
+                |> update (GoToRoute (PlayerRoute (Route.TownStore shop)))
 
         UrlClicked urlRequest ->
             case urlRequest of
@@ -641,9 +642,9 @@ updateBarter msg model =
             ResetBarter ->
                 resetBarter model
 
-            ConfirmBarter ->
+            ConfirmBarter shop ->
                 ( model
-                , Lamdera.sendToBackend <| Barter model.barter
+                , Lamdera.sendToBackend <| Barter model.barter shop
                 )
 
             AddPlayerItem itemId count ->
@@ -1098,8 +1099,8 @@ contentView model =
                     Route.TownMainSquare ->
                         withLocation_ (townMainSquareView model.expandedQuests)
 
-                    Route.TownStore ->
-                        withLocation_ (townStoreView model.barter)
+                    Route.TownStore shop ->
+                        withLocation_ (townStoreView model.barter shop)
 
                     Route.Fight ->
                         withCreatedPlayer_ (fightView model.fightInfo)
@@ -1718,7 +1719,7 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
 
 
 townMainSquareView : SeqSet Quest.Name -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-townMainSquareView expandedQuests location { questsProgress } player =
+townMainSquareView expandedQuests location { questsProgress, questRewardShops } player =
     let
         quests : List Quest.Name
         quests =
@@ -1727,18 +1728,29 @@ townMainSquareView expandedQuests location { questsProgress } player =
         hasQuests : Bool
         hasQuests =
             not <| List.isEmpty quests
+
+        availableShops : List Shop
+        availableShops =
+            Shop.forLocation location
+                |> List.filter (Shop.isAvailable questRewardShops)
     in
     [ pageTitleView <| "Town: " ++ Location.name location
     , H.div [ HA.class "flex flex-col gap-4" ]
-        [ if Vendor.isInLocation location then
-            H.div []
-                [ UI.button
-                    [ HE.onClick GoToTownStore ]
-                    [ H.text "[Visit store]" ]
-                ]
+        [ if List.isEmpty availableShops then
+            H.div [] [ H.text "No vendor in this town..." ]
 
           else
-            H.div [] [ H.text "No vendor in this town..." ]
+            availableShops
+                |> List.map
+                    (\shop ->
+                        H.div [ HA.class "flex flex-row gap-[1ch]" ]
+                            [ H.text <| Shop.personName shop
+                            , UI.button
+                                [ HE.onClick <| GoToTownStore shop ]
+                                [ H.text "[Visit store]" ]
+                            ]
+                    )
+                |> H.div [ HA.class "flex flex-col" ]
         , if hasQuests then
             H.h3 [] [ H.text "Quests" ]
 
@@ -1938,16 +1950,19 @@ expandedQuestView player progress quest =
 
 townStoreView :
     Barter.State
+    -> Shop
     -> Location
     -> PlayerData
     -> CPlayer
     -> List (Html FrontendMsg)
-townStoreView barter location world player =
-    case Maybe.map (Vendor.getFrom world.vendors) (Vendor.forLocation location) of
-        Nothing ->
-            contentUnavailableWhenNotInTownView
-
-        Just vendor ->
+townStoreView barter shop location world player =
+    if Shop.isInLocation location shop then
+        if Shop.isAvailable world.questRewardShops shop then
+            let
+                vendor : Vendor
+                vendor =
+                    Vendor.getFrom world.vendors shop
+            in
             let
                 playerKeptCaps : Int
                 playerKeptCaps =
@@ -1990,8 +2005,9 @@ townStoreView barter location world player =
                                             Logic.price
                                                 { baseValue = count * ItemKind.baseValue kind
                                                 , playerBarterSkill = Skill.get player.special player.addedSkillPercentages Skill.Barter
-                                                , traderBarterSkill = vendor.barterSkill
+                                                , traderBarterSkill = Shop.barterSkill vendor.shop
                                                 , hasMasterTraderPerk = Perk.rank Perk.MasterTrader player.perks > 0
+                                                , discountPct = vendor.discountPct
                                                 }
                                         )
                             )
@@ -2063,7 +2079,7 @@ townStoreView barter location world player =
                 confirmBtn =
                     UI.button
                         [ HA.style "grid-area" "barter-confirm-btn"
-                        , HE.onClick <| BarterMsg ConfirmBarter
+                        , HE.onClick <| BarterMsg (ConfirmBarter shop)
                         ]
                         [ H.text "[Confirm]" ]
 
@@ -2335,7 +2351,11 @@ townStoreView barter location world player =
                         [ HA.class "p-2 border-b-2 border-b-green-800 text-right"
                         , HA.style "grid-area" "vendor-name"
                         ]
-                        [ H.text <| "Vendor: " ++ Vendor.nameWithLocation vendor.name ]
+                        [ "Vendor: {NAME} ({LOCATION})"
+                            |> String.replace "{NAME}" (Shop.personName vendor.shop)
+                            |> String.replace "{LOCATION}" (Shop.location vendor.shop |> Location.name)
+                            |> H.text
+                        ]
 
                 playerTradedValueView : Html FrontendMsg
                 playerTradedValueView =
@@ -2502,6 +2522,12 @@ townStoreView barter location world player =
                 )
                 barter.lastMessage
             ]
+
+        else
+            contentUnavailableDueToQuests
+
+    else
+        contentUnavailableDueToWrongLocation
 
 
 newCharView : Maybe HoveredItem -> NewChar -> List (Html FrontendMsg)
@@ -4406,14 +4432,19 @@ contentUnavailableToLoggedOutView =
     contentUnavailableView "you're not logged in"
 
 
+contentUnavailableDueToQuests : List (Html FrontendMsg)
+contentUnavailableDueToQuests =
+    contentUnavailableView "this vendor is not available at this stage of the world"
+
+
+contentUnavailableDueToWrongLocation : List (Html FrontendMsg)
+contentUnavailableDueToWrongLocation =
+    contentUnavailableView "this vendor does not reside at this location"
+
+
 contentUnavailableWhenNotInTownView : List (Html FrontendMsg)
 contentUnavailableWhenNotInTownView =
-    contentUnavailableView "you're not in a town or another location"
-
-
-contentUnavailableWhenNoVendorView : List (Html FrontendMsg)
-contentUnavailableWhenNoVendorView =
-    contentUnavailableView "you're not in a town that has a vendor"
+    contentUnavailableView "you're not in a town or another important location"
 
 
 contentUnavailableToNonAdminView : List (Html FrontendMsg)

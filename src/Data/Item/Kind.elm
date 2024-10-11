@@ -142,7 +142,7 @@ type Kind
     | SuperCattleProd
       -- Shiv
       -- Switchblade
-      -- Knife
+    | Knife
       -- Combat Knife
     | Wakizashi
     | LittleJesus
@@ -374,6 +374,7 @@ all =
     , MeatJerky
     , Pistol223
     , Ripper
+    , Knife
     , Wakizashi
     , LittleJesus
     , Ripper
@@ -487,6 +488,9 @@ encode kind =
 
         SuperCattleProd ->
             JE.string "SuperCattleProd"
+
+        Knife ->
+            JE.string "Knife"
 
         Wakizashi ->
             JE.string "Wakizashi"
@@ -768,6 +772,9 @@ decoder =
                     "SuperCattleProd" ->
                         JD.succeed SuperCattleProd
 
+                    "Knife" ->
+                        JD.succeed Knife
+
                     "Wakizashi" ->
                         JD.succeed Wakizashi
 
@@ -1037,7 +1044,10 @@ usageEffects kind =
             ]
 
         MeatJerky ->
-            []
+            -- Different from FO2 that doesn't let you eat this
+            [ Effect.Heal { min = 10, max = 15 }
+            , Effect.RemoveAfterUse
+            ]
 
         Robes ->
             []
@@ -1255,6 +1265,9 @@ usageEffects kind =
             []
 
         Pistol223 ->
+            []
+
+        Knife ->
             []
 
         Wakizashi ->
@@ -1535,6 +1548,9 @@ baseValue kind =
 
         Pistol223 ->
             3500
+
+        Knife ->
+            40
 
         Wakizashi ->
             200
@@ -1817,6 +1833,9 @@ ammoDamageResistanceModifier kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -2093,6 +2112,9 @@ ammoDamageModifier kind =
             ( 1, 1 )
 
         Pistol223 ->
+            ( 1, 1 )
+
+        Knife ->
             ( 1, 1 )
 
         Wakizashi ->
@@ -2374,6 +2396,9 @@ ammoArmorClassModifier kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -2649,6 +2674,9 @@ armorClass kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -2978,6 +3006,9 @@ armorDamageThresholdNormal kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -3253,6 +3284,9 @@ armorDamageThresholdExplosion kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -3532,6 +3566,9 @@ armorDamageThresholdElectrical kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -3807,6 +3844,9 @@ armorDamageThresholdEMP kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -4086,6 +4126,9 @@ armorDamageThresholdLaser kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -4361,6 +4404,9 @@ armorDamageThresholdFire kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -4640,6 +4686,9 @@ armorDamageThresholdPlasma kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -4915,6 +4964,9 @@ armorDamageResistanceNormal kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -5194,6 +5246,9 @@ armorDamageResistanceExplosion kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -5469,6 +5524,9 @@ armorDamageResistanceElectrical kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -5748,6 +5806,9 @@ armorDamageResistanceEMP kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -6023,6 +6084,9 @@ armorDamageResistanceLaser kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -6302,6 +6366,9 @@ armorDamageResistanceFire kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -6577,6 +6644,9 @@ armorDamageResistancePlasma kind =
             0
 
         Pistol223 ->
+            0
+
+        Knife ->
             0
 
         Wakizashi ->
@@ -6865,6 +6935,9 @@ usableAmmoForWeapon kind =
         Pistol223 ->
             [ Fmj223 ]
 
+        Knife ->
+            []
+
         Wakizashi ->
             []
 
@@ -7005,6 +7078,9 @@ weaponDamageType kind =
             Just DamageType.NormalDamage
 
         Pistol223 ->
+            Just DamageType.NormalDamage
+
+        Knife ->
             Just DamageType.NormalDamage
 
         Wakizashi ->
@@ -7419,6 +7495,9 @@ weaponStrengthRequirement kind =
         Pistol223 ->
             5
 
+        Knife ->
+            2
+
         Wakizashi ->
             2
 
@@ -7699,6 +7778,9 @@ isLongRangeWeapon kind =
         Pistol223 ->
             False
 
+        Knife ->
+            False
+
         Wakizashi ->
             False
 
@@ -7767,6 +7849,9 @@ isWeaponArmorPenetrating kind =
 
         -- The rest are Falses
         AssaultRifle ->
+            False
+
+        Knife ->
             False
 
         ExpandedAssaultRifle ->
@@ -8256,6 +8341,9 @@ burstRange kind =
         Pistol223 ->
             0
 
+        Knife ->
+            0
+
         Wakizashi ->
             0
 
@@ -8561,6 +8649,9 @@ isAccurateWeapon kind =
         Pistol223 ->
             False
 
+        Knife ->
+            False
+
         Wakizashi ->
             False
 
@@ -8838,6 +8929,9 @@ aimedRange kind =
         Pistol223 ->
             30
 
+        Knife ->
+            1
+
         Wakizashi ->
             1
 
@@ -9114,6 +9208,9 @@ unaimedRange kind =
 
         Pistol223 ->
             30
+
+        Knife ->
+            1
 
         Wakizashi ->
             1
@@ -9407,6 +9504,9 @@ name kind =
         Pistol223 ->
             ".223 Pistol"
 
+        Knife ->
+            "Knife"
+
         Wakizashi ->
             "Wakizashi"
 
@@ -9687,6 +9787,9 @@ types kind =
         Pistol223 ->
             [ Type.SmallGun ]
 
+        Knife ->
+            [ Type.MeleeWeapon ]
+
         Wakizashi ->
             [ Type.MeleeWeapon ]
 
@@ -9840,6 +9943,9 @@ weaponDamage kind =
 
         Pistol223 ->
             mk 20 30
+
+        Knife ->
+            mk 1 6
 
         Wakizashi ->
             mk 4 12

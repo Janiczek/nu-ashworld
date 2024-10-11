@@ -948,6 +948,7 @@ price :
     , playerBarterSkill : Int
     , traderBarterSkill : Int
     , hasMasterTraderPerk : Bool
+    , discountPct : Int
     }
     -> Int
 price r =
@@ -963,7 +964,7 @@ price r =
 
         barterPercent : Int
         barterPercent =
-            max 1 (100 - masterTraderDiscount)
+            max 1 (100 - masterTraderDiscount - r.discountPct)
 
         barterRatio : Float
         barterRatio =
@@ -1381,6 +1382,9 @@ unaimedAimedAttackStyleAndApCost unaimed toAimed unaimedApCost =
 attackStyleAndApCost : ItemKind.Kind -> List ( AttackStyle, Int )
 attackStyleAndApCost kind =
     case kind of
+        ItemKind.Knife ->
+            meleeAttackStyleAndApCost 3
+
         ItemKind.PowerFist ->
             unarmedAttackStyleAndApCost 3
 

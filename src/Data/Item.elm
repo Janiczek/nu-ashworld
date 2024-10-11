@@ -1,13 +1,15 @@
 module Data.Item exposing
     ( Item, decoder, encode
-    , Id, UniqueKey
+    , Id
+    , UniqueKey, encodeUniqueKey, uniqueKeyDecoder
     , create, findMergeableId, getUniqueKey
     )
 
 {-|
 
 @docs Item, decoder, encode
-@docs Id, UniqueKey
+@docs Id
+@docs UniqueKey, encodeUniqueKey, uniqueKeyDecoder
 @docs create, findMergeableId, getUniqueKey
 
 -}
@@ -91,6 +93,19 @@ type alias UniqueKey =
     -- TODO mods
     { kind : Kind
     }
+
+
+encodeUniqueKey : UniqueKey -> JE.Value
+encodeUniqueKey uniqueKey =
+    JE.object
+        [ ( "kind", Kind.encode uniqueKey.kind )
+        ]
+
+
+uniqueKeyDecoder : Decoder UniqueKey
+uniqueKeyDecoder =
+    JD.map UniqueKey
+        (JD.field "kind" Kind.decoder)
 
 
 getUniqueKey : Item -> UniqueKey

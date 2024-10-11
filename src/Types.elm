@@ -19,6 +19,7 @@ import Data.Quest as Quest
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
+import Data.Vendor.Shop exposing (Shop)
 import Data.World as World exposing (World)
 import Data.WorldData
     exposing
@@ -88,7 +89,7 @@ type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
     | GoToRoute Route
-    | GoToTownStore
+    | GoToTownStore Shop
     | Logout
     | Login
     | Register
@@ -152,7 +153,7 @@ type BarterMsg
     | RemovePlayerCaps Int
     | RemoveVendorCaps Int
     | ResetBarter
-    | ConfirmBarter
+    | ConfirmBarter Shop
     | SetTransferNInput Barter.TransferNPosition String
     | SetTransferNHover Barter.TransferNPosition
     | UnsetTransferNHover
@@ -183,7 +184,7 @@ type ToBackend
     | RemoveMessage Message.Id
     | RemoveFightMessages
     | RemoveAllMessages
-    | Barter Barter.State
+    | Barter Barter.State Shop
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name
     | StartProgressing Quest.Name

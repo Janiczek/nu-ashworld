@@ -3595,7 +3595,10 @@ dropSpec type_ =
     case type_ of
         Brahmin ->
             { caps = commonCaps { average = 20, maxDeviation = 10 }
-            , items = [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 1 } ]
+            , items =
+                [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                ]
             }
 
         AngryBrahmin ->
@@ -3604,6 +3607,7 @@ dropSpec type_ =
                 [ item 0.2 ItemKind.Fruit { average = 2, maxDeviation = 2 }
                 , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 2 }
                 , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3618,6 +3622,7 @@ dropSpec type_ =
                 [ item 0.15 ItemKind.Fruit { average = 2, maxDeviation = 1 }
                 , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
                 , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3631,6 +3636,7 @@ dropSpec type_ =
             , items =
                 [ item 0.1 ItemKind.Fruit { average = 1, maxDeviation = 0 }
                 , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 0 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3647,6 +3653,7 @@ dropSpec type_ =
             , items =
                 [ item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
                 , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3665,6 +3672,7 @@ dropSpec type_ =
                 [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 3 }
                 , item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
                 , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3681,6 +3689,7 @@ dropSpec type_ =
             , items =
                 [ item 0.25 ItemKind.Fruit { average = 2, maxDeviation = 2 }
                 , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3690,6 +3699,7 @@ dropSpec type_ =
                 [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 2 }
                 , item 0.15 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
                 , item 0.05 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3699,6 +3709,7 @@ dropSpec type_ =
                 [ item 0.05 ItemKind.Fruit { average = 3, maxDeviation = 2 }
                 , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
                 , item 0.1 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3707,6 +3718,7 @@ dropSpec type_ =
             , items =
                 [ item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
                 , item 0.2 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -3715,6 +3727,7 @@ dropSpec type_ =
             , items =
                 [ item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 3 }
                 , item 0.3 ItemKind.Stimpak { average = 2, maxDeviation = 3 }
+                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
 

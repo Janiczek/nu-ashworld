@@ -27,10 +27,10 @@ module Data.Quest exposing
     )
 
 import Data.Item.Kind as ItemKind
-import Data.Map.Location exposing (Location(..))
+import Data.Map.Location as Location exposing (Location)
 import Data.Perk as Perk exposing (Perk(..))
 import Data.Skill as Skill exposing (Skill(..))
-import Data.Vendor as Vendor exposing (Name(..))
+import Data.Vendor.Shop as Shop exposing (Shop)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import SeqDict exposing (SeqDict)
@@ -903,226 +903,226 @@ location : Name -> Location
 location name =
     case name of
         ArroyoKillEvilPlants ->
-            Arroyo
+            Location.Arroyo
 
         ArroyoFixWellForFeargus ->
-            Arroyo
+            Location.Arroyo
 
         ArroyoRescueNagorsDog ->
-            Arroyo
+            Location.Arroyo
 
         KlamathRefuelStill ->
-            Klamath
+            Location.Klamath
 
         KlamathGuardTheBrahmin ->
-            Klamath
+            Location.Klamath
 
         KlamathRustleTheBrahmin ->
-            Klamath
+            Location.Klamath
 
         KlamathKillRatGod ->
-            Klamath
+            Location.Klamath
 
         KlamathRescueTorr ->
-            Klamath
+            Location.Klamath
 
         KlamathSearchForSmileyTrapper ->
-            Klamath
+            Location.Klamath
 
         ToxicCavesRescueSmileyTrapper ->
-            ToxicCaves
+            Location.ToxicCaves
 
         ToxicCavesRepairTheGenerator ->
-            ToxicCaves
+            Location.ToxicCaves
 
         ToxicCavesLootTheBunker ->
-            ToxicCaves
+            Location.ToxicCaves
 
         DenFreeVicByPayingMetzger ->
-            Den
+            Location.Den
 
         DenFreeVicByKillingOffSlaversGuild ->
-            Den
+            Location.Den
 
         DenDeliverMealToSmitty ->
-            Den
+            Location.Den
 
         DenFindCarParts ->
-            Den
+            Location.Den
 
         DenFixTheCar ->
-            Den
+            Location.Den
 
         ModocInvestigateGhostFarm ->
-            Modoc
+            Location.Modoc
 
         ModocRemoveInfestationInFarrelsGarden ->
-            Modoc
+            Location.Modoc
 
         ModocMediateBetweenSlagsAndJo ->
-            Modoc
+            Location.Modoc
 
         ModocFindGoldWatchForCornelius ->
-            Modoc
+            Location.Modoc
 
         ModocFindGoldWatchForFarrel ->
-            Modoc
+            Location.Modoc
 
         VaultCityGetPlowForMrSmith ->
-            VaultCity
+            Location.VaultCity
 
         VaultCityRescueAmandasHusband ->
-            VaultCity
+            Location.VaultCity
 
         GeckoOptimizePowerPlant ->
-            Gecko
+            Location.Gecko
 
         ReddingClearWanamingoMine ->
-            Redding
+            Location.Redding
 
         ReddingFindExcavatorChip ->
-            Redding
+            Location.Redding
 
         NewRenoTrackDownPrettyBoyLloyd ->
-            NewReno
+            Location.NewReno
 
         NewRenoHelpGuardSecretTransaction ->
-            NewReno
+            Location.NewReno
 
         NewRenoCollectTributeFromCorsicanBrothers ->
-            NewReno
+            Location.NewReno
 
         NewRenoWinBoxingTournament ->
-            NewReno
+            Location.NewReno
 
         NewRenoAcquireElectronicLockpick ->
-            NewReno
+            Location.NewReno
 
         NCRGuardBrahminCaravan ->
-            NewCaliforniaRepublic
+            Location.NewCaliforniaRepublic
 
         NCRTestMutagenicSerum ->
-            NewCaliforniaRepublic
+            Location.NewCaliforniaRepublic
 
         NCRRetrieveComputerParts ->
-            NewCaliforniaRepublic
+            Location.NewCaliforniaRepublic
 
         NCRFreeSlaves ->
-            NewCaliforniaRepublic
+            Location.NewCaliforniaRepublic
 
         NCRInvestigateBrahminRaids ->
-            NewCaliforniaRepublic
+            Location.NewCaliforniaRepublic
 
         V15RescueChrissy ->
-            Vault15
+            Location.Vault15
 
         V15CompleteDealWithNCR ->
-            Vault15
+            Location.Vault15
 
         V13FixVaultComputer ->
-            Vault13
+            Location.Vault13
 
         V13FindTheGeck ->
-            Vault13
+            Location.Vault13
 
         BrokenHillsFixMineAirPurifier ->
-            BrokenHills
+            Location.BrokenHills
 
         BrokenHillsBlowUpMineAirPurifier ->
-            BrokenHills
+            Location.BrokenHills
 
         BrokenHillsFindMissingPeople ->
-            BrokenHills
+            Location.BrokenHills
 
         BrokenHillsBeatFrancisAtArmwrestling ->
-            BrokenHills
+            Location.BrokenHills
 
         RaidersFindEvidenceOfBishopTampering ->
-            Raiders
+            Location.Raiders
 
         RaidersKillEverybody ->
-            Raiders
+            Location.Raiders
 
         SierraArmyDepotFindAbnormalBrainForSkynet ->
-            SierraArmyDepot
+            Location.SierraArmyDepot
 
         SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-            SierraArmyDepot
+            Location.SierraArmyDepot
 
         SierraArmyDepotFindHumanBrainForSkynet ->
-            SierraArmyDepot
+            Location.SierraArmyDepot
 
         SierraArmyDepotFindCyberneticBrainForSkynet ->
-            SierraArmyDepot
+            Location.SierraArmyDepot
 
         SierraArmyDepotAssembleBodyForSkynet ->
-            SierraArmyDepot
+            Location.SierraArmyDepot
 
         MilitaryBaseExcavateTheEntrance ->
-            MilitaryBase
+            Location.MilitaryBase
 
         MilitaryBaseKillMelchior ->
-            MilitaryBase
+            Location.MilitaryBase
 
         SanFranciscoFindFuelForTanker ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindLocationOfFobForTanker ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindNavCompPartForTanker ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindVertibirdPlansForHubologists ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindVertibirdPlansForShi ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoFindBadgersGirlfriendInsideShip ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            SanFrancisco
+            Location.SanFrancisco
 
         SanFranciscoEmbarkForEnclave ->
-            SanFrancisco
+            Location.SanFrancisco
 
         NavarroFixK9 ->
-            Navarro
+            Location.Navarro
 
         NavarroRetrieveFobForTanker ->
-            Navarro
+            Location.Navarro
 
         EnclavePersuadeControlCompanySquadToDesert ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveKillThePresidentStealthily ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveKillThePresidentTheUsualWay ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveFindTheGeck ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveRigTurretsToTargetFrankHorrigan ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveForceScientistToInitiateSelfDestruct ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveKillFrankHorrigan ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
         EnclaveReturnToMainland ->
-            EnclavePlatform
+            Location.EnclavePlatform
 
 
 exclusiveWith : Name -> List Name
@@ -1613,61 +1613,61 @@ locationQuestRequirements : Location -> List Name
 locationQuestRequirements loc =
     -- Some locations are locked until certain quests are done
     case loc of
-        Arroyo ->
+        Location.Arroyo ->
             []
 
-        BrokenHills ->
+        Location.BrokenHills ->
             []
 
-        Den ->
+        Location.Den ->
             []
 
-        EnclavePlatform ->
+        Location.EnclavePlatform ->
             [ SanFranciscoEmbarkForEnclave ]
 
-        Gecko ->
+        Location.Gecko ->
             []
 
-        Klamath ->
+        Location.Klamath ->
             []
 
-        MilitaryBase ->
+        Location.MilitaryBase ->
             []
 
-        Modoc ->
+        Location.Modoc ->
             []
 
-        Navarro ->
+        Location.Navarro ->
             [ SanFranciscoFindLocationOfFobForTanker ]
 
-        NewCaliforniaRepublic ->
+        Location.NewCaliforniaRepublic ->
             []
 
-        NewReno ->
+        Location.NewReno ->
             []
 
-        Raiders ->
+        Location.Raiders ->
             [ NCRInvestigateBrahminRaids ]
 
-        Redding ->
+        Location.Redding ->
             []
 
-        SanFrancisco ->
+        Location.SanFrancisco ->
             []
 
-        SierraArmyDepot ->
+        Location.SierraArmyDepot ->
             [ NewRenoTrackDownPrettyBoyLloyd ]
 
-        ToxicCaves ->
+        Location.ToxicCaves ->
             [ KlamathSearchForSmileyTrapper ]
 
-        VaultCity ->
+        Location.VaultCity ->
             []
 
-        Vault13 ->
+        Location.Vault13 ->
             [ V15CompleteDealWithNCR ]
 
-        Vault15 ->
+        Location.Vault15 ->
             [ NCRRetrieveComputerParts ]
 
 
@@ -1699,39 +1699,42 @@ allForLocation loc =
 
 type GlobalReward
     = SellsGuaranteed
-        { who : Vendor.Name
+        { who : Shop
         , what : ItemKind.Kind
         , amount : Int
         }
     | Discount
-        { who : Vendor.Name
+        { who : Shop
         , percentage : Int
         }
+    | VendorAvailable Shop
 
 
 globalRewardTitle : GlobalReward -> String
 globalRewardTitle reward =
     case reward of
         SellsGuaranteed { who, what, amount } ->
-            Vendor.name who
-                ++ " sells guaranteed "
-                ++ String.fromInt amount
-                ++ "x "
-                ++ ItemKind.name what
-                ++ " each tick"
+            "{WHO} sells guaranteed {AMOUNT}x {WHAT} each tick"
+                |> String.replace "{WHO}" (Shop.personName who)
+                |> String.replace "{AMOUNT}" (String.fromInt amount)
+                |> String.replace "{WHAT}" (ItemKind.name what)
 
         Discount { who, percentage } ->
-            Vendor.name who
-                ++ " gives a discount of "
-                ++ String.fromInt percentage
-                ++ "% on all items"
+            "{WHO} gives a discount of {PERCENTAGE}% on all items"
+                |> String.replace "{WHO}" (Shop.personName who)
+                |> String.replace "{PERCENTAGE}" (String.fromInt percentage)
+
+        VendorAvailable who ->
+            "{VENDOR}'s shop becomes available in {LOCATION}"
+                |> String.replace "{VENDOR}" (Shop.personName who)
+                |> String.replace "{LOCATION}" (Shop.location who |> Location.name)
 
 
 globalRewards : Name -> List GlobalReward
 globalRewards name =
     case name of
         ArroyoKillEvilPlants ->
-            [ SellsGuaranteed { who = ArroyoHakunin, what = ItemKind.HealingPowder, amount = 4 } ]
+            [ SellsGuaranteed { who = Shop.ArroyoHakunin, what = ItemKind.HealingPowder, amount = 4 } ]
 
         ArroyoFixWellForFeargus ->
             []
@@ -1743,16 +1746,16 @@ globalRewards name =
             []
 
         KlamathGuardTheBrahmin ->
-            [ SellsGuaranteed { who = KlamathMaidaBuckner, what = ItemKind.MeatJerky, amount = 4 } ]
+            [ SellsGuaranteed { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
 
         KlamathRustleTheBrahmin ->
             []
 
         KlamathKillRatGod ->
-            [ Discount { who = KlamathMaidaBuckner, percentage = 15 } ]
+            [ Discount { who = Shop.KlamathMaida, percentage = 15 } ]
 
         KlamathRescueTorr ->
-            [ SellsGuaranteed { who = KlamathMaidaBuckner, what = ItemKind.MeatJerky, amount = 4 } ]
+            [ SellsGuaranteed { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
 
         KlamathSearchForSmileyTrapper ->
             []
@@ -1767,12 +1770,10 @@ globalRewards name =
             []
 
         DenFreeVicByPayingMetzger ->
-            -- TODO Vic opens a shop in Klamath
-            []
+            [ VendorAvailable Shop.KlamathVic ]
 
         DenFreeVicByKillingOffSlaversGuild ->
-            -- TODO Vic opens a shop in Klamath
-            []
+            [ VendorAvailable Shop.KlamathVic ]
 
         DenDeliverMealToSmitty ->
             []
@@ -1790,7 +1791,7 @@ globalRewards name =
             []
 
         ModocMediateBetweenSlagsAndJo ->
-            []
+            [ Discount { who = Shop.ModocJo, percentage = 25 } ]
 
         ModocFindGoldWatchForCornelius ->
             []
@@ -1802,16 +1803,13 @@ globalRewards name =
             []
 
         VaultCityRescueAmandasHusband ->
-            -- TODO [ Discount { who = VaultCityAmanda, percentage = 10 } ]
-            []
+            [ Discount { who = Shop.VaultCityRandal, percentage = 10 } ]
 
         GeckoOptimizePowerPlant ->
-            -- TODO [ SellsGuaranteed { who = GeckoShop, what = ItemKind.SmallEnergyCell, amount = 20 } ]
-            []
+            [ SellsGuaranteed { who = Shop.GeckoSurvivalGearPercy, what = ItemKind.SmallEnergyCell, amount = 30 } ]
 
         ReddingClearWanamingoMine ->
-            -- TODO [ Discount { who = ReddingShop, percentage = 15 } ]
-            []
+            [ Discount { who = Shop.ReddingAscorti, percentage = 15 } ]
 
         ReddingFindExcavatorChip ->
             []
@@ -1832,8 +1830,7 @@ globalRewards name =
             []
 
         NCRGuardBrahminCaravan ->
-            -- TODO [ Discount { who = NCRShop, percentage = 10 } ]
-            []
+            [ Discount { who = Shop.NCRDuppo, percentage = 5 } ]
 
         NCRTestMutagenicSerum ->
             []
@@ -1845,15 +1842,13 @@ globalRewards name =
             []
 
         NCRInvestigateBrahminRaids ->
-            -- TODO [ Discount { who = NCRShop, percentage = 10 } ]
-            []
+            [ Discount { who = Shop.NCRDuppo, percentage = 10 } ]
 
         V15RescueChrissy ->
             []
 
         V15CompleteDealWithNCR ->
-            -- TODO [ Discount { who = NCRShop, percentage = 5 } ]
-            []
+            [ Discount { who = Shop.NCRBuster, percentage = 10 } ]
 
         V13FixVaultComputer ->
             -- TODO autodoc for free for everybody
@@ -1869,8 +1864,8 @@ globalRewards name =
             []
 
         BrokenHillsFindMissingPeople ->
-            -- TODO [ Discount { who = BrokenHillsShop, percentage = 10 } ]
-            []
+            -- TODO maybe make Jacob hate you and give you -% discount?
+            [ Discount { who = Shop.BrokenHillsGeneralStoreLiz, percentage = 10 } ]
 
         BrokenHillsBeatFrancisAtArmwrestling ->
             []
@@ -1904,15 +1899,16 @@ globalRewards name =
             []
 
         SanFranciscoFindFuelForTanker ->
-            -- TODO punks open shop
-            []
+            [ VendorAvailable Shop.SanFranciscoPunksJenna
+            ]
 
         SanFranciscoFindLocationOfFobForTanker ->
             []
 
         SanFranciscoFindNavCompPartForTanker ->
-            -- TODO [ Discount { who = SanFranciscoPunks, percentage = 10 } ]
-            []
+            [ Discount { who = Shop.SanFranciscoPunksCal, percentage = 10 }
+            , Discount { who = Shop.SanFranciscoPunksJenna, percentage = 20 }
+            ]
 
         SanFranciscoFindVertibirdPlansForHubologists ->
             []
@@ -1924,16 +1920,17 @@ globalRewards name =
             []
 
         SanFranciscoFindBadgersGirlfriendInsideShip ->
-            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = ItemKind.Ec2mm, amount = 20 } ]
-            []
+            [ VendorAvailable Shop.SanFranciscoPunksCal ]
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = ItemKind.GaussRifle, amount = 1 } ]
-            []
+            [ SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.GaussRifle, amount = 1 }
+            , SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.Ec2mm, amount = 30 }
+            ]
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            -- TODO [ SellsGuaranteed { who = SanFranciscoPunks, what = ItemKind.PlasmaRifle, amount = 1 } ]
-            []
+            [ SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.PlasmaRifle, amount = 1 }
+            , SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.MicrofusionCell, amount = 30 }
+            ]
 
         SanFranciscoEmbarkForEnclave ->
             []
