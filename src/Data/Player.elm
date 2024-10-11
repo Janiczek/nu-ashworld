@@ -372,14 +372,13 @@ fromNewChar currentTime auth newChar =
                     |> List.map (\message -> ( message.id, message ))
                     |> Dict.fromList
             , items =
-                -- Dict.empty
-                -- TODO this should be only temporary while I test things
-                Dict.fromList
-                    [ ( 1, Item.create { lastId = 0, uniqueKey = { kind = ItemKind.Jhp10mm }, count = 5 } |> Tuple.first )
-                    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = ItemKind.Ap10mm }, count = 5 } |> Tuple.first )
-                    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = ItemKind.Fmj223 }, count = 5 } |> Tuple.first )
-                    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = ItemKind.Smg10mm }, count = 5 } |> Tuple.first )
-                    ]
+                --Dict.fromList
+                --    [ ( 1, Item.create { lastId = 0, uniqueKey = { kind = ItemKind.Jhp10mm }, count = 5 } |> Tuple.first )
+                --    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = ItemKind.Ap10mm }, count = 5 } |> Tuple.first )
+                --    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = ItemKind.Fmj223 }, count = 5 } |> Tuple.first )
+                --    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = ItemKind.Smg10mm }, count = 5 } |> Tuple.first )
+                --    ]
+                Dict.empty
             , traits = newChar.traits
             , addedSkillPercentages =
                 Logic.addedSkillPercentages

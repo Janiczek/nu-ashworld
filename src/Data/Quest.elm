@@ -1698,7 +1698,7 @@ allForLocation loc =
 
 
 type GlobalReward
-    = SellsGuaranteed
+    = NewItemsInStock
         { who : Shop
         , what : ItemKind.Kind
         , amount : Int
@@ -1713,8 +1713,8 @@ type GlobalReward
 globalRewardTitle : GlobalReward -> String
 globalRewardTitle reward =
     case reward of
-        SellsGuaranteed { who, what, amount } ->
-            "{WHO} sells guaranteed {AMOUNT}x {WHAT} each tick"
+        NewItemsInStock { who, what, amount } ->
+            "{WHO} starts selling up to {AMOUNT}x {WHAT} each tick"
                 |> String.replace "{WHO}" (Shop.personName who)
                 |> String.replace "{AMOUNT}" (String.fromInt amount)
                 |> String.replace "{WHAT}" (ItemKind.name what)
@@ -1734,7 +1734,7 @@ globalRewards : Name -> List GlobalReward
 globalRewards name =
     case name of
         ArroyoKillEvilPlants ->
-            [ SellsGuaranteed { who = Shop.ArroyoHakunin, what = ItemKind.HealingPowder, amount = 4 } ]
+            [ NewItemsInStock { who = Shop.ArroyoHakunin, what = ItemKind.HealingPowder, amount = 4 } ]
 
         ArroyoFixWellForFeargus ->
             []
@@ -1746,7 +1746,7 @@ globalRewards name =
             []
 
         KlamathGuardTheBrahmin ->
-            [ SellsGuaranteed { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
+            [ NewItemsInStock { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
 
         KlamathRustleTheBrahmin ->
             []
@@ -1755,7 +1755,7 @@ globalRewards name =
             [ Discount { who = Shop.KlamathMaida, percentage = 15 } ]
 
         KlamathRescueTorr ->
-            [ SellsGuaranteed { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
+            [ NewItemsInStock { who = Shop.KlamathMaida, what = ItemKind.MeatJerky, amount = 4 } ]
 
         KlamathSearchForSmileyTrapper ->
             []
@@ -1785,7 +1785,18 @@ globalRewards name =
             []
 
         ModocInvestigateGhostFarm ->
-            []
+            [ -- NewItemsInStock { who = Shop.ModocJo, what = ItemKind.CombatKnife, amount = 2 }
+              -- NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Dynamite, amount = 3 }
+              -- NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Mm762, amount = 10 }
+              -- NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Rope, amount = 2 }
+              NewItemsInStock { who = Shop.ModocJo, what = ItemKind.HuntingRifle, amount = 1 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Shotgun, amount = 1 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Pistol14mm, amount = 1 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.ShotgunShell, amount = 20 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Ap14mm, amount = 10 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Jhp10mm, amount = 20 }
+            , NewItemsInStock { who = Shop.ModocJo, what = ItemKind.Stimpak, amount = 3 }
+            ]
 
         ModocRemoveInfestationInFarrelsGarden ->
             []
@@ -1806,7 +1817,7 @@ globalRewards name =
             [ Discount { who = Shop.VaultCityRandal, percentage = 10 } ]
 
         GeckoOptimizePowerPlant ->
-            [ SellsGuaranteed { who = Shop.GeckoSurvivalGearPercy, what = ItemKind.SmallEnergyCell, amount = 30 } ]
+            [ NewItemsInStock { who = Shop.GeckoSurvivalGearPercy, what = ItemKind.SmallEnergyCell, amount = 30 } ]
 
         ReddingClearWanamingoMine ->
             [ Discount { who = Shop.ReddingAscorti, percentage = 15 } ]
@@ -1821,7 +1832,17 @@ globalRewards name =
             []
 
         NewRenoCollectTributeFromCorsicanBrothers ->
-            []
+            [ -- NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.HKCaws, amount = 1 }
+              -- NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.M60, amount = 1 }
+              -- NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.Flamer, amount = 1 }
+              NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.Bozar, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.SuperSledge, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.Minigun, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.CombatShotgun, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.RocketLauncher, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.SniperRifle, amount = 1 }
+            , NewItemsInStock { who = Shop.NewRenoArmsEldridge, what = ItemKind.AssaultRifle, amount = 1 }
+            ]
 
         NewRenoWinBoxingTournament ->
             []
@@ -1923,13 +1944,13 @@ globalRewards name =
             [ VendorAvailable Shop.SanFranciscoPunksCal ]
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            [ SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.GaussRifle, amount = 1 }
-            , SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.Ec2mm, amount = 30 }
+            [ NewItemsInStock { who = Shop.SanFranciscoPunksCal, what = ItemKind.GaussRifle, amount = 1 }
+            , NewItemsInStock { who = Shop.SanFranciscoPunksCal, what = ItemKind.Ec2mm, amount = 30 }
             ]
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            [ SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.PlasmaRifle, amount = 1 }
-            , SellsGuaranteed { who = Shop.SanFranciscoPunksCal, what = ItemKind.MicrofusionCell, amount = 30 }
+            [ NewItemsInStock { who = Shop.SanFranciscoPunksCal, what = ItemKind.PlasmaRifle, amount = 1 }
+            , NewItemsInStock { who = Shop.SanFranciscoPunksCal, what = ItemKind.MicrofusionCell, amount = 30 }
             ]
 
         SanFranciscoEmbarkForEnclave ->
