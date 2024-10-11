@@ -25,20 +25,17 @@ items =
       , title = "TODOs before release"
       , text =
             """
-- remove the OP starting items
-
+- Test that all current items can be bought / gotten from a quest
+- More enemies?
 - burst: multiple bullets, each with a chance to hit
-
-- more "normal" unarmed+melee weapons, and make them part of shops
-
-- Are we adding bonus to Critical Chance based on AimedShot?
-
+- Weapon/ammo part of item loot of enemies?
+- Fight Strategy: number of available ammo
+- Fight Strategy: walk away
+- Fight Strategy: warning for distance <=0: min distance is 1
+- refactoring: fight Opponents shouldn't hold attackStats and naturalArmorClass?
+- make movement on the map challenging (random encounters, fights you can't skip, have to heal...)
+- logic: Are we adding bonus to Critical Chance based on AimedShot?
 - Don't use ranged weapon's dmg/... when using the fallback unarmed attack when no ammo
-
-- Add upgraded unarmed attacks: https://fallout.fandom.com/wiki/Unarmed_(Fallout)
-
-- FightStrategy: walk away
-
 - regain conciousness in fight (cost 1/2 of max AP)
 
 ~janiczek
