@@ -4607,7 +4607,7 @@ type LinkType
 
 
 linkView : Route -> Link -> Html FrontendMsg
-linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
+linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
     let
         ( tag, linkAttrs ) =
             case type_ of
@@ -4616,6 +4616,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     , [ HA.href http
                       , HA.target "_blank"
                       , HA.attributeMaybe HA.title tooltip
+                      , HA.attributeIf highlighted <| HA.class "active"
                       ]
                     )
 
@@ -4623,7 +4624,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     ( UI.button
                     , [ HE.onClick <| GoToRoute route
                       , HA.attributeMaybe HA.title tooltip
-                      , HA.attributeIf (isActive currentRoute) <| HA.class "active"
+                      , HA.attributeIf (isActive currentRoute || highlighted) <| HA.class "active"
                       , HA.disabled disabled
                       ]
                     )
@@ -4632,6 +4633,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed } =
                     ( UI.button
                     , [ HE.onClick msg
                       , HA.attributeMaybe HA.title tooltip
+                      , HA.attributeIf highlighted <| HA.class "active"
                       , HA.disabled disabled
                       ]
                     )
@@ -4659,12 +4661,13 @@ type alias Link =
     , tooltip : Maybe String
     , disabled : Bool
     , dimmed : Bool
+    , highlighted : Bool
     }
 
 
 linkOut : String -> String -> Maybe String -> Bool -> Link
 linkOut label url tooltip disabled =
-    Link label (LinkOut url) tooltip disabled False
+    Link label (LinkOut url) tooltip disabled False False
 
 
 linkIn : String -> Route -> Maybe String -> Bool -> Link
@@ -4678,10 +4681,11 @@ linkIn label route tooltip disabled =
         tooltip
         disabled
         False
+        False
 
 
-linkInFull : String -> Route -> (Route -> Bool) -> Maybe String -> Bool -> Bool -> Link
-linkInFull label route isActive tooltip disabled dimmed =
+linkInFull : String -> Route -> (Route -> Bool) -> Maybe String -> Bool -> Bool -> Bool -> Link
+linkInFull label route isActive tooltip disabled dimmed highlighted =
     Link label
         (LinkIn
             { route = route
@@ -4691,11 +4695,12 @@ linkInFull label route isActive tooltip disabled dimmed =
         tooltip
         disabled
         dimmed
+        highlighted
 
 
 linkMsg : String -> FrontendMsg -> Maybe String -> Bool -> Link
 linkMsg label msg tooltip disabled =
-    Link label (LinkMsg msg) tooltip disabled False
+    Link label (LinkMsg msg) tooltip disabled False False
 
 
 loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
@@ -4754,6 +4759,12 @@ loggedInLinksView player currentRoute =
                         isInTown : Bool
                         isInTown =
                             Location.location p.location /= Nothing
+
+                        unreadMessages : Int
+                        unreadMessages =
+                            p.messages
+                                |> Dict.filter (always (not << .hasBeenRead))
+                                |> Dict.size
                     in
                     [ linkMsg "Heal" AskToHeal healTooltip healDisabled
                     , linkMsg "Refresh" Refresh Nothing False
@@ -4773,9 +4784,15 @@ loggedInLinksView player currentRoute =
                     , linkInFull "Messages"
                         (PlayerRoute Route.Messages)
                         Route.isMessagesRelatedRoute
-                        Nothing
+                        (if unreadMessages > 0 then
+                            Just "You have unread messages!"
+
+                         else
+                            Nothing
+                        )
                         False
-                        (Dict.all (always .hasBeenRead) p.messages)
+                        (unreadMessages == 0)
+                        (unreadMessages > 0)
                     , linkIn "World" (PlayerRoute Route.AboutWorld) Nothing False
                     , linkIn "Worlds" WorldsList Nothing False
                     , linkMsg "Logout" Logout Nothing False

@@ -28,10 +28,9 @@
     color: var(--yellow);
 }
 
-.link.dimmed:not(:hover):not(.active) .link-label {
-    color: var(--green-300);
-}
-
+.link.dimmed .link-left-bracket,
+.link.dimmed .link-label,
+.link.dimmed .link-right-bracket,
 .link:disabled .link-left-bracket,
 .link:disabled .link-right-bracket,
 .link:disabled .link-label {
