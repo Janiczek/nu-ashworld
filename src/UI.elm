@@ -98,4 +98,8 @@ checkbox { label, isOn, toggle } =
         , TW.mod "hover" "text-green-100 bg-green-800"
         , TW.mod "active" "text-yellow"
         ]
-        [ H.text <| checkboxLabel isOn ++ " " ++ label ]
+        [ H.div [ HA.class "flex flex-row gap-[1ch] text-left" ]
+            [ H.span [] [ H.text <| checkboxLabel isOn ]
+            , H.text label
+            ]
+        ]

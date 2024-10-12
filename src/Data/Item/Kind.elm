@@ -1341,7 +1341,7 @@ baseValue kind =
             1100
 
         Beer ->
-            200
+            5
 
         RedRyderLEBBGun ->
             3500
