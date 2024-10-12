@@ -2109,11 +2109,15 @@ playerRewards name =
             ]
 
         ReddingFindExcavatorChip ->
-            [ ItemReward { what = ItemKind.ScoutHandbook, amount = 5 } ]
+            [ ItemReward { what = ItemKind.ScoutHandbook, amount = 5 }
+            , ItemReward { what = ItemKind.Mauser9mm, amount = 1 }
+            , ItemReward { what = ItemKind.Ball9mm, amount = 300 }
+            ]
 
         NewRenoTrackDownPrettyBoyLloyd ->
             [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
             , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
+            , ItemReward { what = ItemKind.Wakizashi, amount = 1 }
             ]
 
         NewRenoHelpGuardSecretTransaction ->
@@ -2122,11 +2126,14 @@ playerRewards name =
             ]
 
         NewRenoCollectTributeFromCorsicanBrothers ->
-            []
+            [ ItemReward { what = ItemKind.SuperCattleProd, amount = 1 }
+            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+            ]
 
         NewRenoWinBoxingTournament ->
             [ ItemReward { what = ItemKind.PowerFist, amount = 1 }
             , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+            , ItemReward { what = ItemKind.LittleJesus, amount = 1 }
             ]
 
         NewRenoAcquireElectronicLockpick ->
@@ -2180,7 +2187,9 @@ playerRewards name =
             ]
 
         BrokenHillsFindMissingPeople ->
-            []
+            [ ItemReward { what = ItemKind.NeedlerPistol, amount = 1 }
+            , ItemReward { what = ItemKind.HnNeedlerCartridge, amount = 100 }
+            ]
 
         BrokenHillsBeatFrancisAtArmwrestling ->
             [ ItemReward { what = ItemKind.MegaPowerFist, amount = 1 }
@@ -2191,9 +2200,9 @@ playerRewards name =
             [ ItemReward { what = ItemKind.Stimpak, amount = 20 } ]
 
         RaidersKillEverybody ->
-            [ ItemReward { what = ItemKind.CombatArmorMk2, amount = 1 }
-            , ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 1 }
-            , ItemReward { what = ItemKind.Jhp5mm, amount = 50 }
+            [ ItemReward { what = ItemKind.CombatArmorMk2, amount = 3 }
+            , ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 3 }
+            , ItemReward { what = ItemKind.Jhp5mm, amount = 300 }
             ]
 
         SierraArmyDepotFindAbnormalBrainForSkynet ->
@@ -2214,11 +2223,14 @@ playerRewards name =
         MilitaryBaseExcavateTheEntrance ->
             [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
             , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
+            , ItemReward { what = ItemKind.PulsePistol, amount = 1 }
+            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
             ]
 
         MilitaryBaseKillMelchior ->
             [ ItemReward { what = ItemKind.GatlingLaser, amount = 1 }
             , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+            , ItemReward { what = ItemKind.RocketAp, amount = 20 }
             ]
 
         SanFranciscoFindFuelForTanker ->
@@ -2228,7 +2240,9 @@ playerRewards name =
             [ ItemReward { what = ItemKind.MotionSensor, amount = 1 } ]
 
         SanFranciscoFindNavCompPartForTanker ->
-            []
+            [ ItemReward { what = ItemKind.LaserRifleExtCap, amount = 1 }
+            , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+            ]
 
         SanFranciscoFindVertibirdPlansForHubologists ->
             [ ItemReward { what = ItemKind.TurboPlasmaRifle, amount = 1 }

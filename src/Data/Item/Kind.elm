@@ -212,13 +212,13 @@ type Kind
       --------------------
       -- ENERGY WEAPONS --
       --------------------
-    | AlienBlaster
+      -- AlienBlaster
     | LaserPistol
     | MagnetoLaserPistol
       -- Plasma Pistol
       -- Plasma Pistol (Ext. Cap.)
       -- Phazer
-    | SolarScorcher
+      -- SolarScorcher
     | PulsePistol
       ------------
     | GatlingLaser
@@ -236,7 +236,7 @@ type Kind
       -- Molotov cocktail
       -- Plasma grenade
       -- Pulse grenade
-    | HolyHandGrenade
+      -- HolyHandGrenade
       -- Rock
       -- Gold nugget
       -- Uranium ore
@@ -334,9 +334,11 @@ all =
     , Minigun
     , Bozar
     , RocketLauncher
-    , AlienBlaster
+
+    -- AlienBlaster
     , LaserPistol
-    , SolarScorcher
+
+    -- SolarScorcher
     , GatlingLaser
     , LaserRifle
     , LaserRifleExtCap
@@ -382,7 +384,8 @@ all =
     , NeedlerPistol
     , MagnetoLaserPistol
     , PulsePistol
-    , HolyHandGrenade
+
+    -- HolyHandGrenade
     , HnNeedlerCartridge
     , HnApNeedlerCartridge
     ]
@@ -570,18 +573,16 @@ encode kind =
         RocketLauncher ->
             JE.string "RocketLauncher"
 
-        AlienBlaster ->
-            JE.string "AlienBlaster"
-
+        -- AlienBlaster ->
+        --     JE.string "AlienBlaster"
         LaserPistol ->
             JE.string "LaserPistol"
 
         MagnetoLaserPistol ->
             JE.string "MagnetoLaserPistol"
 
-        SolarScorcher ->
-            JE.string "SolarScorcher"
-
+        -- SolarScorcher ->
+        --     JE.string "SolarScorcher"
         PulsePistol ->
             JE.string "PulsePistol"
 
@@ -609,9 +610,8 @@ encode kind =
         FragGrenade ->
             JE.string "FragGrenade"
 
-        HolyHandGrenade ->
-            JE.string "HolyHandGrenade"
-
+        -- HolyHandGrenade ->
+        --     JE.string "HolyHandGrenade"
         BBAmmo ->
             JE.string "BBAmmo"
 
@@ -853,18 +853,16 @@ decoder =
                     "RocketLauncher" ->
                         JD.succeed RocketLauncher
 
-                    "AlienBlaster" ->
-                        JD.succeed AlienBlaster
-
+                    -- "AlienBlaster" ->
+                    --     JD.succeed AlienBlaster
                     "LaserPistol" ->
                         JD.succeed LaserPistol
 
                     "MagnetoLaserPistol" ->
                         JD.succeed MagnetoLaserPistol
 
-                    "SolarScorcher" ->
-                        JD.succeed SolarScorcher
-
+                    -- "SolarScorcher" ->
+                    --     JD.succeed SolarScorcher
                     "PulsePistol" ->
                         JD.succeed PulsePistol
 
@@ -892,9 +890,8 @@ decoder =
                     "FragGrenade" ->
                         JD.succeed FragGrenade
 
-                    "HolyHandGrenade" ->
-                        JD.succeed HolyHandGrenade
-
+                    -- "HolyHandGrenade" ->
+                    --     JD.succeed HolyHandGrenade
                     "BBAmmo" ->
                         JD.succeed BBAmmo
 
@@ -1233,12 +1230,8 @@ usageEffects kind =
         Shotgun ->
             []
 
-        AlienBlaster ->
-            []
-
-        SolarScorcher ->
-            []
-
+        -- AlienBlaster -> []
+        -- SolarScorcher -> []
         Flare ->
             -- Maybe reduce darkness? Probably has no use in this game.
             []
@@ -1288,9 +1281,7 @@ usageEffects kind =
         PulsePistol ->
             []
 
-        HolyHandGrenade ->
-            []
-
+        -- HolyHandGrenade -> []
         HnNeedlerCartridge ->
             []
 
@@ -1516,12 +1507,8 @@ baseValue kind =
         Shotgun ->
             160
 
-        AlienBlaster ->
-            5000
-
-        SolarScorcher ->
-            400
-
+        -- AlienBlaster -> 5000
+        -- SolarScorcher -> 400
         Flare ->
             35
 
@@ -1571,10 +1558,7 @@ baseValue kind =
         PulsePistol ->
             12500
 
-        HolyHandGrenade ->
-            -- Balance?
-            1
-
+        -- HolyHandGrenade -> 1 -- Balance?
         HnNeedlerCartridge ->
             250
 
@@ -1716,15 +1700,11 @@ ammoDamageResistanceModifier kind =
         RocketLauncher ->
             0
 
-        AlienBlaster ->
-            0
-
+        -- AlienBlaster -> 0
         LaserPistol ->
             0
 
-        SolarScorcher ->
-            0
-
+        -- SolarScorcher -> 0
         GatlingLaser ->
             0
 
@@ -1854,9 +1834,7 @@ ammoDamageResistanceModifier kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -2042,15 +2020,11 @@ ammoDamageModifier kind =
         RocketLauncher ->
             ( 1, 1 )
 
-        AlienBlaster ->
-            ( 1, 1 )
-
+        -- AlienBlaster -> ( 1, 1 )
         LaserPistol ->
             ( 1, 1 )
 
-        SolarScorcher ->
-            ( 1, 1 )
-
+        -- SolarScorcher -> ( 1, 1 )
         GatlingLaser ->
             ( 1, 1 )
 
@@ -2135,9 +2109,7 @@ ammoDamageModifier kind =
         PulsePistol ->
             ( 1, 1 )
 
-        HolyHandGrenade ->
-            ( 1, 1 )
-
+        -- HolyHandGrenade -> ( 1, 1 )
         HnNeedlerCartridge ->
             ( 1, 1 )
 
@@ -2363,12 +2335,8 @@ ammoArmorClassModifier kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -2417,9 +2385,7 @@ ammoArmorClassModifier kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             -10
 
@@ -2643,12 +2609,8 @@ armorClass kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -2697,9 +2659,7 @@ armorClass kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -2973,12 +2933,8 @@ armorDamageThresholdNormal kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -3027,9 +2983,7 @@ armorDamageThresholdNormal kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -3253,12 +3207,8 @@ armorDamageThresholdExplosion kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -3307,9 +3257,7 @@ armorDamageThresholdExplosion kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -3533,12 +3481,8 @@ armorDamageThresholdElectrical kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -3587,9 +3531,7 @@ armorDamageThresholdElectrical kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -3813,12 +3755,8 @@ armorDamageThresholdEMP kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -3867,9 +3805,7 @@ armorDamageThresholdEMP kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -4093,12 +4029,8 @@ armorDamageThresholdLaser kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -4147,9 +4079,7 @@ armorDamageThresholdLaser kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -4373,12 +4303,8 @@ armorDamageThresholdFire kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -4427,9 +4353,7 @@ armorDamageThresholdFire kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -4653,12 +4577,8 @@ armorDamageThresholdPlasma kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -4707,9 +4627,7 @@ armorDamageThresholdPlasma kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -4933,12 +4851,8 @@ armorDamageResistanceNormal kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -4987,9 +4901,7 @@ armorDamageResistanceNormal kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -5213,12 +5125,8 @@ armorDamageResistanceExplosion kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -5267,9 +5175,7 @@ armorDamageResistanceExplosion kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -5493,12 +5399,8 @@ armorDamageResistanceElectrical kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -5547,9 +5449,7 @@ armorDamageResistanceElectrical kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -5773,12 +5673,8 @@ armorDamageResistanceEMP kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -5827,9 +5723,7 @@ armorDamageResistanceEMP kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -6053,12 +5947,8 @@ armorDamageResistanceLaser kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -6107,9 +5997,7 @@ armorDamageResistanceLaser kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -6333,12 +6221,8 @@ armorDamageResistanceFire kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -6387,9 +6271,7 @@ armorDamageResistanceFire kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -6613,12 +6495,8 @@ armorDamageResistancePlasma kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -6667,9 +6545,7 @@ armorDamageResistancePlasma kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -6817,16 +6693,11 @@ usableAmmoForWeapon kind =
         RocketLauncher ->
             [ ExplosiveRocket, RocketAp ]
 
-        AlienBlaster ->
-            [ SmallEnergyCell ]
-
+        -- AlienBlaster -> [ SmallEnergyCell ]
         LaserPistol ->
             [ SmallEnergyCell ]
 
-        SolarScorcher ->
-            -- TODO if we ever have darkness, this weapon needs to stop working
-            []
-
+        -- SolarScorcher -> [] -- TODO if we ever have darkness, this weapon needs to stop working
         GatlingLaser ->
             [ MicrofusionCell ]
 
@@ -6956,9 +6827,7 @@ usableAmmoForWeapon kind =
         PulsePistol ->
             [ SmallEnergyCell ]
 
-        HolyHandGrenade ->
-            [ HolyHandGrenade ]
-
+        -- HolyHandGrenade -> [ HolyHandGrenade ]
         HnNeedlerCartridge ->
             []
 
@@ -7068,12 +6937,8 @@ weaponDamageType kind =
         Shotgun ->
             Just DamageType.NormalDamage
 
-        AlienBlaster ->
-            Just DamageType.Electrical
-
-        SolarScorcher ->
-            Just DamageType.Laser
-
+        -- AlienBlaster -> Just DamageType.Electrical
+        -- SolarScorcher -> Just DamageType.Laser
         Flare ->
             Just DamageType.NormalDamage
 
@@ -7101,9 +6966,7 @@ weaponDamageType kind =
         PulsePistol ->
             Just DamageType.Electrical
 
-        HolyHandGrenade ->
-            Just DamageType.Explosion
-
+        -- HolyHandGrenade -> Just DamageType.Explosion
         Beer ->
             Nothing
 
@@ -7462,12 +7325,8 @@ weaponStrengthRequirement kind =
         Shotgun ->
             4
 
-        AlienBlaster ->
-            2
-
-        SolarScorcher ->
-            3
-
+        -- AlienBlaster -> 2
+        -- SolarScorcher -> 3
         Flare ->
             1
 
@@ -7516,9 +7375,7 @@ weaponStrengthRequirement kind =
         PulsePistol ->
             3
 
-        HolyHandGrenade ->
-            2
-
+        -- HolyHandGrenade -> 2
         HnNeedlerCartridge ->
             1
 
@@ -7745,12 +7602,8 @@ isLongRangeWeapon kind =
         Shotgun ->
             False
 
-        AlienBlaster ->
-            False
-
-        SolarScorcher ->
-            False
-
+        -- AlienBlaster -> False
+        -- SolarScorcher -> False
         Flare ->
             False
 
@@ -7799,9 +7652,7 @@ isLongRangeWeapon kind =
         PulsePistol ->
             False
 
-        HolyHandGrenade ->
-            False
-
+        -- HolyHandGrenade -> False
         HnNeedlerCartridge ->
             False
 
@@ -7835,9 +7686,7 @@ isWeaponArmorPenetrating kind =
         PulsePistol ->
             True
 
-        HolyHandGrenade ->
-            True
-
+        -- HolyHandGrenade -> True
         PulseRifle ->
             True
 
@@ -8055,12 +7904,8 @@ isWeaponArmorPenetrating kind =
         Shotgun ->
             False
 
-        AlienBlaster ->
-            False
-
-        SolarScorcher ->
-            False
-
+        -- AlienBlaster -> False
+        -- SolarScorcher -> False
         Flare ->
             False
 
@@ -8308,12 +8153,8 @@ burstRange kind =
         Shotgun ->
             0
 
-        AlienBlaster ->
-            0
-
-        SolarScorcher ->
-            0
-
+        -- AlienBlaster -> 0
+        -- SolarScorcher -> 0
         Flare ->
             0
 
@@ -8362,9 +8203,7 @@ burstRange kind =
         PulsePistol ->
             0
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -8409,9 +8248,7 @@ isAccurateWeapon kind =
         Pistol14mm ->
             True
 
-        AlienBlaster ->
-            True
-
+        -- AlienBlaster -> True
         CattleProd ->
             True
 
@@ -8439,9 +8276,7 @@ isAccurateWeapon kind =
         Shotgun ->
             True
 
-        SolarScorcher ->
-            True
-
+        -- SolarScorcher -> True
         SuperCattleProd ->
             True
 
@@ -8670,9 +8505,7 @@ isAccurateWeapon kind =
         PulsePistol ->
             False
 
-        HolyHandGrenade ->
-            False
-
+        -- HolyHandGrenade -> False
         HnNeedlerCartridge ->
             False
 
@@ -8896,12 +8729,8 @@ aimedRange kind =
         Shotgun ->
             14
 
-        AlienBlaster ->
-            10
-
-        SolarScorcher ->
-            20
-
+        -- AlienBlaster -> 10
+        -- SolarScorcher -> 20
         Flare ->
             0
 
@@ -8950,9 +8779,7 @@ aimedRange kind =
         PulsePistol ->
             15
 
-        HolyHandGrenade ->
-            0
-
+        -- HolyHandGrenade -> 0
         HnNeedlerCartridge ->
             0
 
@@ -9176,12 +9003,8 @@ unaimedRange kind =
         Shotgun ->
             14
 
-        AlienBlaster ->
-            10
-
-        SolarScorcher ->
-            20
-
+        -- AlienBlaster -> 10
+        -- SolarScorcher -> 20
         Flare ->
             15
 
@@ -9230,9 +9053,7 @@ unaimedRange kind =
         PulsePistol ->
             15
 
-        HolyHandGrenade ->
-            20
-
+        -- HolyHandGrenade -> 20
         HnNeedlerCartridge ->
             0
 
@@ -9471,12 +9292,8 @@ name kind =
         Shotgun ->
             "Shotgun"
 
-        AlienBlaster ->
-            "Alien Blaster"
-
-        SolarScorcher ->
-            "Solar Scorcher"
-
+        -- AlienBlaster -> "Alien Blaster"
+        -- SolarScorcher -> "Solar Scorcher"
         Flare ->
             "Flare"
 
@@ -9525,9 +9342,7 @@ name kind =
         PulsePistol ->
             "YK32 Pulse Pistol"
 
-        HolyHandGrenade ->
-            "Holy Hand Grenade"
-
+        -- HolyHandGrenade -> "Holy Hand Grenade"
         HnNeedlerCartridge ->
             "HN Needler Cartridge"
 
@@ -9754,12 +9569,8 @@ types kind =
         Shotgun ->
             [ Type.SmallGun ]
 
-        AlienBlaster ->
-            [ Type.EnergyWeapon ]
-
-        SolarScorcher ->
-            [ Type.EnergyWeapon ]
-
+        -- AlienBlaster -> [ Type.EnergyWeapon ]
+        -- SolarScorcher -> [ Type.EnergyWeapon ]
         Flare ->
             [ Type.ThrownWeapon ]
 
@@ -9808,9 +9619,7 @@ types kind =
         PulsePistol ->
             [ Type.EnergyWeapon ]
 
-        HolyHandGrenade ->
-            [ Type.ThrownWeapon ]
-
+        -- HolyHandGrenade -> [ Type.ThrownWeapon ]
         HnNeedlerCartridge ->
             [ Type.Ammo ]
 
@@ -9932,12 +9741,8 @@ weaponDamage kind =
         Shotgun ->
             mk 12 22
 
-        AlienBlaster ->
-            mk 30 90
-
-        SolarScorcher ->
-            mk 20 60
-
+        -- AlienBlaster -> mk 30 90
+        -- SolarScorcher -> mk 20 60
         Flare ->
             mk 1 1
 
@@ -9965,9 +9770,7 @@ weaponDamage kind =
         PulsePistol ->
             mk 32 46
 
-        HolyHandGrenade ->
-            mk 300 500
-
+        -- HolyHandGrenade -> mk 300 500
         Beer ->
             mk 0 0
 

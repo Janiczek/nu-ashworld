@@ -1485,12 +1485,10 @@ attackStyleAndApCost kind =
         ItemKind.Shotgun ->
             shootAttackStyleAndApCost 5
 
-        ItemKind.AlienBlaster ->
-            shootAttackStyleAndApCost 4
-
-        ItemKind.SolarScorcher ->
-            shootAttackStyleAndApCost 4
-
+        -- ItemKind.AlienBlaster ->
+        --     shootAttackStyleAndApCost 4
+        -- ItemKind.SolarScorcher ->
+        --     shootAttackStyleAndApCost 4
         ItemKind.Flare ->
             [ ( Throw, 1 ) ]
 
@@ -1515,9 +1513,8 @@ attackStyleAndApCost kind =
         ItemKind.PulsePistol ->
             shootAttackStyleAndApCost 4
 
-        ItemKind.HolyHandGrenade ->
-            [ ( Throw, 4 ) ]
-
+        -- ItemKind.HolyHandGrenade ->
+        --     [ ( Throw, 4 ) ]
         ItemKind.Fruit ->
             []
 
