@@ -2116,11 +2116,10 @@ townStoreView barter shop location world player =
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ UI.button
+                                [ UI.highContrastButton
                                     [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
                                     , TW.mod "group-hover" "hidden"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                     , HA.disabled <| caps <= 0
                                     , HA.title "Transfer N items"
                                     ]
@@ -2135,23 +2134,21 @@ townStoreView barter shop location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        UI.button
+                                        UI.highContrastButton
                                             [ HA.disabled True
                                             , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
                                             , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                             , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        UI.button
+                                        UI.highContrastButton
                                             [ HE.onClick <| transfer n
                                             , HA.disabled <| n <= 0 || n > caps
                                             , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
                                             , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                             , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
@@ -2159,24 +2156,22 @@ townStoreView barter shop location world player =
                                 ]
 
                         transferOneView =
-                            UI.button
+                            UI.highContrastButton
                                 [ HE.onClick <| transfer 1
                                 , HA.disabled <| caps <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                 , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            UI.button
+                            UI.highContrastButton
                                 [ HE.onClick <| transfer caps
                                 , HA.disabled <| caps <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                 , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
@@ -2250,10 +2245,9 @@ townStoreView barter shop location world player =
                                 , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
                                 , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
                                 ]
-                                [ UI.button
+                                [ UI.highContrastButton
                                     [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                    , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                     , TW.mod "group-hover" "hidden"
                                     , HA.disabled <| count <= 0
                                     , HA.title "Transfer N items"
@@ -2269,23 +2263,21 @@ townStoreView barter shop location world player =
                                     []
                                 , case String.toInt transferNValue of
                                     Nothing ->
-                                        UI.button
+                                        UI.highContrastButton
                                             [ HA.disabled True
                                             , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
                                             , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                             , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
                                             [ H.text "OK" ]
 
                                     Just n ->
-                                        UI.button
+                                        UI.highContrastButton
                                             [ HE.onClick <| transfer id n
                                             , HA.disabled <| n <= 0 || n > count
                                             , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
                                             , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                             , TW.mod "group-hover" "block"
                                             , HA.title "Transfer N items"
                                             ]
@@ -2293,24 +2285,22 @@ townStoreView barter shop location world player =
                                 ]
 
                         transferOneView =
-                            UI.button
+                            UI.highContrastButton
                                 [ HE.onClick <| transfer id 1
                                 , HA.disabled <| count <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                 , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
                         transferAllView =
-                            UI.button
+                            UI.highContrastButton
                                 [ HE.onClick <| transfer id count
                                 , HA.disabled <| count <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , TW.mod "[&:not(:disabled):hover]" "bg-green-300 text-green-100"
                                 , HA.classList [ ( "hidden", isNHovered ) ]
                                 , HA.title "Transfer all items"
                                 ]
@@ -2344,6 +2334,22 @@ townStoreView barter shop location world player =
                         , HA.style "grid-area" "player-name"
                         ]
                         [ H.text <| "Player: " ++ player.name ]
+
+                playerTradesView : Html FrontendMsg
+                playerTradesView =
+                    H.div
+                        [ HA.class "p-2 border-b-2 border-b-green-800"
+                        , HA.style "grid-area" "player-trades"
+                        ]
+                        [ H.text "Player trades:" ]
+
+                vendorTradesView : Html FrontendMsg
+                vendorTradesView =
+                    H.div
+                        [ HA.class "p-2 border-b-2 border-b-green-800"
+                        , HA.style "grid-area" "vendor-trades"
+                        ]
+                        [ H.text "Vendor trades:" ]
 
                 vendorNameView : Html FrontendMsg
                 vendorNameView =
@@ -2492,6 +2498,8 @@ townStoreView barter shop location world player =
                     , resetBtn
                     , confirmBtn
                     , playerNameView
+                    , playerTradesView
+                    , vendorTradesView
                     , vendorNameView
                     , playerKeptCapsView
                     , vendorKeptCapsView
@@ -2505,10 +2513,13 @@ townStoreView barter shop location world player =
                     , vendorTradedItemsView
                     ]
             in
-            [ pageTitleView <| "Store: " ++ Location.name location
-            , UI.button
-                [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
-                [ H.text "[Back]" ]
+            [ pageTitleView <| "Store: " ++ Shop.personName shop ++ " (" ++ Location.name location ++ ")"
+            , H.div [ HA.class "flex flex-col gap-2 items-start" ]
+                [ UI.button
+                    [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
+                    [ H.text "[Back]" ]
+                , H.div [] [ H.text <| Shop.description shop ]
+                ]
             , H.div
                 [ HA.class "mt-10 self-stretch grid grid-cols-[repeat(4,1fr)]"
                 , HA.class "town-store-grid"

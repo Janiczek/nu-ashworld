@@ -358,13 +358,13 @@ update msg model =
                                                             nextTick =
                                                                 Tick.nextTick tickFrequency currentTime
                                                         in
-                                                        ( { model_
+                                                        { model_
                                                             | worlds =
                                                                 model_.worlds
                                                                     |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
-                                                          }
-                                                        , Cmd.none
-                                                        )
+                                                        }
+                                                            -- On init, run the action immediately.
+                                                            |> postprocess worldName
 
                                                     Just nextWantedTick_ ->
                                                         if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick_ then
@@ -377,9 +377,11 @@ update msg model =
                                                                     model_.worlds
                                                                         |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
                                                             }
+                                                                -- Enough time elapsed, run the action.
                                                                 |> postprocess worldName
 
                                                         else
+                                                            -- Not enough time elapsed, do nothing.
                                                             ( model_
                                                             , Cmd.none
                                                             )

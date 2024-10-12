@@ -3,6 +3,7 @@ module UI exposing
     , button
     , checkbox
     , checkboxLabel
+    , highContrastButton
     , input
     , liBullet
     , textarea
@@ -21,6 +22,19 @@ button attrs content =
             :: TW.mod "disabled" "text-green-300 cursor-not-allowed"
             :: TW.mod "hover" "text-green-100"
             :: TW.mod "[&:not([disabled]):hover]" "bg-green-800"
+            :: TW.mod "active" "text-yellow"
+            :: attrs
+        )
+        content
+
+
+highContrastButton : List (Attribute msg) -> List (Html msg) -> Html msg
+highContrastButton attrs content =
+    H.button
+        (HA.class "uppercase whitespace-pre cursor-pointer text-green-200 select-none"
+            :: TW.mod "disabled" "text-green-300 cursor-not-allowed"
+            :: TW.mod "hover" "text-green-100"
+            :: TW.mod "[&:not([disabled]):hover]" "bg-green-300"
             :: TW.mod "active" "text-yellow"
             :: attrs
         )
