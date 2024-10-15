@@ -19,10 +19,10 @@ module Data.Barter exposing
     , removeVendorCaps
     , removeVendorItem
     , setMessage
-    , setTransferNHover
+    , setTransferNActive
     , setTransferNInput
     , singleArrow
-    , unsetTransferNHover
+    , unsetTransferNActive
     )
 
 import Data.Item as Item
@@ -58,7 +58,7 @@ type alias State =
     , vendorCaps : Int
     , lastMessage : Maybe Message
     , transferNInputs : SeqDict TransferNPosition String
-    , transferNHover : Maybe TransferNPosition
+    , activeN : Maybe TransferNPosition
     }
 
 
@@ -70,7 +70,7 @@ empty =
     , vendorCaps = 0
     , lastMessage = Nothing
     , transferNInputs = SeqDict.empty
-    , transferNHover = Nothing
+    , activeN = Nothing
     }
 
 
@@ -88,6 +88,7 @@ addVendorItem id count state =
                             Just existingCount ->
                                 Just <| existingCount + count
                     )
+        , activeN = Nothing
     }
 
 
@@ -105,6 +106,7 @@ addPlayerItem id count state =
                             Just existingCount ->
                                 Just <| existingCount + count
                     )
+        , activeN = Nothing
     }
 
 
@@ -127,6 +129,7 @@ removePlayerItem id count state =
                                 Just newCount
                         )
                     )
+        , activeN = Nothing
     }
 
 
@@ -149,27 +152,40 @@ removeVendorItem id count state =
                                 Just newCount
                         )
                     )
+        , activeN = Nothing
     }
 
 
 addPlayerCaps : Int -> State -> State
 addPlayerCaps amount state =
-    { state | playerCaps = state.playerCaps + amount }
+    { state
+        | playerCaps = state.playerCaps + amount
+        , activeN = Nothing
+    }
 
 
 removePlayerCaps : Int -> State -> State
 removePlayerCaps amount state =
-    { state | playerCaps = state.playerCaps - amount }
+    { state
+        | playerCaps = state.playerCaps - amount
+        , activeN = Nothing
+    }
 
 
 addVendorCaps : Int -> State -> State
 addVendorCaps amount state =
-    { state | vendorCaps = state.vendorCaps + amount }
+    { state
+        | vendorCaps = state.vendorCaps + amount
+        , activeN = Nothing
+    }
 
 
 removeVendorCaps : Int -> State -> State
 removeVendorCaps amount state =
-    { state | vendorCaps = state.vendorCaps - amount }
+    { state
+        | vendorCaps = state.vendorCaps - amount
+        , activeN = Nothing
+    }
 
 
 setMessage : Message -> State -> State
@@ -258,14 +274,14 @@ setTransferNInput position string state =
     { state | transferNInputs = SeqDict.insert position string state.transferNInputs }
 
 
-setTransferNHover : TransferNPosition -> State -> State
-setTransferNHover position state =
-    { state | transferNHover = Just position }
+setTransferNActive : TransferNPosition -> State -> State
+setTransferNActive position state =
+    { state | activeN = Just position }
 
 
-unsetTransferNHover : State -> State
-unsetTransferNHover state =
-    { state | transferNHover = Nothing }
+unsetTransferNActive : State -> State
+unsetTransferNActive state =
+    { state | activeN = Nothing }
 
 
 encode : State -> JE.Value
@@ -277,7 +293,7 @@ encode state =
         , ( "vendorCaps", JE.int state.vendorCaps )
         , ( "lastMessage", JE.maybe encodeMessage state.lastMessage )
         , ( "transferNInputs", SeqDict.encode encodeTransferNPosition JE.string state.transferNInputs )
-        , ( "transferNHover", JE.maybe encodeTransferNPosition state.transferNHover )
+        , ( "transferNActive", JE.maybe encodeTransferNPosition state.activeN )
         ]
 
 

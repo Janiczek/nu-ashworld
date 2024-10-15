@@ -674,11 +674,11 @@ updateBarter msg model =
             SetTransferNInput position string ->
                 mapBarter (Barter.setTransferNInput position string) model
 
-            SetTransferNHover position ->
-                mapBarter (Barter.setTransferNHover position) model
+            SetTransferNActive position ->
+                mapBarter (Barter.setTransferNActive position) model
 
-            UnsetTransferNHover ->
-                mapBarter Barter.unsetTransferNHover model
+            UnsetTransferNActive ->
+                mapBarter Barter.unsetTransferNActive model
 
 
 mapLoggedInWorld : (PlayerData -> PlayerData) -> Model -> Model
@@ -2106,54 +2106,57 @@ townStoreView barter shop location world player =
                             SeqDict.get transferNPosition barter.transferNInputs
                                 |> Maybe.withDefault Barter.defaultTransferN
 
-                        isNHovered : Bool
-                        isNHovered =
-                            barter.transferNHover == Just transferNPosition
+                        isNActive : Bool
+                        isNActive =
+                            barter.activeN == Just transferNPosition
 
                         transferNView =
-                            H.div
-                                [ HA.class "flex group"
-                                , HE.onMouseEnter <| BarterMsg <| SetTransferNHover transferNPosition
-                                , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
-                                ]
-                                [ UI.highContrastButton
-                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
-                                    , TW.mod "group-hover" "hidden"
+                            if isNActive then
+                                H.div
+                                    [ HA.class "flex" ]
+                                    [ UI.input
+                                        [ HA.class "w-10 bg-green-800 pl-[6px]"
+                                        , HA.value transferNValue
+                                        , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
+                                        , HA.title "Transfer N caps"
+                                        ]
+                                        []
+                                    , case String.toInt transferNValue of
+                                        Nothing ->
+                                            UI.highContrastButton
+                                                [ HA.disabled True
+                                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                                , HA.title "Transfer N caps"
+                                                ]
+                                                [ H.text "OK" ]
+
+                                        Just n ->
+                                            UI.highContrastButton
+                                                [ HE.onClick <| transfer n
+                                                , HA.disabled <| n <= 0 || n > caps
+                                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                                , HA.title "Transfer N caps"
+                                                ]
+                                                [ H.text "OK" ]
+                                    , UI.highContrastButton
+                                        [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                        , HA.title "Close the N input"
+                                        , HE.onClick <| BarterMsg UnsetTransferNActive
+                                        ]
+                                        [ H.text "X" ]
+                                    ]
+
+                            else
+                                UI.highContrastButton
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
                                     , HA.disabled <| caps <= 0
                                     , HA.title "Transfer N items"
+                                    , HE.onClick <| BarterMsg <| SetTransferNActive transferNPosition
                                     ]
                                     [ H.text "N" ]
-                                , UI.input
-                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
-                                    , TW.mod "group-hover" "block"
-                                    , HA.value transferNValue
-                                    , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
-                                    , HA.title "Transfer N items"
-                                    ]
-                                    []
-                                , case String.toInt transferNValue of
-                                    Nothing ->
-                                        UI.highContrastButton
-                                            [ HA.disabled True
-                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
-                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "group-hover" "block"
-                                            , HA.title "Transfer N items"
-                                            ]
-                                            [ H.text "OK" ]
-
-                                    Just n ->
-                                        UI.highContrastButton
-                                            [ HE.onClick <| transfer n
-                                            , HA.disabled <| n <= 0 || n > caps
-                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
-                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "group-hover" "block"
-                                            , HA.title "Transfer N items"
-                                            ]
-                                            [ H.text "OK" ]
-                                ]
 
                         transferOneView =
                             UI.highContrastButton
@@ -2161,8 +2164,8 @@ townStoreView barter shop location world player =
                                 , HA.disabled <| caps <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , HA.classList [ ( "hidden", isNHovered ) ]
-                                , HA.title "Transfer 1 item"
+                                , HA.classList [ ( "hidden", isNActive ) ]
+                                , HA.title "Transfer 1 cap"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
 
@@ -2172,8 +2175,8 @@ townStoreView barter shop location world player =
                                 , HA.disabled <| caps <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , HA.classList [ ( "hidden", isNHovered ) ]
-                                , HA.title "Transfer all items"
+                                , HA.classList [ ( "hidden", isNActive ) ]
+                                , HA.title "Transfer all caps"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
@@ -2235,54 +2238,57 @@ townStoreView barter shop location world player =
                             SeqDict.get position barter.transferNInputs
                                 |> Maybe.withDefault Barter.defaultTransferN
 
-                        isNHovered : Bool
-                        isNHovered =
-                            barter.transferNHover == Just position
+                        isNActive : Bool
+                        isNActive =
+                            barter.activeN == Just (transferNPosition id)
 
                         transferNView =
-                            H.div
-                                [ HA.class "flex group"
-                                , HE.onMouseEnter <| BarterMsg <| SetTransferNHover position
-                                , HE.onMouseLeave <| BarterMsg UnsetTransferNHover
-                                ]
-                                [ UI.highContrastButton
-                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                            if isNActive then
+                                H.div
+                                    [ HA.class "flex" ]
+                                    [ UI.input
+                                        [ HA.class "w-10 bg-green-800 pl-[6px]"
+                                        , HA.value transferNValue
+                                        , HE.onInput <| BarterMsg << SetTransferNInput position
+                                        , HA.title "Transfer N items"
+                                        ]
+                                        []
+                                    , case String.toInt transferNValue of
+                                        Nothing ->
+                                            UI.highContrastButton
+                                                [ HA.disabled True
+                                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                                , HA.title "Transfer N items"
+                                                ]
+                                                [ H.text "OK" ]
+
+                                        Just n ->
+                                            UI.highContrastButton
+                                                [ HE.onClick <| transfer id n
+                                                , HA.disabled <| n <= 0 || n > count
+                                                , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
+                                                , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
+                                                , HA.title "Transfer N items"
+                                                ]
+                                                [ H.text "OK" ]
+                                    , UI.highContrastButton
+                                        [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 block"
+                                        , HA.title "Close the N input"
+                                        , HE.onClick <| BarterMsg UnsetTransferNActive
+                                        ]
+                                        [ H.text "X" ]
+                                    ]
+
+                            else
+                                UI.highContrastButton
+                                    [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                    , TW.mod "group-hover" "hidden"
                                     , HA.disabled <| count <= 0
                                     , HA.title "Transfer N items"
+                                    , HE.onClick <| BarterMsg <| SetTransferNActive (transferNPosition id)
                                     ]
                                     [ H.text "N" ]
-                                , UI.input
-                                    [ HA.class "w-10 bg-green-800 pl-[6px] hidden"
-                                    , TW.mod "group-hover" "block"
-                                    , HA.value transferNValue
-                                    , HE.onInput <| BarterMsg << SetTransferNInput position
-                                    , HA.title "Transfer N items"
-                                    ]
-                                    []
-                                , case String.toInt transferNValue of
-                                    Nothing ->
-                                        UI.highContrastButton
-                                            [ HA.disabled True
-                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
-                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "group-hover" "block"
-                                            , HA.title "Transfer N items"
-                                            ]
-                                            [ H.text "OK" ]
-
-                                    Just n ->
-                                        UI.highContrastButton
-                                            [ HE.onClick <| transfer id n
-                                            , HA.disabled <| n <= 0 || n > count
-                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200 hidden"
-                                            , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                            , TW.mod "group-hover" "block"
-                                            , HA.title "Transfer N items"
-                                            ]
-                                            [ H.text "OK" ]
-                                ]
 
                         transferOneView =
                             UI.highContrastButton
@@ -2290,7 +2296,7 @@ townStoreView barter shop location world player =
                                 , HA.disabled <| count <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , HA.classList [ ( "hidden", isNHovered ) ]
+                                , HA.classList [ ( "hidden", isNActive ) ]
                                 , HA.title "Transfer 1 item"
                                 ]
                                 [ H.text <| Barter.singleArrow arrowsDirection ]
@@ -2301,7 +2307,7 @@ townStoreView barter shop location world player =
                                 , HA.disabled <| count <= 0
                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                , HA.classList [ ( "hidden", isNHovered ) ]
+                                , HA.classList [ ( "hidden", isNActive ) ]
                                 , HA.title "Transfer all items"
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]

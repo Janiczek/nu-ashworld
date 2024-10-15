@@ -155,8 +155,8 @@ type BarterMsg
     | ResetBarter
     | ConfirmBarter Shop
     | SetTransferNInput Barter.TransferNPosition String
-    | SetTransferNHover Barter.TransferNPosition
-    | UnsetTransferNHover
+    | SetTransferNActive Barter.TransferNPosition
+    | UnsetTransferNActive
 
 
 type ToBackend
