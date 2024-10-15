@@ -4,6 +4,7 @@ module Data.Fight.AttackStyle exposing
     , decoder
     , encode
     , isAimed
+    , isUnarmed
     , toAimed
     , toString
     )
@@ -198,3 +199,31 @@ encode attackStyle =
 
         ShootBurst ->
             JE.object [ ( "type", JE.string "ShootBurst" ) ]
+
+
+isUnarmed : AttackStyle -> Bool
+isUnarmed style =
+    case style of
+        UnarmedUnaimed ->
+            True
+
+        UnarmedAimed _ ->
+            True
+
+        MeleeUnaimed ->
+            False
+
+        MeleeAimed _ ->
+            False
+
+        Throw ->
+            False
+
+        ShootSingleUnaimed ->
+            False
+
+        ShootSingleAimed _ ->
+            False
+
+        ShootBurst ->
+            False

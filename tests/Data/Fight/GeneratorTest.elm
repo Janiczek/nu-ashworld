@@ -52,21 +52,13 @@ baseOpponent =
     , caps = 50
     , items = Dict.empty
     , drops = []
+    , level = 1
     , equippedArmor = Nothing
     , equippedWeapon = Nothing
     , preferredAmmo = Nothing
     , naturalArmorClass = 5
-    , attackStats =
-        Logic.attackStats
-            { special = Special.init
-            , addedSkillPercentages = SeqDict.singleton Skill.Unarmed 50
-            , traits = SeqSet.empty
-            , perks = SeqDict.empty
-            , equippedWeapon = Nothing
-            , level = 1
-            , unarmedDamageBonus = 0
-            }
     , addedSkillPercentages = SeqDict.empty
+    , unarmedDamageBonus = 0
     , special = Special.init
     , fightStrategy = Command DoWhatever
     }

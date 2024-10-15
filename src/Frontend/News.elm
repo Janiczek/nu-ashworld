@@ -25,7 +25,6 @@ items =
       , title = "TODOs before release"
       , text =
             """
-- Test that all current items can be bought / gotten from a quest
 - More enemies?
 - burst: multiple bullets, each with a chance to hit
 - Weapon/ammo part of item loot of enemies?
@@ -35,7 +34,6 @@ items =
 - refactoring: fight Opponents shouldn't hold attackStats and naturalArmorClass?
 - make movement on the map challenging (random encounters, fights you can't skip, have to heal...)
 - logic: Are we adding bonus to Critical Chance based on AimedShot?
-- Don't use ranged weapon's dmg/... when using the fallback unarmed attack when no ammo
 - regain conciousness in fight (cost 1/2 of max AP)
 
 ~janiczek

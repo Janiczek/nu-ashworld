@@ -33,7 +33,6 @@ import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
-import Logic exposing (AttackStats)
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
@@ -57,12 +56,13 @@ type alias Opponent =
     , caps : Int
     , items : Dict Item.Id Item
     , drops : List Item
+    , level : Int
     , equippedArmor : Maybe ItemKind.Kind
     , equippedWeapon : Maybe ItemKind.Kind
     , preferredAmmo : Maybe ItemKind.Kind
     , naturalArmorClass : Int
-    , attackStats : AttackStats
     , addedSkillPercentages : SeqDict Skill Int
+    , unarmedDamageBonus : Int
     , special : Special
     , fightStrategy : FightStrategy
     }

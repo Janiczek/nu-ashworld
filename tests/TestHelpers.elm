@@ -24,6 +24,7 @@ module TestHelpers exposing
     , itemFuzzer
     , itemKindFuzzer
     , itemsFuzzer
+    , levelFuzzer
     , maxApFuzzer
     , maxHpFuzzer
     , meleeWeaponKindFuzzer
@@ -76,6 +77,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
+import Data.Xp as Xp
 import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
@@ -118,6 +120,12 @@ playerOpponentFuzzer =
 xpFuzzer : Fuzzer Int
 xpFuzzer =
     Fuzz.intRange 0 4851000
+
+
+levelFuzzer : Fuzzer Int
+levelFuzzer =
+    xpFuzzer
+        |> Fuzz.map Xp.currentLevel
 
 
 hpFuzzer : Fuzzer Int
@@ -163,16 +171,28 @@ opponentFuzzer =
         |> Fuzz.andMap capsFuzzer
         |> Fuzz.andMap itemsFuzzer
         |> Fuzz.andMap dropsFuzzer
+        |> Fuzz.andMap levelFuzzer
         |> Fuzz.andMap equippedArmorKindFuzzer
         |> Fuzz.andMap equippedWeaponKindFuzzer
         |> Fuzz.andMap preferredAmmoKindFuzzer
         |> Fuzz.andMap naturalArmorClassFuzzer
-        |> Fuzz.andMap attackStatsFuzzer
         |> Fuzz.andMap addedSkillPercentagesFuzzer
+        |> Fuzz.andMap unarmedDamageBonus
         |> Fuzz.andMap specialFuzzer
         |> Fuzz.andMap (fightStrategyFuzzer { maxDepth = 5 })
         -- sanitization:
         |> Fuzz.map (\o -> { o | hp = min o.hp o.maxHp })
+
+
+unarmedDamageBonus : Fuzzer Int
+unarmedDamageBonus =
+    Fuzz.intRange
+        0
+        (Enemy.all
+            |> List.map Enemy.unarmedDamageBonus
+            |> List.maximum
+            |> Maybe.withDefault 0
+        )
 
 
 itemsFuzzer : Fuzzer (Dict Item.Id Item)

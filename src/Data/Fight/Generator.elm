@@ -189,7 +189,7 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
         otherOpponent =
             opponent_ (Fight.theOther who) ongoing
 
-        usedAmmo_ : UsedAmmo
+        usedAmmo_ : Logic.UsedAmmo
         usedAmmo_ =
             usedAmmo who ongoing
 
@@ -225,6 +225,21 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
         damageType : DamageType
         damageType =
             Logic.weaponDamageType opponent.equippedWeapon
+
+        attackStats : AttackStats
+        attackStats =
+            Logic.attackStats
+                { special = opponent.special
+                , addedSkillPercentages = opponent.addedSkillPercentages
+                , level = opponent.level
+                , perks = opponent.perks
+                , traits = opponent.traits
+                , equippedWeapon = opponent.equippedWeapon
+                , preferredAmmo = opponent.preferredAmmo
+                , items = opponent.items
+                , unarmedDamageBonus = opponent.unarmedDamageBonus
+                , attackStyle = attackStyle
+                }
     in
     Random.map2
         (\damage maybeCritical ->
@@ -237,16 +252,16 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
 
                 ( ammoDamageMultiplier, ammoDamageDivisor ) =
                     case usedAmmo_ of
-                        PreferredAmmo ( _, ammoKind ) ->
+                        Logic.PreferredAmmo ( _, ammoKind ) ->
                             ItemKind.ammoDamageModifier ammoKind
 
-                        FallbackAmmo ( _, ammoKind ) ->
+                        Logic.FallbackAmmo ( _, ammoKind ) ->
                             ItemKind.ammoDamageModifier ammoKind
 
-                        NoUsableAmmo ->
+                        Logic.NoUsableAmmo ->
                             ( 1, 1 )
 
-                        NoAmmoNeeded ->
+                        Logic.NoAmmoNeeded ->
                             ( 1, 1 )
 
                 isWeaponArmorPenetrating : Bool
@@ -258,16 +273,16 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                                 |> Maybe.withDefault False
                     in
                     case usedAmmo_ of
-                        PreferredAmmo _ ->
+                        Logic.PreferredAmmo _ ->
                             allGood ()
 
-                        FallbackAmmo _ ->
+                        Logic.FallbackAmmo _ ->
                             allGood ()
 
-                        NoUsableAmmo ->
+                        Logic.NoUsableAmmo ->
                             False
 
-                        NoAmmoNeeded ->
+                        Logic.NoAmmoNeeded ->
                             False
 
                 isUnarmedAttackArmorPiercing : Bool
@@ -350,16 +365,16 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
                 ammoDamageResistanceModifierPct : Int
                 ammoDamageResistanceModifierPct =
                     case usedAmmo_ of
-                        PreferredAmmo ( _, ammoKind ) ->
+                        Logic.PreferredAmmo ( _, ammoKind ) ->
                             ItemKind.ammoDamageResistanceModifier ammoKind
 
-                        FallbackAmmo ( _, ammoKind ) ->
+                        Logic.FallbackAmmo ( _, ammoKind ) ->
                             ItemKind.ammoDamageResistanceModifier ammoKind
 
-                        NoUsableAmmo ->
+                        Logic.NoUsableAmmo ->
                             0
 
-                        NoAmmoNeeded ->
+                        Logic.NoAmmoNeeded ->
                             0
 
                 finesseDamageResistanceModifierPct : Int
@@ -404,8 +419,8 @@ rollDamageAndCriticalInfo who ongoing attackStyle maybeCriticalEffectCategory =
             )
         )
         (Random.int
-            opponent.attackStats.minDamage
-            opponent.attackStats.maxDamage
+            attackStats.minDamage
+            attackStats.maxDamage
         )
         criticalGenerator
 
@@ -612,7 +627,7 @@ generator r =
                                     { capsGained = ongoing.target.caps
                                     , xpGained =
                                         Logic.xpGained
-                                            { baseXpGained = Enemy.xp enemyType
+                                            { baseXpGained = Enemy.xpReward enemyType
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
                                     , itemsGained = ongoing.target.drops
@@ -1108,6 +1123,21 @@ attack_ who ongoing attackStyle baseApCost =
         weaponRange =
             Logic.weaponRange opponent.equippedWeapon attackStyle
 
+        attackStats : AttackStats
+        attackStats =
+            Logic.attackStats
+                { special = opponent.special
+                , addedSkillPercentages = opponent.addedSkillPercentages
+                , level = opponent.level
+                , perks = opponent.perks
+                , traits = opponent.traits
+                , equippedWeapon = opponent.equippedWeapon
+                , preferredAmmo = opponent.preferredAmmo
+                , items = opponent.items
+                , unarmedDamageBonus = opponent.unarmedDamageBonus
+                , attackStyle = attackStyle
+                }
+
         continueAttack : Maybe ( Item.Id, ItemKind.Kind ) -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
         continueAttack usedAmmo_ =
             let
@@ -1147,7 +1177,7 @@ attack_ who ongoing attackStyle baseApCost =
 
                                 attackStatsCriticalChanceBonus : Int
                                 attackStatsCriticalChanceBonus =
-                                    opponent.attackStats.criticalChanceBonus
+                                    attackStats.criticalChanceBonus
 
                                 criticalChance : Int
                                 criticalChance =
@@ -1245,16 +1275,16 @@ attack_ who ongoing attackStyle baseApCost =
 
     else
         case usedAmmo who ongoing of
-            PreferredAmmo ammo ->
+            Logic.PreferredAmmo ammo ->
                 continueAttack (Just ammo)
 
-            FallbackAmmo ammo ->
+            Logic.FallbackAmmo ammo ->
                 continueAttack (Just ammo)
 
-            NoAmmoNeeded ->
+            Logic.NoAmmoNeeded ->
                 continueAttack Nothing
 
-            NoUsableAmmo ->
+            Logic.NoUsableAmmo ->
                 -- fall back to an unarmed attack
                 attack_
                     who
@@ -1390,17 +1420,10 @@ evalValue who state value =
             n
 
 
-type UsedAmmo
-    = PreferredAmmo ( Item.Id, ItemKind.Kind )
-    | FallbackAmmo ( Item.Id, ItemKind.Kind )
-    | NoUsableAmmo
-    | NoAmmoNeeded
-
-
 {-| When trying to use a weapon, look at the user's preferences (preferredAmmo)
 and their inventory (opponent.items) and choose which ammo will be used.
 -}
-usedAmmo : Who -> OngoingFight -> UsedAmmo
+usedAmmo : Who -> OngoingFight -> Logic.UsedAmmo
 usedAmmo who ongoingFight =
     let
         opponent : Opponent
@@ -1411,7 +1434,7 @@ usedAmmo who ongoingFight =
         Nothing ->
             -- This is going to be unarmed combat without anything equipped (so
             -- no chance of eg. eating cells for Power Fist)
-            NoAmmoNeeded
+            Logic.NoAmmoNeeded
 
         Just equippedWeapon ->
             let
@@ -1422,11 +1445,11 @@ usedAmmo who ongoingFight =
             in
             if SeqSet.isEmpty usableAmmo then
                 -- Eg. Solar Scorcher, I guess? Or any unarmed/melee weapon that doesn't eat ammo
-                NoAmmoNeeded
+                Logic.NoAmmoNeeded
 
             else
                 let
-                    fallback : () -> UsedAmmo
+                    fallback : () -> Logic.UsedAmmo
                     fallback () =
                         opponent.items
                             |> Dict.toList
@@ -1439,8 +1462,8 @@ usedAmmo who ongoingFight =
                                         Nothing
                                 )
                             |> List.head
-                            |> Maybe.map FallbackAmmo
-                            |> Maybe.withDefault NoUsableAmmo
+                            |> Maybe.map Logic.FallbackAmmo
+                            |> Maybe.withDefault Logic.NoUsableAmmo
                 in
                 case opponent.preferredAmmo of
                     Just preferredAmmo ->
@@ -1454,7 +1477,7 @@ usedAmmo who ongoingFight =
                                     fallback ()
 
                                 Just ( id, item ) ->
-                                    PreferredAmmo ( id, item.kind )
+                                    Logic.PreferredAmmo ( id, item.kind )
 
                         else
                             -- We need to fall back to anything else that's usable and that's in our inventory.
@@ -1478,16 +1501,16 @@ rangeNeeded attackStyle who state =
 
         Just equippedWeapon ->
             case usedAmmo who state.ongoingFight of
-                PreferredAmmo _ ->
+                Logic.PreferredAmmo _ ->
                     ItemKind.range attackStyle equippedWeapon
 
-                FallbackAmmo _ ->
+                Logic.FallbackAmmo _ ->
                     ItemKind.range attackStyle equippedWeapon
 
-                NoAmmoNeeded ->
+                Logic.NoAmmoNeeded ->
                     ItemKind.range attackStyle equippedWeapon
 
-                NoUsableAmmo ->
+                Logic.NoUsableAmmo ->
                     Logic.unarmedRange
 
 
@@ -1586,59 +1609,30 @@ enemyOpponentGenerator r lastItemId enemyType =
                     hp : Int
                     hp =
                         Enemy.hp enemyType
-
-                    addedSkillPercentages : SeqDict Skill Int
-                    addedSkillPercentages =
-                        Enemy.addedSkillPercentages enemyType
-
-                    traits : SeqSet Trait
-                    traits =
-                        SeqSet.empty
-
-                    special : Special
-                    special =
-                        Enemy.special enemyType
-
-                    equippedWeapon : Maybe ItemKind.Kind
-                    equippedWeapon =
-                        Enemy.equippedWeapon enemyType
-
-                    preferredAmmo : Maybe ItemKind.Kind
-                    preferredAmmo =
-                        Enemy.preferredAmmo enemyType
                 in
                 ( { type_ = OpponentType.Npc enemyType
                   , hp = hp
                   , maxHp = hp
                   , maxAp = Enemy.actionPoints enemyType
                   , sequence = Enemy.sequence enemyType
-                  , traits = traits
+                  , traits = SeqSet.empty
                   , perks = SeqDict.empty
                   , caps = caps_
                   , items = Dict.empty
                   , drops = items
+                  , -- This is used for the named unarmed attacks. Let's skip it
+                    -- for enemies for now. Maybe it will make more sense for people
+                    -- like Lo Pan etc.
+                    level = 1
                   , equippedArmor = Enemy.equippedArmor enemyType
-                  , equippedWeapon = equippedWeapon
-                  , preferredAmmo = preferredAmmo
+                  , equippedWeapon = Enemy.equippedWeapon enemyType
+                  , preferredAmmo = Enemy.preferredAmmo enemyType
                   , naturalArmorClass = Enemy.naturalArmorClass enemyType
-                  , attackStats =
-                        Logic.attackStats
-                            { special = special
-                            , addedSkillPercentages =
-                                -- TODO define this for enemies
-                                SeqDict.empty
-                            , traits = traits
-                            , perks = SeqDict.empty
-                            , equippedWeapon = equippedWeapon
-                            , level =
-                                -- TODO what to do? What damage ranges do enemies really have in FO2?
-                                1
-                            , unarmedDamageBonus = Enemy.unarmedDamageBonus enemyType
-                            }
-                  , addedSkillPercentages = addedSkillPercentages
+                  , addedSkillPercentages = Enemy.addedSkillPercentages enemyType
                   , -- Enemies never have anything else than base special (no traits, perks, ...)
-                    special = special
+                    special = Enemy.special enemyType
                   , fightStrategy = FightStrategy.doWhatever
+                  , unarmedDamageBonus = Enemy.unarmedDamageBonus enemyType
                   }
                 , newItemId
                 )
@@ -1688,18 +1682,6 @@ playerOpponent player =
                 , actionBoyPerkRanks = Perk.rank Perk.ActionBoy player.perks
                 , special = player.special
                 }
-
-        attackStats : AttackStats
-        attackStats =
-            Logic.attackStats
-                { special = player.special
-                , addedSkillPercentages = player.addedSkillPercentages
-                , level = Xp.currentLevel player.xp
-                , perks = player.perks
-                , traits = player.traits
-                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
-                , unarmedDamageBonus = 0
-                }
     in
     { type_ =
         OpponentType.Player
@@ -1715,12 +1697,13 @@ playerOpponent player =
     , caps = player.caps
     , items = player.items
     , drops = []
+    , level = Xp.currentLevel player.xp
     , equippedArmor = player.equippedArmor |> Maybe.map .kind
     , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
     , preferredAmmo = player.preferredAmmo
     , naturalArmorClass = naturalArmorClass
-    , attackStats = attackStats
     , addedSkillPercentages = player.addedSkillPercentages
+    , unarmedDamageBonus = 0 -- This is only used for NPC enemies
     , special = player.special
     , fightStrategy = player.fightStrategy
     }

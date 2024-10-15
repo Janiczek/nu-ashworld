@@ -25,7 +25,7 @@ module Data.Enemy exposing
     , special
     , typeDecoder
     , unarmedDamageBonus
-    , xp
+    , xpReward
     )
 
 import Data.Fight.AimedShot exposing (AimedShot(..))
@@ -209,8 +209,8 @@ forSmallChunk smallChunk =
     forBigChunk bigChunk
 
 
-xp : Type -> BaseXp
-xp type_ =
+xpReward : Type -> BaseXp
+xpReward type_ =
     BaseXp <|
         case type_ of
             Brahmin ->

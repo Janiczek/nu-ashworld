@@ -1,6 +1,7 @@
 module Logic exposing
     ( AttackStats
     , ItemNotUsableReason(..)
+    , UsedAmmo(..)
     , actionPoints
     , addedSkillPercentages
     , aimedShotApCostPenalty
@@ -41,6 +42,7 @@ module Logic exposing
     , totalTags
     , unarmedApCost
     , unarmedRange
+    , usedAmmo
     , weaponDamageType
     , weaponRange
     , xpGained
@@ -51,6 +53,7 @@ import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Fight.DamageType as DamageType exposing (DamageType(..))
 import Data.Fight.OpponentType exposing (OpponentType(..))
+import Data.Item as Item exposing (Item)
 import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Item.Type as ItemType
@@ -60,6 +63,8 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp exposing (BaseXp(..))
+import Dict exposing (Dict)
+import Dict.Extra as Dict
 import Random exposing (Generator)
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
@@ -782,42 +787,86 @@ attackStats :
     , perks : SeqDict Perk Int
     , level : Int
     , equippedWeapon : Maybe ItemKind.Kind
+    , preferredAmmo : Maybe ItemKind.Kind
+    , items : Dict Item.Id Item
     , unarmedDamageBonus : Int
+    , attackStyle : AttackStyle
     }
     -> AttackStats
 attackStats r =
-    case r.equippedWeapon of
-        Nothing ->
-            unarmedAttackStats
-                { special = r.special
-                , unarmedSkill = Skill.get r.special r.addedSkillPercentages Skill.Unarmed
-                , traits = r.traits
-                , perks = r.perks
-                , level = r.level
-                , unarmedDamageBonus = r.unarmedDamageBonus
-                }
+    -- TODO test: attack with knife = melee, should be getting HeavyHanded perk bonuses, but not unarmedDamageBonus
+    -- TODO test: fallback unarmed attack should be getting HeavyHanded perk bonuses and the rest as if there was no equippedWeapon
+    let
+        default () =
+            case r.equippedWeapon of
+                Nothing ->
+                    meleeAttackStats r
 
-        Just weapon ->
-            armedAttackStats
-                { bonusRangedDamagePerkRank = Perk.rank Perk.BonusRangedDamage r.perks
-                , equippedWeapon = weapon
-                }
+                Just equippedWeapon ->
+                    case r.attackStyle of
+                        UnarmedUnaimed ->
+                            meleeAttackStats r
+
+                        UnarmedAimed _ ->
+                            meleeAttackStats r
+
+                        MeleeUnaimed ->
+                            meleeAttackStats r
+
+                        MeleeAimed _ ->
+                            meleeAttackStats r
+
+                        Throw ->
+                            rangedAttackStats equippedWeapon r
+
+                        ShootSingleUnaimed ->
+                            rangedAttackStats equippedWeapon r
+
+                        ShootSingleAimed _ ->
+                            rangedAttackStats equippedWeapon r
+
+                        ShootBurst ->
+                            rangedAttackStats equippedWeapon r
+    in
+    case usedAmmo r of
+        PreferredAmmo _ ->
+            default ()
+
+        FallbackAmmo _ ->
+            default ()
+
+        NoUsableAmmo ->
+            meleeAttackStats { r | equippedWeapon = Nothing }
+
+        NoAmmoNeeded ->
+            default ()
 
 
-armedAttackStats :
-    { bonusRangedDamagePerkRank : Int
-    , equippedWeapon : ItemKind.Kind
-    }
+rangedAttackStats :
+    ItemKind.Kind
+    ->
+        { r
+            | special : Special
+            , addedSkillPercentages : SeqDict Skill Int
+            , traits : SeqSet Trait
+            , perks : SeqDict Perk Int
+            , level : Int
+            , items : Dict Item.Id Item
+        }
     -> AttackStats
-armedAttackStats r =
+rangedAttackStats equippedWeapon r =
     let
         weapon : { min : Int, max : Int }
         weapon =
-            ItemKind.weaponDamage r.equippedWeapon
+            ItemKind.weaponDamage equippedWeapon
+
+        bonusRangedDamagePerkRank : Int
+        bonusRangedDamagePerkRank =
+            Perk.rank Perk.BonusRangedDamage r.perks
 
         rangedDamagePerkBonus : Int
         rangedDamagePerkBonus =
-            2 * r.bonusRangedDamagePerkRank
+            2 * bonusRangedDamagePerkRank
     in
     -- TODO Pyromaniac - +5 damage if weapon damage type is Fire
     { minDamage = weapon.min + rangedDamagePerkBonus
@@ -826,16 +875,22 @@ armedAttackStats r =
     }
 
 
-unarmedAttackStats :
-    { special : Special
-    , unarmedSkill : Int
-    , traits : SeqSet Trait
-    , perks : SeqDict Perk Int
-    , level : Int
-    , unarmedDamageBonus : Int
+meleeAttackStats :
+    { r
+        | special : Special
+        , addedSkillPercentages : SeqDict Skill Int
+        , traits : SeqSet Trait
+        , perks : SeqDict Perk Int
+        , level : Int
+        , unarmedDamageBonus : Int
+        , equippedWeapon : Maybe ItemKind.Kind
+        , attackStyle : AttackStyle
+
+        -- We don't care about ammo here in AttackStats, that's all gonna happen
+        -- in the final damage calculation in Data.Fight.Generator
     }
     -> AttackStats
-unarmedAttackStats r =
+meleeAttackStats r =
     let
         { strength, agility } =
             r.special
@@ -856,18 +911,27 @@ unarmedAttackStats r =
         bonusMeleeDamage =
             max 1 (strength - 5) + heavyHandedTraitBonus + hthDamagePerkBonus
 
+        unarmedSkill : Int
+        unarmedSkill =
+            Skill.get r.special r.addedSkillPercentages Skill.Unarmed
+
+        isUnarmedAttack : Bool
+        isUnarmedAttack =
+            AttackStyle.isUnarmed r.attackStyle
+
+        {- "Named" unarmed attacks -}
         { unarmedAttackBonus, criticalChanceBonus } =
-            if r.unarmedSkill < 55 || agility < 6 then
+            if unarmedSkill < 55 || agility < 6 || r.equippedWeapon /= Nothing || not isUnarmedAttack then
                 { unarmedAttackBonus = 0
                 , criticalChanceBonus = 0
                 }
 
-            else if r.unarmedSkill < 75 || strength < 5 || r.level < 6 then
+            else if unarmedSkill < 75 || strength < 5 || r.level < 6 then
                 { unarmedAttackBonus = 3
                 , criticalChanceBonus = 0
                 }
 
-            else if r.unarmedSkill < 100 || agility < 7 || r.level < 9 then
+            else if unarmedSkill < 100 || agility < 7 || r.level < 9 then
                 { unarmedAttackBonus = 5
                 , criticalChanceBonus = 5
                 }
@@ -877,17 +941,20 @@ unarmedAttackStats r =
                 , criticalChanceBonus = 15
                 }
 
-        minDamage : Int
-        minDamage =
-            1 + unarmedAttackBonus
+        ( minDamage, maxDamage ) =
+            case r.equippedWeapon of
+                Nothing ->
+                    ( 1 + unarmedAttackBonus
+                    , 1 + unarmedAttackBonus + bonusMeleeDamage + r.unarmedDamageBonus
+                    )
 
-        maxDamage : Int
-        maxDamage =
-            minDamage + bonusMeleeDamage + r.unarmedDamageBonus
+                Just equippedWeapon ->
+                    let
+                        weaponDmg =
+                            ItemKind.weaponDamage equippedWeapon
+                    in
+                    ( weaponDmg.min, weaponDmg.max + bonusMeleeDamage )
     in
-    -- TODO refactor this into the attacks (Punch, StrongPunch, ...)
-    -- TODO return a list of possible attacks
-    -- TODO track their AP cost too
     { minDamage = minDamage
     , maxDamage = maxDamage
     , criticalChanceBonus = criticalChanceBonus
@@ -1701,3 +1768,79 @@ healAmountGenerator kind =
 
         Nothing ->
             Random.constant 0
+
+
+type UsedAmmo
+    = PreferredAmmo ( Item.Id, ItemKind.Kind )
+    | FallbackAmmo ( Item.Id, ItemKind.Kind )
+    | NoUsableAmmo
+    | NoAmmoNeeded
+
+
+{-| When trying to use a weapon, look at the user's preferences (preferredAmmo)
+and their inventory (opponent.items) and choose which ammo will be used.
+-}
+usedAmmo :
+    { r
+        | equippedWeapon : Maybe ItemKind.Kind
+        , items : Dict Item.Id Item
+        , preferredAmmo : Maybe ItemKind.Kind
+    }
+    -> UsedAmmo
+usedAmmo r =
+    case r.equippedWeapon of
+        Nothing ->
+            -- This is going to be unarmed combat without anything equipped (so
+            -- no chance of eg. eating cells for Power Fist)
+            NoAmmoNeeded
+
+        Just equippedWeapon ->
+            let
+                usableAmmo : SeqSet ItemKind.Kind
+                usableAmmo =
+                    ItemKind.usableAmmoForWeapon equippedWeapon
+                        |> SeqSet.fromList
+            in
+            if SeqSet.isEmpty usableAmmo then
+                -- Eg. Solar Scorcher, I guess? Or any unarmed/melee weapon that doesn't eat ammo
+                NoAmmoNeeded
+
+            else
+                let
+                    fallback : () -> UsedAmmo
+                    fallback () =
+                        r.items
+                            |> Dict.toList
+                            |> List.filterMap
+                                (\( id, { kind } ) ->
+                                    if SeqSet.member kind usableAmmo then
+                                        Just ( id, kind )
+
+                                    else
+                                        Nothing
+                                )
+                            |> List.head
+                            |> Maybe.map FallbackAmmo
+                            |> Maybe.withDefault NoUsableAmmo
+                in
+                case r.preferredAmmo of
+                    Just preferredAmmo ->
+                        if SeqSet.member preferredAmmo usableAmmo then
+                            -- We can use the preferred ammo (if we have it in our inventory!)
+                            -- NOTE: we'd like it to be that if you sell/consume all of your preferredAmmo, it stops being equipped.
+                            -- That would mean this being Just is a guarantee that it also exists in the inventory.
+                            -- But let's check it exists in inventory anyways.
+                            case Dict.find (\_ item -> item.kind == preferredAmmo) r.items of
+                                Nothing ->
+                                    fallback ()
+
+                                Just ( id, item ) ->
+                                    PreferredAmmo ( id, item.kind )
+
+                        else
+                            -- We need to fall back to anything else that's usable and that's in our inventory.
+                            fallback ()
+
+                    Nothing ->
+                        -- We're free to try anything (it's going to be a Fallback ammo)
+                        fallback ()
