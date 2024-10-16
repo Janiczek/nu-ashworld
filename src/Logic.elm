@@ -32,6 +32,7 @@ module Logic exposing
     , playerCombatCapsGained
     , playerCombatXpGained
     , price
+    , regainConciousnessApCost
     , sequence
     , skillPointCost
     , skillPointsPerLevel
@@ -250,6 +251,11 @@ armorClass r =
 aimedShotApCostPenalty : Int
 aimedShotApCostPenalty =
     1
+
+
+aimedShotCriticalChanceBonus : AimedShot -> Int
+aimedShotCriticalChanceBonus aimedShot =
+    aimedShotChanceToHitPenalty aimedShot
 
 
 aimedShotChanceToHitPenalty : AimedShot -> Int
@@ -962,51 +968,103 @@ meleeAttackStats r =
 
 baseCriticalChance :
     { special : Special
-    , hasFinesseTrait : Bool
-    , moreCriticalPerkRanks : Int
-    , hasSlayerPerk : Bool
+    , traits : SeqSet Trait
+    , perks : SeqDict Perk Int
+    , attackStyle : AttackStyle
+    , chanceToHit : Int
+    , hitOrMissRoll : Int
     }
     -> Int
 baseCriticalChance r =
-    -- TODO sniper perk and non-unarmed combat
-    unarmedBaseCriticalChance r
-
-
-unarmedBaseCriticalChance :
-    { special : Special
-    , hasFinesseTrait : Bool
-    , moreCriticalPerkRanks : Int
-    , hasSlayerPerk : Bool
-    }
-    -> Int
-unarmedBaseCriticalChance r =
     let
+        fromChanceToHit : Int
+        fromChanceToHit =
+            max 0 ((r.chanceToHit - r.hitOrMissRoll) // 10)
+
+        fromSpecial : Int
         fromSpecial =
             r.special.luck
 
+        fromFinesse : Int
         fromFinesse =
-            if r.hasFinesseTrait then
+            if SeqSet.member Trait.Finesse r.traits then
                 10
 
             else
                 0
 
+        fromMoreCriticals : Int
         fromMoreCriticals =
-            r.moreCriticalPerkRanks * 5
+            5 * Perk.rank Perk.MoreCriticals r.perks
 
+        fromSlayer : Int
         fromSlayer =
-            if r.hasSlayerPerk then
+            if Perk.rank Perk.Slayer r.perks > 0 then
                 100
 
             else
                 0
+
+        fromSniper : Int
+        fromSniper =
+            if Perk.rank Perk.Sniper r.perks > 0 then
+                -- instead of fromSpecial 1% per Luck point, we get 10% per Luck point.
+                r.special.luck * 9
+
+            else
+                0
+
+        fromAimedShot : AimedShot -> Int
+        fromAimedShot aim =
+            aimedShotCriticalChanceBonus aim
+
+        unaimed : Int -> Int
+        unaimed fromEndgamePerk =
+            (fromChanceToHit
+                + fromSpecial
+                + fromFinesse
+                + fromMoreCriticals
+                + fromEndgamePerk
+            )
+                |> min 95
+
+        aimed : AimedShot -> Int -> Int
+        aimed aim fromEndgamePerk =
+            (fromChanceToHit
+                + fromSpecial
+                + fromFinesse
+                + fromMoreCriticals
+                + fromAimedShot aim
+                + fromEndgamePerk
+            )
+                |> min 95
     in
-    (fromSpecial
-        + fromFinesse
-        + fromMoreCriticals
-        + fromSlayer
-    )
-        |> min 100
+    case r.attackStyle of
+        -- Slayer's 100% wins over the rest
+        UnarmedUnaimed ->
+            max fromSlayer (unaimed 0)
+
+        UnarmedAimed aim ->
+            max fromSlayer (aimed aim 0)
+
+        MeleeUnaimed ->
+            max fromSlayer (unaimed 0)
+
+        MeleeAimed aim ->
+            max fromSlayer (aimed aim 0)
+
+        -- Sniper is capped to 95%
+        Throw ->
+            unaimed fromSniper
+
+        ShootSingleUnaimed ->
+            unaimed fromSniper
+
+        ShootSingleAimed aim ->
+            aimed aim fromSniper
+
+        ShootBurst ->
+            unaimed fromSniper
 
 
 price :

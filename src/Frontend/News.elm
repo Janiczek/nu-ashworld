@@ -30,10 +30,8 @@ items =
 - Weapon/ammo part of item loot of enemies?
 - Fight Strategy: number of available ammo
 - Fight Strategy: walk away
-- Fight Strategy: warning for distance <=0: min distance is 1
 - refactoring: fight Opponents shouldn't hold attackStats and naturalArmorClass?
 - make movement on the map challenging (random encounters, fights you can't skip, have to heal...)
-- logic: Are we adding bonus to Critical Chance based on AimedShot?
 - regain conciousness in fight (cost 1/2 of max AP)
 
 ~janiczek

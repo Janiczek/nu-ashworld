@@ -1,5 +1,6 @@
 module LogicTest exposing (test)
 
+import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
@@ -21,7 +22,50 @@ test : Test
 test =
     Test.describe "Logic"
         [ chanceToHitSuite
+        , baseCriticalChanceSuite
         , attackStatsSuite
+        ]
+
+
+baseCriticalChanceSuite : Test
+baseCriticalChanceSuite =
+    Test.describe "baseCriticalChance"
+        [ Test.fuzz2 baseCriticalChanceArgsFuzzer
+            (Fuzz.oneOfValues
+                [ AttackStyle.UnarmedUnaimed
+                , AttackStyle.UnarmedAimed AimedShot.Eyes
+                , AttackStyle.MeleeUnaimed
+                , AttackStyle.MeleeAimed AimedShot.Torso
+                ]
+            )
+            "Slayer always gets 100% if unarmed/melee"
+          <|
+            \args attackStyle ->
+                Logic.baseCriticalChance
+                    { args
+                        | perks = args.perks |> SeqDict.insert Perk.Slayer 1
+                        , attackStyle = attackStyle
+                    }
+                    |> Expect.equal 100
+        , Test.fuzz2 baseCriticalChanceArgsFuzzer
+            (Fuzz.oneOfValues
+                [ AttackStyle.Throw
+                , AttackStyle.ShootSingleUnaimed
+                , AttackStyle.ShootSingleAimed AimedShot.Eyes
+                , AttackStyle.ShootSingleAimed AimedShot.Torso
+                , AttackStyle.ShootBurst
+                ]
+            )
+            "Sniper always gets 95% if Luck is 10"
+          <|
+            \args attackStyle ->
+                Logic.baseCriticalChance
+                    { args
+                        | perks = args.perks |> SeqDict.insert Perk.Sniper 1
+                        , attackStyle = attackStyle
+                        , special = args.special |> Special.set Special.Luck 10
+                    }
+                    |> Expect.equal 95
         ]
 
 
@@ -282,3 +326,31 @@ chanceToHitArgsFuzzer =
         |> Fuzz.andMap TestHelpers.preferredAmmoKindFuzzer
         |> Fuzz.andMap TestHelpers.armorClassFuzzer
         |> Fuzz.andMap TestHelpers.attackStyleFuzzer
+
+
+baseCriticalChanceArgsFuzzer :
+    Fuzzer
+        { special : Special
+        , traits : SeqSet Trait
+        , perks : SeqDict Perk Int
+        , attackStyle : AttackStyle
+        , chanceToHit : Int
+        , hitOrMissRoll : Int
+        }
+baseCriticalChanceArgsFuzzer =
+    Fuzz.constant
+        (\special traits perks attackStyle chanceToHit hitOrMissRoll ->
+            { special = special
+            , traits = traits
+            , perks = perks
+            , attackStyle = attackStyle
+            , chanceToHit = chanceToHit
+            , hitOrMissRoll = hitOrMissRoll
+            }
+        )
+        |> Fuzz.andMap TestHelpers.specialFuzzer
+        |> Fuzz.andMap TestHelpers.traitsFuzzer
+        |> Fuzz.andMap TestHelpers.perksFuzzer
+        |> Fuzz.andMap TestHelpers.attackStyleFuzzer
+        |> Fuzz.andMap (Fuzz.intRange 0 95)
+        |> Fuzz.andMap (Fuzz.intRange 0 100)

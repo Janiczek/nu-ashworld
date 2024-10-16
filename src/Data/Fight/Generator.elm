@@ -1170,9 +1170,11 @@ attack_ who ongoing attackStyle baseApCost =
                                 baseCriticalChance =
                                     Logic.baseCriticalChance
                                         { special = opponent.special
-                                        , hasFinesseTrait = Trait.isSelected Trait.Finesse opponent.traits
-                                        , moreCriticalPerkRanks = Perk.rank Perk.MoreCriticals opponent.perks
-                                        , hasSlayerPerk = Perk.rank Perk.Slayer opponent.perks > 0
+                                        , perks = opponent.perks
+                                        , traits = opponent.traits
+                                        , attackStyle = attackStyle
+                                        , chanceToHit = chance
+                                        , hitOrMissRoll = roll
                                         }
 
                                 attackStatsCriticalChanceBonus : Int

@@ -101,7 +101,7 @@ type Perk
       -- lvl 18
       -- TODO SilentDeath -- needs sneaking in combat
       -- lvl 24
-      -- TODO Sniper -- needs ranged weapons
+    | Sniper
     | Slayer
       -- special
     | GeckoSkinning
@@ -146,6 +146,7 @@ all =
     , Pathfinder
     , Ranger
     , Salesman
+    , Sniper
     , Slayer
     , Speaker
     , Survivalist
@@ -213,6 +214,9 @@ name perk =
 
         GainLuck ->
             "Gain Luck"
+
+        Sniper ->
+            "Sniper"
 
         Slayer ->
             "Slayer"
@@ -427,6 +431,9 @@ maxRank perk =
         BonusRateOfFire ->
             1
 
+        Sniper ->
+            1
+
         Slayer ->
             1
 
@@ -497,6 +504,9 @@ encode perk =
 
             GainLuck ->
                 "gain-luck"
+
+            Sniper ->
+                "sniper"
 
             Slayer ->
                 "slayer"
@@ -642,6 +652,9 @@ decoder =
 
                     "gain-luck" ->
                         JD.succeed GainLuck
+
+                    "sniper" ->
+                        JD.succeed Sniper
 
                     "slayer" ->
                         JD.succeed Slayer
@@ -816,6 +829,9 @@ isApplicableForLevelup r perk =
 
                 GainLuck ->
                     r.level >= 12 && s.luck < 10
+
+                Sniper ->
+                    r.level >= 24 && s.agility >= 8 && s.perception >= 8 && skill Skill.SmallGuns >= 80
 
                 Slayer ->
                     r.level >= 24 && s.agility >= 8 && s.strength >= 8 && skill Skill.Unarmed >= 80
@@ -1008,6 +1024,9 @@ description perk =
 
         Salesman ->
             "You are an adept salesperson. With this Perk you gain +20% towards your Barter skill."
+
+        Sniper ->
+            "You have mastered the firearm as a source of pain. This perk gives you an increased chance to score a critical hit with ranged weapons."
 
         Slayer ->
             "The Slayer walks the earth! In hand-to-hand combat all of your hits are upgraded to critical hits, causing destruction and mayhem."
