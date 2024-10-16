@@ -195,6 +195,7 @@ itemCount =
         |. nonemptySpaces
         |= P.oneOf
             [ P.map (\_ -> MyHealingItemCount) (P.keyword "healing items")
+            , P.map (\_ -> MyAmmoCount) (P.keyword "ammo")
             , P.map MyItemCount itemKind
             ]
 
@@ -206,6 +207,7 @@ itemsUsed =
         |. nonemptySpaces
         |= P.oneOf
             [ P.map (\_ -> HealingItemsUsed) (P.keyword "healing items")
+            , P.map (\_ -> AmmoUsed) (P.keyword "ammo")
             , P.map ItemsUsed itemKind
             ]
 

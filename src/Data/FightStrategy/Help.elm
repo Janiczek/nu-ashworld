@@ -24,25 +24,26 @@ help =
   - heal ([ITEM])                     - my AP
   - heal with anything                - number of available [ITEM]
   - move forward                      - number of available healing items
-  - do whatever                       - number of used [ITEM]
-  - skip turn                         - number of used healing items
-                                      - opponent's level
-                                      - chance to hit ([ATTACK])
- [CONDITION]                          - range needed ([ATTACK])
-   - opponent is player               - distance
-   - opponent is NPC                  - [NUMBER]
-   - [VALUE] [OPERATOR] [VALUE]
-   - ([CONDITION] or [CONDITION])
-   - ([CONDITION] and [CONDITION])  [ATTACK]             [AIM]
-                                      - unarmed            - head
-                                      - unarmed, [AIM]     - eyes
- [OPERATOR]                           - melee              - torso
-   - <   (less than)                  - melee, [AIM]       - groin
-   - <=  (less than or equal)         - throw              - left arm
-   - ==  (equals)                     - shoot              - right arm
-   - !=  (doesn't equal)              - shoot, [AIM]       - left leg
-   - >=  (greater than or equal)      - burst              - right leg
-   - >   (greater than)
+  - do whatever                       - number of available ammo
+  - skip turn                         - number of used [ITEM]
+                                      - number of used healing items
+                                      - number of used ammo
+ [CONDITION]                          - opponent's level
+   - opponent is player               - chance to hit ([ATTACK])
+   - opponent is NPC                  - range needed ([ATTACK])
+   - [VALUE] [OPERATOR] [VALUE]       - distance
+   - ([CONDITION] or [CONDITION])     - [NUMBER]
+   - ([CONDITION] and [CONDITION])
+
+                                    [ATTACK]             [AIM]
+ [OPERATOR]                           - unarmed            - head
+   - <   (less than)                  - unarmed, [AIM]     - eyes
+   - <=  (less than or equal)         - melee              - torso
+   - ==  (equals)                     - melee, [AIM]       - groin
+   - !=  (doesn't equal)              - throw              - left arm
+   - >=  (greater than or equal)      - shoot              - right arm
+   - >   (greater than)               - shoot, [AIM]       - left leg
+                                      - burst              - right leg
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -221,14 +222,14 @@ Example usage:
 - my HP
 - chance to hit (left leg)
 - number of available healing items
-- number of available Stimpak"""
+- number of available Stimpak
+- number of used ammo"""
 
         Operator ->
             """Example usage:
 - distance > 1
 - my HP <= 80
-- my AP == 3
-"""
+- my AP == 3"""
 
         Number ->
             """Can be positive or negative integers (no decimal point).

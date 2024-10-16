@@ -1374,6 +1374,24 @@ evalValue who state value =
                     )
                 |> List.sum
 
+        MyAmmoCount ->
+            case state.you.equippedWeapon of
+                Nothing ->
+                    0
+
+                Just weapon ->
+                    state.you.items
+                        |> Dict.toList
+                        |> List.filterMap
+                            (\( _, item ) ->
+                                if ItemKind.isUsableAmmoForWeapon weapon item.kind then
+                                    Just item.count
+
+                                else
+                                    Nothing
+                            )
+                        |> List.sum
+
         ItemsUsed itemKind ->
             state.yourItemsUsed
                 |> SeqDict.get itemKind
@@ -1391,6 +1409,24 @@ evalValue who state value =
                             Nothing
                     )
                 |> List.sum
+
+        AmmoUsed ->
+            case state.you.equippedWeapon of
+                Nothing ->
+                    0
+
+                Just weapon ->
+                    state.yourItemsUsed
+                        |> SeqDict.toList
+                        |> List.filterMap
+                            (\( kind, count ) ->
+                                if ItemKind.isUsableAmmoForWeapon weapon kind then
+                                    Just count
+
+                                else
+                                    Nothing
+                            )
+                        |> List.sum
 
         ChanceToHit attackStyle ->
             Logic.chanceToHit

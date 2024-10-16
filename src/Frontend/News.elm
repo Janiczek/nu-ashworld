@@ -28,7 +28,6 @@ items =
 - More enemies?
 - burst: multiple bullets, each with a chance to hit
 - Weapon/ammo part of item loot of enemies?
-- Fight Strategy: number of available ammo
 - Fight Strategy: walk away
 - refactoring: fight Opponents shouldn't hold attackStats and naturalArmorClass?
 - make movement on the map challenging (random encounters, fights you can't skip, have to heal...)

@@ -40,6 +40,8 @@ value =
               , ( "used HealingPowder", "number of used Healing Powder", Just (ItemsUsed ItemKind.HealingPowder) )
               , ( "used - non-healing item also works", "number of used Metal Armor", Just (ItemsUsed ItemKind.MetalArmor) )
               , ( "used healing items", "number of used healing items", Just HealingItemsUsed )
+              , ( "item count - ammo", "number of available ammo", Just MyAmmoCount )
+              , ( "used ammo", "number of used ammo", Just AmmoUsed )
               ]
             , AttackStyle.all
                 |> List.fastConcatMap

@@ -66,8 +66,10 @@ type Value
     | MyAP
     | MyItemCount ItemKind.Kind
     | MyHealingItemCount
+    | MyAmmoCount
     | ItemsUsed ItemKind.Kind
     | HealingItemsUsed
+    | AmmoUsed
     | ChanceToHit AttackStyle
     | RangeNeeded AttackStyle
     | Distance
@@ -177,12 +179,18 @@ valueToString value =
         MyHealingItemCount ->
             "number of available healing items"
 
+        MyAmmoCount ->
+            "number of available ammo"
+
         ItemsUsed kind ->
             "number of used "
                 ++ ItemKind.name kind
 
         HealingItemsUsed ->
             "number of used healing items"
+
+        AmmoUsed ->
+            "number of used ammo"
 
         ChanceToHit attackStyle ->
             "chance to hit ("
@@ -370,6 +378,11 @@ encodeValue value =
                 [ ( "type", JE.string "MyHealingItemCount" )
                 ]
 
+        MyAmmoCount ->
+            JE.object
+                [ ( "type", JE.string "MyAmmoCount" )
+                ]
+
         ItemsUsed itemKind ->
             JE.object
                 [ ( "type", JE.string "ItemsUsed" )
@@ -379,6 +392,11 @@ encodeValue value =
         HealingItemsUsed ->
             JE.object
                 [ ( "type", JE.string "HealingItemsUsed" )
+                ]
+
+        AmmoUsed ->
+            JE.object
+                [ ( "type", JE.string "AmmoUsed" )
                 ]
 
         ChanceToHit attackStyle ->
