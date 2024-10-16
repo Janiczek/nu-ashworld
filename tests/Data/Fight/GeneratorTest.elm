@@ -6,12 +6,10 @@ import Data.Fight.Generator as FightGen exposing (Fight)
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (..)
 import Data.Item.Kind as ItemKind
-import Data.Skill as Skill
 import Data.Special as Special
 import Dict
 import Expect
 import Fuzz exposing (Fuzzer)
-import Logic
 import Random
 import SeqDict
 import SeqSet

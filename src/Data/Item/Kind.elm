@@ -573,16 +573,12 @@ encode kind =
         RocketLauncher ->
             JE.string "RocketLauncher"
 
-        -- AlienBlaster ->
-        --     JE.string "AlienBlaster"
         LaserPistol ->
             JE.string "LaserPistol"
 
         MagnetoLaserPistol ->
             JE.string "MagnetoLaserPistol"
 
-        -- SolarScorcher ->
-        --     JE.string "SolarScorcher"
         PulsePistol ->
             JE.string "PulsePistol"
 
@@ -610,8 +606,6 @@ encode kind =
         FragGrenade ->
             JE.string "FragGrenade"
 
-        -- HolyHandGrenade ->
-        --     JE.string "HolyHandGrenade"
         BBAmmo ->
             JE.string "BBAmmo"
 

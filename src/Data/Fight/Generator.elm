@@ -8,7 +8,7 @@ module Data.Fight.Generator exposing
     , targetAlreadyDead
     )
 
-import Data.Enemy as Enemy exposing (equippedWeapon)
+import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
@@ -27,7 +27,7 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
-import Data.Skill as Skill exposing (Skill(..))
+import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp

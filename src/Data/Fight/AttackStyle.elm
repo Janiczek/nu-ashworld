@@ -4,14 +4,16 @@ module Data.Fight.AttackStyle exposing
     , decoder
     , encode
     , isAimed
+    , isUnaimed
     , isUnarmed
     , toAimed
     , toString
     )
 
-import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
+import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
+import List.ExtraExtra as List
 
 
 type AttackStyle
@@ -33,7 +35,7 @@ all =
         :: ShootSingleUnaimed
         :: ShootBurst
         :: (AimedShot.all
-                |> List.concatMap
+                |> List.fastConcatMap
                     (\aimed ->
                         [ UnarmedAimed aimed
                         , MeleeAimed aimed
@@ -41,6 +43,34 @@ all =
                         ]
                     )
            )
+
+
+isUnaimed : AttackStyle -> Bool
+isUnaimed style =
+    case style of
+        UnarmedUnaimed ->
+            True
+
+        UnarmedAimed _ ->
+            False
+
+        MeleeUnaimed ->
+            True
+
+        MeleeAimed _ ->
+            False
+
+        Throw ->
+            True
+
+        ShootSingleUnaimed ->
+            True
+
+        ShootSingleAimed _ ->
+            False
+
+        ShootBurst ->
+            False
 
 
 isAimed : AttackStyle -> Bool

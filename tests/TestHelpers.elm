@@ -81,6 +81,7 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import List.ExtraExtra as List
 import Logic exposing (AttackStats)
 import Maybe.Extra as Maybe
 import Parser as P exposing (Parser, Problem(..))
@@ -302,7 +303,7 @@ attackStyleFuzzer =
             :: MeleeUnaimed
             :: Throw
             :: ShootSingleUnaimed
-            :: List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
+            :: List.fastConcatMap (\toAimed -> List.map toAimed AimedShot.all)
                 [ UnarmedAimed
                 , MeleeAimed
                 , ShootSingleAimed
@@ -313,7 +314,7 @@ attackStyleFuzzer =
 aimedAttackStyleFuzzer : Fuzzer AttackStyle
 aimedAttackStyleFuzzer =
     Fuzz.oneOfValues
-        (List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
+        (List.fastConcatMap (\toAimed -> List.map toAimed AimedShot.all)
             [ UnarmedAimed
             , MeleeAimed
             , ShootSingleAimed

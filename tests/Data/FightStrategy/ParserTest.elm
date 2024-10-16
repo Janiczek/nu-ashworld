@@ -13,6 +13,7 @@ import Data.FightStrategy as FightStrategy
 import Data.FightStrategy.Parser as FightStrategy
 import Data.Item.Kind as ItemKind
 import Expect
+import List.ExtraExtra as List
 import Test exposing (Test)
 import TestHelpers
     exposing
@@ -26,7 +27,7 @@ value : Test
 value =
     parserTest "FightStrategy.value"
         FightStrategy.value
-        (List.concat
+        (List.fastConcat
             [ [ ( "my HP", "my HP", Just MyHP )
               , ( "my max HP", "my max HP", Just MyMaxHP )
               , ( "my AP", "my AP", Just MyAP )
@@ -41,7 +42,7 @@ value =
               , ( "used healing items", "number of used healing items", Just HealingItemsUsed )
               ]
             , AttackStyle.all
-                |> List.concatMap
+                |> List.fastConcatMap
                     (\style ->
                         [ ( "chance to hit " ++ Debug.toString style
                           , "chance to hit (" ++ AttackStyle.toString style ++ ")"
@@ -110,7 +111,7 @@ command : Test
 command =
     parserTest "FightStrategy.command"
         FightStrategy.command
-        (List.concat
+        (List.fastConcat
             [ [ ( "attack randomly", "attack randomly", Just AttackRandomly )
               , ( "move forward", "move forward", Just MoveForward )
               , ( "do whatever", "do whatever", Just DoWhatever )

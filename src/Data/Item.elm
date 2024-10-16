@@ -14,10 +14,7 @@ module Data.Item exposing
 
 -}
 
-import Data.Fight.AttackStyle exposing (AttackStyle(..))
-import Data.Fight.DamageType exposing (DamageType(..))
-import Data.Item.Kind as Kind exposing (Kind(..))
-import Data.Map.Location exposing (Size(..))
+import Data.Item.Kind as Kind exposing (Kind)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 import Json.Decode as JD exposing (Decoder)

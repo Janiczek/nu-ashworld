@@ -1,6 +1,6 @@
 module Data.Vendor.Shop exposing
     ( Shop(..), encode, decoder
-    , all, allAvailable, isAvailable
+    , all, isAvailable
     , personName, description, barterSkill, initialSpec
     , location, forLocation, isInLocation
     , ShopSpec, encodeSpec, specDecoder
@@ -9,7 +9,7 @@ module Data.Vendor.Shop exposing
 {-|
 
 @docs Shop, encode, decoder
-@docs all, allAvailable, isAvailable
+@docs all, isAvailable
 @docs personName, description, barterSkill, initialSpec
 @docs location, forLocation, isInLocation
 
@@ -21,7 +21,6 @@ import Data.Item as Item
 import Data.Item.Kind exposing (Kind(..))
 import Data.Map.Location as Location exposing (Location)
 import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
 import Json.Encode as JE
 import Random.FloatExtra as Random exposing (NormalIntSpec)
 import SeqDict exposing (SeqDict)
@@ -78,12 +77,6 @@ all =
     , SanFranciscoPunksCal
     , SanFranciscoPunksJenna
     ]
-
-
-allAvailable : SeqSet Shop -> List Shop
-allAvailable fromQuestGlobalRewards =
-    all
-        |> List.filter (isAvailable fromQuestGlobalRewards)
 
 
 isAvailable : SeqSet Shop -> Shop -> Bool

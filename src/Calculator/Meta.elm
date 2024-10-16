@@ -11,6 +11,7 @@ import Dict.Extra
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
+import List.ExtraExtra as List
 import Process
 import Random exposing (Generator)
 import Random.Extra
@@ -107,7 +108,7 @@ update msg model =
             ( model
             , Random.generate DidRunSim
                 (pop
-                    |> List.concatMap
+                    |> List.fastConcatMap
                         (\p1 ->
                             pop
                                 |> List.map (\p2 -> ( p1, p2 ))
@@ -131,10 +132,10 @@ update msg model =
                 wins =
                     fights
                         |> Dict.toList
-                        |> List.concatMap
+                        |> List.fastConcatMap
                             (\( ( i1, i2 ), results ) ->
                                 results
-                                    |> List.concatMap
+                                    |> List.fastConcatMap
                                         (\result ->
                                             case result of
                                                 Fight.AttackerWon _ ->

@@ -14,12 +14,13 @@ module Data.FightStrategy exposing
     , warnings
     )
 
-import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Item.Kind as ItemKind
 import Data.Trait as Trait exposing (Trait)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import List.ExtraExtra as List
 import SeqSet exposing (SeqSet)
 
 
@@ -583,13 +584,15 @@ doWhatever =
 type ValidationWarning
     = ItemDoesntHeal ItemKind.Kind
     | YouCantUseAimedShots
+    | MinDistanceIs1
 
 
 warnings : SeqSet Trait -> FightStrategy -> List ValidationWarning
 warnings traits strategy =
-    List.concat
+    List.fastConcat
         [ healingWithNonHealingItemsWarnings strategy
         , youCantUseAimedShots traits strategy
+        , minDistanceIs1 strategy
         ]
 
 
@@ -613,6 +616,100 @@ healingWithNonHealingItemsWarnings strategy =
         |> List.map ItemDoesntHeal
 
 
+minDistanceIs1 : FightStrategy -> List ValidationWarning
+minDistanceIs1 strategy =
+    if anyCondition isInvalidDistanceCondition strategy then
+        [ MinDistanceIs1 ]
+
+    else
+        []
+
+
+isInvalidDistanceCondition : Condition -> Bool
+isInvalidDistanceCondition condition =
+    case condition of
+        Operator { lhs, op, rhs } ->
+            case ( lhs, rhs ) of
+                ( Distance, Number n ) ->
+                    case op of
+                        LT_ ->
+                            -- distance < 1: always false
+                            -- distance < 2: not always
+                            n <= 1
+
+                        LTE ->
+                            -- distance <= 0: always false
+                            -- distance <= 1: not always
+                            n <= 0
+
+                        EQ_ ->
+                            -- distance == 0: always false
+                            -- distance == 1: not always
+                            n <= 0
+
+                        NE ->
+                            -- distance /= 0: always true
+                            -- distance /= 1: not always
+                            n <= 0
+
+                        GTE ->
+                            -- distance >= 1: always true
+                            -- distance >= 2: not always
+                            n <= 1
+
+                        GT_ ->
+                            -- distance > 0: always true
+                            -- distance > 1: not always
+                            n <= 0
+
+                ( Number n, Distance ) ->
+                    case op of
+                        GT_ ->
+                            -- 0 > distance: always true
+                            -- 1 > distance: not always
+                            n <= 0
+
+                        GTE ->
+                            -- 1 >= distance: always true
+                            -- 2 >= distance: not always
+                            n <= 1
+
+                        NE ->
+                            -- 0 != distance: always true
+                            -- 1 != distance: not always
+                            n <= 0
+
+                        EQ_ ->
+                            -- 0 == distance: always false
+                            -- 1 == distance: not always
+                            n <= 0
+
+                        LTE ->
+                            -- 0 <= distance: always true
+                            -- 1 <= distance: not always
+                            n <= 0
+
+                        LT_ ->
+                            -- 1 < distance: always false
+                            -- 2 < distance: not always
+                            n <= 1
+
+                _ ->
+                    False
+
+        Or c1 c2 ->
+            isInvalidDistanceCondition c1 || isInvalidDistanceCondition c2
+
+        And c1 c2 ->
+            isInvalidDistanceCondition c1 || isInvalidDistanceCondition c2
+
+        OpponentIsNPC ->
+            False
+
+        OpponentIsPlayer ->
+            False
+
+
 anyCommand : (Command -> Bool) -> FightStrategy -> Bool
 anyCommand predicate strategy =
     case strategy of
@@ -621,6 +718,16 @@ anyCommand predicate strategy =
 
         Command command ->
             predicate command
+
+
+anyCondition : (Condition -> Bool) -> FightStrategy -> Bool
+anyCondition predicate strategy =
+    case strategy of
+        If { condition, then_, else_ } ->
+            predicate condition || anyCondition predicate then_ || anyCondition predicate else_
+
+        Command _ ->
+            False
 
 
 isAimedCommand : Command -> Bool

@@ -1,7 +1,6 @@
 module Data.Tick exposing
     ( TickPerIntervalCurve(..)
     , curveDecoder
-    , curveToString
     , encodeCurve
     , limit
     , nextTick
@@ -30,16 +29,6 @@ type TickPerIntervalCurve
         , rest : Int
         }
     | Linear Int
-
-
-curveToString : TickPerIntervalCurve -> String
-curveToString curve =
-    case curve of
-        QuarterAndRest { quarter, rest } ->
-            String.fromInt quarter ++ "-" ++ String.fromInt rest
-
-        Linear n ->
-            String.fromInt n
 
 
 encodeCurve : TickPerIntervalCurve -> JE.Value

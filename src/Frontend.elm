@@ -7,6 +7,7 @@ import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
+import Data.Fight.AttackStyle as AttackStyle
 import Data.Fight.DamageType exposing (DamageType)
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Fight.View
@@ -76,6 +77,7 @@ import Html.Extra as H
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
+import List.ExtraExtra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
 import Markdown.Block
@@ -974,7 +976,7 @@ nextTickView zone time { tickFrequency, worldName } =
     in
     -- The -0.5px is a hack to prevent text on Windows from being blurry (basically aligning it back to the pixel grid)
     H.div [ HA.class "grid grid-cols-2 gap-x-[1ch] -translate-x-[0.5px]" ] <|
-        List.concat
+        List.fastConcat
             [ [ H.span
                     [ HA.class "text-green-300 text-right" ]
                     [ H.text "World:" ]
@@ -1198,29 +1200,6 @@ Page `{URL}` not found.
 """
         |> String.replace "{URL}" (Url.toString url)
         |> Markdown.toHtml [ HA.id "not-found-content" ]
-    ]
-
-
-adminPlayerData : AdminData -> List (Html FrontendMsg)
-adminPlayerData data =
-    [ pageTitleView "Admin :: Logged In"
-    , if Dict.isEmpty data.loggedInPlayers then
-        H.text "Nobody's here!"
-
-      else
-        data.loggedInPlayers
-            |> Dict.toList
-            |> List.map
-                (\( worldName, playerNames ) ->
-                    H.li []
-                        [ H.text worldName
-                        , H.ul []
-                            (playerNames
-                                |> List.map (\playerName -> H.li [] [ H.text playerName ])
-                            )
-                        ]
-                )
-            |> H.ul []
     ]
 
 
@@ -1569,7 +1548,7 @@ locationView location =
         , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
         , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
         , cssVars <|
-            List.concat
+            List.fastConcat
                 [ [ ( "--tile-coord-x", String.fromInt x )
                   , ( "--tile-coord-y", String.fromInt y )
                   ]
@@ -2186,7 +2165,7 @@ townStoreView barter shop location world player =
                                 [ H.text <| "Caps: $" ++ capsString ]
                     in
                     H.div
-                        [ HA.class <| "flex items-center px-2 pt-1 pb-0.5"
+                        [ HA.class "flex items-center px-2 pt-1 pb-0.5"
                         , TW.mod "[&[data-caps='0']]" "text-green-300"
                         , HA.style "grid-area" gridArea
                         , HA.attribute "data-caps" capsString
@@ -3519,16 +3498,22 @@ inventoryView _ player =
                 { special = player.special
                 , traits = player.traits
                 , perks = player.perks
+                , items = player.items
                 , addedSkillPercentages = player.addedSkillPercentages
                 , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
+                , preferredAmmo = player.preferredAmmo
                 , level = Xp.currentLevel player.xp
                 , unarmedDamageBonus = 0
+                , attackStyle =
+                    player.equippedWeapon
+                        |> Maybe.map (.kind >> Logic.unaimedAttackStyle)
+                        |> Maybe.withDefault AttackStyle.UnarmedUnaimed
                 }
     in
     [ pageTitleView "Inventory"
     , H.div [ HA.class "flex flex-col gap-4" ]
         [ H.p []
-            [ H.text <| "Total value: "
+            [ H.text "Total value: "
             , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
             ]
         , H.h3
@@ -3595,7 +3580,7 @@ inventoryView _ player =
                 ]
             ]
           ]
-            |> List.concat
+            |> List.fastConcat
             |> H.ul []
         , H.h3
             [ HA.class "text-green-300" ]
@@ -3851,6 +3836,9 @@ settingsFightStrategyView fightStrategyText _ player =
 
                         FightStrategy.YouCantUseAimedShots ->
                             "You can't use aimed shots (due to the Fast Shot trait)"
+
+                        FightStrategy.MinDistanceIs1 ->
+                            "Your condition will be always true/false because the minimal distance between opponents is 1, not between opponents is 1, not 0."
                 ]
 
         viewDeadEnd : Parser.DeadEnd -> List (Html FrontendMsg)
@@ -4084,7 +4072,7 @@ settingsFightStrategyView fightStrategyText _ player =
                         , H.ul []
                             (deadEnds
                                 |> List.sortBy deadEndCategorization
-                                |> List.concatMap viewDeadEnd
+                                |> List.fastConcatMap viewDeadEnd
                             )
                         ]
                    )
@@ -4179,16 +4167,6 @@ fightView maybeFight _ player =
                     [ H.text "[Back]" ]
                 ]
             ]
-
-
-ladderLoadingView : List (Html FrontendMsg)
-ladderLoadingView =
-    [ pageTitleView "Ladder"
-    , H.div []
-        [ H.text "Ladder is loading..."
-        , H.span [ HA.class "loading-cursor" ] []
-        ]
-    ]
 
 
 worldInfoView : WorldInfo -> Html FrontendMsg
@@ -4484,25 +4462,6 @@ contentUnavailableView reason =
         [ HE.onClick <| GoToRoute News ]
         [ H.text "[Back]" ]
     ]
-
-
-notInitializedView : Model -> Html FrontendMsg
-notInitializedView model =
-    let
-        worldNames : List World.Name
-        worldNames =
-            model.worlds
-                |> Maybe.withDefault []
-                |> List.map .name
-    in
-    appView
-        { leftNav =
-            [ loginFormView worldNames model.loginForm
-            , alertMessageView model.alertMessage
-            , loadingNavView
-            ]
-        }
-        model
 
 
 loadingNavView : Html FrontendMsg

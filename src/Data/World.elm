@@ -9,7 +9,7 @@ module Data.World exposing
 import Data.Player as Player exposing (Player, SPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
-import Data.Tick as Tick exposing (TickPerIntervalCurve(..))
+import Data.Tick as Tick exposing (TickPerIntervalCurve)
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.Vendor.Shop as Shop exposing (Shop)
 import Dict exposing (Dict)

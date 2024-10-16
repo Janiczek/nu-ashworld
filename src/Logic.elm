@@ -4,7 +4,6 @@ module Logic exposing
     , UsedAmmo(..)
     , actionPoints
     , addedSkillPercentages
-    , aimedShotApCostPenalty
     , armorClass
     , attackApCost
     , attackStats
@@ -33,16 +32,15 @@ module Logic exposing
     , playerCombatCapsGained
     , playerCombatXpGained
     , price
-    , regainConciousnessApCost
     , sequence
     , skillPointCost
     , skillPointsPerLevel
     , tickHealPercentage
     , ticksGivenPerQuestEngagement
     , totalTags
+    , unaimedAttackStyle
     , unarmedApCost
     , unarmedRange
-    , usedAmmo
     , weaponDamageType
     , weaponRange
     , xpGained
@@ -51,7 +49,7 @@ module Logic exposing
 import Data.Enemy as Enemy
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
-import Data.Fight.DamageType as DamageType exposing (DamageType(..))
+import Data.Fight.DamageType as DamageType exposing (DamageType)
 import Data.Fight.OpponentType exposing (OpponentType(..))
 import Data.Item as Item exposing (Item)
 import Data.Item.Effect as ItemEffect
@@ -65,6 +63,7 @@ import Data.Trait as Trait exposing (Trait)
 import Data.Xp exposing (BaseXp(..))
 import Dict exposing (Dict)
 import Dict.Extra as Dict
+import List.Extra
 import Random exposing (Generator)
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
@@ -1722,6 +1721,15 @@ attackStyleAndApCost kind =
 
         ItemKind.HnApNeedlerCartridge ->
             []
+
+
+unaimedAttackStyle : ItemKind.Kind -> AttackStyle
+unaimedAttackStyle kind =
+    kind
+        |> attackStyleAndApCost
+        |> List.Extra.find (\( style, _ ) -> AttackStyle.isUnaimed style)
+        |> Maybe.map Tuple.first
+        |> Maybe.withDefault AttackStyle.UnarmedUnaimed
 
 
 canBurst : ItemKind.Kind -> Bool

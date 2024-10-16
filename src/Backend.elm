@@ -51,7 +51,6 @@ import Data.WorldInfo exposing (WorldInfo)
 import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.Extra as Dict
-import Dict.ExtraExtra as Dict
 import Env
 import Http
 import Json.Decode as JD
@@ -2086,27 +2085,6 @@ subscriptions _ =
         ]
 
 
-savePlayer : World.Name -> SPlayer -> Model -> Model
-savePlayer worldName newPlayer model =
-    updatePlayer worldName newPlayer.name (always newPlayer) model
-
-
-updateWorld_ : World.Name -> (World -> ( World, Cmd BackendMsg )) -> Model -> ( Model, Cmd BackendMsg )
-updateWorld_ worldName fn model =
-    case Dict.get worldName model.worlds of
-        Nothing ->
-            ( model, Cmd.none )
-
-        Just world ->
-            let
-                ( newWorld, cmd ) =
-                    fn world
-            in
-            ( { model | worlds = Dict.insert worldName newWorld model.worlds }
-            , cmd
-            )
-
-
 updateWorld : World.Name -> (World -> World) -> Model -> Model
 updateWorld worldName fn model =
     { model | worlds = Dict.update worldName (Maybe.map fn) model.worlds }
@@ -2144,22 +2122,6 @@ updateVendor shop worldName location fn model =
                             world.vendors
                 }
             )
-
-
-createItem : World.Name -> World -> { uniqueKey : Item.UniqueKey, count : Int } -> Model -> ( Item, Model )
-createItem worldName world { uniqueKey, count } model =
-    -- TODO why is this not used?
-    let
-        ( item, newLastId ) =
-            Item.create
-                { lastId = world.lastItemId
-                , uniqueKey = uniqueKey
-                , count = count
-                }
-    in
-    ( item
-    , { model | worlds = model.worlds |> Dict.insert worldName { world | lastItemId = newLastId } }
-    )
 
 
 stopProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )

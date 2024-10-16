@@ -27,7 +27,7 @@ test =
 
 attackStatsSuite : Test
 attackStatsSuite =
-    Test.describe "attackStats" <|
+    Test.describe "attackStats"
         [ Test.fuzz attackStatsArgsFuzzer "Don't use ranged dmg range when using fallback unarmed attack when no ammo" <|
             \args ->
                 Logic.attackStats
@@ -127,7 +127,7 @@ attackStatsSuite =
 
 chanceToHitSuite : Test
 chanceToHitSuite =
-    Test.describe "chanceToHit" <|
+    Test.describe "chanceToHit"
         [ Test.fuzz chanceToHitArgsFuzzer "0..95" <|
             \args ->
                 Logic.chanceToHit args

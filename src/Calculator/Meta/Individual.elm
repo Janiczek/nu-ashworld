@@ -8,6 +8,7 @@ import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
 import List.Extra
+import List.ExtraExtra as List
 import Logic
 import Random exposing (Generator)
 import Random.List
@@ -89,7 +90,7 @@ attackStyleGenerator =
             :: MeleeUnaimed
             :: Throw
             :: ShootSingleUnaimed
-            :: List.concatMap (\toAimed -> List.map toAimed AimedShot.all)
+            :: List.fastConcatMap (\toAimed -> List.map toAimed AimedShot.all)
                 [ UnarmedAimed
                 , MeleeAimed
                 , ShootSingleAimed

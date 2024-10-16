@@ -3,15 +3,13 @@ module Data.Item.KindTest exposing (suite)
 import Data.Enemy as Enemy
 import Data.Item.Kind as ItemKind
 import Data.Map as Map
-import Data.Map.BigChunk as BigChunk
 import Data.Map.SmallChunk as SmallChunk
 import Data.Quest as Quest
 import Data.Vendor.Shop as Shop
 import Expect
-import Fuzz exposing (Fuzzer)
+import List.ExtraExtra as List
 import SeqSet exposing (SeqSet)
 import Test exposing (Test)
-import TestHelpers
 
 
 suite : Test
@@ -29,7 +27,7 @@ allObtainable =
                 availableInBaseShopSpecs : SeqSet ItemKind.Kind
                 availableInBaseShopSpecs =
                     Shop.all
-                        |> List.concatMap
+                        |> List.fastConcatMap
                             (\shop ->
                                 shop
                                     |> Shop.initialSpec
@@ -41,7 +39,7 @@ allObtainable =
                 availableInQuestRewardShopSpecs : SeqSet ItemKind.Kind
                 availableInQuestRewardShopSpecs =
                     Quest.all
-                        |> List.concatMap
+                        |> List.fastConcatMap
                             (\quest ->
                                 quest
                                     |> Quest.globalRewards
@@ -63,7 +61,7 @@ allObtainable =
                 availableInPersonalQuestRewards : SeqSet ItemKind.Kind
                 availableInPersonalQuestRewards =
                     Quest.all
-                        |> List.concatMap
+                        |> List.fastConcatMap
                             (\quest ->
                                 quest
                                     |> Quest.playerRewards
@@ -89,12 +87,12 @@ allObtainable =
                 reachableEnemies =
                     Map.allTileCoords
                         |> List.map SmallChunk.forCoords
-                        |> List.concatMap Enemy.forSmallChunk
+                        |> List.fastConcatMap Enemy.forSmallChunk
 
                 availableInEnemyDrops : SeqSet ItemKind.Kind
                 availableInEnemyDrops =
                     reachableEnemies
-                        |> List.concatMap
+                        |> List.fastConcatMap
                             (\enemy ->
                                 enemy
                                     |> Enemy.dropSpec
