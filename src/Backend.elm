@@ -1951,6 +1951,9 @@ oneTimePerkEffects currentTime =
                 Perk.Slayer ->
                     Nothing
 
+                Perk.Sniper ->
+                    Nothing
+
                 Perk.FortuneFinder ->
                     Nothing
 
