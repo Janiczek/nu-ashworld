@@ -381,7 +381,7 @@ chanceToHit :
     , attackerSpecial : Special
     , distanceHexes : Int
     , equippedWeapon : Maybe ItemKind.Kind
-    , preferredAmmo : Maybe ItemKind.Kind
+    , usedAmmo : UsedAmmo
     , targetArmorClass : Int
     , attackStyle : AttackStyle
     }
@@ -494,7 +494,7 @@ rangedChanceToHit :
         , targetArmorClass : Int
         , distanceHexes : Int
         , equippedWeapon : Maybe ItemKind.Kind
-        , preferredAmmo : Maybe ItemKind.Kind
+        , usedAmmo : UsedAmmo
         , attackStyle : AttackStyle
     }
     -> Int
@@ -515,12 +515,13 @@ rangedChanceToHit r =
                     0
 
                 else
-                    case neededSkill r.attackStyle (ItemKind.types equippedWeapon) of
-                        Nothing ->
-                            -- Wanted to attack in an `attackStyle` the weapon can't do
-                            0
+                    let
+                        neededSkill_ : Maybe Skill
+                        neededSkill_ =
+                            neededSkill r.attackStyle (ItemKind.types equippedWeapon)
 
-                        Just weaponSkill ->
+                        continue : Skill -> Maybe ( Item.Id, ItemKind.Kind ) -> Int
+                        continue weaponSkill ammo =
                             let
                                 weaponSkill_ : Int
                                 weaponSkill_ =
@@ -537,8 +538,8 @@ rangedChanceToHit r =
 
                                 ammoArmorClassModifier : Int
                                 ammoArmorClassModifier =
-                                    r.preferredAmmo
-                                        |> Maybe.map ItemKind.ammoArmorClassModifier
+                                    ammo
+                                        |> Maybe.map (\( _, kind ) -> ItemKind.ammoArmorClassModifier kind)
                                         |> Maybe.withDefault 0
 
                                 lightingPenalty_ : Int
@@ -591,18 +592,113 @@ rangedChanceToHit r =
 
                                     else
                                         0
+
+                                chanceToHitAtLeastOnce : Int
+                                chanceToHitAtLeastOnce =
+                                    (weaponSkill_
+                                        + (8 * r.attackerSpecial.perception)
+                                        -- weapon long range perk is already factored into the distancePenalty
+                                        + weaponAccuratePerk
+                                        - distancePenalty_
+                                        - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
+                                        - lightingPenalty_
+                                        - strengthRequirementPenalty
+                                        - shotPenalty
+                                    )
+                                        |> clamp 0 95
                             in
-                            (weaponSkill_
-                                + (8 * r.attackerSpecial.perception)
-                                -- weapon long range perk is already factored into the distancePenalty
-                                + weaponAccuratePerk
-                                - distancePenalty_
-                                - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
-                                - lightingPenalty_
-                                - strengthRequirementPenalty
-                                - shotPenalty
-                            )
-                                |> clamp 0 95
+                            if r.attackStyle == ShootBurst then
+                                case ammo of
+                                    Just ( _, _ ) ->
+                                        let
+                                            { chanceToHitEach } =
+                                                adjustChanceToHitForBurst
+                                                    { chanceToHitAtLeastOnce = chanceToHitAtLeastOnce
+                                                    , ammoUsedInBurst =
+                                                        -- This is used for the recoil of the gun, we don't really care that
+                                                        -- the player only has eg. 9 ammo left while Bozar would like to use 15.
+                                                        -- From the ideal 15 shots, we'd hit X%, and so it stands to reason
+                                                        -- that we'd have the same chance to hit each bullet with fewer bullets used.
+                                                        ItemKind.shotsPerBurst equippedWeapon
+                                                    }
+                                        in
+                                        chanceToHitEach
+
+                                    Nothing ->
+                                        -- Probably shouldn't happen. Burst with a weapon that doesn't use ammo.
+                                        0
+
+                            else
+                                chanceToHitAtLeastOnce
+                    in
+                    case ( neededSkill_, r.usedAmmo ) of
+                        ( Nothing, _ ) ->
+                            -- Wanted to attack in an `attackStyle` the weapon can't do
+                            0
+
+                        ( _, NoUsableAmmo ) ->
+                            -- Weapon without ammo. Fallback to the unarmed attack.
+                            meleeChanceToHit
+                                { r
+                                    | equippedWeapon = Nothing
+                                    , attackStyle = UnarmedUnaimed
+                                    , usedAmmo = NoAmmoNeeded
+                                }
+
+                        ( Just weaponSkill, NoAmmoNeeded ) ->
+                            continue weaponSkill Nothing
+
+                        ( Just weaponSkill, PreferredAmmo ammo ) ->
+                            continue weaponSkill (Just ammo)
+
+                        ( Just weaponSkill, FallbackAmmo ammo ) ->
+                            continue weaponSkill (Just ammo)
+
+
+{-| Burst chance to hit is "chance to hit at least once". But what chanceToHit
+and by extension rangedChanceToHit is supposed to return, is "chance to hit this
+bullet". So we need to compute the probability of the latter from the former, to
+later give to Data.Fight.Generator for its rolls. As a rough guideline, each
+bullet will have a lower chance to hit than the total "chance to hit at least
+once".
+
+chanceToHitEach = 1 - (1 - chanceToHitAtLeastOnce)^(1/N)
+
+Example:
+
+  - chance to hit at least once = 95%
+  - ammo used in this burst = 15 (Bozar)
+  - chance to hit each bullet = 1 - (1 - 0.95)^(1/15) = 0.181 = 18%
+
+We can check this in the other direction with any binomial distribution calculator,
+eg. <https://homepage.divms.uiowa.edu/~mbognar/applets/bin.html>
+
+X ~ Bin(n,p)
+n = 15
+p = 0.181
+x = 1
+P(X >= x) = 0.94997 (because we rounded p to 0.181)
+
+-}
+adjustChanceToHitForBurst :
+    { chanceToHitAtLeastOnce : Int
+    , ammoUsedInBurst : Int
+    }
+    -> { chanceToHitEach : Int }
+adjustChanceToHitForBurst { ammoUsedInBurst, chanceToHitAtLeastOnce } =
+    let
+        chanceToHitAtLeastOnce_ =
+            toFloat chanceToHitAtLeastOnce / 100
+
+        chanceToHitEach_ =
+            -- The meat of the calculation
+            1 - (1 - chanceToHitAtLeastOnce_) ^ (1.0 / toFloat ammoUsedInBurst)
+
+        chanceToHitEach =
+            round (chanceToHitEach_ * 100)
+                |> clamp 0 95
+    in
+    { chanceToHitEach = chanceToHitEach }
 
 
 weaponRange : Maybe ItemKind.Kind -> AttackStyle -> Int
@@ -623,6 +719,7 @@ meleeChanceToHit :
         , attackerTraits : SeqSet Trait
         , distanceHexes : Int
         , equippedWeapon : Maybe ItemKind.Kind
+        , usedAmmo : UsedAmmo
         , targetArmorClass : Int
         , attackStyle : AttackStyle
     }
@@ -637,18 +734,16 @@ meleeChanceToHit r =
         0
 
     else
-        case
-            neededSkill r.attackStyle
-                (r.equippedWeapon
-                    |> Maybe.map ItemKind.types
-                    |> Maybe.withDefault []
-                )
-        of
-            Nothing ->
-                -- Wanted to attack in an `attackStyle` the weapon can't do
-                0
+        let
+            neededSkill_ =
+                neededSkill r.attackStyle
+                    (r.equippedWeapon
+                        |> Maybe.map ItemKind.types
+                        |> Maybe.withDefault []
+                    )
 
-            Just weaponSkill ->
+            continue : Skill -> Int
+            continue weaponSkill =
                 let
                     skillPercentage : Int
                     skillPercentage =
@@ -701,6 +796,30 @@ meleeChanceToHit r =
                     - shotPenalty
                 )
                     |> clamp 0 95
+        in
+        case ( neededSkill_, r.usedAmmo ) of
+            ( Nothing, _ ) ->
+                -- Wanted to attack in an `attackStyle` the weapon can't do
+                0
+
+            ( _, NoUsableAmmo ) ->
+                -- eg. Power Fist without power
+                -- Go for the fallback unarmed attack
+                meleeChanceToHit
+                    { r
+                        | equippedWeapon = Nothing
+                        , attackStyle = UnarmedUnaimed
+                        , usedAmmo = NoAmmoNeeded
+                    }
+
+            ( Just weaponSkill, NoAmmoNeeded ) ->
+                continue weaponSkill
+
+            ( Just weaponSkill, FallbackAmmo _ ) ->
+                continue weaponSkill
+
+            ( Just weaponSkill, PreferredAmmo _ ) ->
+                continue weaponSkill
 
 
 sequence :
@@ -1471,7 +1590,6 @@ ticksGivenPerQuestEngagement engagement =
 burstShotChanceToHitPenalty : Int
 burstShotChanceToHitPenalty =
     -- TODO we should think more of a penalty, to simulate the cone
-    -- TODO also, every bullet needs to have its own chance to hit
     20
 
 

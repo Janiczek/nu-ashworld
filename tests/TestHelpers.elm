@@ -49,6 +49,7 @@ module TestHelpers exposing
     , specialFuzzer
     , traitsFuzzer
     , unarmedWeaponKindFuzzer
+    , usedAmmoFuzzer
     , valueFuzzer
     , weaponKindFuzzer
     , xpFuzzer
@@ -82,7 +83,7 @@ import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import List.ExtraExtra as List
-import Logic exposing (AttackStats)
+import Logic exposing (AttackStats, UsedAmmo)
 import Maybe.Extra as Maybe
 import Parser as P exposing (Parser, Problem(..))
 import Random
@@ -655,3 +656,17 @@ removeNewlinesAtEnds string =
 
     else
         string
+
+
+usedAmmoFuzzer : Fuzzer UsedAmmo
+usedAmmoFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.map2 (\id kind -> Logic.PreferredAmmo ( id, kind ))
+            (Fuzz.intRange 0 99999)
+            ammoKindFuzzer
+        , Fuzz.map2 (\id kind -> Logic.FallbackAmmo ( id, kind ))
+            (Fuzz.intRange 0 99999)
+            ammoKindFuzzer
+        , Fuzz.constant Logic.NoUsableAmmo
+        , Fuzz.constant Logic.NoAmmoNeeded
+        ]

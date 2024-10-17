@@ -299,20 +299,20 @@ chanceToHitArgsFuzzer :
         , attackerTraits : SeqSet Trait
         , distanceHexes : Int
         , equippedWeapon : Maybe ItemKind.Kind
-        , preferredAmmo : Maybe ItemKind.Kind
+        , usedAmmo : Logic.UsedAmmo
         , targetArmorClass : Int
         , attackStyle : AttackStyle
         }
 chanceToHitArgsFuzzer =
     Fuzz.constant
-        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon preferredAmmo targetArmorClass attackStyle ->
+        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon usedAmmo targetArmorClass attackStyle ->
             { attackerAddedSkillPercentages = attackerAddedSkillPercentages
             , attackerPerks = attackerPerks
             , attackerSpecial = attackerSpecial
             , attackerTraits = attackerTraits
             , distanceHexes = distanceHexes
             , equippedWeapon = equippedWeapon
-            , preferredAmmo = preferredAmmo
+            , usedAmmo = usedAmmo
             , targetArmorClass = targetArmorClass
             , attackStyle = attackStyle
             }
@@ -323,7 +323,7 @@ chanceToHitArgsFuzzer =
         |> Fuzz.andMap TestHelpers.traitsFuzzer
         |> Fuzz.andMap TestHelpers.distanceFuzzer
         |> Fuzz.andMap TestHelpers.equippedWeaponKindFuzzer
-        |> Fuzz.andMap TestHelpers.preferredAmmoKindFuzzer
+        |> Fuzz.andMap TestHelpers.usedAmmoFuzzer
         |> Fuzz.andMap TestHelpers.armorClassFuzzer
         |> Fuzz.andMap TestHelpers.attackStyleFuzzer
 

@@ -1003,7 +1003,7 @@ chanceToHit who ongoing attackStyle =
         , targetArmorClass = armorClass
         , attackStyle = attackStyle
         , equippedWeapon = opponent.equippedWeapon
-        , preferredAmmo = opponent.preferredAmmo
+        , usedAmmo = usedAmmo who ongoing
         }
 
 
@@ -1144,8 +1144,6 @@ attack_ who ongoing attackStyle baseApCost =
         -- TODO burst: use up ammo for each bullet
         -- TODO burst: if we have fewer bullets than the burst, only do that many rounds in the calculation
         -- TODO burst: only a certain percentage of bullets hits the main target. How to consolidate this with the 1v1 combat and cone of spread that we don't need?
-        -- TODO burst: Chance to Hit == chance to hit at least once. Meaning each bullet has _lower_ chance to hit
-        -- TODO burst: maybe... chanceToHitOne = 1 - (1 - chanceToHitAtLeastOnce)^(1/N)
         continueAttack : Maybe ( Item.Id, ItemKind.Kind ) -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
         continueAttack usedAmmo_ =
             let
@@ -1453,7 +1451,7 @@ evalValue who state value =
                         }
                 , attackStyle = attackStyle
                 , equippedWeapon = state.you.equippedWeapon
-                , preferredAmmo = state.you.preferredAmmo
+                , usedAmmo = usedAmmo who state.ongoingFight
                 }
 
         RangeNeeded attackStyle ->
