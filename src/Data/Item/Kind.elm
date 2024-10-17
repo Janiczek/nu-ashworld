@@ -11,7 +11,7 @@ module Data.Item.Kind exposing
     , armorClass, armorDamageResistance, armorDamageThreshold
     , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
     , range, weaponStrengthRequirement
-    , weaponDamageType, weaponDamage
+    , weaponDamageType, weaponDamage, shotsPerBurst
     , usableAmmoForWeapon, isUsableAmmoForWeapon
     )
 
@@ -46,7 +46,7 @@ module Data.Item.Kind exposing
 
 @docs isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
 @docs range, weaponStrengthRequirement
-@docs weaponDamageType, weaponDamage
+@docs weaponDamageType, weaponDamage, shotsPerBurst
 @docs usableAmmoForWeapon, isUsableAmmoForWeapon
 
 TODO weight : Kind -> Int
@@ -9905,3 +9905,274 @@ weaponDamage kind =
 
         HnApNeedlerCartridge ->
             mk 0 0
+
+
+shotsPerBurst : Kind -> Int
+shotsPerBurst kind =
+    case kind of
+        PowerFist ->
+            0
+
+        MegaPowerFist ->
+            0
+
+        SuperSledge ->
+            0
+
+        GaussPistol ->
+            0
+
+        Smg10mm ->
+            10
+
+        HkP90c ->
+            12
+
+        AssaultRifle ->
+            8
+
+        ExpandedAssaultRifle ->
+            8
+
+        HuntingRifle ->
+            0
+
+        ScopedHuntingRifle ->
+            0
+
+        RedRyderLEBBGun ->
+            0
+
+        SniperRifle ->
+            0
+
+        GaussRifle ->
+            0
+
+        PancorJackhammer ->
+            5
+
+        SawedOffShotgun ->
+            0
+
+        Minigun ->
+            40
+
+        Bozar ->
+            15
+
+        RocketLauncher ->
+            0
+
+        LaserPistol ->
+            0
+
+        GatlingLaser ->
+            10
+
+        LaserRifle ->
+            0
+
+        LaserRifleExtCap ->
+            0
+
+        PlasmaRifle ->
+            0
+
+        TurboPlasmaRifle ->
+            0
+
+        PulseRifle ->
+            0
+
+        FragGrenade ->
+            0
+
+        CattleProd ->
+            0
+
+        SuperCattleProd ->
+            0
+
+        Mauser9mm ->
+            0
+
+        Pistol14mm ->
+            0
+
+        CombatShotgun ->
+            3
+
+        HkCaws ->
+            5
+
+        Shotgun ->
+            0
+
+        Flare ->
+            0
+
+        Pistol223 ->
+            0
+
+        Knife ->
+            0
+
+        Wakizashi ->
+            0
+
+        LittleJesus ->
+            0
+
+        Ripper ->
+            0
+
+        NeedlerPistol ->
+            0
+
+        MagnetoLaserPistol ->
+            0
+
+        PulsePistol ->
+            0
+
+        Beer ->
+            0
+
+        Fruit ->
+            0
+
+        HealingPowder ->
+            0
+
+        Stimpak ->
+            0
+
+        SuperStimpak ->
+            0
+
+        BigBookOfScience ->
+            0
+
+        DeansElectronics ->
+            0
+
+        FirstAidBook ->
+            0
+
+        GunsAndBullets ->
+            0
+
+        ScoutHandbook ->
+            0
+
+        Robes ->
+            0
+
+        LeatherJacket ->
+            0
+
+        LeatherArmor ->
+            0
+
+        MetalArmor ->
+            0
+
+        TeslaArmor ->
+            0
+
+        CombatArmor ->
+            0
+
+        CombatArmorMk2 ->
+            0
+
+        PowerArmor ->
+            0
+
+        BBAmmo ->
+            0
+
+        SmallEnergyCell ->
+            0
+
+        Fmj223 ->
+            0
+
+        ShotgunShell ->
+            0
+
+        Jhp10mm ->
+            0
+
+        Jhp5mm ->
+            0
+
+        MicrofusionCell ->
+            0
+
+        Ec2mm ->
+            0
+
+        Tool ->
+            0
+
+        LockPicks ->
+            0
+
+        ElectronicLockpick ->
+            0
+
+        AbnormalBrain ->
+            0
+
+        ChimpanzeeBrain ->
+            0
+
+        HumanBrain ->
+            0
+
+        CyberneticBrain ->
+            0
+
+        GECK ->
+            0
+
+        SkynetAim ->
+            0
+
+        MotionSensor ->
+            0
+
+        K9 ->
+            0
+
+        MeatJerky ->
+            0
+
+        Ap5mm ->
+            0
+
+        Mm9 ->
+            0
+
+        Ball9mm ->
+            0
+
+        Ap10mm ->
+            0
+
+        Ap14mm ->
+            0
+
+        ExplosiveRocket ->
+            0
+
+        RocketAp ->
+            0
+
+        HnNeedlerCartridge ->
+            0
+
+        HnApNeedlerCartridge ->
+            0

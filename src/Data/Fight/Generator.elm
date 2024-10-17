@@ -1138,6 +1138,14 @@ attack_ who ongoing attackStyle baseApCost =
                 , attackStyle = attackStyle
                 }
 
+        -- TODO burst: only one global critical hit roll; if it's critical, all the non-missing bullets are critical
+        -- TODO burst: targets the torso
+        -- TODO burst: each bullet has its own chance to hit
+        -- TODO burst: use up ammo for each bullet
+        -- TODO burst: if we have fewer bullets than the burst, only do that many rounds in the calculation
+        -- TODO burst: only a certain percentage of bullets hits the main target. How to consolidate this with the 1v1 combat and cone of spread that we don't need?
+        -- TODO burst: Chance to Hit == chance to hit at least once. Meaning each bullet has _lower_ chance to hit
+        -- TODO burst: maybe... chanceToHitOne = 1 - (1 - chanceToHitAtLeastOnce)^(1/N)
         continueAttack : Maybe ( Item.Id, ItemKind.Kind ) -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
         continueAttack usedAmmo_ =
             let
