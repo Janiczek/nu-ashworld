@@ -6,6 +6,7 @@ module TestHelpers exposing
     , armorKindFuzzer
     , attackStatsFuzzer
     , attackStyleFuzzer
+    , canPass
     , capsFuzzer
     , commandFuzzer
     , conditionFuzzer
@@ -82,6 +83,7 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
+import List.Extra
 import List.ExtraExtra as List
 import Logic exposing (AttackStats, UsedAmmo)
 import Maybe.Extra as Maybe
@@ -91,6 +93,7 @@ import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 import String.Extra as String
 import Test exposing (Test)
+import Test.Runner
 import Time exposing (Posix)
 
 
@@ -672,3 +675,30 @@ usedAmmoFuzzer =
         , Fuzz.constant Logic.NoUsableAmmo
         , Fuzz.constant Logic.NoAmmoNeeded
         ]
+
+
+{-| Will run the fuzzer up to 100 times and check if it passes the test at least once.
+-}
+canPass : Fuzzer a -> (a -> Bool) -> Expectation
+canPass fuzzer pred =
+    let
+        tries =
+            100
+
+        go n nLeft =
+            if nLeft <= 0 then
+                Expect.fail <| "Expected the fuzzer to pass the test at least once out of " ++ String.fromInt tries ++ " tries."
+
+            else
+                let
+                    seenItPass =
+                        Fuzz.examples n fuzzer
+                            |> List.any pred
+                in
+                if seenItPass then
+                    Expect.pass
+
+                else
+                    go (n + 1) (nLeft - n)
+    in
+    go 1 tries

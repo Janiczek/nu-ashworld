@@ -6,6 +6,7 @@ module Data.Fight exposing
     , Result(..)
     , Who(..)
     , attackDamage
+    , attackStyle
     , encodeInfo
     , infoDecoder
     , isAttack
@@ -386,9 +387,9 @@ actionDecoder =
 
                     "Miss" ->
                         JD.map2
-                            (\attackStyle apCost ->
+                            (\attackStyle_ apCost ->
                                 Miss
-                                    { attackStyle = attackStyle
+                                    { attackStyle = attackStyle_
                                     , apCost = apCost
                                     }
                             )
@@ -457,10 +458,10 @@ commandRejectionReasonDecoder =
 attackActionDecoder : Decoder Action
 attackActionDecoder =
     JD.map5
-        (\damage attackStyle remainingHp isCritical apCost ->
+        (\damage attackStyle_ remainingHp isCritical apCost ->
             Attack
                 { damage = damage
-                , attackStyle = attackStyle
+                , attackStyle = attackStyle_
                 , remainingHp = remainingHp
                 , isCritical = isCritical
                 , apCost = apCost
@@ -520,8 +521,48 @@ attackDamage action =
         Attack { damage } ->
             damage
 
-        _ ->
+        Miss _ ->
             0
+
+        Start _ ->
+            0
+
+        ComeCloser _ ->
+            0
+
+        Heal _ ->
+            0
+
+        SkipTurn ->
+            0
+
+        FailToDoAnything _ ->
+            0
+
+
+attackStyle : Action -> Maybe AttackStyle
+attackStyle action =
+    case action of
+        Attack r ->
+            Just r.attackStyle
+
+        Miss r ->
+            Just r.attackStyle
+
+        Start _ ->
+            Nothing
+
+        ComeCloser _ ->
+            Nothing
+
+        Heal _ ->
+            Nothing
+
+        SkipTurn ->
+            Nothing
+
+        FailToDoAnything _ ->
+            Nothing
 
 
 isAttack : Action -> Bool

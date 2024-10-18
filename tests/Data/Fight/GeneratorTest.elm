@@ -1,8 +1,8 @@
 module Data.Fight.GeneratorTest exposing (suite)
 
 import Data.Fight as Fight exposing (Opponent)
-import Data.Fight.AttackStyle as AttackStyle
-import Data.Fight.Generator as FightGen exposing (Fight)
+import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
+import Data.Fight.Generator as FightGen exposing (Fight, OngoingFight)
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy exposing (..)
 import Data.Item.Kind as ItemKind
@@ -36,6 +36,8 @@ suite =
             , thrownAttackUsesUpWeapon
             , canBurstAttackWithLessThanDesignatedAmmoAmount
             , burstAttackUsesDesignatedAmmoAmount
+            , burstAttackCanCauseDamage
+            , burstAttackCanBeCritical
             ]
         ]
 
@@ -466,6 +468,64 @@ burstAttackUsesDesignatedAmmoAmount =
                     ]
 
 
+burstAttackCanCauseDamage : Test
+burstAttackCanCauseDamage =
+    Test.test "Burst attack can cause damage" <|
+        \() ->
+            let
+                attackFuzzer_ =
+                    attackFuzzer
+                        (\opponent ->
+                            { opponent
+                                | equippedWeapon = Just ItemKind.Bozar
+                                , preferredAmmo = Just ItemKind.Fmj223
+                                , items = Dict.singleton 1 { id = 1, kind = ItemKind.Fmj223, count = 100 }
+                            }
+                        )
+                        (Fuzz.constant AttackStyle.ShootBurst)
+
+                test result =
+                    result.nextOngoing.reverseLog
+                        |> List.any
+                            (\( _, action ) ->
+                                (Fight.attackStyle action == Just AttackStyle.ShootBurst)
+                                    && (Fight.attackDamage action > 0)
+                            )
+            in
+            canPass attackFuzzer_ test
+
+
+burstAttackCanBeCritical : Test
+burstAttackCanBeCritical =
+    Test.test "Burst attack can be critical" <|
+        \() ->
+            let
+                attackFuzzer_ =
+                    attackFuzzer
+                        (\opponent ->
+                            { opponent
+                                | equippedWeapon = Just ItemKind.Bozar
+                                , preferredAmmo = Just ItemKind.Fmj223
+                                , items = Dict.singleton 1 { id = 1, kind = ItemKind.Fmj223, count = 100 }
+                            }
+                        )
+                        (Fuzz.constant AttackStyle.ShootBurst)
+
+                test result =
+                    result.nextOngoing.reverseLog
+                        |> List.any
+                            (\( _, action ) ->
+                                case action of
+                                    Fight.Attack r ->
+                                        r.isCritical
+
+                                    _ ->
+                                        False
+                            )
+            in
+            canPass attackFuzzer_ test
+
+
 rangedAttackSucceedsWithWrongPreferredAmmo : Test
 rangedAttackSucceedsWithWrongPreferredAmmo =
     Test.test "Ranged attack succeeds with wrong preferred ammo" <|
@@ -639,3 +699,39 @@ randomFightFuzzer =
         { attacker = opponentFuzzer
         , target = opponentFuzzer
         }
+
+
+attackFuzzer : (Opponent -> Opponent) -> Fuzzer AttackStyle -> Fuzzer { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+attackFuzzer fixOpponent attackStyleFuzzer =
+    Fuzz.map4
+        (\opponent attackStyle ap seed ->
+            let
+                fixedOpponent =
+                    fixOpponent opponent
+
+                ongoingFight =
+                    { distanceHexes = 1
+                    , attacker = fixedOpponent
+                    , attackerAp = 10
+                    , attackerItemsUsed = SeqDict.empty
+                    , target = fixedOpponent
+                    , targetAp = 10
+                    , targetItemsUsed = SeqDict.empty
+                    , reverseLog = []
+                    , actionsTaken = 0
+                    }
+            in
+            Random.step
+                (FightGen.attack_
+                    Fight.Attacker
+                    ongoingFight
+                    attackStyle
+                    ap
+                )
+                seed
+                |> Tuple.first
+        )
+        opponentFuzzer
+        attackStyleFuzzer
+        (Fuzz.intRange 1 10)
+        randomSeedFuzzer
