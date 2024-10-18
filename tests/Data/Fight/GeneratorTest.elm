@@ -34,6 +34,8 @@ suite =
             , rangedAttackFailsAtDistance30WithRange7
             , unarmedAttackUsedWhenNoAmmoAndInRange
             , thrownAttackUsesUpWeapon
+            , canBurstAttackWithLessThanDesignatedAmmoAmount
+            , burstAttackUsesDesignatedAmmoAmount
             ]
         ]
 
@@ -333,6 +335,134 @@ thrownAttackUsesUpWeapon =
                             |> Dict.isEmpty
                             |> Expect.equal True
                             |> Expect.onFail "Expected the attack to result in FragGrenade not being in attacker's inventory"
+                    ]
+
+
+canBurstAttackWithLessThanDesignatedAmmoAmount : Test
+canBurstAttackWithLessThanDesignatedAmmoAmount =
+    Test.test "Can burst attack with less than designated ammo amount" <|
+        \() ->
+            let
+                weapon =
+                    ItemKind.Bozar
+
+                ammo =
+                    ItemKind.Fmj223
+
+                designatedAmmoAmount =
+                    ItemKind.shotsPerBurst weapon
+
+                usedAmmoAmount =
+                    designatedAmmoAmount - 1
+
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just weapon
+                        , preferredAmmo = Nothing
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = ammo, count = usedAmmoAmount } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 10 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootBurst
+                            6
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result
+                |> Expect.all
+                    [ \r ->
+                        r.ranCommandSuccessfully
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to succeed"
+                    , \r ->
+                        r.nextOngoing.attackerItemsUsed
+                            |> SeqDict.get ammo
+                            |> Expect.equal (Just usedAmmoAmount)
+                            |> Expect.onFail "Expected the attack to use only the owned ammo amount, not more"
+                    , \r ->
+                        r.nextOngoing.attacker.items
+                            |> Dict.filter (\_ { kind } -> kind == ammo)
+                            |> Dict.isEmpty
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to result in ammo not being in attacker's inventory"
+                    ]
+
+
+burstAttackUsesDesignatedAmmoAmount : Test
+burstAttackUsesDesignatedAmmoAmount =
+    Test.test "Burst attack uses designated ammo amount" <|
+        \() ->
+            let
+                weapon =
+                    ItemKind.Bozar
+
+                ammo =
+                    ItemKind.Fmj223
+
+                designatedAmmoAmount =
+                    ItemKind.shotsPerBurst weapon
+
+                ownedAmmoAmount =
+                    designatedAmmoAmount * 2
+
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just weapon
+                        , preferredAmmo = Nothing
+                        , items =
+                            Dict.fromList
+                                [ ( 1, { id = 1, kind = ammo, count = ownedAmmoAmount } )
+                                ]
+                    }
+
+                baseOngoingFight_ =
+                    baseOngoingFight opponent
+
+                ongoingFight =
+                    { baseOngoingFight_ | distanceHexes = 10 }
+
+                result =
+                    Random.step
+                        (FightGen.attack_
+                            Fight.Attacker
+                            ongoingFight
+                            AttackStyle.ShootBurst
+                            6
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            result
+                |> Expect.all
+                    [ \r ->
+                        r.ranCommandSuccessfully
+                            |> Expect.equal True
+                            |> Expect.onFail "Expected the attack to succeed"
+                    , \r ->
+                        r.nextOngoing.attackerItemsUsed
+                            |> SeqDict.get ammo
+                            |> Expect.equal (Just designatedAmmoAmount)
+                            |> Expect.onFail "Expected the attack to use only the designated ammo amount, not more"
+                    , \r ->
+                        r.nextOngoing.attacker.items
+                            |> Dict.filter (\_ { kind } -> kind == ammo)
+                            |> Dict.isEmpty
+                            |> Expect.equal False
+                            |> Expect.onFail "Expected the attack to result in ammo still being in attacker's inventory"
                     ]
 
 
