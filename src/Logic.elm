@@ -42,6 +42,7 @@ module Logic exposing
     , unaimedAttackStyle
     , unarmedApCost
     , unarmedRange
+    , usedAmmo
     , weaponDamageType
     , weaponRange
     , xpGained
@@ -520,7 +521,7 @@ rangedChanceToHit r =
                         neededSkill_ =
                             neededSkill r.attackStyle (ItemKind.types equippedWeapon)
 
-                        continue : Skill -> Maybe ( Item.Id, ItemKind.Kind ) -> Int
+                        continue : Skill -> Maybe ( Item.Id, ItemKind.Kind, Int ) -> Int
                         continue weaponSkill ammo =
                             let
                                 weaponSkill_ : Int
@@ -539,7 +540,7 @@ rangedChanceToHit r =
                                 ammoArmorClassModifier : Int
                                 ammoArmorClassModifier =
                                     ammo
-                                        |> Maybe.map (\( _, kind ) -> ItemKind.ammoArmorClassModifier kind)
+                                        |> Maybe.map (\( _, kind, _ ) -> ItemKind.ammoArmorClassModifier kind)
                                         |> Maybe.withDefault 0
 
                                 lightingPenalty_ : Int
@@ -609,7 +610,7 @@ rangedChanceToHit r =
                             in
                             if r.attackStyle == ShootBurst then
                                 case ammo of
-                                    Just ( _, _ ) ->
+                                    Just _ ->
                                         let
                                             { chanceToHitEach } =
                                                 adjustChanceToHitForBurst
@@ -1043,7 +1044,13 @@ meleeAttackStats r =
         isUnarmedAttack =
             AttackStyle.isUnarmed r.attackStyle
 
-        {- "Named" unarmed attacks -}
+        {- "Named" unarmed attacks.
+           https://fallout.fandom.com/wiki/Unarmed_(Fallout)#Fallout_2_and_Fallout_Tactics_2
+
+           We're using the primary punches, that way we don't need to worry about different AP costs.
+           That also means these are never armor piercing.
+
+        -}
         { unarmedAttackBonus, criticalChanceBonus } =
             if unarmedSkill < 55 || agility < 6 || r.equippedWeapon /= Nothing || not isUnarmedAttack then
                 { unarmedAttackBonus = 0
@@ -1955,8 +1962,8 @@ healAmountGenerator kind =
 
 
 type UsedAmmo
-    = PreferredAmmo ( Item.Id, ItemKind.Kind )
-    | FallbackAmmo ( Item.Id, ItemKind.Kind )
+    = PreferredAmmo ( Item.Id, ItemKind.Kind, Int )
+    | FallbackAmmo ( Item.Id, ItemKind.Kind, Int )
     | NoUsableAmmo
     | NoAmmoNeeded
 
@@ -1996,9 +2003,9 @@ usedAmmo r =
                         r.items
                             |> Dict.toList
                             |> List.filterMap
-                                (\( id, { kind } ) ->
+                                (\( id, { kind, count } ) ->
                                     if SeqSet.member kind usableAmmo then
-                                        Just ( id, kind )
+                                        Just ( id, kind, count )
 
                                     else
                                         Nothing
@@ -2019,7 +2026,7 @@ usedAmmo r =
                                     fallback ()
 
                                 Just ( id, item ) ->
-                                    PreferredAmmo ( id, item.kind )
+                                    PreferredAmmo ( id, item.kind, item.count )
 
                         else
                             -- We need to fall back to anything else that's usable and that's in our inventory.

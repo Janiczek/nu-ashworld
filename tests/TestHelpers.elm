@@ -661,12 +661,14 @@ removeNewlinesAtEnds string =
 usedAmmoFuzzer : Fuzzer UsedAmmo
 usedAmmoFuzzer =
     Fuzz.oneOf
-        [ Fuzz.map2 (\id kind -> Logic.PreferredAmmo ( id, kind ))
+        [ Fuzz.map3 (\id kind count -> Logic.PreferredAmmo ( id, kind, count ))
             (Fuzz.intRange 0 99999)
             ammoKindFuzzer
-        , Fuzz.map2 (\id kind -> Logic.FallbackAmmo ( id, kind ))
+            (Fuzz.intRange 1 100)
+        , Fuzz.map3 (\id kind count -> Logic.FallbackAmmo ( id, kind, count ))
             (Fuzz.intRange 0 99999)
             ammoKindFuzzer
+            (Fuzz.intRange 1 100)
         , Fuzz.constant Logic.NoUsableAmmo
         , Fuzz.constant Logic.NoAmmoNeeded
         ]
