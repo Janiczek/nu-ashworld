@@ -1224,7 +1224,7 @@ adminMapView worldName adminData =
                     , ( "--map-rows", String.fromInt Map.rows )
                     , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                     ]
-                , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+                , HA.class "relative bg-black bg-[url('/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
                 , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
                 , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
                 , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
@@ -1456,7 +1456,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                 ]
-            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "relative bg-black bg-[url('/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
             , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
@@ -1640,7 +1640,7 @@ mapLoggedOutView =
                 , ( "--map-rows", String.fromInt Map.rows )
                 , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                 ]
-            , HA.class "relative bg-black bg-[url('/public/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+            , HA.class "relative bg-black bg-[url('/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
             , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
