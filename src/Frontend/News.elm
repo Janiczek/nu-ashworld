@@ -21,17 +21,28 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1614377234
+    [ { date = 1729367803
       , title = "TODOs before release"
       , text =
             """
+Current:
+
+- critical: show the failure message in the fight view
+
+Next up:
+
+- use critical effects
+- critical misses
+- quests UX + test them end-to-end
+
+Ideas floating around:
+
 - More enemies?
-- burst: multiple bullets, each with a chance to hit
 - Weapon/ammo part of item loot of enemies?
 - Fight Strategy: walk away
-- refactoring: fight Opponents shouldn't hold attackStats and naturalArmorClass?
-- make movement on the map challenging (random encounters, fights you can't skip, have to heal...)
-- regain conciousness in fight (cost 1/2 of max AP)
+- make movement on the map challenging (random encounters, fights you can't skip, have to be alive to move...)
+- critical effect - lose consciousness -> regain conciousness in fight (cost 1/2 of max AP)
+- steal skill gives you % chance of looting a random item from a player's inventory in PVP after defeating them
 
 ~janiczek
 """
