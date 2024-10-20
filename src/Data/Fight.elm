@@ -20,8 +20,9 @@ module Data.Fight exposing
     , theOther
     )
 
-import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
+import Data.Fight.Critical as Critical
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType(..))
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
@@ -34,6 +35,7 @@ import Dict exposing (Dict)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
 import Json.Encode as JE
+import Json.Encode.Extra as JE
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
@@ -94,7 +96,7 @@ type Action
         { damage : Int
         , attackStyle : AttackStyle
         , remainingHp : Int
-        , isCritical : Bool -- TODO the string
+        , critical : Maybe ( List Critical.Effect, Critical.Message )
         , apCost : Int
         }
     | Miss
@@ -304,7 +306,16 @@ encodeAction action =
                 , ( "damage", JE.int r.damage )
                 , ( "attackStyle", AttackStyle.encode r.attackStyle )
                 , ( "remainingHp", JE.int r.remainingHp )
-                , ( "isCritical", JE.bool r.isCritical )
+                , ( "critical"
+                  , JE.maybe
+                        (\( effects, message ) ->
+                            JE.object
+                                [ ( "effects", JE.list Critical.encodeEffect effects )
+                                , ( "message", Critical.encodeMessage message )
+                                ]
+                        )
+                        r.critical
+                  )
                 , ( "apCost", JE.int r.apCost )
                 ]
 
@@ -458,19 +469,26 @@ commandRejectionReasonDecoder =
 attackActionDecoder : Decoder Action
 attackActionDecoder =
     JD.map5
-        (\damage attackStyle_ remainingHp isCritical apCost ->
+        (\damage attackStyle_ remainingHp critical apCost ->
             Attack
                 { damage = damage
                 , attackStyle = attackStyle_
                 , remainingHp = remainingHp
-                , isCritical = isCritical
+                , critical = critical
                 , apCost = apCost
                 }
         )
         (JD.field "damage" JD.int)
         (JD.field "attackStyle" AttackStyle.decoder)
         (JD.field "remainingHp" JD.int)
-        (JD.field "isCritical" JD.bool)
+        (JD.field "critical"
+            (JD.maybe
+                (JD.map2 Tuple.pair
+                    (JD.field "effects" (JD.list Critical.effectDecoder))
+                    (JD.field "message" Critical.messageDecoder)
+                )
+            )
+        )
         (JD.field "apCost" JD.int)
 
 
@@ -478,7 +496,7 @@ opponentName : OpponentType -> String
 opponentName opponentType =
     case opponentType of
         Npc enemyType ->
-            Enemy.name enemyType
+            EnemyType.name enemyType
 
         Player { name } ->
             name
@@ -578,8 +596,8 @@ isAttack action =
 isCriticalAttack : Action -> Bool
 isCriticalAttack action =
     case action of
-        Attack { isCritical } ->
-            isCritical
+        Attack { critical } ->
+            critical /= Nothing
 
         _ ->
             False
@@ -599,7 +617,7 @@ isOpponentLivingCreature : Opponent -> Bool
 isOpponentLivingCreature opponent =
     case opponent.type_ of
         Npc enemy ->
-            Enemy.isLivingCreature enemy
+            EnemyType.isLivingCreature enemy
 
         Player _ ->
             True

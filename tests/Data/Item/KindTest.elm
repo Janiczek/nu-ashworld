@@ -1,6 +1,7 @@
 module Data.Item.KindTest exposing (suite)
 
 import Data.Enemy as Enemy
+import Data.Enemy.Type exposing (EnemyType)
 import Data.Item.Kind as ItemKind
 import Data.Map as Map
 import Data.Map.SmallChunk as SmallChunk
@@ -83,7 +84,7 @@ allObtainable =
                             )
                         |> SeqSet.fromList
 
-                reachableEnemies : List Enemy.Type
+                reachableEnemies : List EnemyType
                 reachableEnemies =
                     Map.allTileCoords
                         |> List.map SmallChunk.forCoords

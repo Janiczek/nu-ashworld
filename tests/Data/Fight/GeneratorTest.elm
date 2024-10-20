@@ -4,7 +4,7 @@ import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Generator as FightGen exposing (Fight, OngoingFight)
 import Data.Fight.OpponentType as OpponentType
-import Data.FightStrategy exposing (..)
+import Data.FightStrategy as FightStrategy exposing (..)
 import Data.Item.Kind as ItemKind
 import Data.Special as Special
 import Dict
@@ -15,6 +15,7 @@ import SeqDict
 import SeqSet
 import Test exposing (Test)
 import TestHelpers exposing (..)
+import Time
 
 
 suite : Test
@@ -22,6 +23,7 @@ suite =
     Test.describe "Data.Fight.Generator"
         [ Test.describe "generator"
             [ damageNeverNegative
+            , meleeUnaimedStrategyResultsInMeleeUnaimedAttacks
             ]
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
@@ -120,6 +122,52 @@ meleeAttackSucceedsAtDistance2WithRange2 =
             result.ranCommandSuccessfully
                 |> Expect.equal True
                 |> Expect.onFail "Expected the attack to succeed"
+
+
+meleeUnaimedStrategyResultsInMeleeUnaimedAttacks : Test
+meleeUnaimedStrategyResultsInMeleeUnaimedAttacks =
+    Test.test "Melee unaimed strategy results in melee unaimed attacks" <|
+        \() ->
+            let
+                opponent =
+                    { baseOpponent
+                        | equippedWeapon = Just ItemKind.Knife
+                        , fightStrategy =
+                            FightStrategy.If
+                                { condition =
+                                    FightStrategy.Operator
+                                        { lhs = FightStrategy.Distance
+                                        , op = FightStrategy.GT_
+                                        , rhs = FightStrategy.Number 1
+                                        }
+                                , then_ = FightStrategy.Command FightStrategy.MoveForward
+                                , else_ = FightStrategy.Command <| FightStrategy.Attack AttackStyle.MeleeUnaimed
+                                }
+                    }
+
+                fight =
+                    Random.step
+                        (FightGen.generator
+                            { attacker = opponent
+                            , target = opponent
+                            , currentTime = Time.millisToPosix 0
+                            }
+                        )
+                        (Random.initialSeed 3)
+                        |> Tuple.first
+            in
+            fight.fightInfo.log
+                |> List.all
+                    (\( _, action ) ->
+                        case action of
+                            Fight.Attack r ->
+                                r.attackStyle == AttackStyle.MeleeUnaimed
+
+                            _ ->
+                                True
+                    )
+                |> Expect.equal True
+                |> Expect.onFail "Expected all attacks to be melee unaimed"
 
 
 meleeAttackFailsAtDistance2WithRange1 : Test
@@ -517,7 +565,7 @@ burstAttackCanBeCritical =
                             (\( _, action ) ->
                                 case action of
                                     Fight.Attack r ->
-                                        r.isCritical
+                                        r.critical /= Nothing
 
                                     _ ->
                                         False

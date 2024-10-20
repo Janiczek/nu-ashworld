@@ -9,6 +9,7 @@ module Data.Fight.Generator exposing
     )
 
 import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Fight as Fight exposing (CommandRejectionReason(..), Opponent, Who(..))
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
@@ -186,8 +187,11 @@ rollCritical who ongoing attackStyle maybeCriticalEffectCategory =
         opponent =
             opponent_ who ongoing
 
+        otherWho =
+            Fight.theOther who
+
         otherOpponent =
-            opponent_ (Fight.theOther who) ongoing
+            opponent_ otherWho ongoing
 
         criticalSpec : Maybe Critical.Spec
         criticalSpec =
@@ -203,7 +207,7 @@ rollCritical who ongoing attackStyle maybeCriticalEffectCategory =
                         case otherOpponent.type_ of
                             OpponentType.Player _ ->
                                 -- TODO gender -> womanCriticalSpec
-                                Enemy.manCriticalSpec aimedShot criticalEffectCategory
+                                Enemy.playerCriticalSpec aimedShot criticalEffectCategory
 
                             OpponentType.Npc enemyType ->
                                 Enemy.criticalSpec enemyType aimedShot criticalEffectCategory
@@ -670,7 +674,7 @@ generator r =
                                     { capsGained = ongoing.target.caps
                                     , xpGained =
                                         Logic.xpGained
-                                            { baseXpGained = Enemy.xpReward enemyType
+                                            { baseXpGained = EnemyType.xpReward enemyType
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
                                     , itemsGained = ongoing.target.drops
@@ -1105,46 +1109,33 @@ attack who ongoing wantedAttackStyle =
     let
         opponent =
             opponent_ who ongoing
+
+        ( attackStyle, baseApCost ) =
+            case opponent.equippedWeapon of
+                Nothing ->
+                    unarmedAttackStyle
+
+                Just weapon ->
+                    let
+                        possibleAttackStyles : List ( AttackStyle, Int )
+                        possibleAttackStyles =
+                            Logic.attackStyleAndApCost weapon
+                    in
+                    possibleAttackStyles
+                        |> List.find (\( attackStyle_, _ ) -> attackStyle_ == wantedAttackStyle)
+                        |> {- TODO can this happen? Eg. when we have equipped a
+                              spear but want to do Burst?  Should we let the
+                              player know something weird happened?
+
+                              This is theoretically a loophole where the player
+                              has a weapon with cost of shooting 5, has 3 AP
+                              left, and intentionally uses this invalid command
+                              to make use of this AP remnant with an unarmed
+                              attack.
+                           -}
+                           Maybe.withDefault unarmedAttackStyle
     in
-    (case opponent.equippedWeapon of
-        Nothing ->
-            Random.constant unarmedAttackStyle
-
-        Just weapon ->
-            let
-                possibleAttackStyles : List ( AttackStyle, Int )
-                possibleAttackStyles =
-                    Logic.attackStyleAndApCost weapon
-            in
-            if
-                List.member wantedAttackStyle
-                    (List.map Tuple.first possibleAttackStyles)
-            then
-                case possibleAttackStyles of
-                    [] ->
-                        -- This can probably only happpen if we somehow allow user to equip a non-weapon?
-                        Random.constant unarmedAttackStyle
-
-                    x :: xs ->
-                        Random.uniform x xs
-
-            else
-                {- TODO can this happen? Eg. when we have equipped a
-                   spear but want to do Burst?  Should we let the
-                   player know something weird happened?
-
-                   This is theoretically a loophole where the player
-                   has a weapon with cost of shooting 5, has 3 AP
-                   left, and intentionally uses this invalid command
-                   to make use of this AP remnant with an unarmed
-                   attack.
-                -}
-                Random.constant unarmedAttackStyle
-    )
-        |> Random.andThen
-            (\( attackStyle, baseApCost ) ->
-                attack_ who ongoing attackStyle baseApCost
-            )
+    attack_ who ongoing attackStyle baseApCost
 
 
 attack_ : Who -> OngoingFight -> AttackStyle -> Int -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
@@ -1277,6 +1268,7 @@ attack_ who ongoing attackStyle baseApCost =
                             |> Random.andThen (rollCritical who ongoing attackStyle)
                             |> Random.andThen
                                 (\maybeCritical ->
+                                    -- TODO interpret critical effects!
                                     rollDamage who ongoing attackStyle maybeCritical
                                         |> Random.map
                                             (\damage ->
@@ -1287,11 +1279,12 @@ attack_ who ongoing attackStyle baseApCost =
                                                             { damage = damage
                                                             , attackStyle = attackStyle
                                                             , remainingHp = (opponent_ other ongoing).hp - damage
-                                                            , isCritical = maybeCritical /= Nothing
+                                                            , critical =
+                                                                maybeCritical
+                                                                    |> Maybe.map (\c -> ( c.effects, c.message ))
                                                             , apCost = apCost_
                                                             }
                                                 in
-                                                -- TODO use the critical effects and message!!
                                                 ongoing
                                                     |> addLog who action
                                                     |> subtractAp who action
@@ -1359,6 +1352,7 @@ attack_ who ongoing attackStyle baseApCost =
                                 |> Random.andThen (rollCritical who ongoing attackStyle)
                                 |> Random.andThen
                                     (\maybeCritical ->
+                                        -- TODO interpret critical effects!
                                         Random.list bulletsUsed (oneBullet maybeCritical)
                                             |> Random.map
                                                 (\bulletHits ->
@@ -1375,11 +1369,10 @@ attack_ who ongoing attackStyle baseApCost =
                                                                 { damage = damage
                                                                 , attackStyle = attackStyle
                                                                 , remainingHp = (opponent_ other ongoing).hp - damage
-                                                                , isCritical = maybeCritical /= Nothing
+                                                                , critical = maybeCritical |> Maybe.map (\c -> ( c.effects, c.message ))
                                                                 , apCost = apCost_
                                                                 }
                                                     in
-                                                    -- TODO use the critical effects and message!!
                                                     ongoing
                                                         |> addLog who action
                                                         |> subtractAp who action
@@ -1723,7 +1716,7 @@ addHp hp opponent =
     { opponent | hp = min opponent.maxHp <| opponent.hp + hp }
 
 
-enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Int -> Enemy.Type -> Generator ( Opponent, Int )
+enemyOpponentGenerator : { hasFortuneFinderPerk : Bool } -> Int -> EnemyType -> Generator ( Opponent, Int )
 enemyOpponentGenerator r lastItemId enemyType =
     Enemy.dropGenerator lastItemId (Enemy.dropSpec enemyType)
         |> Random.map
@@ -1739,13 +1732,13 @@ enemyOpponentGenerator r lastItemId enemyType =
 
                     hp : Int
                     hp =
-                        Enemy.hp enemyType
+                        EnemyType.hp enemyType
                 in
                 ( { type_ = OpponentType.Npc enemyType
                   , hp = hp
                   , maxHp = hp
-                  , maxAp = Enemy.actionPoints enemyType
-                  , sequence = Enemy.sequence enemyType
+                  , maxAp = EnemyType.actionPoints enemyType
+                  , sequence = EnemyType.sequence enemyType
                   , traits = SeqSet.empty
                   , perks = SeqDict.empty
                   , caps = caps_
@@ -1755,15 +1748,15 @@ enemyOpponentGenerator r lastItemId enemyType =
                     -- for enemies for now. Maybe it will make more sense for people
                     -- like Lo Pan etc.
                     level = 1
-                  , equippedArmor = Enemy.equippedArmor enemyType
-                  , equippedWeapon = Enemy.equippedWeapon enemyType
-                  , preferredAmmo = Enemy.preferredAmmo enemyType
-                  , naturalArmorClass = Enemy.naturalArmorClass enemyType
-                  , addedSkillPercentages = Enemy.addedSkillPercentages enemyType
+                  , equippedArmor = EnemyType.equippedArmor enemyType
+                  , equippedWeapon = EnemyType.equippedWeapon enemyType
+                  , preferredAmmo = EnemyType.preferredAmmo enemyType
+                  , naturalArmorClass = EnemyType.naturalArmorClass enemyType
+                  , addedSkillPercentages = EnemyType.addedSkillPercentages enemyType
                   , -- Enemies never have anything else than base special (no traits, perks, ...)
-                    special = Enemy.special enemyType
+                    special = EnemyType.special enemyType
                   , fightStrategy = FightStrategy.doWhatever
-                  , unarmedDamageBonus = Enemy.unarmedDamageBonus enemyType
+                  , unarmedDamageBonus = EnemyType.unarmedDamageBonus enemyType
                   }
                 , newItemId
                 )

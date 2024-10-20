@@ -5,7 +5,7 @@ module Data.Fight.OpponentType exposing
     , encode
     )
 
-import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Player.PlayerName exposing (PlayerName)
 import Json.Decode as JD exposing (Decoder)
 import Json.Decode.Extra as JD
@@ -13,7 +13,7 @@ import Json.Encode as JE
 
 
 type OpponentType
-    = Npc Enemy.Type
+    = Npc EnemyType
     | Player PlayerOpponent
 
 
@@ -30,7 +30,7 @@ decoder =
             (\type_ ->
                 case type_ of
                     "npc" ->
-                        JD.map Npc Enemy.typeDecoder
+                        JD.map Npc EnemyType.decoder
 
                     "player" ->
                         JD.map Player
@@ -53,7 +53,7 @@ encode opponentType =
         Npc enemyType ->
             JE.object
                 [ ( "type", JE.string "npc" )
-                , ( "enemyType", Enemy.encodeType enemyType )
+                , ( "enemyType", EnemyType.encode enemyType )
                 ]
 
         Player { name, xp } ->

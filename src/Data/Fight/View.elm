@@ -4,6 +4,7 @@ import Data.Enemy as Enemy
 import Data.Fight as Fight exposing (Action, CommandRejectionReason(..), Who(..))
 import Data.Fight.AimedShot exposing (AimedShot)
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
+import Data.Fight.Critical as Critical
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Item exposing (Item)
 import Data.Item.Kind as ItemKind
@@ -224,10 +225,10 @@ view perceptionLevel fight yourName =
                                                             names_.subject.verbPresent "come"
                                                                 ++ " closer."
 
-                                                Fight.Attack { damage, remainingHp, attackStyle, isCritical } ->
+                                                Fight.Attack { damage, remainingHp, attackStyle, critical } ->
                                                     let
                                                         critically =
-                                                            if isCritical then
+                                                            if critical /= Nothing then
                                                                 "critically "
 
                                                             else
@@ -298,22 +299,51 @@ view perceptionLevel fight yourName =
                                                         , H.text " for "
                                                         , highlight <| String.fromInt damage
                                                         , H.text " damage"
-                                                        , if remainingHp <= 0 then
-                                                            H.span []
-                                                                [ H.text ", resulting in "
-                                                                , H.span [ HA.class "text-yellow" ] [ H.text "death" ]
-                                                                , H.text "."
-                                                                ]
+                                                        , case critical of
+                                                            Nothing ->
+                                                                if remainingHp <= 0 then
+                                                                    H.span []
+                                                                        [ H.text ", resulting in "
+                                                                        , H.span [ HA.class "text-yellow" ] [ H.text "death" ]
+                                                                        , H.text "."
+                                                                        ]
 
-                                                          else if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
-                                                            H.span []
-                                                                [ H.text ". Remaining HP: "
-                                                                , highlight <| String.fromInt remainingHp
-                                                                , H.text "."
-                                                                ]
+                                                                else if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
+                                                                    H.span []
+                                                                        [ H.text ". Remaining HP: "
+                                                                        , highlight <| String.fromInt remainingHp
+                                                                        , H.text "."
+                                                                        ]
 
-                                                          else
-                                                            H.text "."
+                                                                else
+                                                                    H.text "."
+
+                                                            Just ( effects, message ) ->
+                                                                H.span []
+                                                                    ((H.text <|
+                                                                        ", "
+                                                                            ++ messageView
+                                                                                { -- you're not the attacker, you're the attacked, so we want to say "and it knocks YOU over" (`itsYou` being talked about in the Message!)
+                                                                                  itsYou = currentActionWho /= you
+                                                                                }
+                                                                                message
+                                                                     )
+                                                                        :: (if remainingHp <= 0 && not (List.member Critical.Death effects) then
+                                                                                [ H.text " This results in "
+                                                                                , H.span [ HA.class "text-yellow" ] [ H.text "death" ]
+                                                                                , H.text "."
+                                                                                ]
+
+                                                                            else if currentActionWho /= you || Perception.atLeast Perception.Great perceptionLevel then
+                                                                                [ H.text " Remaining HP: "
+                                                                                , highlight <| String.fromInt remainingHp
+                                                                                , H.text "."
+                                                                                ]
+
+                                                                            else
+                                                                                []
+                                                                           )
+                                                                    )
                                                         ]
 
                                                 Fight.Miss { attackStyle } ->
@@ -669,3 +699,17 @@ view perceptionLevel fight yourName =
                 ]
             ]
         ]
+
+
+messageView : { itsYou : Bool } -> Critical.Message -> String
+messageView { itsYou } message =
+    case message of
+        Critical.OtherMessage s ->
+            s
+
+        Critical.PlayerMessage r ->
+            if itsYou then
+                r.you
+
+            else
+                r.them

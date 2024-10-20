@@ -21,13 +21,13 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1729367803
+    [ { date = 1729411797
       , title = "TODOs before release"
       , text =
             """
 Current:
 
-- critical: show the failure message in the fight view
+- world vs worlds - shows different player count
 
 Next up:
 

@@ -56,7 +56,7 @@ module TestHelpers exposing
     , xpFuzzer
     )
 
-import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Fight exposing (Opponent)
 import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
@@ -83,7 +83,6 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
-import List.Extra
 import List.ExtraExtra as List
 import Logic exposing (AttackStats, UsedAmmo)
 import Maybe.Extra as Maybe
@@ -93,7 +92,6 @@ import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 import String.Extra as String
 import Test exposing (Test)
-import Test.Runner
 import Time exposing (Posix)
 
 
@@ -193,8 +191,8 @@ unarmedDamageBonus : Fuzzer Int
 unarmedDamageBonus =
     Fuzz.intRange
         0
-        (Enemy.all
-            |> List.map Enemy.unarmedDamageBonus
+        (EnemyType.all
+            |> List.map EnemyType.unarmedDamageBonus
             |> List.maximum
             |> Maybe.withDefault 0
         )
@@ -361,9 +359,9 @@ randomSeedFuzzer =
         |> Fuzz.map Random.initialSeed
 
 
-enemyTypeFuzzer : Fuzzer Enemy.Type
+enemyTypeFuzzer : Fuzzer EnemyType
 enemyTypeFuzzer =
-    Fuzz.oneOfValues Enemy.all
+    Fuzz.oneOfValues EnemyType.all
 
 
 traitsFuzzer : Fuzzer (SeqSet Trait)

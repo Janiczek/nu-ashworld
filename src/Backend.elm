@@ -11,6 +11,7 @@ import Data.Auth as Auth
         )
 import Data.Barter as Barter
 import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Fight as Fight exposing (Opponent)
 import Data.Fight.Generator as FightGen
 import Data.Fight.OpponentType as OpponentType
@@ -1636,17 +1637,17 @@ wander clientId world worldName player model =
 
     else
         let
-            possibleEnemies : List Enemy.Type
+            possibleEnemies : List EnemyType
             possibleEnemies =
                 player.location
                     |> Map.toTileCoords
                     |> SmallChunk.forCoords
                     |> Enemy.forSmallChunk
 
-            enemyTypeGenerator : Generator Enemy.Type
+            enemyTypeGenerator : Generator EnemyType
             enemyTypeGenerator =
                 Random.List.choose possibleEnemies
-                    |> Random.map (Tuple.first >> Maybe.withDefault Enemy.default)
+                    |> Random.map (Tuple.first >> Maybe.withDefault EnemyType.GiantAnt)
 
             fightGen : Generator ( FightGen.Fight, Int )
             fightGen =

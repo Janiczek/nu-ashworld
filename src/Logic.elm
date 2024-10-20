@@ -48,7 +48,7 @@ module Logic exposing
     , xpGained
     )
 
-import Data.Enemy as Enemy
+import Data.Enemy.Type as EnemyType
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot(..))
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
 import Data.Fight.DamageType as DamageType exposing (DamageType)
@@ -1507,7 +1507,7 @@ naturalDamageThreshold :
 naturalDamageThreshold r =
     case r.opponentType of
         Npc enemy ->
-            Enemy.damageThreshold r.damageType enemy
+            EnemyType.damageThreshold r.damageType enemy
 
         Player _ ->
             0
@@ -1539,7 +1539,7 @@ naturalDamageResistance :
 naturalDamageResistance r =
     case r.opponentType of
         Npc enemy ->
-            Enemy.damageResistance r.damageType enemy
+            EnemyType.damageResistance r.damageType enemy
 
         Player _ ->
             0
