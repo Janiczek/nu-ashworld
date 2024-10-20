@@ -885,6 +885,15 @@ updateFromFrontend sessionId clientId msg model =
         ChoosePerk perk ->
             withLoggedInCreatedPlayer <| choosePerk perk
 
+        WorldsPlease ->
+            let
+                worlds =
+                    getWorlds model
+            in
+            ( model
+            , Lamdera.sendToFrontend clientId <| CurrentWorlds worlds
+            )
+
         RefreshPlease ->
             let
                 loggedOut () =

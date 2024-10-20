@@ -19,7 +19,7 @@ module Logic exposing
     , healAmountGenerator
     , healAmountGenerator_
     , healApCost
-    , healPerTick
+    , healOverTimePerTick
     , hitpoints
     , mainWorldName
     , maxTraits
@@ -171,19 +171,66 @@ hitpoints r =
 
 
 tickHealPercentage :
-    { endurance : Int
+    { special : Special
+    , addedSkillPercentages : SeqDict Skill Int
     , fasterHealingPerkRanks : Int
     }
     -> Int
 tickHealPercentage r =
-    50
-        + (r.endurance * 2)
-        + (r.fasterHealingPerkRanks * 10)
+    let
+        pctFloor =
+            50
+
+        pctFromEndurance =
+            r.special.endurance * 2
+
+        pctFromFasterHealingPerk =
+            10 * r.fasterHealingPerkRanks
+
+        doctor =
+            Skill.get r.special r.addedSkillPercentages Skill.Doctor
+
+        -- pctMinimum = 52
+        -- pctRest = 48
+        -- Doctor 0% -> 0
+        -- Doctor 100% -> 48
+        -- Doctor 1% -> 48/100
+        pctFromDoctor =
+            doctor * 48 // 100
+    in
+    (pctFloor
+        + pctFromEndurance
+        + pctFromFasterHealingPerk
+        + pctFromDoctor
+    )
+        |> min 100
 
 
-healPerTick : Int
-healPerTick =
-    4
+healOverTimePerTick :
+    { special : Special
+    , addedSkillPercentages : SeqDict Skill Int
+    , fasterHealingPerkRanks : Int
+    }
+    -> Int
+healOverTimePerTick r =
+    let
+        base =
+            4
+
+        firstAid =
+            Skill.get r.special r.addedSkillPercentages Skill.FirstAid
+
+        fromFirstAid =
+            -- 1 HP every 20% of First Aid
+            firstAid // 20
+
+        fasterHealingBonusPct =
+            r.fasterHealingPerkRanks * 10
+    in
+    (base + fromFirstAid)
+        |> toFloat
+        |> (\hp -> hp * (1 + toFloat fasterHealingBonusPct / 100))
+        |> round
 
 
 naturalArmorClass :

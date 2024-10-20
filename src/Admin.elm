@@ -138,6 +138,10 @@ encodeToBackendMsg msg =
                 , ( "text", JE.string text )
                 ]
 
+        WorldsPlease ->
+            JE.object
+                [ ( "type", JE.string "WorldsPlease" ) ]
+
         RefreshPlease ->
             JE.object
                 [ ( "type", JE.string "RefreshPlease" ) ]

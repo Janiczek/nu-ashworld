@@ -292,8 +292,13 @@ tick currentTime worldTickCurve player =
         |> addTicks (ticksPerHourAvailableAfterQuests worldTickCurve player)
         |> addQuestProgressXp currentTime
         |> (if player.hp < player.maxHp then
-                -- Logic.healingRate already accounts for tick healing rate multiplier
-                addHp Logic.healPerTick
+                addHp
+                    (Logic.healOverTimePerTick
+                        { special = player.special
+                        , addedSkillPercentages = player.addedSkillPercentages
+                        , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                        }
+                    )
 
             else
                 identity
@@ -338,8 +343,9 @@ healManuallyUsingTick player =
             tickHealPercentage : Int
             tickHealPercentage =
                 Logic.tickHealPercentage
-                    { endurance = player.special.endurance
+                    { special = player.special
                     , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                    , addedSkillPercentages = player.addedSkillPercentages
                     }
         in
         player

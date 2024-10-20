@@ -320,49 +320,49 @@ isUseful : Skill -> Bool
 isUseful skill =
     case skill of
         SmallGuns ->
-            False
+            True
 
         BigGuns ->
-            False
+            True
 
         EnergyWeapons ->
-            False
+            True
 
         Unarmed ->
             True
 
         MeleeWeapons ->
-            False
+            True
 
         Throwing ->
-            False
+            True
 
         FirstAid ->
-            False
+            True
 
         Doctor ->
-            False
+            True
 
         Sneak ->
-            False
+            True
 
         Lockpick ->
-            False
+            True
 
         Steal ->
-            False
+            True
 
         Traps ->
-            False
+            True
 
         Science ->
-            False
+            True
 
         Repair ->
-            False
+            True
 
         Speech ->
-            False
+            True
 
         Barter ->
             True
@@ -371,7 +371,7 @@ isUseful skill =
             False
 
         Outdoorsman ->
-            False
+            True
 
 
 description : Skill -> String
@@ -396,10 +396,12 @@ description skill =
             "The skill of muscle-propelled ranged weapons, such as throwing knives, spears and grenades."
 
         FirstAid ->
-            "General healing skill. Used to heal small cuts, abrasions and other minor ills. In game terms, the use of first aid can heal more hit points over time than just rest."
+            -- Original: "General healing skill. Used to heal small cuts, abrasions and other minor ills. In game terms, the use of first aid can heal more hit points over time than just rest."
+            "General healing skill. Used to heal small cuts, abrasions and other minor ills. Increases the percentage of HP healed over time (when you receive a new tick)."
 
         Doctor ->
-            "The healing of major wounds and crippled limbs. Without this skill, it will take a much longer period of time to restore crippled limbs to use."
+            -- Original: "The healing of major wounds and crippled limbs. Without this skill, it will take a much longer period of time to restore crippled limbs to use."
+            "The healing of major wounds and crippled limbs. Increases the percentage of HP healed when you use ticks to heal."
 
         Sneak ->
             "Quiet movement, and the ability to remain unnoticed. If successful, you will be much harder to locate. You cannot run and sneak at the same time."

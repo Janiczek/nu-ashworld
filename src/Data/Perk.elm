@@ -953,7 +953,7 @@ description perk =
             "Each level of Educated will add +2 skill points when you gain a new experience level. This Perk works best when purchased early in your adventure."
 
         FasterHealing ->
-            "With each level of this Perk, the percentage of max HP you heal using a tick increases by 10%."
+            "With each level of this Perk, the percentage of max HP you heal over time and when you use a tick increases by 10%."
 
         FortuneFinder ->
             "You have the talent of finding money. You will find additional money in random encounters in the desert: all caps drops from PvM combat get doubled."

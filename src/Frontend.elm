@@ -388,6 +388,12 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend RefreshPlease
             )
 
+        AskForWorldsAndGoToWorldsRoute ->
+            ( model
+            , Lamdera.sendToBackend WorldsPlease
+            )
+                |> Cmd.andThen (update (GoToRoute Route.WorldsList))
+
         AskToTagSkill skill ->
             ( model
             , Lamdera.sendToBackend <| TagSkill skill
@@ -2685,14 +2691,26 @@ newCharDerivedStatsView newChar =
                             }
                   , Nothing
                   )
-                , ( "Tick heal percentage"
+                , ( "Heal when using tick"
                   , (String.fromInt <|
                         Logic.tickHealPercentage
-                            { endurance = finalSpecial.endurance
+                            { special = finalSpecial
+                            , addedSkillPercentages = SeqDict.empty
                             , fasterHealingPerkRanks = 0
                             }
                     )
                         ++ " % of max HP"
+                  , Nothing
+                  )
+                , ( "Heal over time"
+                  , (String.fromInt <|
+                        Logic.healOverTimePerTick
+                            { special = finalSpecial
+                            , addedSkillPercentages = SeqDict.empty
+                            , fasterHealingPerkRanks = 0
+                            }
+                    )
+                        ++ " HP every tick"
                   , Nothing
                   )
                 , ( "Perception Level"
@@ -3081,21 +3099,26 @@ charDerivedStatsView player =
                             }
                   , Nothing
                   )
-                , ( "Tick heal"
-                  , let
-                        percentage =
-                            Logic.tickHealPercentage
-                                { endurance = player.special.endurance
-                                , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
-                                }
-
-                        absolute =
-                            round <| toFloat player.maxHp * toFloat percentage / 100
-                    in
-                    String.fromInt absolute
-                        ++ " HP ("
-                        ++ String.fromInt percentage
-                        ++ "% of max HP)"
+                , ( "Heal when using tick"
+                  , (String.fromInt <|
+                        Logic.tickHealPercentage
+                            { special = player.special
+                            , addedSkillPercentages = player.addedSkillPercentages
+                            , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                            }
+                    )
+                        ++ " % of max HP"
+                  , Nothing
+                  )
+                , ( "Heal over time"
+                  , (String.fromInt <|
+                        Logic.healOverTimePerTick
+                            { special = player.special
+                            , addedSkillPercentages = player.addedSkillPercentages
+                            , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
+                            }
+                    )
+                        ++ " HP every tick"
                   , Nothing
                   )
                 , ( "Perception Level"
@@ -4682,7 +4705,8 @@ loggedInLinksView player currentRoute =
                     let
                         tickHealPercentage =
                             Logic.tickHealPercentage
-                                { endurance = p.special.endurance
+                                { special = p.special
+                                , addedSkillPercentages = p.addedSkillPercentages
                                 , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
                                 }
 
@@ -4759,7 +4783,7 @@ loggedInLinksView player currentRoute =
                         (unreadMessages == 0)
                         (unreadMessages > 0)
                     , linkIn "World" (PlayerRoute Route.AboutWorld) Nothing False
-                    , linkIn "Worlds" WorldsList Nothing False
+                    , linkMsg "Worlds" AskForWorldsAndGoToWorldsRoute Nothing False
                     , linkMsg "Logout" Logout Nothing False
                     ]
     in

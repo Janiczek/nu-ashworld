@@ -112,6 +112,7 @@ type FrontendMsg
     | ImportFileSelected File
     | AskToImport String
     | Refresh
+    | AskForWorldsAndGoToWorldsRoute
     | AskToTagSkill Skill
     | AskToUseSkillPoints Skill
     | SetAuthName String
@@ -176,6 +177,7 @@ type ToBackend
     | UnequipWeapon
     | ClearPreferredAmmo
     | RefreshPlease
+    | WorldsPlease
     | TagSkill Skill
     | UseSkillPoints Skill
     | ChoosePerk Perk

@@ -27,11 +27,10 @@ items =
             """
 Current:
 
-- world vs worlds - shows different player count
+- use critical effects
 
 Next up:
 
-- use critical effects
 - critical misses
 - quests UX + test them end-to-end
 
@@ -41,7 +40,7 @@ Ideas floating around:
 - Weapon/ammo part of item loot of enemies?
 - Fight Strategy: walk away
 - make movement on the map challenging (random encounters, fights you can't skip, have to be alive to move...)
-- critical effect - lose consciousness -> regain conciousness in fight (cost 1/2 of max AP)
+- critical effect - lose consciousness -> regain consciousness in fight (cost 1/2 of max AP)
 - steal skill gives you % chance of looting a random item from a player's inventory in PVP after defeating them
 
 ~janiczek

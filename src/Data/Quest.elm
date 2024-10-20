@@ -29,7 +29,7 @@ module Data.Quest exposing
 import Data.Item.Kind as ItemKind
 import Data.Map.Location as Location exposing (Location)
 import Data.Perk as Perk exposing (Perk(..))
-import Data.Skill as Skill exposing (Skill(..))
+import Data.Skill as Skill exposing (Skill)
 import Data.Vendor.Shop as Shop exposing (Shop)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
@@ -2026,7 +2026,7 @@ playerRewards name =
             [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
 
         ArroyoRescueNagorsDog ->
-            [ SkillUpgrade { skill = Unarmed, percentage = 10 } ]
+            [ SkillUpgrade { skill = Skill.Unarmed, percentage = 10 } ]
 
         KlamathRefuelStill ->
             [ ItemReward { what = ItemKind.Beer, amount = 10 } ]
@@ -2035,7 +2035,7 @@ playerRewards name =
             []
 
         KlamathRustleTheBrahmin ->
-            [ SkillUpgrade { skill = Sneak, percentage = 10 } ]
+            [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 } ]
 
         KlamathKillRatGod ->
             [ ItemReward { what = ItemKind.RedRyderLEBBGun, amount = 1 } ]
@@ -2351,7 +2351,7 @@ playerRequirements name =
             []
 
         ArroyoFixWellForFeargus ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 25 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 25 } ]
 
         ArroyoRescueNagorsDog ->
             []
@@ -2363,7 +2363,7 @@ playerRequirements name =
             []
 
         KlamathRustleTheBrahmin ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 30 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 30 } ]
 
         KlamathKillRatGod ->
             [ SkillRequirement { skill = Combat, percentage = 60 } ]
@@ -2372,13 +2372,13 @@ playerRequirements name =
             []
 
         KlamathSearchForSmileyTrapper ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 20 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 20 } ]
 
         ToxicCavesRescueSmileyTrapper ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 40 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 40 } ]
 
         ToxicCavesRepairTheGenerator ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 90 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 90 } ]
 
         ToxicCavesLootTheBunker ->
             [ SkillRequirement { skill = Combat, percentage = 120 }
@@ -2395,115 +2395,115 @@ playerRequirements name =
             []
 
         DenFindCarParts ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 50 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 50 } ]
 
         DenFixTheCar ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 70 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 70 } ]
 
         ModocInvestigateGhostFarm ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 70 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 70 } ]
 
         ModocRemoveInfestationInFarrelsGarden ->
             [ SkillRequirement { skill = Combat, percentage = 50 } ]
 
         ModocMediateBetweenSlagsAndJo ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 60 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 60 } ]
 
         ModocFindGoldWatchForCornelius ->
-            [ SkillRequirement { skill = Specific Lockpick, percentage = 70 } ]
+            [ SkillRequirement { skill = Specific Skill.Lockpick, percentage = 70 } ]
 
         ModocFindGoldWatchForFarrel ->
-            [ SkillRequirement { skill = Specific Lockpick, percentage = 70 } ]
+            [ SkillRequirement { skill = Specific Skill.Lockpick, percentage = 70 } ]
 
         VaultCityGetPlowForMrSmith ->
-            [ SkillRequirement { skill = Specific Science, percentage = 60 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 60 } ]
 
         VaultCityRescueAmandasHusband ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 80 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 80 } ]
 
         GeckoOptimizePowerPlant ->
-            [ SkillRequirement { skill = Specific Science, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 100 } ]
 
         ReddingClearWanamingoMine ->
             [ SkillRequirement { skill = Combat, percentage = 150 } ]
 
         ReddingFindExcavatorChip ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 80 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 80 } ]
 
         NewRenoTrackDownPrettyBoyLloyd ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 110 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 110 } ]
 
         NewRenoHelpGuardSecretTransaction ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 90 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 90 } ]
 
         NewRenoCollectTributeFromCorsicanBrothers ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 100 } ]
 
         NewRenoWinBoxingTournament ->
-            [ SkillRequirement { skill = Specific Unarmed, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Unarmed, percentage = 100 } ]
 
         NewRenoAcquireElectronicLockpick ->
-            [ SkillRequirement { skill = Specific Steal, percentage = 90 } ]
+            [ SkillRequirement { skill = Specific Skill.Steal, percentage = 90 } ]
 
         NCRGuardBrahminCaravan ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 80 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 80 } ]
 
         NCRTestMutagenicSerum ->
-            [ SkillRequirement { skill = Specific Science, percentage = 80 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 80 } ]
 
         NCRRetrieveComputerParts ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 120 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 120 } ]
 
         NCRFreeSlaves ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 110 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 110 } ]
 
         NCRInvestigateBrahminRaids ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 100 } ]
 
         V15RescueChrissy ->
-            [ SkillRequirement { skill = Specific Traps, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Traps, percentage = 100 } ]
 
         V15CompleteDealWithNCR ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 120 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 120 } ]
 
         V13FixVaultComputer ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 120 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 120 } ]
 
         V13FindTheGeck ->
-            [ SkillRequirement { skill = Specific Lockpick, percentage = 150 } ]
+            [ SkillRequirement { skill = Specific Skill.Lockpick, percentage = 150 } ]
 
         BrokenHillsFixMineAirPurifier ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 100 } ]
 
         BrokenHillsBlowUpMineAirPurifier ->
-            [ SkillRequirement { skill = Specific Traps, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Traps, percentage = 100 } ]
 
         BrokenHillsFindMissingPeople ->
             []
 
         BrokenHillsBeatFrancisAtArmwrestling ->
-            [ SkillRequirement { skill = Specific Unarmed, percentage = 150 } ]
+            [ SkillRequirement { skill = Specific Skill.Unarmed, percentage = 150 } ]
 
         RaidersFindEvidenceOfBishopTampering ->
-            [ SkillRequirement { skill = Specific Traps, percentage = 130 } ]
+            [ SkillRequirement { skill = Specific Skill.Traps, percentage = 130 } ]
 
         RaidersKillEverybody ->
             [ SkillRequirement { skill = Combat, percentage = 200 } ]
 
         SierraArmyDepotFindAbnormalBrainForSkynet ->
-            [ SkillRequirement { skill = Specific Science, percentage = 60 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 60 } ]
 
         SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-            [ SkillRequirement { skill = Specific Science, percentage = 100 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 100 } ]
 
         SierraArmyDepotFindHumanBrainForSkynet ->
-            [ SkillRequirement { skill = Specific Science, percentage = 150 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 150 } ]
 
         SierraArmyDepotFindCyberneticBrainForSkynet ->
-            [ SkillRequirement { skill = Specific Science, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 200 } ]
 
         SierraArmyDepotAssembleBodyForSkynet ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 150 }
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 150 }
             , ItemRequirementOneOf
                 [ ItemKind.AbnormalBrain
                 , ItemKind.ChimpanzeeBrain
@@ -2513,66 +2513,66 @@ playerRequirements name =
             ]
 
         MilitaryBaseExcavateTheEntrance ->
-            [ SkillRequirement { skill = Specific Traps, percentage = 180 } ]
+            [ SkillRequirement { skill = Specific Skill.Traps, percentage = 180 } ]
 
         MilitaryBaseKillMelchior ->
             [ SkillRequirement { skill = Combat, percentage = 220 } ]
 
         SanFranciscoFindFuelForTanker ->
-            [ SkillRequirement { skill = Specific Barter, percentage = 150 } ]
+            [ SkillRequirement { skill = Specific Skill.Barter, percentage = 150 } ]
 
         SanFranciscoFindLocationOfFobForTanker ->
-            [ SkillRequirement { skill = Specific Outdoorsman, percentage = 150 } ]
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 150 } ]
 
         SanFranciscoFindNavCompPartForTanker ->
-            [ SkillRequirement { skill = Specific Lockpick, percentage = 180 } ]
+            [ SkillRequirement { skill = Specific Skill.Lockpick, percentage = 180 } ]
 
         SanFranciscoFindVertibirdPlansForHubologists ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 200 } ]
 
         SanFranciscoFindVertibirdPlansForShi ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 200 } ]
 
         SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 200 } ]
 
         SanFranciscoFindBadgersGirlfriendInsideShip ->
             [ SkillRequirement { skill = Combat, percentage = 200 } ]
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            [ SkillRequirement { skill = Specific Unarmed, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Unarmed, percentage = 200 } ]
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            [ SkillRequirement { skill = Specific Unarmed, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Unarmed, percentage = 200 } ]
 
         SanFranciscoEmbarkForEnclave ->
             []
 
         NavarroFixK9 ->
-            [ SkillRequirement { skill = Specific Repair, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Repair, percentage = 200 } ]
 
         NavarroRetrieveFobForTanker ->
-            [ SkillRequirement { skill = Specific Steal, percentage = 180 } ]
+            [ SkillRequirement { skill = Specific Skill.Steal, percentage = 180 } ]
 
         EnclavePersuadeControlCompanySquadToDesert ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 200 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 200 } ]
 
         EnclaveKillThePresidentStealthily ->
-            [ SkillRequirement { skill = Specific Sneak, percentage = 220 } ]
+            [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 220 } ]
 
         EnclaveKillThePresidentTheUsualWay ->
             [ SkillRequirement { skill = Combat, percentage = 220 } ]
 
         EnclaveFindTheGeck ->
-            [ SkillRequirement { skill = Specific Traps, percentage = 150 }
-            , SkillRequirement { skill = Specific Sneak, percentage = 150 }
+            [ SkillRequirement { skill = Specific Skill.Traps, percentage = 150 }
+            , SkillRequirement { skill = Specific Skill.Sneak, percentage = 150 }
             ]
 
         EnclaveRigTurretsToTargetFrankHorrigan ->
-            [ SkillRequirement { skill = Specific Science, percentage = 250 } ]
+            [ SkillRequirement { skill = Specific Skill.Science, percentage = 250 } ]
 
         EnclaveForceScientistToInitiateSelfDestruct ->
-            [ SkillRequirement { skill = Specific Speech, percentage = 250 } ]
+            [ SkillRequirement { skill = Specific Skill.Speech, percentage = 250 } ]
 
         EnclaveKillFrankHorrigan ->
             [ SkillRequirement { skill = Combat, percentage = 250 } ]
