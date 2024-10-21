@@ -3531,6 +3531,7 @@ inventoryView _ player =
                     player.equippedWeapon
                         |> Maybe.map (.kind >> Logic.unaimedAttackStyle)
                         |> Maybe.withDefault AttackStyle.UnarmedUnaimed
+                , crippledArms = 0
                 }
     in
     [ pageTitleView "Inventory"

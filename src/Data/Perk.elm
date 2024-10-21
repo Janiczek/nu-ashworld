@@ -56,7 +56,7 @@ type Perk
     | Negotiator
       -- TODO Pack Rat -- would need carry weight
     | Pathfinder
-      -- TODO Quick Recovery -- would need knockdown effect implemented
+    | QuickRecovery
       -- TODO Rad Resistance -- would need rad resistance stat tracked
     | Ranger
     | Salesman
@@ -144,6 +144,7 @@ all =
     , Negotiator
     , NightVision
     , Pathfinder
+    , QuickRecovery
     , Ranger
     , Salesman
     , Sniper
@@ -299,6 +300,9 @@ name perk =
         BonusRangedDamage ->
             "Bonus Ranged Damage"
 
+        QuickRecovery ->
+            "Quick Recovery"
+
 
 {-| <https://fallout.fandom.com/wiki/Fallout_2_perks>
 -}
@@ -443,6 +447,9 @@ maxRank perk =
         BonusRangedDamage ->
             2
 
+        QuickRecovery ->
+            1
+
 
 encode : Perk -> JE.Value
 encode perk =
@@ -586,6 +593,9 @@ encode perk =
             BonusRangedDamage ->
                 "bonus-ranged-damage"
 
+            QuickRecovery ->
+                "quick-recovery"
+
 
 decoder : Decoder Perk
 decoder =
@@ -595,6 +605,9 @@ decoder =
                 case perk of
                     "bonus-ranged-damage" ->
                         JD.succeed BonusRangedDamage
+
+                    "quick-recovery" ->
+                        JD.succeed QuickRecovery
 
                     "earlier-sequence" ->
                         JD.succeed EarlierSequence
@@ -910,6 +923,9 @@ isApplicableForLevelup r perk =
 
                 BonusRangedDamage ->
                     r.level >= 6 && s.agility >= 6 && s.luck >= 6
+
+                QuickRecovery ->
+                    r.level >= 6 && s.agility >= 5
            )
 
 
@@ -1054,3 +1070,6 @@ description perk =
 
         BonusRangedDamage ->
             "Your training in firearms and other ranged weapons has made you more deadly in ranged combat. For each level of this Perk, you do +2 points of damage with ranged weapons."
+
+        QuickRecovery ->
+            "You are quick at recovering from being knocked down. Standing back up takes 1 AP instead of 4 AP."

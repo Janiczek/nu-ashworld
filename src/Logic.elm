@@ -21,7 +21,9 @@ module Logic exposing
     , healApCost
     , healOverTimePerTick
     , hitpoints
+    , knockOutTurns
     , mainWorldName
+    , maxPossibleMove
     , maxTraits
     , minTicksPerHourNeededForQuest
     , naturalArmorClass
@@ -36,6 +38,7 @@ module Logic exposing
     , sequence
     , skillPointCost
     , skillPointsPerLevel
+    , standUpApCost
     , tickHealPercentage
     , ticksGivenPerQuestEngagement
     , totalTags
@@ -147,9 +150,23 @@ healApCost =
     2
 
 
-regainConciousnessApCost : { maxAP : Int } -> Int
+standUpApCost : { hasQuickRecoveryPerk : Bool } -> Int
+standUpApCost r =
+    if r.hasQuickRecoveryPerk then
+        1
+
+    else
+        4
+
+
+knockOutTurns : Int
+knockOutTurns =
+    2
+
+
+regainConciousnessApCost : { maxAp : Int } -> Int
 regainConciousnessApCost r =
-    r.maxAP // 2
+    r.maxAp // 2
 
 
 hitpoints :
@@ -427,6 +444,7 @@ chanceToHit :
     , attackerPerks : SeqDict Perk Int
     , attackerTraits : SeqSet Trait
     , attackerSpecial : Special
+    , crippledArms : Int
     , distanceHexes : Int
     , equippedWeapon : Maybe ItemKind.Kind
     , usedAmmo : UsedAmmo
@@ -539,6 +557,7 @@ rangedChanceToHit :
         , attackerSpecial : Special
         , attackerPerks : SeqDict Perk Int
         , attackerTraits : SeqSet Trait
+        , crippledArms : Int
         , targetArmorClass : Int
         , distanceHexes : Int
         , equippedWeapon : Maybe ItemKind.Kind
@@ -551,6 +570,10 @@ rangedChanceToHit r =
         -- FastShot doesn't work with aimed attacks
         0
 
+    else if r.crippledArms >= 2 then
+        -- Cannot use non-unarmed attacks with both arms crippled
+        0
+
     else
         case r.equippedWeapon of
             Nothing ->
@@ -558,7 +581,11 @@ rangedChanceToHit r =
                 0
 
             Just equippedWeapon ->
-                if r.distanceHexes > ItemKind.range r.attackStyle equippedWeapon then
+                if r.crippledArms >= 1 && ItemKind.isTwoHandedWeapon equippedWeapon then
+                    -- Can't use two-handed weapon if both hands aren't fine
+                    0
+
+                else if r.distanceHexes > ItemKind.range r.attackStyle equippedWeapon then
                     -- Wanted to attack at a range the weapon can't do
                     0
 
@@ -583,6 +610,14 @@ rangedChanceToHit r =
                                         , equippedWeapon = r.equippedWeapon
                                         , perception = r.attackerSpecial.perception
                                         }
+
+                                crippledArmPenalty : Int
+                                crippledArmPenalty =
+                                    if r.crippledArms >= 1 then
+                                        40
+
+                                    else
+                                        0
 
                                 ammoArmorClassModifier : Int
                                 ammoArmorClassModifier =
@@ -652,6 +687,7 @@ rangedChanceToHit r =
                                         - lightingPenalty_
                                         - strengthRequirementPenalty
                                         - shotPenalty
+                                        - crippledArmPenalty
                                     )
                                         |> clamp 0 95
                             in
@@ -766,6 +802,7 @@ meleeChanceToHit :
         , attackerSpecial : Special
         , attackerTraits : SeqSet Trait
         , distanceHexes : Int
+        , crippledArms : Int
         , equippedWeapon : Maybe ItemKind.Kind
         , usedAmmo : UsedAmmo
         , targetArmorClass : Int
@@ -779,6 +816,14 @@ meleeChanceToHit r =
 
     else if r.distanceHexes > weaponRange r.equippedWeapon r.attackStyle then
         -- Wanted to attack at a range the weapon can't do
+        0
+
+    else if r.crippledArms >= 2 && not (AttackStyle.isUnarmed r.attackStyle) then
+        -- Can't use non-unarmed attacks with both arms crippled
+        0
+
+    else if r.crippledArms >= 1 && Maybe.map ItemKind.isTwoHandedWeapon r.equippedWeapon == Just True then
+        -- Can't use two-handed weapon if both hands aren't fine
         0
 
     else
@@ -825,6 +870,14 @@ meleeChanceToHit r =
                             ShootBurst ->
                                 0
 
+                    crippledArmPenalty : Int
+                    crippledArmPenalty =
+                        if r.crippledArms >= 1 then
+                            40
+
+                        else
+                            0
+
                     weaponAccuratePerk : Int
                     weaponAccuratePerk =
                         case r.equippedWeapon of
@@ -842,6 +895,7 @@ meleeChanceToHit r =
                     + weaponAccuratePerk
                     - r.targetArmorClass
                     - shotPenalty
+                    - crippledArmPenalty
                 )
                     |> clamp 0 95
         in
@@ -960,6 +1014,7 @@ attackStats :
     , level : Int
     , equippedWeapon : Maybe ItemKind.Kind
     , preferredAmmo : Maybe ItemKind.Kind
+    , crippledArms : Int
     , items : Dict Item.Id Item
     , unarmedDamageBonus : Int
     , attackStyle : AttackStyle
@@ -1054,6 +1109,7 @@ meleeAttackStats :
         , traits : SeqSet Trait
         , perks : SeqDict Perk Int
         , level : Int
+        , crippledArms : Int
         , unarmedDamageBonus : Int
         , equippedWeapon : Maybe ItemKind.Kind
         , attackStyle : AttackStyle
@@ -1099,7 +1155,12 @@ meleeAttackStats r =
 
         -}
         { unarmedAttackBonus, criticalChanceBonus } =
-            if unarmedSkill < 55 || agility < 6 || r.equippedWeapon /= Nothing || not isUnarmedAttack then
+            if r.crippledArms >= 1 then
+                { unarmedAttackBonus = -4
+                , criticalChanceBonus = 0
+                }
+
+            else if unarmedSkill < 55 || agility < 6 || r.equippedWeapon /= Nothing || not isUnarmedAttack then
                 { unarmedAttackBonus = 0
                 , criticalChanceBonus = 0
                 }
@@ -1122,8 +1183,8 @@ meleeAttackStats r =
         ( minDamage, maxDamage ) =
             case r.equippedWeapon of
                 Nothing ->
-                    ( 1 + unarmedAttackBonus
-                    , 1 + unarmedAttackBonus + bonusMeleeDamage + r.unarmedDamageBonus
+                    ( max 0 <| 1 + unarmedAttackBonus
+                    , max 0 <| 1 + unarmedAttackBonus + bonusMeleeDamage + r.unarmedDamageBonus
                     )
 
                 Just equippedWeapon ->
@@ -2082,3 +2143,19 @@ usedAmmo r =
                     Nothing ->
                         -- We're free to try anything (it's going to be a Fallback ammo)
                         fallback ()
+
+
+maxPossibleMove :
+    { actionPoints : Int
+    , crippledLegs : Int
+    }
+    -> Int
+maxPossibleMove r =
+    if r.crippledLegs <= 0 then
+        r.actionPoints
+
+    else if r.crippledLegs == 1 then
+        r.actionPoints // 4
+
+    else
+        0

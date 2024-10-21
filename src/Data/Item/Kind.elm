@@ -11,7 +11,7 @@ module Data.Item.Kind exposing
     , armorClass, armorDamageResistance, armorDamageThreshold
     , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
     , range, weaponStrengthRequirement
-    , weaponDamageType, weaponDamage, shotsPerBurst
+    , weaponDamageType, weaponDamage, shotsPerBurst, isTwoHandedWeapon
     , usableAmmoForWeapon, isUsableAmmoForWeapon
     )
 
@@ -46,7 +46,7 @@ module Data.Item.Kind exposing
 
 @docs isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
 @docs range, weaponStrengthRequirement
-@docs weaponDamageType, weaponDamage, shotsPerBurst
+@docs weaponDamageType, weaponDamage, shotsPerBurst, isTwoHandedWeapon
 @docs usableAmmoForWeapon, isUsableAmmoForWeapon
 
 TODO weight : Kind -> Int
@@ -10176,3 +10176,275 @@ shotsPerBurst kind =
 
         HnApNeedlerCartridge ->
             0
+
+
+isTwoHandedWeapon : Kind -> Bool
+isTwoHandedWeapon kind =
+    case kind of
+        SuperSledge ->
+            True
+
+        AssaultRifle ->
+            True
+
+        ExpandedAssaultRifle ->
+            True
+
+        HuntingRifle ->
+            True
+
+        ScopedHuntingRifle ->
+            True
+
+        RedRyderLEBBGun ->
+            True
+
+        SniperRifle ->
+            True
+
+        GaussRifle ->
+            True
+
+        CombatShotgun ->
+            True
+
+        HkCaws ->
+            True
+
+        PancorJackhammer ->
+            True
+
+        Shotgun ->
+            True
+
+        Minigun ->
+            True
+
+        Bozar ->
+            True
+
+        RocketLauncher ->
+            True
+
+        GatlingLaser ->
+            True
+
+        LaserRifle ->
+            True
+
+        LaserRifleExtCap ->
+            True
+
+        PlasmaRifle ->
+            True
+
+        TurboPlasmaRifle ->
+            True
+
+        PulseRifle ->
+            True
+
+        -- Rest are False
+        PowerFist ->
+            False
+
+        MegaPowerFist ->
+            False
+
+        GaussPistol ->
+            False
+
+        Smg10mm ->
+            False
+
+        HkP90c ->
+            False
+
+        SawedOffShotgun ->
+            False
+
+        LaserPistol ->
+            False
+
+        FragGrenade ->
+            False
+
+        CattleProd ->
+            False
+
+        SuperCattleProd ->
+            False
+
+        Mauser9mm ->
+            False
+
+        Pistol14mm ->
+            False
+
+        Flare ->
+            False
+
+        Pistol223 ->
+            False
+
+        Knife ->
+            False
+
+        Wakizashi ->
+            False
+
+        LittleJesus ->
+            False
+
+        Ripper ->
+            False
+
+        NeedlerPistol ->
+            False
+
+        MagnetoLaserPistol ->
+            False
+
+        PulsePistol ->
+            False
+
+        Beer ->
+            False
+
+        Fruit ->
+            False
+
+        HealingPowder ->
+            False
+
+        Stimpak ->
+            False
+
+        SuperStimpak ->
+            False
+
+        BigBookOfScience ->
+            False
+
+        DeansElectronics ->
+            False
+
+        FirstAidBook ->
+            False
+
+        GunsAndBullets ->
+            False
+
+        ScoutHandbook ->
+            False
+
+        Robes ->
+            False
+
+        LeatherJacket ->
+            False
+
+        LeatherArmor ->
+            False
+
+        MetalArmor ->
+            False
+
+        TeslaArmor ->
+            False
+
+        CombatArmor ->
+            False
+
+        CombatArmorMk2 ->
+            False
+
+        PowerArmor ->
+            False
+
+        BBAmmo ->
+            False
+
+        SmallEnergyCell ->
+            False
+
+        Fmj223 ->
+            False
+
+        ShotgunShell ->
+            False
+
+        Jhp10mm ->
+            False
+
+        Jhp5mm ->
+            False
+
+        MicrofusionCell ->
+            False
+
+        Ec2mm ->
+            False
+
+        Tool ->
+            False
+
+        LockPicks ->
+            False
+
+        ElectronicLockpick ->
+            False
+
+        AbnormalBrain ->
+            False
+
+        ChimpanzeeBrain ->
+            False
+
+        HumanBrain ->
+            False
+
+        CyberneticBrain ->
+            False
+
+        GECK ->
+            False
+
+        SkynetAim ->
+            False
+
+        MotionSensor ->
+            False
+
+        K9 ->
+            False
+
+        MeatJerky ->
+            False
+
+        Ap5mm ->
+            False
+
+        Mm9 ->
+            False
+
+        Ball9mm ->
+            False
+
+        Ap10mm ->
+            False
+
+        Ap14mm ->
+            False
+
+        ExplosiveRocket ->
+            False
+
+        RocketAp ->
+            False
+
+        HnNeedlerCartridge ->
+            False
+
+        HnApNeedlerCartridge ->
+            False

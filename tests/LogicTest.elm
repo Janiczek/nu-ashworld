@@ -98,6 +98,7 @@ attackStatsSuite =
                     , items = Dict.singleton 1 { id = 1, kind = ItemKind.Knife, count = 1 }
                     , unarmedDamageBonus = 10
                     , attackStyle = MeleeUnaimed
+                    , crippledArms = 0
                     }
                     |> Expect.equal
                         { minDamage = {- knife -} 1
@@ -126,6 +127,7 @@ attackStatsSuite =
                             ]
                     , unarmedDamageBonus = 10
                     , attackStyle = UnarmedUnaimed
+                    , crippledArms = 0
                     }
                     |> Expect.equal
                         { minDamage = {- power fist -} 12
@@ -150,6 +152,7 @@ attackStatsSuite =
                     , items = Dict.empty
                     , unarmedDamageBonus = 10
                     , attackStyle = UnarmedUnaimed
+                    , crippledArms = 0
                     }
                     |> Expect.equal
                         { minDamage =
@@ -187,6 +190,7 @@ chanceToHitSuite =
                         , equippedWeapon = maybeWeapon
                         , distanceHexes = 1
                         , targetArmorClass = 0
+                        , crippledArms = 0
                     }
                     |> Expect.greaterThan 0
         , Test.fuzz2 chanceToHitArgsFuzzer (Fuzz.maybe TestHelpers.unarmedWeaponKindFuzzer) "Unarmed outside range: cannot hit" <|
@@ -206,6 +210,7 @@ chanceToHitSuite =
                         , equippedWeapon = Just weapon
                         , distanceHexes = 1
                         , targetArmorClass = 0
+                        , crippledArms = 0
                     }
                     |> Expect.greaterThan 0
         , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.meleeWeaponKindFuzzer "Melee outside range: cannot hit" <|
@@ -229,6 +234,7 @@ chanceToHitSuite =
                         , equippedWeapon = Just weapon
                         , distanceHexes = 1
                         , targetArmorClass = 0
+                        , crippledArms = 0
                     }
                     |> Expect.greaterThan 0
         , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.gunKindFuzzer "Ranged outside range: cannot hit" <|
@@ -263,10 +269,11 @@ attackStatsArgsFuzzer :
         , items : Dict Item.Id Item
         , unarmedDamageBonus : Int
         , attackStyle : AttackStyle
+        , crippledArms : Int
         }
 attackStatsArgsFuzzer =
     Fuzz.constant
-        (\special addedSkillPercentages traits perks level equippedWeapon preferredAmmo items unarmedDamageBonus attackStyle ->
+        (\special addedSkillPercentages traits perks level equippedWeapon preferredAmmo items unarmedDamageBonus attackStyle crippledArms ->
             { special = special
             , addedSkillPercentages = addedSkillPercentages
             , traits = traits
@@ -277,6 +284,7 @@ attackStatsArgsFuzzer =
             , items = items
             , unarmedDamageBonus = unarmedDamageBonus
             , attackStyle = attackStyle
+            , crippledArms = crippledArms
             }
         )
         |> Fuzz.andMap TestHelpers.specialFuzzer
@@ -289,6 +297,7 @@ attackStatsArgsFuzzer =
         |> Fuzz.andMap TestHelpers.itemsFuzzer
         |> Fuzz.andMap (Fuzz.intRange 0 10)
         |> Fuzz.andMap TestHelpers.attackStyleFuzzer
+        |> Fuzz.andMap (Fuzz.intRange 0 2)
 
 
 chanceToHitArgsFuzzer :
@@ -302,10 +311,11 @@ chanceToHitArgsFuzzer :
         , usedAmmo : Logic.UsedAmmo
         , targetArmorClass : Int
         , attackStyle : AttackStyle
+        , crippledArms : Int
         }
 chanceToHitArgsFuzzer =
     Fuzz.constant
-        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon usedAmmo targetArmorClass attackStyle ->
+        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon usedAmmo targetArmorClass attackStyle crippledArms ->
             { attackerAddedSkillPercentages = attackerAddedSkillPercentages
             , attackerPerks = attackerPerks
             , attackerSpecial = attackerSpecial
@@ -315,6 +325,7 @@ chanceToHitArgsFuzzer =
             , usedAmmo = usedAmmo
             , targetArmorClass = targetArmorClass
             , attackStyle = attackStyle
+            , crippledArms = crippledArms
             }
         )
         |> Fuzz.andMap TestHelpers.addedSkillPercentagesFuzzer
@@ -326,6 +337,7 @@ chanceToHitArgsFuzzer =
         |> Fuzz.andMap TestHelpers.usedAmmoFuzzer
         |> Fuzz.andMap TestHelpers.armorClassFuzzer
         |> Fuzz.andMap TestHelpers.attackStyleFuzzer
+        |> Fuzz.andMap (Fuzz.intRange 0 2)
 
 
 baseCriticalChanceArgsFuzzer :

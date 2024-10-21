@@ -1700,6 +1700,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
                     updatePlayer worldName player.name fn
 
         newModel =
+            -- We purposefully don't persist the critical effect Blinded changes to SPECIAL Perception (-> 1). Blindness is short-term.
             { model
                 | worlds =
                     model.worlds
@@ -1912,6 +1913,9 @@ oneTimePerkEffects currentTime =
                             player
                                 |> SPlayer.addSkillPercentage 10 Skill.Repair
                                 |> SPlayer.addSkillPercentage 10 Skill.Science
+
+                Perk.QuickRecovery ->
+                    Nothing
 
                 Perk.BonusHthAttacks ->
                     Nothing

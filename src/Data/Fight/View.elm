@@ -30,6 +30,7 @@ type alias Names =
     , nameCap : String
     , namePossCap : String
     , verbPresent : String -> String
+    , be : String
     }
 
 
@@ -104,6 +105,7 @@ view perceptionLevel fight yourName =
                     , nameCap = "You"
                     , namePossCap = "Your"
                     , verbPresent = identity
+                    , be = "are"
                     }
 
                 TargetVerbatim ->
@@ -111,6 +113,7 @@ view perceptionLevel fight yourName =
                     , nameCap = targetName
                     , namePossCap = normalPoss targetName
                     , verbPresent = addS
+                    , be = "is"
                     }
 
                 AttackerVerbatim ->
@@ -118,6 +121,7 @@ view perceptionLevel fight yourName =
                     , nameCap = attackerName
                     , namePossCap = normalPoss attackerName
                     , verbPresent = addS
+                    , be = "is"
                     }
 
         getNames : Who -> { subject : Names, object : Names }
@@ -414,6 +418,20 @@ view perceptionLevel fight yourName =
                                                                 ++ names_.subject.verbPresent "miss"
                                                                 ++ "."
                                                         ]
+
+                                                Fight.KnockedOut ->
+                                                    H.text <|
+                                                        names_.subject.nameCap
+                                                            ++ " "
+                                                            ++ names_.subject.be
+                                                            ++ " knocked out."
+
+                                                Fight.StandUp _ ->
+                                                    H.text <|
+                                                        names_.subject.nameCap
+                                                            ++ " "
+                                                            ++ names_.subject.verbPresent "stand"
+                                                            ++ " up."
 
                                                 Fight.Heal r ->
                                                     H.text <|

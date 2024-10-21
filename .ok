@@ -1,2 +1,3 @@
 test: elm-test --compiler lamdera
 watch: elm-test --compiler lamdera --watch
+max: elm-test --compiler lamdera --fuzz 100000

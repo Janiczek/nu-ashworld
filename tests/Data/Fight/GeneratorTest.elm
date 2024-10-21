@@ -65,6 +65,13 @@ baseOpponent =
     , unarmedDamageBonus = 0
     , special = Special.init
     , fightStrategy = Command DoWhatever
+    , crippledLeftLeg = False
+    , crippledRightLeg = False
+    , crippledLeftArm = False
+    , crippledRightArm = False
+    , knockedOutTurns = 0
+    , isKnockedDown = False
+    , losesNextTurn = False
     }
 
 

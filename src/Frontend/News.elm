@@ -43,6 +43,9 @@ Ideas floating around:
 - critical effect - lose consciousness -> regain consciousness in fight (cost 1/2 of max AP)
 - steal skill gives you % chance of looting a random item from a player's inventory in PVP after defeating them
 
+- inventory: help on hover - show how much it will heal (either in a help section or in the "HP: ..." section of left nav
+- left nav: on hover of "Heal", show how much it will heal in the "HP: ..." section
+
 ~janiczek
 """
       }

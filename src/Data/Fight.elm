@@ -68,6 +68,16 @@ type alias Opponent =
     , unarmedDamageBonus : Int
     , special : Special
     , fightStrategy : FightStrategy
+
+    -- Short-term health effects (don't persist to the SPlayer)
+    -- blindness -> sets special.perception to 1. We just need to make sure this doesn't get persisted to the SPlayer later
+    , knockedOutTurns : Int
+    , isKnockedDown : Bool
+    , crippledLeftLeg : Bool
+    , crippledRightLeg : Bool
+    , crippledLeftArm : Bool
+    , crippledRightArm : Bool
+    , losesNextTurn : Bool
     }
 
 
@@ -111,6 +121,8 @@ type Action
         , newHp : Int
         }
     | SkipTurn
+    | KnockedOut
+    | StandUp { apCost : Int }
     | FailToDoAnything CommandRejectionReason
 
 
@@ -339,6 +351,15 @@ encodeAction action =
                 [ ( "type", JE.string "SkipTurn" )
                 ]
 
+        KnockedOut ->
+            JE.object [ ( "type", JE.string "KnockedOut" ) ]
+
+        StandUp { apCost } ->
+            JE.object
+                [ ( "type", JE.string "StandUp" )
+                , ( "apCost", JE.int apCost )
+                ]
+
         FailToDoAnything reason ->
             JE.object
                 [ ( "type", JE.string "FailToDoAnything" )
@@ -422,6 +443,13 @@ actionDecoder =
 
                     "SkipTurn" ->
                         JD.succeed SkipTurn
+
+                    "KnockedOut" ->
+                        JD.succeed KnockedOut
+
+                    "StandUp" ->
+                        JD.map (\apCost -> StandUp { apCost = apCost })
+                            (JD.field "apCost" JD.int)
 
                     "FailToDoAnything" ->
                         JD.map FailToDoAnything (JD.field "reason" commandRejectionReasonDecoder)
@@ -548,7 +576,13 @@ attackDamage action =
         ComeCloser _ ->
             0
 
+        KnockedOut ->
+            0
+
         Heal _ ->
+            0
+
+        StandUp _ ->
             0
 
         SkipTurn ->
@@ -573,7 +607,13 @@ attackStyle action =
         ComeCloser _ ->
             Nothing
 
+        KnockedOut ->
+            Nothing
+
         Heal _ ->
+            Nothing
+
+        StandUp _ ->
             Nothing
 
         SkipTurn ->

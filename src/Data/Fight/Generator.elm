@@ -135,6 +135,12 @@ apCost action =
         Fight.Heal _ ->
             Logic.healApCost
 
+        Fight.KnockedOut ->
+            0
+
+        Fight.StandUp r_ ->
+            r_.apCost
+
         Fight.SkipTurn ->
             0
 
@@ -285,6 +291,7 @@ rollDamage who ongoing attackStyle maybeCritical =
                 , perks = opponent.perks
                 , traits = opponent.traits
                 , equippedWeapon = opponent.equippedWeapon
+                , crippledArms = crippledArms opponent
                 , preferredAmmo = opponent.preferredAmmo
                 , items = opponent.items
                 , unarmedDamageBonus = opponent.unarmedDamageBonus
@@ -562,12 +569,69 @@ generator r =
         turn : Who -> OngoingFight -> Generator OngoingFight
         turn who ongoing =
             if bothAlive ongoing && not (givenUp ongoing) then
-                ongoing
-                    |> resetAp who
-                    |> runStrategyRepeatedly who
+                let
+                    opponent =
+                        opponent_ who ongoing
+                in
+                if opponent.losesNextTurn then
+                    -- skip turn but also reset the "skip turn" flag
+                    ongoing
+                        |> updateOpponent who (\op -> { op | losesNextTurn = False })
+                        |> Random.constant
+
+                else if opponent.knockedOutTurns > 1 then
+                    -- skip turn and decrease the number of turns to wait
+                    ongoing
+                        |> updateOpponent who (\op -> { op | knockedOutTurns = op.knockedOutTurns - 1 })
+                        |> addLog who Fight.KnockedOut
+                        |> Random.constant
+
+                else if opponent.knockedOutTurns == 1 then
+                    ongoing
+                        |> updateOpponent who (\op -> { op | knockedOutTurns = 0 })
+                        |> resetAp who
+                        |> standUp who
+                        |> updateAp (\ap -> ap - Logic.regainConciousnessApCost { maxAp = opponent.maxAp }) who
+                        |> runStrategyRepeatedly who
+
+                else
+                    ongoing
+                        |> resetAp who
+                        |> (if opponent.isKnockedDown then
+                                standUp who
+
+                            else
+                                identity
+                           )
+                        |> runStrategyRepeatedly who
 
             else
                 Random.constant ongoing
+
+        standUp who o =
+            let
+                opponent =
+                    opponent_ who o
+
+                standUpCost =
+                    Logic.standUpApCost
+                        { hasQuickRecoveryPerk =
+                            Perk.rank Perk.QuickRecovery opponent.perks > 0
+                        }
+            in
+            o
+                |> updateAp (\ap -> ap - standUpCost) who
+                |> updateOpponent who (\op -> { op | isKnockedDown = False })
+                |> addLog who (Fight.StandUp { apCost = standUpCost })
+
+        updateAp : (Int -> Int) -> Who -> OngoingFight -> OngoingFight
+        updateAp fn who ongoing =
+            case who of
+                Attacker ->
+                    { ongoing | attackerAp = max 0 <| fn ongoing.attackerAp }
+
+                Target ->
+                    { ongoing | targetAp = max 0 <| fn ongoing.targetAp }
 
         resetAp : Who -> OngoingFight -> OngoingFight
         resetAp who ongoing =
@@ -1002,9 +1066,16 @@ moveForward who ongoing =
 
     else
         let
+            opponent =
+                opponent_ who ongoing
+
             maxPossibleMove : Int
             maxPossibleMove =
-                min (ongoing.distanceHexes - 1) (opponentAp who ongoing)
+                Logic.maxPossibleMove
+                    { actionPoints = opponentAp who ongoing
+                    , crippledLegs = crippledLegs opponent
+                    }
+                    |> min (ongoing.distanceHexes - 1)
 
             action : Fight.Action
             action =
@@ -1060,6 +1131,7 @@ chanceToHit who ongoing attackStyle =
         , attackStyle = attackStyle
         , equippedWeapon = opponent.equippedWeapon
         , usedAmmo = usedAmmo who ongoing
+        , crippledArms = crippledArms opponent
         }
 
 
@@ -1179,6 +1251,7 @@ attack_ who ongoing attackStyle baseApCost =
                 , items = opponent.items
                 , unarmedDamageBonus = opponent.unarmedDamageBonus
                 , attackStyle = attackStyle
+                , crippledArms = crippledArms opponent
                 }
 
         criticalChance_ : Int -> Int
@@ -1268,7 +1341,6 @@ attack_ who ongoing attackStyle baseApCost =
                             |> Random.andThen (rollCritical who ongoing attackStyle)
                             |> Random.andThen
                                 (\maybeCritical ->
-                                    -- TODO interpret critical effects!
                                     rollDamage who ongoing attackStyle maybeCritical
                                         |> Random.map
                                             (\damage ->
@@ -1290,6 +1362,13 @@ attack_ who ongoing attackStyle baseApCost =
                                                     |> subtractAp who action
                                                     |> useAmmo 1
                                                     |> updateOpponent other (subtractHp damage)
+                                                    |> (case maybeCritical of
+                                                            Nothing ->
+                                                                identity
+
+                                                            Just c ->
+                                                                updateOpponent other (applyCriticalEffects c.effects)
+                                                       )
                                                     |> finalizeCommand
                                             )
                                 )
@@ -1352,7 +1431,6 @@ attack_ who ongoing attackStyle baseApCost =
                                 |> Random.andThen (rollCritical who ongoing attackStyle)
                                 |> Random.andThen
                                     (\maybeCritical ->
-                                        -- TODO interpret critical effects!
                                         Random.list bulletsUsed (oneBullet maybeCritical)
                                             |> Random.map
                                                 (\bulletHits ->
@@ -1378,6 +1456,13 @@ attack_ who ongoing attackStyle baseApCost =
                                                         |> subtractAp who action
                                                         |> useAmmo bulletsUsed
                                                         |> updateOpponent other (subtractHp damage)
+                                                        |> (case maybeCritical of
+                                                                Nothing ->
+                                                                    identity
+
+                                                                Just c ->
+                                                                    updateOpponent other (applyCriticalEffects c.effects)
+                                                           )
                                                         |> finalizeCommand
                                                 )
                                     )
@@ -1591,6 +1676,7 @@ evalValue who state value =
                 , attackStyle = attackStyle
                 , equippedWeapon = state.you.equippedWeapon
                 , usedAmmo = usedAmmo who state.ongoingFight
+                , crippledArms = crippledArms state.you
                 }
 
         RangeNeeded attackStyle ->
@@ -1701,6 +1787,46 @@ targetAlreadyDead r =
     }
 
 
+applyCriticalEffects : List Critical.Effect -> Opponent -> Opponent
+applyCriticalEffects effects opponent =
+    List.foldl applyCriticalEffect opponent effects
+
+
+applyCriticalEffect : Critical.Effect -> Opponent -> Opponent
+applyCriticalEffect effect opponent =
+    case effect of
+        Critical.Knockout ->
+            { opponent | knockedOutTurns = Logic.knockOutTurns }
+
+        Critical.Knockdown ->
+            { opponent | isKnockedDown = True }
+
+        Critical.CrippledLeftLeg ->
+            { opponent | crippledLeftLeg = True }
+
+        Critical.CrippledRightLeg ->
+            { opponent | crippledRightLeg = True }
+
+        Critical.CrippledLeftArm ->
+            { opponent | crippledLeftArm = True }
+
+        Critical.CrippledRightArm ->
+            { opponent | crippledRightArm = True }
+
+        Critical.Blinded ->
+            { opponent | special = opponent.special |> Special.set Special.Perception 1 }
+
+        Critical.Death ->
+            { opponent | hp = 0 }
+
+        Critical.BypassArmor ->
+            -- This is interpreted in the critical damage modifier calculations elsewhere
+            opponent
+
+        Critical.LoseNextTurn ->
+            { opponent | losesNextTurn = True }
+
+
 unequipWeapon : Opponent -> Opponent
 unequipWeapon opponent =
     { opponent | equippedWeapon = Nothing }
@@ -1757,6 +1883,13 @@ enemyOpponentGenerator r lastItemId enemyType =
                     special = EnemyType.special enemyType
                   , fightStrategy = FightStrategy.doWhatever
                   , unarmedDamageBonus = EnemyType.unarmedDamageBonus enemyType
+                  , knockedOutTurns = 0
+                  , isKnockedDown = False
+                  , crippledLeftLeg = False
+                  , crippledRightLeg = False
+                  , crippledLeftArm = False
+                  , crippledRightArm = False
+                  , losesNextTurn = False
                   }
                 , newItemId
                 )
@@ -1830,4 +1963,30 @@ playerOpponent player =
     , unarmedDamageBonus = 0 -- This is only used for NPC enemies
     , special = player.special
     , fightStrategy = player.fightStrategy
+    , knockedOutTurns = 0
+    , isKnockedDown = False
+    , crippledLeftLeg = False
+    , crippledRightLeg = False
+    , crippledLeftArm = False
+    , crippledRightArm = False
+    , losesNextTurn = False
     }
+
+
+boolToInt : Bool -> Int
+boolToInt b =
+    if b then
+        1
+
+    else
+        0
+
+
+crippledLegs : Opponent -> Int
+crippledLegs opponent =
+    boolToInt opponent.crippledLeftLeg + boolToInt opponent.crippledRightLeg
+
+
+crippledArms : Opponent -> Int
+crippledArms opponent =
+    boolToInt opponent.crippledLeftArm + boolToInt opponent.crippledRightArm

@@ -183,6 +183,13 @@ opponentFuzzer =
         |> Fuzz.andMap unarmedDamageBonus
         |> Fuzz.andMap specialFuzzer
         |> Fuzz.andMap (fightStrategyFuzzer { maxDepth = 5 })
+        |> Fuzz.andMap (Fuzz.intRange 0 2)
+        |> Fuzz.andMap Fuzz.bool
+        |> Fuzz.andMap Fuzz.bool
+        |> Fuzz.andMap Fuzz.bool
+        |> Fuzz.andMap Fuzz.bool
+        |> Fuzz.andMap Fuzz.bool
+        |> Fuzz.andMap Fuzz.bool
         -- sanitization:
         |> Fuzz.map (\o -> { o | hp = min o.hp o.maxHp })
 
