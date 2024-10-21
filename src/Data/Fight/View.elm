@@ -421,16 +421,12 @@ view perceptionLevel fight yourName =
 
                                                 Fight.KnockedOut ->
                                                     H.text <|
-                                                        names_.subject.nameCap
-                                                            ++ " "
-                                                            ++ names_.subject.be
+                                                        names_.subject.be
                                                             ++ " knocked out."
 
                                                 Fight.StandUp _ ->
                                                     H.text <|
-                                                        names_.subject.nameCap
-                                                            ++ " "
-                                                            ++ names_.subject.verbPresent "stand"
+                                                        names_.subject.verbPresent "stand"
                                                             ++ " up."
 
                                                 Fight.Heal r ->

@@ -625,6 +625,58 @@ rangedChanceToHit r =
                                         |> Maybe.map (\( _, kind, _ ) -> ItemKind.ammoArmorClassModifier kind)
                                         |> Maybe.withDefault 0
 
+                                oneHanderFor : ItemKind.Kind -> Int
+                                oneHanderFor weapon =
+                                    if ItemKind.isTwoHandedWeapon weapon then
+                                        -40
+
+                                    else
+                                        20
+
+                                oneHanderBonus : Int
+                                oneHanderBonus =
+                                    if SeqSet.member Trait.OneHander r.attackerTraits then
+                                        case ( r.attackStyle, r.equippedWeapon ) of
+                                            ( Throw, Nothing ) ->
+                                                0
+
+                                            ( Throw, Just weapon ) ->
+                                                oneHanderFor weapon
+
+                                            ( ShootSingleUnaimed, Nothing ) ->
+                                                0
+
+                                            ( ShootSingleUnaimed, Just weapon ) ->
+                                                oneHanderFor weapon
+
+                                            ( ShootSingleAimed _, Nothing ) ->
+                                                0
+
+                                            ( ShootSingleAimed _, Just weapon ) ->
+                                                oneHanderFor weapon
+
+                                            ( ShootBurst, Nothing ) ->
+                                                0
+
+                                            ( ShootBurst, Just weapon ) ->
+                                                oneHanderFor weapon
+
+                                            -- We don't care about these here:
+                                            ( UnarmedUnaimed, _ ) ->
+                                                0
+
+                                            ( UnarmedAimed _, _ ) ->
+                                                0
+
+                                            ( MeleeUnaimed, _ ) ->
+                                                0
+
+                                            ( MeleeAimed _, _ ) ->
+                                                0
+
+                                    else
+                                        0
+
                                 lightingPenalty_ : Int
                                 lightingPenalty_ =
                                     lightingPenalty
@@ -682,6 +734,7 @@ rangedChanceToHit r =
                                         + (8 * r.attackerSpecial.perception)
                                         -- weapon long range perk is already factored into the distancePenalty
                                         + weaponAccuratePerk
+                                        + oneHanderBonus
                                         - distancePenalty_
                                         - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
                                         - lightingPenalty_
@@ -870,6 +923,52 @@ meleeChanceToHit r =
                             ShootBurst ->
                                 0
 
+                    oneHanderFor : ItemKind.Kind -> Int
+                    oneHanderFor weapon =
+                        if ItemKind.isTwoHandedWeapon weapon then
+                            -40
+
+                        else
+                            20
+
+                    oneHanderBonus : Int
+                    oneHanderBonus =
+                        if SeqSet.member Trait.OneHander r.attackerTraits then
+                            case ( r.attackStyle, r.equippedWeapon ) of
+                                ( UnarmedUnaimed, _ ) ->
+                                    0
+
+                                ( UnarmedAimed _, _ ) ->
+                                    0
+
+                                ( MeleeUnaimed, Nothing ) ->
+                                    0
+
+                                ( MeleeUnaimed, Just weapon ) ->
+                                    oneHanderFor weapon
+
+                                ( MeleeAimed _, Nothing ) ->
+                                    0
+
+                                ( MeleeAimed _, Just weapon ) ->
+                                    oneHanderFor weapon
+
+                                -- We don't care about these here:
+                                ( Throw, _ ) ->
+                                    0
+
+                                ( ShootSingleUnaimed, _ ) ->
+                                    0
+
+                                ( ShootSingleAimed _, _ ) ->
+                                    0
+
+                                ( ShootBurst, _ ) ->
+                                    0
+
+                        else
+                            0
+
                     crippledArmPenalty : Int
                     crippledArmPenalty =
                         if r.crippledArms >= 1 then
@@ -893,6 +992,7 @@ meleeChanceToHit r =
                 in
                 (skillPercentage
                     + weaponAccuratePerk
+                    + oneHanderBonus
                     - r.targetArmorClass
                     - shotPenalty
                     - crippledArmPenalty

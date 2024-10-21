@@ -26,7 +26,7 @@ type Trait
     | HeavyHanded
       -- Jinxed
     | Kamikaze
-      -- One Hander
+    | OneHander
       -- Sex Appeal
     | Skilled
     | SmallFrame
@@ -40,6 +40,7 @@ all =
     , Gifted
     , HeavyHanded
     , Kamikaze
+    , OneHander
     , Skilled
     , SmallFrame
     ]
@@ -72,6 +73,9 @@ name trait =
         FastShot ->
             "Fast Shot"
 
+        OneHander ->
+            "One Hander"
+
 
 encode : Trait -> JE.Value
 encode trait =
@@ -91,6 +95,9 @@ encode trait =
 
             Skilled ->
                 "skilled"
+
+            OneHander ->
+                "one-hander"
 
             HeavyHanded ->
                 "heavy-handed"
@@ -122,6 +129,9 @@ decoder =
 
                     "skilled" ->
                         JD.succeed Skilled
+
+                    "one-hander" ->
+                        JD.succeed OneHander
 
                     "heavy-handed" ->
                         JD.succeed HeavyHanded
@@ -171,6 +181,12 @@ as much time honing your skills.
 * -10% to all skills
 * 5 less skill points per level
 """
+
+        OneHander ->
+            """One of your hands is very dominant. You excel with single-handed weapons, but two-handed weapons cause a problem.
+
+* +20% chance to hit with one-handed weapons
+* -40% chance to hit with two-handed weapons"""
 
         SmallFrame ->
             """You are not quite as big as other people, but that never slowed
