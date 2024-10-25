@@ -672,7 +672,7 @@ generator r =
                 targetIsPlayer =
                     Fight.isPlayer ongoing.target.type_
 
-                result : Fight.Result
+                result : Fight.FightResult
                 result =
                     if givenUp ongoing then
                         Fight.NobodyDeadGivenUp

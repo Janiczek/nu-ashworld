@@ -1,9 +1,17 @@
 module Data.Fight exposing
     ( Action(..)
+    , AttackData
+    , AttackerWonData
+    , ComeCloserData
     , CommandRejectionReason(..)
+    , FightResult(..)
+    , HealData
     , Info
+    , MissData
     , Opponent
-    , Result(..)
+    , StandUpData
+    , StartData
+    , TargetWonData
     , Who(..)
     , attackDamage
     , attackStyle
@@ -44,7 +52,7 @@ type alias Info =
     { attacker : OpponentType
     , target : OpponentType
     , log : List ( Who, Action )
-    , result : Result
+    , result : FightResult
     }
 
 
@@ -81,13 +89,21 @@ type alias Opponent =
     }
 
 
-type Result
-    = AttackerWon { xpGained : Int, capsGained : Int, itemsGained : List Item }
-    | TargetWon { xpGained : Int, capsGained : Int, itemsGained : List Item }
+type FightResult
+    = AttackerWon AttackerWonData
+    | TargetWon TargetWonData
     | TargetAlreadyDead
     | BothDead
     | NobodyDead
     | NobodyDeadGivenUp
+
+
+type alias AttackerWonData =
+    { xpGained : Int, capsGained : Int, itemsGained : List Item }
+
+
+type alias TargetWonData =
+    { xpGained : Int, capsGained : Int, itemsGained : List Item }
 
 
 type Who
@@ -97,33 +113,53 @@ type Who
 
 type Action
     = -- TODO later Reload, WalkAway, uncousciousness and other debuffs...
-      Start { distanceHexes : Int }
-    | ComeCloser
-        { hexes : Int
-        , remainingDistanceHexes : Int
-        }
-    | Attack
-        { damage : Int
-        , attackStyle : AttackStyle
-        , remainingHp : Int
-        , critical : Maybe ( List Critical.Effect, Critical.Message )
-        , apCost : Int
-        }
-    | Miss
-        { attackStyle : AttackStyle
-        , apCost : Int
-
-        -- TODO isCritical
-        }
-    | Heal
-        { itemKind : ItemKind.Kind
-        , healedHp : Int
-        , newHp : Int
-        }
+      Start StartData
+    | ComeCloser ComeCloserData
+    | Attack AttackData
+    | Miss MissData
+    | Heal HealData
     | SkipTurn
     | KnockedOut
-    | StandUp { apCost : Int }
+    | StandUp StandUpData
     | FailToDoAnything CommandRejectionReason
+
+
+type alias StartData =
+    { distanceHexes : Int }
+
+
+type alias ComeCloserData =
+    { hexes : Int
+    , remainingDistanceHexes : Int
+    }
+
+
+type alias AttackData =
+    { damage : Int
+    , attackStyle : AttackStyle
+    , remainingHp : Int
+    , critical : Maybe ( List Critical.Effect, Critical.Message )
+    , apCost : Int
+    }
+
+
+type alias MissData =
+    { attackStyle : AttackStyle
+    , apCost : Int
+
+    -- TODO isCritical
+    }
+
+
+type alias HealData =
+    { itemKind : ItemKind.Kind
+    , healedHp : Int
+    , newHp : Int
+    }
+
+
+type alias StandUpData =
+    { apCost : Int }
 
 
 type CommandRejectionReason
@@ -181,7 +217,7 @@ encodeInfo info =
         ]
 
 
-encodeResult : Result -> JE.Value
+encodeResult : FightResult -> JE.Value
 encodeResult result =
     case result of
         AttackerWon r ->
@@ -213,14 +249,14 @@ encodeResult result =
             JE.object [ ( "type", JE.string "NobodyDeadGivenUp" ) ]
 
 
-resultDecoder : Decoder Result
+resultDecoder : Decoder FightResult
 resultDecoder =
     JD.oneOf
         [ resultDecoderV1
         ]
 
 
-resultDecoderV1 : Decoder Result
+resultDecoderV1 : Decoder FightResult
 resultDecoderV1 =
     JD.field "type" JD.string
         |> JD.andThen

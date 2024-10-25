@@ -2,6 +2,9 @@ module Data.Message exposing
     ( Content(..)
     , Id
     , Message
+    , YouAdvancedLevelData
+    , YouAttackedData
+    , YouWereAttackedData
     , content
     , dictDecoder
     , encode
@@ -41,19 +44,28 @@ type alias Message =
 
 type Content
     = Welcome
-    | YouAdvancedLevel
-        { -- perkAvailable : Bool
-          -- skillPointsAvailable : Bool
-          newLevel : Int
-        }
-    | YouWereAttacked
-        { attacker : PlayerName
-        , fightInfo : Fight.Info
-        }
-    | YouAttacked
-        { target : PlayerName
-        , fightInfo : Fight.Info
-        }
+    | YouAdvancedLevel YouAdvancedLevelData
+    | YouWereAttacked YouWereAttackedData
+    | YouAttacked YouAttackedData
+
+
+type alias YouWereAttackedData =
+    { attacker : PlayerName
+    , fightInfo : Fight.Info
+    }
+
+
+type alias YouAdvancedLevelData =
+    { -- perkAvailable : Bool
+      -- skillPointsAvailable : Bool
+      newLevel : Int
+    }
+
+
+type alias YouAttackedData =
+    { target : PlayerName
+    , fightInfo : Fight.Info
+    }
 
 
 isFightMessage : Content -> Bool

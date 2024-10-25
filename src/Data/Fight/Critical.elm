@@ -4,6 +4,7 @@ module Data.Fight.Critical exposing
     , EffectCategory(..)
     , Message(..)
     , Spec
+    , YouAndThem
     , effectDecoder
     , encodeEffect
     , encodeMessage
@@ -62,8 +63,14 @@ type Effect
 
 
 type Message
-    = PlayerMessage { you : String, them : String }
+    = PlayerMessage YouAndThem
     | OtherMessage String
+
+
+type alias YouAndThem =
+    { you : String
+    , them : String
+    }
 
 
 type alias Spec =

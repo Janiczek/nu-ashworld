@@ -1,5 +1,6 @@
 module Data.Tick exposing
-    ( TickPerIntervalCurve(..)
+    ( QuarterAndRestData
+    , TickPerIntervalCurve(..)
     , curveDecoder
     , encodeCurve
     , limit
@@ -24,11 +25,14 @@ limit =
 
 
 type TickPerIntervalCurve
-    = QuarterAndRest
-        { quarter : Int
-        , rest : Int
-        }
+    = QuarterAndRest QuarterAndRestData
     | Linear Int
+
+
+type alias QuarterAndRestData =
+    { quarter : Int
+    , rest : Int
+    }
 
 
 encodeCurve : TickPerIntervalCurve -> JE.Value

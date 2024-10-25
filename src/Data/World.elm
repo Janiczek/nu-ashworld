@@ -25,7 +25,7 @@ import SeqDict.Extra as SeqDict
 import SeqSet exposing (SeqSet)
 import SeqSet.Extra as SeqSet
 import Time exposing (Posix)
-import Time.Extra as Time
+import Time.Extra
 import Time.ExtraExtra as Time
 
 
@@ -41,9 +41,9 @@ type alias World =
     , lastItemId : Int
     , description : String
     , startedAt : Posix
-    , tickFrequency : Time.Interval
+    , tickFrequency : Time.Extra.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
-    , vendorRestockFrequency : Time.Interval
+    , vendorRestockFrequency : Time.Extra.Interval
     , questsProgress : SeqDict Quest.Name (Dict PlayerName Int)
     , questRewardShops : SeqSet Shop
     }
@@ -54,15 +54,15 @@ init { fast } =
     let
         ( tickFrequency, tickPerIntervalCurve, vendorRestockFrequency ) =
             if fast then
-                ( Time.Second
+                ( Time.Extra.Second
                 , Tick.QuarterAndRest { quarter = 2, rest = 1 }
-                , Time.Minute
+                , Time.Extra.Minute
                 )
 
             else
-                ( Time.Hour
+                ( Time.Extra.Hour
                 , Tick.QuarterAndRest { quarter = 4, rest = 2 }
-                , Time.Hour
+                , Time.Extra.Hour
                 )
     in
     { players = Dict.empty

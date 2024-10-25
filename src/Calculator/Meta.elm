@@ -26,7 +26,7 @@ import Task
 type alias Model =
     { generation : Int
     , population : List Individual
-    , fights : Dict ( Int, Int ) (List Fight.Result) -- ints are indexes into `population`
+    , fights : Dict ( Int, Int ) (List Fight.FightResult) -- ints are indexes into `population`
     , wins : Dict Int Int -- the key is index into the population, value is number of wins
     , autoRun : Bool
     }
@@ -59,7 +59,7 @@ type Msg
     | Auto
     | GeneratedPopulation (List Individual)
     | RunSim
-    | DidRunSim (Dict ( Int, Int ) (List Fight.Result))
+    | DidRunSim (Dict ( Int, Int ) (List Fight.FightResult))
     | Continue
 
 
@@ -293,7 +293,7 @@ view model =
         ]
 
 
-viewFights : Dict ( Int, Int ) (List Fight.Result) -> Html Msg
+viewFights : Dict ( Int, Int ) (List Fight.FightResult) -> Html Msg
 viewFights fights =
     if Dict.isEmpty fights then
         H.text ""
@@ -304,7 +304,7 @@ viewFights fights =
             pop =
                 List.range 0 (populationSize - 1)
 
-            cellColor : Fight.Result -> String
+            cellColor : Fight.FightResult -> String
             cellColor result =
                 case result of
                     Fight.AttackerWon _ ->
@@ -333,7 +333,7 @@ viewFights fights =
             resultSize =
                 10
 
-            dataCell : List Fight.Result -> Html Msg
+            dataCell : List Fight.FightResult -> Html Msg
             dataCell results =
                 results
                     |> List.map

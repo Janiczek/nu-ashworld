@@ -4,6 +4,7 @@ module Data.Vendor.Shop exposing
     , personName, description, barterSkill, initialSpec
     , location, forLocation, isInLocation
     , ShopSpec, encodeSpec, specDecoder
+    , StockItem
     )
 
 {-|
@@ -51,8 +52,12 @@ type Shop
 
 type alias ShopSpec =
     { caps : NormalIntSpec
-    , stock : List { uniqueKey : Item.UniqueKey, maxCount : Int }
+    , stock : List StockItem
     }
+
+
+type alias StockItem =
+    { uniqueKey : Item.UniqueKey, maxCount : Int }
 
 
 all : List Shop
