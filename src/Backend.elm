@@ -53,6 +53,7 @@ import Data.Xp as Xp
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 import Env
+import Fusion.Generated.Types
 import Http
 import Json.Decode as JD
 import Json.Encode as JE
@@ -598,7 +599,13 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                                 else
                                     identity
                                )
-                            |> Queue.enqueue ( playerName_, worldName_, msg )
+                            |> Queue.enqueue
+                                ( playerName_
+                                , worldName_
+                                , msg
+                                    |> Admin.encodeToBackendMsg
+                                    |> JE.encode 0
+                                )
                 }
 
         ( newModel, normalCmd ) =
@@ -694,6 +701,33 @@ updateFromFrontend sessionId clientId msg model =
                 )
     in
     case msg of
+        FusionGiveMeBackendModel ->
+            ( model
+            , model
+                |> Fusion.Generated.Types.toValue_BackendModel
+                |> FusionHeresBackendModel
+                |> Lamdera.sendToFrontend clientId
+            )
+
+        ApplyThisFusionPatch patch ->
+            let
+                patchResult =
+                    Fusion.Generated.Types.patch_BackendModel
+                        { force = False }
+                        patch
+                        model
+            in
+            case patchResult of
+                Err _ ->
+                    -- TODO be vocal about this?
+                    ( model, Cmd.none )
+
+                Ok newModel ->
+                    ( newModel
+                    , -- TODO make every frontend refresh?
+                      Cmd.none
+                    )
+
         LogMeIn auth ->
             if Auth.isAdminName auth then
                 if Auth.adminPasswordChecksOut auth then
@@ -969,33 +1003,6 @@ updateFromFrontend sessionId clientId msg model =
 updateAdmin : ClientId -> AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateAdmin clientId msg model =
     case msg of
-        ExportJson ->
-            let
-                json : String
-                json =
-                    model
-                        |> Admin.encodeBackendModel
-                        |> JE.encode 0
-            in
-            ( model
-            , Lamdera.sendToFrontend clientId <| JsonExportDone json
-            )
-
-        ImportJson jsonString ->
-            case JD.decodeString (Admin.backendModelDecoder model.randomSeed) jsonString of
-                Ok newModel ->
-                    ( { newModel | adminLoggedIn = model.adminLoggedIn }
-                    , Cmd.batch
-                        [ Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
-                        , Lamdera.sendToFrontend clientId <| AlertMessage "Import successful!"
-                        ]
-                    )
-
-                Err error ->
-                    ( model
-                    , Lamdera.sendToFrontend clientId <| AlertMessage <| JD.errorToString error
-                    )
-
         CreateNewWorld worldName fast ->
             if Dict.member worldName model.worlds then
                 ( model, Cmd.none )

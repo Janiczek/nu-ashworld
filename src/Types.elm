@@ -32,6 +32,8 @@ import Dict exposing (Dict)
 import File exposing (File)
 import Frontend.HoveredItem exposing (HoveredItem)
 import Frontend.Route exposing (Route)
+import Fusion
+import Fusion.Patch
 import Lamdera exposing (ClientId, SessionId)
 import Queue exposing (Queue)
 import Random
@@ -62,10 +64,21 @@ type alias FrontendModel =
     , userWantsToShowAreaDanger : Bool
 
     -- admin state
-    , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
+    , lastTenToBackendMsgs : List ( PlayerName, World.Name, String )
     , adminNewWorldName : String
     , adminNewWorldFast : Bool
+    , fusionBackendModel : FusionBackendModel
     }
+
+
+type FusionBackendModel
+    = FNotLoaded
+    | FOriginalOnly Fusion.Value
+    | FEdited
+        { original : Fusion.Value
+        , edited : Fusion.Value
+        , patch : Fusion.Patch.Patch
+        }
 
 
 type alias BackendModel =
@@ -77,7 +90,7 @@ type alias BackendModel =
         -- can compute their data just once.
         BiDict ClientId ( World.Name, PlayerName )
     , adminLoggedIn : Maybe ( ClientId, SessionId )
-    , lastTenToBackendMsgs : Queue ( PlayerName, World.Name, ToBackend )
+    , lastTenToBackendMsgs : Queue ( PlayerName, World.Name, String )
     , randomSeed : Random.Seed
     , -- We don't want to send the same data to players over and over when
       -- Tick-ing. This lets us skip that work.
@@ -88,6 +101,8 @@ type alias BackendModel =
 type FrontendMsg
     = UrlClicked UrlRequest
     | UrlChanged Url
+    | FusionEdit Fusion.Patch.Patch
+    | FusionQuery Fusion.Query
     | GoToRoute Route
     | GoToTownStore Shop
     | Logout
@@ -107,10 +122,6 @@ type FrontendMsg
     | AskToUnequipWeapon
     | AskToClearPreferredAmmo
     | AskToSetFightStrategy ( FightStrategy, String )
-    | AskForExport
-    | ImportButtonClicked
-    | ImportFileSelected File
-    | AskToImport String
     | Refresh
     | AskForWorldsAndGoToWorldsRoute
     | AskToTagSkill Skill
@@ -142,6 +153,9 @@ type FrontendMsg
     | CollapseQuestItem Quest.Name
     | AskToStopProgressing Quest.Name
     | AskToStartProgressing Quest.Name
+    | LoadFusionBackendModel
+    | ResetFusionBackendModel
+    | PersistFusionBackendModel
 
 
 type BarterMsg
@@ -190,12 +204,12 @@ type ToBackend
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name
     | StartProgressing Quest.Name
+    | FusionGiveMeBackendModel
+    | ApplyThisFusionPatch Fusion.Patch.Patch
 
 
 type AdminToBackend
-    = ExportJson
-    | ImportJson String
-    | CreateNewWorld String Bool
+    = CreateNewWorld String Bool
 
 
 type BackendMsg
@@ -219,7 +233,7 @@ type ToFrontend
     | CurrentWorlds (List WorldInfo)
     | CurrentAdmin AdminData
     | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))
-    | CurrentAdminLastTenToBackendMsgs (List ( PlayerName, World.Name, ToBackend ))
+    | CurrentAdminLastTenToBackendMsgs (List ( PlayerName, World.Name, String ))
     | YoureLoggedOut (List WorldInfo)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedIn PlayerData
@@ -228,7 +242,7 @@ type ToFrontend
     | YouHaveCreatedChar CPlayer PlayerData
     | AlertMessage String
     | YoureLoggedInAsAdmin AdminData
-    | JsonExportDone String
     | BarterDone ( PlayerData, Maybe Barter.Message )
     | BarterMessage Barter.Message
     | YourMessages (Dict Message.Id Message.Message)
+    | FusionHeresBackendModel Fusion.Value

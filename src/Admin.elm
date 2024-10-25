@@ -1,8 +1,4 @@
-module Admin exposing
-    ( backendModelDecoder
-    , encodeBackendModel
-    , encodeToBackendMsg
-    )
+module Admin exposing (encodeToBackendMsg)
 
 import BiDict
 import Data.Auth as Auth
@@ -25,35 +21,6 @@ import Random
 import Set.ExtraExtra as Set
 import Time
 import Types exposing (AdminToBackend(..), BackendModel, ToBackend(..))
-
-
-encodeBackendModel : BackendModel -> JE.Value
-encodeBackendModel model =
-    JE.object
-        [ ( "worlds", Dict.encode JE.string World.encode model.worlds ) ]
-
-
-backendModelDecoder : Random.Seed -> Decoder BackendModel
-backendModelDecoder seed =
-    JD.oneOf
-        [ backendModelDecoderV1 seed
-        ]
-
-
-backendModelDecoderV1 : Random.Seed -> Decoder BackendModel
-backendModelDecoderV1 seed =
-    JD.map
-        (\worlds ->
-            { worlds = worlds
-            , loggedInPlayers = BiDict.empty
-            , time = Time.millisToPosix 0
-            , adminLoggedIn = Nothing
-            , lastTenToBackendMsgs = Queue.empty
-            , randomSeed = seed
-            , playerDataCache = Dict.empty
-            }
-        )
-        (JD.field "worlds" (Dict.decoder JD.string World.decoder))
 
 
 encodeToBackendMsg : ToBackend -> JE.Value
@@ -212,19 +179,19 @@ encodeToBackendMsg msg =
                 , ( "quest", Quest.encode quest )
                 ]
 
-        AdminToBackend ExportJson ->
-            JE.object
-                [ ( "type", JE.string "AdminToBackend ExportJson" ) ]
-
-        AdminToBackend (ImportJson _) ->
-            JE.object
-                [ ( "type", JE.string "AdminToBackend ImportJson" )
-                , ( "json", JE.string "<omitted>" )
-                ]
-
         AdminToBackend (CreateNewWorld worldName fast) ->
             JE.object
                 [ ( "type", JE.string "AdminToBackend CreateNewWorld" )
                 , ( "name", JE.string worldName )
                 , ( "fast", JE.bool fast )
+                ]
+
+        FusionGiveMeBackendModel ->
+            JE.object
+                [ ( "type", JE.string "FusionGiveMeBackendModel" ) ]
+
+        ApplyThisFusionPatch value ->
+            JE.object
+                [ ( "type", JE.string "ApplyThisFusionPatch" )
+                , ( "value", JE.string "<omitted>" )
                 ]

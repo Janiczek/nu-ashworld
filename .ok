@@ -1,3 +1,4 @@
 test: elm-test --compiler lamdera
 watch: elm-test --compiler lamdera --watch
 max: elm-test --compiler lamdera --fuzz 100000
+fusion: npx elm-pages run ~/Localhost/cloned/lamdera-fusion/scripts/src/Main.elm ~/Localhost/lamdera/nu-ashworld/elm.json ~/Localhost/lamdera/nu-ashworld/generated Types.BackendModel

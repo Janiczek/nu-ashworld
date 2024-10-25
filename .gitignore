@@ -6,3 +6,4 @@ node_modules/
 wiki/tiddlywiki.info
 wiki/tiddlers/
 wiki/output/
+generated/Fusion/Generated/**/*.elm

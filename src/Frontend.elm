@@ -68,6 +68,11 @@ import Frontend.Route as Route
         ( AdminRoute(..)
         , Route(..)
         )
+import Fusion.Editor
+import Fusion.Generated.TypeDict
+import Fusion.Generated.TypeDict.Types
+import Fusion.Generated.Types
+import Fusion.Patch
 import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HA
@@ -116,6 +121,14 @@ app =
         }
 
 
+viewFusion : Model -> Browser.Document FrontendMsg
+viewFusion model =
+    { title = ""
+    , body =
+        []
+    }
+
+
 init : Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     let
@@ -150,6 +163,7 @@ init url key =
       , lastTenToBackendMsgs = []
       , adminNewWorldName = ""
       , adminNewWorldFast = False
+      , fusionBackendModel = FNotLoaded
       }
     , Cmd.batch
         [ Task.perform GotZone Time.here
@@ -217,6 +231,94 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
+        LoadFusionBackendModel ->
+            ( model
+            , Lamdera.sendToBackend FusionGiveMeBackendModel
+            )
+
+        ResetFusionBackendModel ->
+            ( { model
+                | fusionBackendModel =
+                    case model.fusionBackendModel of
+                        FNotLoaded ->
+                            FNotLoaded
+
+                        FOriginalOnly original ->
+                            FOriginalOnly original
+
+                        FEdited { original } ->
+                            FOriginalOnly original
+              }
+            , Cmd.none
+            )
+
+        PersistFusionBackendModel ->
+            case model.fusionBackendModel of
+                FNotLoaded ->
+                    ( model, Cmd.none )
+
+                FOriginalOnly _ ->
+                    ( model, Cmd.none )
+
+                FEdited { patch } ->
+                    ( model
+                    , Lamdera.sendToBackend <| ApplyThisFusionPatch patch
+                    )
+
+        FusionEdit patch ->
+            let
+                edit maybeOriginal maybeOldPatch value =
+                    let
+                        patchResult =
+                            Fusion.Patch.patch
+                                { force = False }
+                                patch
+                                value
+                    in
+                    case patchResult of
+                        Err _ ->
+                            ( model, Cmd.none )
+
+                        Ok newBackendModel ->
+                            ( { model
+                                | fusionBackendModel =
+                                    case maybeOriginal of
+                                        Nothing ->
+                                            FEdited { original = value, edited = newBackendModel, patch = patch }
+
+                                        Just original ->
+                                            case Fusion.Patch.merge maybeOldPatch (Just patch) of
+                                                Err _ ->
+                                                    -- TODO be vocal about this?
+                                                    model.fusionBackendModel
+
+                                                Ok Nothing ->
+                                                    -- TODO be vocal about this?
+                                                    model.fusionBackendModel
+
+                                                Ok (Just newPatch) ->
+                                                    FEdited
+                                                        { original = original
+                                                        , edited = newBackendModel
+                                                        , patch = newPatch
+                                                        }
+                              }
+                            , Cmd.none
+                            )
+            in
+            case model.fusionBackendModel of
+                FNotLoaded ->
+                    ( model, Cmd.none )
+
+                FOriginalOnly value ->
+                    edit Nothing Nothing value
+
+                FEdited r ->
+                    edit (Just r.original) (Just r.patch) r.edited
+
+        FusionQuery _ ->
+            ( model, Cmd.none )
+
         GoToRoute route ->
             let
                 finalRoute =
@@ -361,26 +463,6 @@ update msg ({ loginForm } as model) =
         AskToSetFightStrategy ( strategy, text ) ->
             ( model
             , Lamdera.sendToBackend <| SetFightStrategy ( strategy, text )
-            )
-
-        ImportButtonClicked ->
-            ( model
-            , File.Select.file [ "application/json" ] ImportFileSelected
-            )
-
-        ImportFileSelected file ->
-            ( model
-            , Task.perform AskToImport (File.toString file)
-            )
-
-        AskToImport jsonString ->
-            ( model
-            , Lamdera.sendToBackend <| AdminToBackend <| ImportJson jsonString
-            )
-
-        AskForExport ->
-            ( model
-            , Lamdera.sendToBackend <| AdminToBackend ExportJson
             )
 
         Refresh ->
@@ -710,6 +792,11 @@ updateLoggedInWorld data model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
+        FusionHeresBackendModel value ->
+            ( { model | fusionBackendModel = FOriginalOnly value }
+            , Cmd.none
+            )
+
         YoureLoggedIn data ->
             let
                 newRoute =
@@ -844,27 +931,6 @@ updateFromBackend msg model =
         AlertMessage message ->
             ( { model | alertMessage = Just message }
             , Cmd.none
-            )
-
-        JsonExportDone json ->
-            let
-                date : String
-                date =
-                    DateFormat.format
-                        [ DateFormat.yearNumber
-                        , DateFormat.text "-"
-                        , DateFormat.monthFixed
-                        , DateFormat.text "-"
-                        , DateFormat.dayOfMonthFixed
-                        ]
-                        model.zone
-                        model.time
-            in
-            ( model
-            , File.Download.string
-                ("nu-ashworld-db-export-" ++ date ++ ".json")
-                "application/json"
-                json
             )
 
         BarterDone ( world, maybeMessage ) ->
@@ -1055,6 +1121,9 @@ contentView model =
 
                     AdminWorldHiscores worldName ->
                         adminWorldHiscoresView worldName data
+
+                    AdminBackendModelEditor ->
+                        adminFusionEditorView model.fusionBackendModel
 
             ( AdminRoute _, _ ) ->
                 contentUnavailableToNonAdminView
@@ -4797,9 +4866,8 @@ adminLinksView currentRoute =
     let
         links =
             [ linkMsg "Refresh" Refresh Nothing False
+            , linkIn "Model" (AdminRoute AdminBackendModelEditor) Nothing False
             , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
-            , linkMsg "Import" ImportButtonClicked Nothing False
-            , linkMsg "Export" AskForExport Nothing False
             , linkMsg "Logout" Logout Nothing False
             ]
     in
@@ -4885,7 +4953,7 @@ adminWorldsListView newWorldName newWorldFast data =
     ]
 
 
-adminWorldActivityView : List ( PlayerName, World.Name, ToBackend ) -> World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView : List ( PlayerName, World.Name, String ) -> World.Name -> AdminData -> List (Html FrontendMsg)
 adminWorldActivityView lastTenToBackendMsgs worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
@@ -4910,17 +4978,58 @@ adminWorldActivityView lastTenToBackendMsgs worldName data =
                             H.tr []
                                 [ H.td [] [ H.text msgWorldName ]
                                 , H.td [] [ H.text playerName ]
-                                , H.td []
-                                    [ Admin.encodeToBackendMsg msg
-                                        |> JE.encode 0
-                                        |> H.text
-                                    ]
+                                , H.td [] [ H.text msg ]
                                 ]
                         )
                         lastTenToBackendMsgs
                 )
             , adminMapView worldName data
             ]
+
+
+adminFusionEditorView : FusionBackendModel -> List (Html FrontendMsg)
+adminFusionEditorView fusionBackendModel =
+    let
+        viewEditor value =
+            H.div []
+                [ UI.button
+                    [ HE.onClick LoadFusionBackendModel ]
+                    [ H.text "[Reload model]" ]
+                , -- TODO switch to Fusion.Editor.view sometime later
+                  Fusion.Editor.value
+                    { editMsg = FusionEdit
+                    , queryMsg = FusionQuery
+                    , type_ = Just Fusion.Generated.TypeDict.Types.type_BackendModel
+                    , typeDict = Fusion.Generated.TypeDict.typeDict
+                    }
+                    value
+                ]
+    in
+    [ pageTitleView "Admin :: Model"
+    , case fusionBackendModel of
+        FNotLoaded ->
+            UI.button
+                [ HE.onClick LoadFusionBackendModel ]
+                [ H.text "[Load model]" ]
+
+        FOriginalOnly value ->
+            H.div [ HA.class "flex flex-col gap-2" ]
+                [ viewEditor value
+                ]
+
+        FEdited { original, edited } ->
+            H.div [ HA.class "flex flex-col gap-2" ]
+                [ H.div [ HA.class "flex flex-row gap-2" ]
+                    [ UI.button
+                        [ HE.onClick ResetFusionBackendModel ]
+                        [ H.text "Reset" ]
+                    , UI.button
+                        [ HE.onClick PersistFusionBackendModel ]
+                        [ H.text "Persist" ]
+                    ]
+                , viewEditor edited
+                ]
+    ]
 
 
 adminWorldHiscoresView : World.Name -> AdminData -> List (Html FrontendMsg)

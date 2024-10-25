@@ -46,6 +46,7 @@ type AdminRoute
     = AdminWorldsList
     | AdminWorldActivity World.Name
     | AdminWorldHiscores World.Name
+    | AdminBackendModelEditor
 
 
 needsPlayer : Route -> Bool
@@ -175,6 +176,7 @@ adminParser : Parser (AdminRoute -> a) a
 adminParser =
     P.oneOf
         [ P.map AdminWorldsList <| P.s "worlds"
+        , P.map AdminBackendModelEditor <| P.s "model-editor"
         , P.map AdminWorldActivity <| P.s "world" </> P.string </> P.s "activity"
         , P.map AdminWorldHiscores <| P.s "world" </> P.string </> P.s "hiscores"
         ]
@@ -337,5 +339,8 @@ toString route =
 
                                 AdminWorldHiscores world ->
                                     "world/" ++ world ++ "/hiscores"
+
+                                AdminBackendModelEditor ->
+                                    "model-editor"
                            )
            )
