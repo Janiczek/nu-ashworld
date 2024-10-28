@@ -101,7 +101,6 @@ init =
 
 restockVendors : World.Name -> Model -> ( Model, Cmd BackendMsg )
 restockVendors worldName model =
-    -- TODO don't forget to restock vendors when you create a world
     case Dict.get worldName model.worlds of
         Nothing ->
             ( model, Cmd.none )
@@ -445,11 +444,10 @@ saveToPlayerDataCache clientId newHash model =
 
 processGameTick : World.Name -> Model -> ( Model, Cmd BackendMsg )
 processGameTick worldName model =
-    -- TODO refresh the affected users that are logged-in?
     model
         |> processGameTickForPlayers worldName
         |> processGameTickForQuests worldName
-        |> restockVendors worldName
+        |> Cmd.pure
 
 
 processGameTickForPlayers : String -> Model -> Model
@@ -457,7 +455,6 @@ processGameTickForPlayers worldName model =
     model
         |> updateWorld worldName
             (\world ->
-                -- TODO refresh the affected users that are logged-in
                 { world
                     | players =
                         Dict.map
@@ -1005,9 +1002,14 @@ updateAdmin clientId msg model =
                                     model.worlds
                         }
                 in
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
-                )
+                newModel
+                    |> restockVendors worldName
+                    |> Cmd.andThen
+                        (\m ->
+                            ( m
+                            , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
+                            )
+                        )
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool
