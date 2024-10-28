@@ -87,7 +87,7 @@ terrain =
         , ( ( 0, 23 ), Ocean )
         , ( ( 0, 24 ), Ocean )
         , ( ( 0, 25 ), Ocean )
-        , ( ( 0, 26 ), Ocean )
+        , ( ( 0, 26 ), Land ) -- Enclave
         , ( ( 0, 27 ), Ocean )
         , ( ( 0, 28 ), Ocean )
         , ( ( 0, 29 ), Ocean )
