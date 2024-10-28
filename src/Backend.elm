@@ -1005,9 +1005,9 @@ updateAdmin clientId msg model =
                 newModel
                     |> restockVendors worldName
                     |> Cmd.andThen
-                        (\m ->
-                            ( m
-                            , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData newModel
+                        (\modelAfterRestocking ->
+                            ( modelAfterRestocking
+                            , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData modelAfterRestocking
                             )
                         )
 
