@@ -2156,6 +2156,13 @@ startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> M
 startProgressing quest clientId world worldName player model =
     -- TODO: there are requirements other than Quest.playerRequirements, check them as well if we don't elsewhere already
     let
+        locationQuestAllowed : Bool
+        locationQuestAllowed =
+            quest
+                |> Quest.location
+                |> Quest.locationQuestRequirements
+                |> List.all (\requiredQuest -> World.isQuestDone requiredQuest world)
+
         playerRequirements : List Quest.PlayerRequirement
         playerRequirements =
             Quest.playerRequirements quest
@@ -2201,7 +2208,7 @@ startProgressing quest clientId world worldName player model =
                                 player.caps >= capsNeeded
                     )
     in
-    if playerAlreadyPaidRequirements || playerCanPayRequirements then
+    if locationQuestAllowed && (playerAlreadyPaidRequirements || playerCanPayRequirements) then
         let
             ensurePlayerPresent : World -> World
             ensurePlayerPresent world_ =

@@ -1706,9 +1706,23 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
 townMainSquareView : SeqSet Quest.Name -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView expandedQuests location { questsProgress, questRewardShops } player =
     let
+        locationQuestAllowed : Bool
+        locationQuestAllowed =
+            Quest.locationQuestRequirements location
+                |> List.all
+                    (\quest ->
+                        SeqDict.get quest questsProgress
+                            |> Maybe.map (\q -> q.ticksGiven >= Quest.ticksNeeded quest)
+                            |> Maybe.withDefault False
+                    )
+
         quests : List Quest.Name
         quests =
-            Quest.allForLocation location
+            if locationQuestAllowed then
+                Quest.allForLocation location
+
+            else
+                []
 
         hasQuests : Bool
         hasQuests =
@@ -1739,8 +1753,11 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         , if hasQuests then
             H.h3 [] [ H.text "Quests" ]
 
-          else
+          else if locationQuestAllowed then
             H.text "No quests in this town..."
+
+          else
+            H.text "No quests in this town... (yet!)"
         , H.viewIf hasQuests <|
             H.ul []
                 (quests

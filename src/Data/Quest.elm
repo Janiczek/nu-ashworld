@@ -12,6 +12,7 @@ module Data.Quest exposing
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
+    , location
     , locationQuestRequirements
     , playerRequirementTitle
     , playerRequirements
