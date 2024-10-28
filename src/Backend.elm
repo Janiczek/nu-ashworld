@@ -2192,9 +2192,13 @@ startProgressing quest clientId world worldName player model =
                 world_
 
         newModel =
-            model
-                |> updatePlayer worldName player.name (SPlayer.startProgressing quest world.tickPerIntervalCurve)
-                |> updateWorld worldName ensurePlayerIsInQuestProgressDict
+            if World.isQuestDone quest world then
+                model
+
+            else
+                model
+                    |> updatePlayer worldName player.name (SPlayer.startProgressing quest world.tickPerIntervalCurve)
+                    |> updateWorld worldName ensurePlayerIsInQuestProgressDict
     in
     getPlayerData worldName player.name newModel
         |> Maybe.map

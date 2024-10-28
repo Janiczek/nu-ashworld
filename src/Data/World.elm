@@ -4,6 +4,7 @@ module Data.World exposing
     , decoder
     , encode
     , init
+    , isQuestDone
     )
 
 import Data.Player as Player exposing (Player, SPlayer)
@@ -164,3 +165,13 @@ decoder =
         |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)
         |> JD.andMap (JD.field "questsProgress" (SeqDict.decoder Quest.decoder (Dict.decoder JD.string JD.int)))
         |> JD.andMap (JD.field "questRewardShops" (SeqSet.decoder Shop.decoder))
+
+
+isQuestDone : Quest.Name -> World -> Bool
+isQuestDone quest world =
+    world.questsProgress
+        |> SeqDict.get quest
+        |> Maybe.withDefault Dict.empty
+        |> Dict.values
+        |> List.sum
+        |> (\sum -> sum >= Quest.ticksNeeded quest)
