@@ -1864,88 +1864,82 @@ expandedQuestView player progress quest =
                     ]
                     [ H.text "[START]" ]
             ]
-        , H.div [ HA.class "bg-green-800 p-[2ch]" ]
-            [ questProgressbarView
-                { ticksGiven = progress.ticksGiven
-                , ticksNeeded = ticksNeeded
-                , ticksGivenByPlayer = progress.ticksGivenByPlayer
-                }
-            , H.div []
-                [ H.text <|
-                    "Players active: "
-                        ++ String.fromInt progress.playersActive
-                        ++ " ("
-                        ++ String.fromInt progress.ticksPerHour
-                        ++ " ticks/hour)"
-                ]
-            , H.div []
-                [ H.text <|
-                    "XP per tick: "
-                        ++ String.fromInt (Quest.xpPerTickGiven quest)
-                ]
-            , H.div
-                [ HA.class "mt-5" ]
-                [ H.text "Quest Requirements" ]
-            , if List.isEmpty questRequirements then
-                H.div
-                    [ HA.class "ml-[4ch]" ]
-                    [ H.text "NONE" ]
-
-              else
-                H.ul
-                    [ HA.class "ps-[4ch]" ]
-                    (List.map (Quest.title >> liText) questRequirements)
-            , H.div
-                [ HA.class "mt-5" ]
-                [ H.text "Player Requirements (affect ticks/hour)" ]
-            , if List.isEmpty playerRequirements then
-                H.div
-                    [ HA.class "ml-[4ch]" ]
-                    [ H.text "NONE" ]
-
-              else
-                H.ul
-                    [ HA.class "ps-[4ch]" ]
-                    (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
-            , H.div
-                [ HA.class "mt-5" ]
-                [ H.text "Global Rewards" ]
-            , if List.isEmpty globalRewards then
-                H.div
-                    [ HA.class "ml-[4ch]" ]
-                    [ H.text "NONE" ]
-
-              else
-                H.ul
-                    [ HA.class "ps-[4ch]" ]
-                    (List.map (Quest.globalRewardTitle >> liText) globalRewards)
-            , H.div
-                [ HA.class "mt-5" ]
-                (if List.isEmpty playerRewards then
-                    [ H.text "Player Rewards" ]
-
-                 else
-                    [ H.text "Player Rewards"
-                    , H.text " (if you give "
-                    , H.span
+        , H.div [ HA.class "bg-green-800 p-[2ch]" ] <|
+            List.concat <|
+                [ [ questProgressbarView
+                        { ticksGiven = progress.ticksGiven
+                        , ticksNeeded = ticksNeeded
+                        , ticksGivenByPlayer = progress.ticksGivenByPlayer
+                        }
+                  , H.div []
+                        [ H.text <|
+                            "Players active: "
+                                ++ String.fromInt progress.playersActive
+                                ++ " ("
+                                ++ String.fromInt progress.ticksPerHour
+                                ++ " ticks/hour)"
+                        ]
+                  , H.div
                         []
                         [ H.text <|
-                            String.fromInt (Quest.ticksNeededForPlayerReward quest)
-                                ++ "+"
+                            "XP per tick: "
+                                ++ String.fromInt (Quest.xpPerTickGiven quest)
                         ]
-                    , H.text " ticks)"
-                    ]
-                )
-            , if List.isEmpty playerRewards then
-                H.div
-                    [ HA.class "ml-[4ch]" ]
-                    [ H.text "NONE" ]
+                  ]
+                , if List.isEmpty questRequirements then
+                    []
 
-              else
-                H.ul
-                    [ HA.class "ps-[4ch]" ]
-                    (List.map (Quest.playerRewardTitle >> liText) playerRewards)
-            ]
+                  else
+                    [ H.div
+                        [ HA.class "mt-5" ]
+                        [ H.text "Quest Requirements" ]
+                    , H.ul
+                        [ HA.class "ps-[4ch]" ]
+                        (List.map (Quest.title >> liText) questRequirements)
+                    ]
+                , if List.isEmpty playerRequirements then
+                    []
+
+                  else
+                    [ H.div
+                        [ HA.class "mt-5" ]
+                        [ H.text "Player Requirements" ]
+                    , H.ul
+                        [ HA.class "ps-[4ch]" ]
+                        (List.map (Quest.playerRequirementTitle >> liText) playerRequirements)
+                    ]
+                , if List.isEmpty globalRewards then
+                    []
+
+                  else
+                    [ H.div
+                        [ HA.class "mt-5" ]
+                        [ H.text "Global Rewards" ]
+                    , H.ul
+                        [ HA.class "ps-[4ch]" ]
+                        (List.map (Quest.globalRewardTitle >> liText) globalRewards)
+                    ]
+                , if List.isEmpty playerRewards then
+                    []
+
+                  else
+                    [ H.div
+                        [ HA.class "mt-5" ]
+                        [ H.text "Player Rewards"
+                        , H.text " (if you give "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <|
+                                String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                                    ++ "+"
+                            ]
+                        , H.text " ticks)"
+                        ]
+                    , H.ul
+                        [ HA.class "ps-[4ch]" ]
+                        (List.map (Quest.playerRewardTitle >> liText) playerRewards)
+                    ]
+                ]
         ]
     ]
 
