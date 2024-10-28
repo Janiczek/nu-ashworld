@@ -1595,7 +1595,7 @@ questRequirements name =
 
 locationQuestRequirements : Location -> List Name
 locationQuestRequirements loc =
-    -- Some locations are locked until certain quests are done
+    -- Some locations' quests are locked until certain quests are done
     case loc of
         Location.Arroyo ->
             []
