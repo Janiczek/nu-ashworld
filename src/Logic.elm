@@ -29,11 +29,11 @@ module Logic exposing
     , newCharAvailableSpecialPoints
     , newCharMaxTaggedSkills
     , newCharSpecial
+    , passesPlayerRequirement
     , perkRate
     , playerCombatCapsGained
     , playerCombatXpGained
     , price
-    , questRequirementCombatSkills
     , questTicksPerHour
     , regainConciousnessApCost
     , sequence
@@ -61,6 +61,7 @@ import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Item.Type as ItemType
 import Data.Perk as Perk exposing (Perk)
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -2254,3 +2255,43 @@ questRequirementCombatSkills =
 
     -- TODO traps?
     ]
+
+
+passesPlayerRequirement :
+    Quest.PlayerRequirement
+    ->
+        { player
+            | caps : Int
+            , special : Special
+            , addedSkillPercentages : SeqDict Skill Int
+            , items : Dict Item.Id Item
+        }
+    -> Bool
+passesPlayerRequirement req player =
+    case req of
+        Quest.SkillRequirement r ->
+            case r.skill of
+                Quest.Combat ->
+                    let
+                        maxCombatSkill : Int
+                        maxCombatSkill =
+                            questRequirementCombatSkills
+                                |> List.map (Skill.get player.special player.addedSkillPercentages)
+                                |> List.maximum
+                                |> Maybe.withDefault 0
+                    in
+                    maxCombatSkill >= r.percentage
+
+                Quest.Specific skill ->
+                    Skill.get player.special player.addedSkillPercentages skill >= r.percentage
+
+        Quest.ItemRequirementOneOf itemsNeeded ->
+            itemsNeeded
+                |> List.any
+                    (\item ->
+                        player.items
+                            |> Dict.any (\_ { kind, count } -> kind == item && count >= 1)
+                    )
+
+        Quest.CapsRequirement capsNeeded ->
+            player.caps >= capsNeeded

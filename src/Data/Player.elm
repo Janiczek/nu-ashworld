@@ -87,6 +87,7 @@ type alias SPlayer =
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
+    , hasCar : Bool
     }
 
 
@@ -171,6 +172,7 @@ encodeSPlayer player =
         , ( "fightStrategy", FightStrategy.encode player.fightStrategy )
         , ( "fightStrategyText", JE.string player.fightStrategyText )
         , ( "questsActive", SeqSet.encode Quest.encode player.questsActive )
+        , ( "hasCar", JE.bool player.hasCar )
         ]
 
 
@@ -222,6 +224,7 @@ sPlayerDecoder =
         |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
         |> JD.andMap (JD.field "fightStrategyText" JD.string)
         |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
+        |> JD.andMap (JD.field "hasCar" JD.bool)
 
 
 serverToClient : SPlayer -> CPlayer
@@ -396,4 +399,5 @@ fromNewChar currentTime auth newChar =
                 Tuple.second FightStrategy.default
                     |> FightStrategy.toString
             , questsActive = SeqSet.empty
+            , hasCar = False
             }

@@ -64,7 +64,7 @@ import Queue
 import Random exposing (Generator)
 import Random.List
 import SeqDict exposing (SeqDict)
-import SeqSet
+import SeqSet exposing (SeqSet)
 import Set exposing (Set)
 import Task
 import Time exposing (Posix)
@@ -466,41 +466,212 @@ processGameTickForPlayers worldName model =
 
 processGameTickForQuests : String -> Model -> Model
 processGameTickForQuests worldName model =
-    model
-        |> updateWorld worldName
-            (\world ->
-                { world
-                    | questsProgress =
-                        SeqDict.map
-                            (\quest progressPerPlayer ->
-                                progressPerPlayer
-                                    |> Dict.map
-                                        (\playerName progress ->
-                                            let
-                                                player : Maybe SPlayer
-                                                player =
-                                                    Dict.get playerName world.players
-                                                        |> Maybe.andThen Player.getPlayerData
+    let
+        modelWithUpdatedWorld =
+            model
+                |> updateWorld worldName
+                    (\world ->
+                        { world
+                            | questsProgress =
+                                SeqDict.map
+                                    (\quest progressPerPlayer ->
+                                        if World.isQuestDone_ quest progressPerPlayer then
+                                            progressPerPlayer
 
-                                                ticksGiven : Int
-                                                ticksGiven =
-                                                    player
-                                                        |> Maybe.map
-                                                            (\player_ ->
-                                                                if SeqSet.member quest player_.questsActive then
-                                                                    Logic.questTicksPerHour
+                                        else
+                                            progressPerPlayer
+                                                |> Dict.map
+                                                    (\playerName progress ->
+                                                        let
+                                                            player : Maybe SPlayer
+                                                            player =
+                                                                Dict.get playerName world.players
+                                                                    |> Maybe.andThen Player.getPlayerData
+
+                                                            ticksGiven : Int
+                                                            ticksGiven =
+                                                                player
+                                                                    |> Maybe.map
+                                                                        (\player_ ->
+                                                                            if SeqSet.member quest player_.questsActive then
+                                                                                Logic.questTicksPerHour
+
+                                                                            else
+                                                                                0
+                                                                        )
+                                                                    |> Maybe.withDefault 0
+                                                        in
+                                                        progress + ticksGiven
+                                                    )
+                                    )
+                                    world.questsProgress
+                        }
+                    )
+
+        completedQuests : SeqSet Quest.Name
+        completedQuests =
+            Maybe.map2
+                (\oldWorld newWorld ->
+                    Quest.all
+                        |> List.filter
+                            (\quest ->
+                                not (World.isQuestDone quest oldWorld)
+                                    && World.isQuestDone quest newWorld
+                            )
+                        |> SeqSet.fromList
+                )
+                (Dict.get worldName model.worlds)
+                (Dict.get worldName modelWithUpdatedWorld.worlds)
+                |> Maybe.withDefault SeqSet.empty
+    in
+    if SeqSet.isEmpty completedQuests then
+        modelWithUpdatedWorld
+
+    else
+        List.foldl
+            (\completedQuest model_ ->
+                { model_
+                    | worlds =
+                        model_.worlds
+                            |> Dict.update worldName
+                                (Maybe.map
+                                    (\world ->
+                                        let
+                                            ( newLastItemId, updatedPlayers ) =
+                                                Dict.foldl
+                                                    (\playerName player ( lastItemId, players ) ->
+                                                        case player of
+                                                            Player.NeedsCharCreated _ ->
+                                                                ( lastItemId, players )
+
+                                                            Player.Player playerData ->
+                                                                if SeqSet.member completedQuest playerData.questsActive then
+                                                                    let
+                                                                        ( newLastItemId_, newPlayerData ) =
+                                                                            { playerData
+                                                                                | questsActive =
+                                                                                    playerData.questsActive
+                                                                                        |> SeqSet.remove completedQuest
+                                                                            }
+                                                                                |> applyPlayerQuestRewards completedQuest lastItemId
+                                                                    in
+                                                                    ( newLastItemId_
+                                                                    , players
+                                                                        |> Dict.insert playerName (Player.Player newPlayerData)
+                                                                    )
 
                                                                 else
-                                                                    0
-                                                            )
-                                                        |> Maybe.withDefault 0
-                                            in
-                                            progress + ticksGiven
-                                        )
-                            )
-                            world.questsProgress
+                                                                    ( lastItemId, players )
+                                                    )
+                                                    ( world.lastItemId, world.players )
+                                                    world.players
+                                        in
+                                        List.foldl
+                                            applyGlobalQuestReward
+                                            { world
+                                                | players = updatedPlayers
+                                                , lastItemId = newLastItemId
+                                            }
+                                            (Quest.globalRewards completedQuest)
+                                    )
+                                )
                 }
             )
+            modelWithUpdatedWorld
+            (SeqSet.toList completedQuests)
+
+
+applyPlayerQuestRewards : Quest.Name -> Int -> SPlayer -> ( Int, SPlayer )
+applyPlayerQuestRewards quest lastItemId player =
+    List.foldl
+        applyPlayerQuestReward
+        ( lastItemId, player )
+        (Quest.playerRewards quest)
+
+
+applyPlayerQuestReward : Quest.PlayerReward -> ( Int, SPlayer ) -> ( Int, SPlayer )
+applyPlayerQuestReward reward ( lastItemId, player ) =
+    case reward of
+        Quest.ItemReward { what, amount } ->
+            ( lastItemId + 1
+            , player
+                |> SPlayer.addItem { id = lastItemId, kind = what, count = amount }
+            )
+
+        Quest.SkillUpgrade { skill, percentage } ->
+            ( lastItemId
+            , { player
+                | addedSkillPercentages =
+                    player.addedSkillPercentages
+                        |> SeqDict.update skill
+                            (\maybeCurrentPct ->
+                                Maybe.withDefault 0 maybeCurrentPct
+                                    |> (+) percentage
+                                    |> Just
+                            )
+              }
+            )
+
+        Quest.PerkReward perk ->
+            ( lastItemId
+            , { player
+                | perks =
+                    player.perks
+                        |> SeqDict.update perk
+                            (\maybeCount ->
+                                (1 + Maybe.withDefault 0 maybeCount)
+                                    |> min (Perk.maxRank perk)
+                                    |> Just
+                            )
+              }
+            )
+
+        Quest.CarReward ->
+            ( lastItemId
+            , { player | hasCar = True }
+            )
+
+
+applyGlobalQuestReward : Quest.GlobalReward -> World -> World
+applyGlobalQuestReward reward world =
+    case reward of
+        Quest.NewItemsInStock { who, what, amount } ->
+            { world
+                | vendors =
+                    world.vendors
+                        |> SeqDict.update who
+                            (Maybe.map
+                                (\vendor ->
+                                    { vendor
+                                        | currentSpec =
+                                            { stock =
+                                                vendor.currentSpec.stock
+                                                    |> SeqDict.insert { kind = what } { maxCount = amount }
+                                            , caps = vendor.currentSpec.caps
+                                            }
+                                    }
+                                )
+                            )
+            }
+
+        Quest.Discount { who, percentage } ->
+            { world
+                | vendors =
+                    world.vendors
+                        |> SeqDict.update who
+                            (Maybe.map
+                                (\vendor ->
+                                    { vendor | discountPct = vendor.discountPct + percentage }
+                                )
+                            )
+            }
+
+        Quest.VendorAvailable who ->
+            { world
+                | questRewardShops =
+                    world.questRewardShops
+                        |> SeqSet.insert who
+            }
 
 
 withLoggedInPlayer_ :
@@ -2156,7 +2327,7 @@ stopProgressing quest clientId _ worldName player model =
 
 startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 startProgressing quest clientId world worldName player model =
-    -- TODO: there are requirements other than Quest.playerRequirements, check them as well if we don't elsewhere already
+    -- TODO: check for exclusivity with already completed quest
     let
         locationQuestAllowed : Bool
         locationQuestAllowed =
@@ -2179,36 +2350,7 @@ startProgressing quest clientId world worldName player model =
         playerCanPayRequirements : Bool
         playerCanPayRequirements =
             playerRequirements
-                |> List.all
-                    (\req ->
-                        case req of
-                            Quest.SkillRequirement r ->
-                                case r.skill of
-                                    Quest.Combat ->
-                                        let
-                                            maxCombatSkill : Int
-                                            maxCombatSkill =
-                                                Logic.questRequirementCombatSkills
-                                                    |> List.map (Skill.get player.special player.addedSkillPercentages)
-                                                    |> List.maximum
-                                                    |> Maybe.withDefault 0
-                                        in
-                                        maxCombatSkill >= r.percentage
-
-                                    Quest.Specific skill ->
-                                        Skill.get player.special player.addedSkillPercentages skill >= r.percentage
-
-                            Quest.ItemRequirementOneOf itemsNeeded ->
-                                itemsNeeded
-                                    |> List.any
-                                        (\item ->
-                                            player.items
-                                                |> Dict.any (\_ { kind, count } -> kind == item && count >= 1)
-                                        )
-
-                            Quest.CapsRequirement capsNeeded ->
-                                player.caps >= capsNeeded
-                    )
+                |> List.all (\req -> Logic.passesPlayerRequirement req player)
     in
     if locationQuestAllowed && (playerAlreadyPaidRequirements || playerCanPayRequirements) then
         let

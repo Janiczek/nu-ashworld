@@ -189,7 +189,7 @@ get finalSpecial addedPercentages skill =
         viaSpecial =
             specialPercentage skill finalSpecial
     in
-    min 300 <| added + viaSpecial
+    min maxPct <| added + viaSpecial
 
 
 encode : Skill -> JE.Value
@@ -443,3 +443,8 @@ combatSkills =
     , Unarmed
     , MeleeWeapons
     ]
+
+
+maxPct : Int
+maxPct =
+    300

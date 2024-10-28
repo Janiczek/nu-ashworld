@@ -69,19 +69,19 @@ capsGenerator { caps } =
 stockGenerator : ShopSpec -> Generator (List ( Item.UniqueKey, Int ))
 stockGenerator { stock } =
     let
-        listLength =
-            List.length stock
+        stockSize =
+            SeqDict.size stock
 
         halfOrMore n =
             Random.int (max 1 (n // 2)) n
     in
-    halfOrMore listLength
-        |> Random.andThen (\count -> Random.List.choices count stock)
+    halfOrMore stockSize
+        |> Random.andThen (\count -> Random.List.choices count (SeqDict.toList stock))
         |> Random.andThen
             (\( chosen, _ ) ->
                 chosen
                     |> List.map
-                        (\{ uniqueKey, maxCount } ->
+                        (\( uniqueKey, { maxCount } ) ->
                             Random.int 0 maxCount
                                 |> Random.map (Tuple.pair uniqueKey)
                         )
@@ -99,7 +99,7 @@ restockVendors lastItemId vendors =
                 stockKeys : SeqSet Item.UniqueKey
                 stockKeys =
                     vendor.currentSpec.stock
-                        |> List.map .uniqueKey
+                        |> SeqDict.keys
                         |> SeqSet.fromList
             in
             Random.map2

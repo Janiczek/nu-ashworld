@@ -5,6 +5,7 @@ module Data.World exposing
     , encode
     , init
     , isQuestDone
+    , isQuestDone_
     )
 
 import Data.Player as Player exposing (Player, SPlayer)
@@ -183,6 +184,11 @@ isQuestDone quest world =
     world.questsProgress
         |> SeqDict.get quest
         |> Maybe.withDefault Dict.empty
-        |> Dict.values
+        |> isQuestDone_ quest
+
+
+isQuestDone_ : Quest.Name -> Dict PlayerName Int -> Bool
+isQuestDone_ quest perPlayer =
+    Dict.values perPlayer
         |> List.sum
         |> (\sum -> sum >= Quest.ticksNeeded quest)
