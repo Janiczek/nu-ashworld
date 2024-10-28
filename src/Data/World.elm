@@ -99,6 +99,8 @@ encode world =
         , ( "tickFrequency", Time.encodeInterval world.tickFrequency )
         , ( "tickPerIntervalCurve", Tick.encodeCurve world.tickPerIntervalCurve )
         , ( "vendorRestockFrequency", Time.encodeInterval world.vendorRestockFrequency )
+        , ( "questsProgress", SeqDict.encode Quest.encode (JE.dict identity JE.int) world.questsProgress )
+        , ( "questRewardShops", SeqSet.encode Shop.encode world.questRewardShops )
         ]
 
 
