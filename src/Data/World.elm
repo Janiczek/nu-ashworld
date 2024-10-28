@@ -25,6 +25,7 @@ import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
 import SeqSet exposing (SeqSet)
 import SeqSet.Extra as SeqSet
+import Set exposing (Set)
 import Time exposing (Posix)
 import Time.Extra as Time
 import Time.ExtraExtra as Time
@@ -47,6 +48,9 @@ type alias World =
     , vendorRestockFrequency : Time.Interval
     , questsProgress : SeqDict Quest.Name (Dict PlayerName Int)
     , questRewardShops : SeqSet Shop
+    , -- Which players have paid the item / caps requirement for a quest?
+      -- (They'll be able to pause/unpause their progress on the quest for free)
+      questRequirementsPaid : SeqDict Quest.Name (Set PlayerName)
     }
 
 
@@ -81,6 +85,10 @@ init { fast } =
             |> List.map (\q -> ( q, Dict.empty ))
             |> SeqDict.fromList
     , questRewardShops = SeqSet.empty
+    , questRequirementsPaid =
+        Quest.all
+            |> List.map (\q -> ( q, Set.empty ))
+            |> SeqDict.fromList
     }
 
 
@@ -102,6 +110,7 @@ encode world =
         , ( "vendorRestockFrequency", Time.encodeInterval world.vendorRestockFrequency )
         , ( "questsProgress", SeqDict.encode Quest.encode (JE.dict identity JE.int) world.questsProgress )
         , ( "questRewardShops", SeqSet.encode Shop.encode world.questRewardShops )
+        , ( "questRequirementsPaid", SeqDict.encode Quest.encode (JE.set JE.string) world.questRequirementsPaid )
         ]
 
 
@@ -131,7 +140,7 @@ lastItemId players vendors =
 decoder : Decoder World
 decoder =
     JD.succeed
-        (\players nextWantedTick nextVendorRestockTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency questsProgress questRewardShops ->
+        (\players nextWantedTick nextVendorRestockTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency questsProgress questRewardShops questRequirementsPaid ->
             { players = players
             , nextWantedTick = nextWantedTick
             , nextVendorRestockTick = nextVendorRestockTick
@@ -144,6 +153,7 @@ decoder =
             , vendorRestockFrequency = vendorRestockFrequency
             , questsProgress = questsProgress
             , questRewardShops = questRewardShops
+            , questRequirementsPaid = questRequirementsPaid
             }
         )
         |> JD.andMap
@@ -165,6 +175,7 @@ decoder =
         |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)
         |> JD.andMap (JD.field "questsProgress" (SeqDict.decoder Quest.decoder (Dict.decoder JD.string JD.int)))
         |> JD.andMap (JD.field "questRewardShops" (SeqSet.decoder Shop.decoder))
+        |> JD.andMap (JD.field "questRequirementsPaid" (SeqDict.decoder Quest.decoder (JD.set JD.string)))
 
 
 isQuestDone : Quest.Name -> World -> Bool

@@ -25,7 +25,6 @@ module Logic exposing
     , mainWorldName
     , maxPossibleMove
     , maxTraits
-    , minTicksPerHourNeededForQuest
     , naturalArmorClass
     , newCharAvailableSpecialPoints
     , newCharMaxTaggedSkills
@@ -34,13 +33,14 @@ module Logic exposing
     , playerCombatCapsGained
     , playerCombatXpGained
     , price
+    , questRequirementCombatSkills
+    , questTicksPerHour
     , regainConciousnessApCost
     , sequence
     , skillPointCost
     , skillPointsPerLevel
     , standUpApCost
     , tickHealPercentage
-    , ticksGivenPerQuestEngagement
     , totalTags
     , unaimedAttackStyle
     , unarmedApCost
@@ -61,7 +61,6 @@ import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Item.Type as ItemType
 import Data.Perk as Perk exposing (Perk)
-import Data.Quest as Quest exposing (Engagement(..))
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -1780,26 +1779,9 @@ mainWorldName =
     "main"
 
 
-minTicksPerHourNeededForQuest : Int
-minTicksPerHourNeededForQuest =
-    Quest.allEngagement
-        |> List.map ticksGivenPerQuestEngagement
-        |> List.filter (\tph -> tph /= 0)
-        |> List.minimum
-        |> Maybe.withDefault 1
-
-
-ticksGivenPerQuestEngagement : Quest.Engagement -> Int
-ticksGivenPerQuestEngagement engagement =
-    case engagement of
-        NotProgressing ->
-            0
-
-        ProgressingSlowly ->
-            1
-
-        Progressing ->
-            2
+questTicksPerHour : Int
+questTicksPerHour =
+    2
 
 
 burstShotChanceToHitPenalty : Int
@@ -2259,3 +2241,16 @@ maxPossibleMove r =
 
     else
         0
+
+
+questRequirementCombatSkills : List Skill
+questRequirementCombatSkills =
+    [ Skill.SmallGuns
+    , Skill.BigGuns
+    , Skill.EnergyWeapons
+    , Skill.MeleeWeapons
+    , Skill.Throwing
+    , Skill.Unarmed
+
+    -- TODO traps?
+    ]

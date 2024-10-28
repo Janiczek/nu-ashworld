@@ -258,22 +258,14 @@ getPlayerData_ worldName world player =
             |> SeqDict.map
                 (\quest ticksGivenPerPlayer ->
                     let
-                        engagements : List Quest.Engagement
-                        engagements =
+                        engagedPlayersCount : Int
+                        engagedPlayersCount =
                             players
-                                |> List.map (\player_ -> SPlayer.questEngagement player_ quest)
-
-                        playersActive : Int
-                        playersActive =
-                            engagements
-                                |> List.filter (\e -> e /= Quest.NotProgressing)
-                                |> List.length
+                                |> List.count (\player_ -> SeqSet.member quest player_.questsActive)
 
                         ticksPerHour : Int
                         ticksPerHour =
-                            engagements
-                                |> List.map Logic.ticksGivenPerQuestEngagement
-                                |> List.sum
+                            engagedPlayersCount * Logic.questTicksPerHour
 
                         ticksGiven : Int
                         ticksGiven =
@@ -290,7 +282,7 @@ getPlayerData_ worldName world player =
                     in
                     { ticksGiven = ticksGiven
                     , ticksPerHour = ticksPerHour
-                    , playersActive = playersActive
+                    , playersActive = engagedPlayersCount
                     , ticksGivenByPlayer = ticksGivenByPlayer
                     }
                 )
@@ -498,9 +490,11 @@ processGameTickForQuests worldName model =
                                                     player
                                                         |> Maybe.map
                                                             (\player_ ->
-                                                                quest
-                                                                    |> SPlayer.questEngagement player_
-                                                                    |> Logic.ticksGivenPerQuestEngagement
+                                                                if SeqSet.member quest player_.questsActive then
+                                                                    Logic.questTicksPerHour
+
+                                                                else
+                                                                    0
                                                             )
                                                         |> Maybe.withDefault 0
                                             in
@@ -2160,51 +2154,110 @@ stopProgressing quest clientId _ worldName player model =
 
 startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 startProgressing quest clientId world worldName player model =
+    -- TODO: there are requirements other than Quest.playerRequirements, check them as well if we don't elsewhere already
     let
-        ensurePlayerIsInQuestProgressDict : World -> World
-        ensurePlayerIsInQuestProgressDict world_ =
-            if SPlayer.canStartProgressing quest world.tickPerIntervalCurve player then
-                { world_
-                    | questsProgress =
-                        world_.questsProgress
-                            |> SeqDict.update quest
-                                (\maybePlayersProgress ->
-                                    case maybePlayersProgress of
-                                        Nothing ->
-                                            Just (Dict.singleton player.name 0)
+        playerRequirements : List Quest.PlayerRequirement
+        playerRequirements =
+            Quest.playerRequirements quest
 
-                                        Just playersProgress ->
-                                            playersProgress
-                                                |> Dict.update player.name
-                                                    (\maybePlayerProgress ->
-                                                        case maybePlayerProgress of
-                                                            Nothing ->
-                                                                Just 0
+        playerAlreadyPaidRequirements : Bool
+        playerAlreadyPaidRequirements =
+            world.questRequirementsPaid
+                |> SeqDict.get quest
+                |> Maybe.withDefault Set.empty
+                |> Set.member player.name
 
-                                                            Just n ->
-                                                                Just n
-                                                    )
-                                                |> Just
-                                )
-                }
+        playerCanPayRequirements : Bool
+        playerCanPayRequirements =
+            playerRequirements
+                |> List.all
+                    (\req ->
+                        case req of
+                            Quest.SkillRequirement r ->
+                                case r.skill of
+                                    Quest.Combat ->
+                                        let
+                                            maxCombatSkill : Int
+                                            maxCombatSkill =
+                                                Logic.questRequirementCombatSkills
+                                                    |> List.map (Skill.get player.special player.addedSkillPercentages)
+                                                    |> List.maximum
+                                                    |> Maybe.withDefault 0
+                                        in
+                                        maxCombatSkill >= r.percentage
 
-            else
-                world_
+                                    Quest.Specific skill ->
+                                        Skill.get player.special player.addedSkillPercentages skill >= r.percentage
 
-        newModel =
-            if World.isQuestDone quest world then
-                model
+                            Quest.ItemRequirementOneOf itemsNeeded ->
+                                itemsNeeded
+                                    |> List.any
+                                        (\item ->
+                                            player.items
+                                                |> Dict.any (\_ { kind, count } -> kind == item && count >= 1)
+                                        )
 
-            else
-                model
-                    |> updatePlayer worldName player.name (SPlayer.startProgressing quest world.tickPerIntervalCurve)
-                    |> updateWorld worldName ensurePlayerIsInQuestProgressDict
+                            Quest.CapsRequirement capsNeeded ->
+                                player.caps >= capsNeeded
+                    )
     in
-    getPlayerData worldName player.name newModel
-        |> Maybe.map
-            (\data ->
-                ( newModel
-                , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+    if playerAlreadyPaidRequirements || playerCanPayRequirements then
+        let
+            ensurePlayerPresent : World -> World
+            ensurePlayerPresent world_ =
+                if SPlayer.canStartProgressing world.tickPerIntervalCurve player then
+                    { world_
+                        | questsProgress =
+                            world_.questsProgress
+                                |> SeqDict.update quest
+                                    (\maybePlayersProgress ->
+                                        case maybePlayersProgress of
+                                            Nothing ->
+                                                Just (Dict.singleton player.name 0)
+
+                                            Just playersProgress ->
+                                                playersProgress
+                                                    |> Dict.update player.name (Maybe.withDefault 0 >> Just)
+                                                    |> Just
+                                    )
+                    }
+
+                else
+                    world_
+
+            newModel =
+                if World.isQuestDone quest world then
+                    model
+
+                else
+                    model
+                        |> updatePlayer worldName player.name (SPlayer.startProgressing quest world.tickPerIntervalCurve)
+                        |> updateWorld worldName ensurePlayerPresent
+                        |> (if playerAlreadyPaidRequirements then
+                                identity
+
+                            else
+                                updatePlayer worldName player.name (SPlayer.payQuestRequirements playerRequirements)
+                                    >> updateWorld worldName (notePlayerPaidRequirements quest player.name)
+                           )
+        in
+        getPlayerData worldName player.name newModel
+            |> Maybe.map
+                (\data ->
+                    ( newModel
+                    , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+                    )
                 )
-            )
-        |> Maybe.withDefault ( model, Cmd.none )
+            |> Maybe.withDefault ( model, Cmd.none )
+
+    else
+        ( model, Cmd.none )
+
+
+notePlayerPaidRequirements : Quest.Name -> PlayerName -> World -> World
+notePlayerPaidRequirements quest player world =
+    { world
+        | questRequirementsPaid =
+            world.questRequirementsPaid
+                |> SeqDict.update quest (Maybe.withDefault Set.empty >> Set.insert player >> Just)
+    }

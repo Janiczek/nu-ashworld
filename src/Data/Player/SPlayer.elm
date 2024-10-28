@@ -17,8 +17,8 @@ module Data.Player.SPlayer exposing
     , incSpecial
     , incWins
     , levelUpHereAndNow
+    , payQuestRequirements
     , preferAmmo
-    , questEngagement
     , readMessage
     , recalculateHp
     , removeAllMessages
@@ -51,20 +51,16 @@ import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
 import Data.Quest as Quest
-    exposing
-        ( Engagement(..)
-        , PlayerRequirement(..)
-        , SkillRequirement(..)
-        )
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Tick as Tick exposing (TickPerIntervalCurve)
 import Data.Trait as Trait
 import Data.Xp as Xp
 import Dict exposing (Dict)
+import Dict.Extra
 import Logic
 import SeqDict exposing (SeqDict)
-import SeqSet exposing (SeqSet)
+import SeqSet
 import Time exposing (Posix)
 
 
@@ -290,7 +286,7 @@ tick : Posix -> TickPerIntervalCurve -> SPlayer -> SPlayer
 tick currentTime worldTickCurve player =
     player
         |> addTicks (ticksPerHourAvailableAfterQuests worldTickCurve player)
-        |> addQuestProgressXp currentTime
+        |> addTickQuestProgressXp currentTime
         |> (if player.hp < player.maxHp then
                 addHp
                     (Logic.healOverTimePerTick
@@ -305,8 +301,8 @@ tick currentTime worldTickCurve player =
            )
 
 
-addQuestProgressXp : Posix -> SPlayer -> SPlayer
-addQuestProgressXp currentTime player =
+addTickQuestProgressXp : Posix -> SPlayer -> SPlayer
+addTickQuestProgressXp currentTime player =
     let
         xpPerQuest : SeqDict Quest.Name Int
         xpPerQuest =
@@ -315,10 +311,7 @@ addQuestProgressXp currentTime player =
                 |> List.map
                     (\quest ->
                         ( quest
-                        , quest
-                            |> questEngagement player
-                            |> Logic.ticksGivenPerQuestEngagement
-                            |> (*) (Quest.xpPerTickGiven quest)
+                        , Quest.xpPerTickGiven quest * Logic.questTicksPerHour
                         )
                     )
                 |> SeqDict.fromList
@@ -713,76 +706,19 @@ setPreferredAmmo preferredAmmo player =
     { player | preferredAmmo = preferredAmmo }
 
 
-questEngagement : SPlayer -> Quest.Name -> Quest.Engagement
-questEngagement player quest =
-    let
-        reqs : List PlayerRequirement
-        reqs =
-            Quest.playerRequirements quest
-
-        meetsRequirement : PlayerRequirement -> Bool
-        meetsRequirement req =
-            let
-                oneSkill : Int -> Skill -> Bool
-                oneSkill percentage skill =
-                    Skill.get player.special player.addedSkillPercentages skill >= percentage
-            in
-            case req of
-                SkillRequirement { skill, percentage } ->
-                    case skill of
-                        Combat ->
-                            List.any (oneSkill percentage) Skill.combatSkills
-
-                        Specific skill_ ->
-                            oneSkill percentage skill_
-
-                ItemRequirementOneOf items ->
-                    -- TODO consume the items once adding the quest? Only in some of these cases (chimpanzee brain) and not in others (lockpick)?
-                    let
-                        playerItemKinds : SeqSet ItemKind.Kind
-                        playerItemKinds =
-                            player.items
-                                |> Dict.values
-                                |> List.map .kind
-                                |> SeqSet.fromList
-                    in
-                    List.all (\kind -> SeqSet.member kind playerItemKinds) items
-
-                CapsRequirement amount ->
-                    -- TODO remove the caps once adding the quest?
-                    player.caps >= amount
-    in
-    if SeqSet.member quest player.questsActive then
-        if List.isEmpty reqs then
-            Progressing
-
-        else if List.all meetsRequirement reqs then
-            Progressing
-
-        else
-            {- TODO only allow this if the reqs not met are the skill ones!
-               We can't allow the user to progress if they don't meet the caps / items reqs!
-            -}
-            ProgressingSlowly
-
-    else
-        NotProgressing
-
-
 stopProgressing : Quest.Name -> SPlayer -> SPlayer
 stopProgressing quest player =
     { player | questsActive = SeqSet.remove quest player.questsActive }
 
 
-canStartProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> Bool
-canStartProgressing quest worldTickCurve player =
-    -- TODO is it expected that `quest` is not used?
-    ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.minTicksPerHourNeededForQuest
+canStartProgressing : TickPerIntervalCurve -> SPlayer -> Bool
+canStartProgressing worldTickCurve player =
+    ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.questTicksPerHour
 
 
 startProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> SPlayer
 startProgressing quest worldTickCurve player =
-    if canStartProgressing quest worldTickCurve player then
+    if canStartProgressing worldTickCurve player then
         { player | questsActive = SeqSet.insert quest player.questsActive }
 
     else
@@ -792,11 +728,42 @@ startProgressing quest worldTickCurve player =
 ticksPerHourUsedOnQuests : SPlayer -> Int
 ticksPerHourUsedOnQuests player =
     player.questsActive
-        |> SeqSet.toList
-        |> List.map (questEngagement player >> Logic.ticksGivenPerQuestEngagement)
-        |> List.sum
+        |> SeqSet.size
+        |> (*) Logic.questTicksPerHour
 
 
 ticksPerHourAvailableAfterQuests : TickPerIntervalCurve -> SPlayer -> Int
 ticksPerHourAvailableAfterQuests worldTickCurve player =
     Tick.ticksAddedPerInterval worldTickCurve player.ticks - ticksPerHourUsedOnQuests player
+
+
+payQuestRequirements : List Quest.PlayerRequirement -> SPlayer -> SPlayer
+payQuestRequirements reqs player =
+    List.foldl
+        (\req accPlayer ->
+            case req of
+                Quest.SkillRequirement _ ->
+                    accPlayer
+
+                Quest.ItemRequirementOneOf requiredItems ->
+                    -- Only pay the first item you find
+                    case Dict.Extra.find (\_ item -> List.member item.kind requiredItems && item.count >= 1) accPlayer.items of
+                        Nothing ->
+                            accPlayer
+
+                        Just ( id, item ) ->
+                            { accPlayer
+                                | items =
+                                    if item.count == 1 then
+                                        Dict.remove id accPlayer.items
+
+                                    else
+                                        Dict.insert id { item | count = max 0 (item.count - 1) } accPlayer.items
+                            }
+
+                Quest.CapsRequirement capsRequired ->
+                    -- It should have been checked outside this function that we _do_ have enough caps to pay
+                    { accPlayer | caps = max 0 (player.caps - capsRequired) }
+        )
+        player
+        reqs

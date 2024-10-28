@@ -1,13 +1,11 @@
 module Data.Quest exposing
-    ( Engagement(..)
-    , GlobalReward(..)
+    ( GlobalReward(..)
     , Name(..)
     , PlayerRequirement(..)
     , PlayerReward(..)
     , Progress
     , SkillRequirement(..)
     , all
-    , allEngagement
     , allForLocation
     , decoder
     , encode
@@ -205,20 +203,6 @@ type alias Progress =
     , ticksGiven : Int
     , ticksGivenByPlayer : Int
     }
-
-
-type Engagement
-    = NotProgressing
-    | ProgressingSlowly
-    | Progressing
-
-
-allEngagement : List Engagement
-allEngagement =
-    [ NotProgressing
-    , ProgressingSlowly
-    , Progressing
-    ]
 
 
 title : Name -> String
