@@ -1,15 +1,12 @@
 module RPC exposing (..)
 
-import Env
 import Http
-import LamderaRPC exposing (RPC(..))
-import Types exposing (..)
+import Json.Encode as Json
+import Lamdera exposing (SessionId)
+import LamderaRPC exposing (..)
+import Types exposing (BackendModel)
 
 
-
--- Apps with no RPC.elm get this file, which responds to no endpoints
-
-
-lamdera_handleEndpoints : LamderaRPC.RPCArgs -> BackendModel -> ( LamderaRPC.RPCResult, BackendModel, Cmd msg )
-lamdera_handleEndpoints args model =
-    ( LamderaRPC.ResultFailure <| Http.BadBody <| "Unknown endpoint " ++ args.endpoint, model, Cmd.none )
+lamdera_handleEndpoints : Json.Value -> HttpRequest -> BackendModel -> ( LamderaRPC.RPCResult, BackendModel, Cmd msg )
+lamdera_handleEndpoints reqRaw req model =
+    ( ResultRaw 404 "" [] <| BodyBytes [], model, Cmd.none )
