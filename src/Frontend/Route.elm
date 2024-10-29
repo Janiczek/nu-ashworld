@@ -283,7 +283,9 @@ toString route =
                     "worlds"
 
                 NotFound url ->
-                    Url.toString url
+                    url.path
+                        ++ (url.query |> Maybe.map (\q -> "?" ++ q) |> Maybe.withDefault "")
+                        ++ (url.fragment |> Maybe.map (\f -> "#" ++ f) |> Maybe.withDefault "")
 
                 -- TODO is this OK?
                 PlayerRoute proute ->
