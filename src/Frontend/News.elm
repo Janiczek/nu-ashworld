@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1729495778
+    [ { date = 1730206347
       , title = "TODOs before release"
       , text =
             """
