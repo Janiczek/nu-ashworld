@@ -217,6 +217,12 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
+        AskToTemporaryFinishQuest quest ->
+            ( model, Lamdera.sendToBackend (TemporaryFinishQuest quest) )
+
+        AskToTemporaryMaxOutTicks ->
+            ( model, Lamdera.sendToBackend TemporaryMaxOutTicks )
+
         GoToRoute route ->
             let
                 finalRoute =
@@ -1693,6 +1699,13 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         hasMaxTicks : Bool
         hasMaxTicks =
             player.ticks >= Tick.limit
+
+        isQuestDone : Quest.Name -> Bool
+        isQuestDone quest =
+            questsProgress
+                |> SeqDict.get quest
+                |> Maybe.map (\p -> p.ticksGiven >= Quest.ticksNeeded quest)
+                |> Maybe.withDefault False
     in
     [ pageTitleView <| "Town: " ++ Location.name location
     , H.div [ HA.class "flex flex-col gap-4" ]
@@ -1724,6 +1737,7 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         , H.viewIf hasQuests <|
             UI.ul []
                 (quests
+                    |> List.filter (\q -> not (List.any isQuestDone (Quest.exclusiveWith q)))
                     |> List.map (questView player questsProgress expandedQuests)
                 )
         ]
@@ -1774,6 +1788,7 @@ collapsedQuestView progress quest =
         , H.viewIf isDone <|
             H.text " [DONE]"
         ]
+    , UI.button [ HE.onClick (AskToTemporaryFinishQuest quest) ] [ H.text "[TEMP FINISH]" ]
     ]
 
 
@@ -1830,6 +1845,10 @@ expandedQuestView player progress questsProgress quest =
                 |> Maybe.map (\q_ -> q_.ticksGiven >= Quest.ticksNeeded q)
                 |> Maybe.withDefault False
 
+        exclusiveQuests : List Quest.Name
+        exclusiveQuests =
+            Quest.exclusiveWith quest
+
         canStart : Bool
         canStart =
             List.all isQuestDone questRequirements
@@ -1878,7 +1897,8 @@ expandedQuestView player progress questsProgress quest =
                       else
                         HA.class "!text-yellow"
                     , TW.mod "hover" "text-yellow"
-                    , HE.onClickStopPropagation <| AskToStartProgressing quest
+                    , HA.disabled (not canStart)
+                    , HA.attributeIf canStart (HE.onClickStopPropagation <| AskToStartProgressing quest)
                     ]
                     [ H.text "[START]" ]
             ]
@@ -1913,8 +1933,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Quest Requirements" ]
-                    , UI.ul
-                        [ HA.class "ps-[4ch]" ]
+                    , UI.ul []
                         (List.map
                             (\q ->
                                 Quest.title q
@@ -1935,13 +1954,12 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Player Requirements" ]
-                    , UI.ul
-                        [ HA.class "ps-[4ch]" ]
+                    , UI.ul []
                         (List.map
                             (\req ->
                                 let
                                     isMet =
-                                        Logic.passesPlayerRequirement req player
+                                        progress.alreadyPaidRequirements || Logic.passesPlayerRequirement req player
                                 in
                                 Quest.playerRequirementTitle req
                                     |> (if isMet then
@@ -1961,8 +1979,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Global Rewards" ]
-                    , UI.ul
-                        [ HA.class "ps-[4ch]" ]
+                    , UI.ul []
                         (List.map
                             (Quest.globalRewardTitle
                                 >> (if isDone then
@@ -1991,8 +2008,7 @@ expandedQuestView player progress questsProgress quest =
                             ]
                         , H.text " ticks)"
                         ]
-                    , UI.ul
-                        [ HA.class "ps-[4ch]" ]
+                    , UI.ul []
                         (List.map
                             (Quest.playerRewardTitle
                                 >> (if isDone then
@@ -2007,6 +2023,18 @@ expandedQuestView player progress questsProgress quest =
                                    )
                             )
                             playerRewards
+                        )
+                    ]
+                , if List.isEmpty exclusiveQuests then
+                    []
+
+                  else
+                    [ H.div
+                        [ HA.class "mt-5" ]
+                        [ H.text "Exclusive with:" ]
+                    , UI.ul []
+                        (exclusiveQuests
+                            |> List.map (\q -> liText (Quest.title q))
                         )
                     ]
                 ]
@@ -5118,6 +5146,8 @@ createdPlayerInfoView tickFrequency worldName zone time player =
                         [ HA.class "text-green-100 mb-4" ]
                         [ H.text <| nextTickTime zone time freq ]
                 )
+        , H.div [] [ UI.button [ HE.onClick AskToTemporaryMaxOutTicks ] [ H.text "[MAX]" ] ]
+        , H.div [] []
         , H.div
             [ HA.class "text-right text-green-300" ]
             [ H.text "Name:" ]

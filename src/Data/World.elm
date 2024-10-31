@@ -179,16 +179,16 @@ decoder =
         |> JD.andMap (JD.field "questRequirementsPaid" (SeqDict.decoder Quest.decoder (JD.set JD.string)))
 
 
-isQuestDone : Quest.Name -> World -> Bool
-isQuestDone quest world =
+isQuestDone : World -> Quest.Name -> Bool
+isQuestDone world quest =
     world.questsProgress
         |> SeqDict.get quest
         |> Maybe.withDefault Dict.empty
-        |> isQuestDone_ quest
+        |> (\perPlayer -> isQuestDone_ perPlayer quest)
 
 
-isQuestDone_ : Quest.Name -> Dict PlayerName Int -> Bool
-isQuestDone_ quest perPlayer =
+isQuestDone_ : Dict PlayerName Int -> Quest.Name -> Bool
+isQuestDone_ perPlayer quest =
     Dict.values perPlayer
         |> List.sum
         |> (\sum -> sum >= Quest.ticksNeeded quest)

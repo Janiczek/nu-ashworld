@@ -226,6 +226,11 @@ getPlayerData_ worldName world player =
                 |> Maybe.map (Tuple.first >> (+) 1)
                 -- TODO find this info in a non-Maybe way?
                 |> Maybe.withDefault 1
+
+        playerName =
+            player
+                |> Player.getPlayerData
+                |> Maybe.map .name
     in
     { worldName = worldName
     , description = world.description
@@ -274,15 +279,24 @@ getPlayerData_ worldName world player =
 
                         ticksGivenByPlayer : Int
                         ticksGivenByPlayer =
-                            player
-                                |> Player.getPlayerData
-                                |> Maybe.andThen (\{ name } -> Dict.get name ticksGivenPerPlayer)
+                            playerName
+                                |> Maybe.andThen (\name -> Dict.get name ticksGivenPerPlayer)
                                 |> Maybe.withDefault 0
                     in
                     { ticksGiven = ticksGiven
                     , ticksPerHour = ticksPerHour
                     , playersActive = engagedPlayersCount
                     , ticksGivenByPlayer = ticksGivenByPlayer
+                    , alreadyPaidRequirements =
+                        playerName
+                            |> Maybe.map
+                                (\name ->
+                                    world.questRequirementsPaid
+                                        |> SeqDict.get quest
+                                        |> Maybe.withDefault Set.empty
+                                        |> Set.member name
+                                )
+                            |> Maybe.withDefault False
                     }
                 )
     , questRewardShops = world.questRewardShops
@@ -475,7 +489,7 @@ processGameTickForQuests worldName model =
                             | questsProgress =
                                 SeqDict.map
                                     (\quest progressPerPlayer ->
-                                        if World.isQuestDone_ quest progressPerPlayer then
+                                        if World.isQuestDone_ progressPerPlayer quest then
                                             progressPerPlayer
 
                                         else
@@ -515,8 +529,8 @@ processGameTickForQuests worldName model =
                     Quest.all
                         |> List.filter
                             (\quest ->
-                                not (World.isQuestDone quest oldWorld)
-                                    && World.isQuestDone quest newWorld
+                                not (World.isQuestDone oldWorld quest)
+                                    && World.isQuestDone newWorld quest
                             )
                         |> SeqSet.fromList
                 )
@@ -2327,14 +2341,13 @@ stopProgressing quest clientId _ worldName player model =
 
 startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 startProgressing quest clientId world worldName player model =
-    -- TODO: check for exclusivity with already completed quest
     let
         locationQuestAllowed : Bool
         locationQuestAllowed =
             quest
                 |> Quest.location
                 |> Quest.locationQuestRequirements
-                |> List.all (\requiredQuest -> World.isQuestDone requiredQuest world)
+                |> List.all (\requiredQuest -> World.isQuestDone world requiredQuest)
 
         playerRequirements : List Quest.PlayerRequirement
         playerRequirements =
@@ -2351,8 +2364,34 @@ startProgressing quest clientId world worldName player model =
         playerCanPayRequirements =
             playerRequirements
                 |> List.all (\req -> Logic.passesPlayerRequirement req player)
+
+        completedQuests : SeqSet Quest.Name
+        completedQuests =
+            world.questsProgress
+                |> SeqDict.toList
+                |> List.filterMap
+                    (\( quest_, progress ) ->
+                        let
+                            given =
+                                progress
+                                    |> Dict.values
+                                    |> List.sum
+                        in
+                        if Quest.ticksNeeded quest_ <= given then
+                            Just quest_
+
+                        else
+                            Nothing
+                    )
+                |> SeqSet.fromList
+
+        isExclusiveWithCompletedQuest : Bool
+        isExclusiveWithCompletedQuest =
+            completedQuests
+                |> SeqSet.toList
+                |> List.any (\completedQuest -> Quest.isExclusiveWith completedQuest quest)
     in
-    if locationQuestAllowed && (playerAlreadyPaidRequirements || playerCanPayRequirements) then
+    if locationQuestAllowed && (playerAlreadyPaidRequirements || playerCanPayRequirements) && not isExclusiveWithCompletedQuest then
         let
             ensurePlayerPresent : World -> World
             ensurePlayerPresent world_ =
@@ -2377,7 +2416,7 @@ startProgressing quest clientId world worldName player model =
                     world_
 
             newModel =
-                if World.isQuestDone quest world then
+                if World.isQuestDone world quest then
                     model
 
                 else

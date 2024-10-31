@@ -12,6 +12,7 @@ module Data.Quest exposing
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
+    , isExclusiveWith
     , location
     , locationQuestRequirements
     , playerRequirementTitle
@@ -203,6 +204,7 @@ type alias Progress =
     , ticksPerHour : Int
     , ticksGiven : Int
     , ticksGivenByPlayer : Int
+    , alreadyPaidRequirements : Bool
     }
 
 
@@ -2044,8 +2046,7 @@ playerRewards name =
             ]
 
         DenFreeVicByPayingMetzger ->
-            [ ItemReward { what = ItemKind.SawedOffShotgun, amount = 1 }
-            , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
+            [ ItemReward { what = ItemKind.Stimpak, amount = 40 }
             ]
 
         DenFreeVicByKillingOffSlaversGuild ->
@@ -3250,3 +3251,9 @@ decoder =
                     _ ->
                         JD.fail <| "Unknown quest name: '" ++ string ++ "'"
             )
+
+
+isExclusiveWith : Name -> Name -> Bool
+isExclusiveWith quest1 quest2 =
+    exclusiveWith quest1
+        |> List.member quest2
