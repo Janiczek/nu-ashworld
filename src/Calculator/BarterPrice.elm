@@ -101,7 +101,7 @@ view model =
                 , TW.mod "hover" "bg-green-800 text-green-100"
                 , TW.mod "active" "text-yellow"
                 ]
-                [H.text <| ItemKind.name kind ++ " "
+                [ H.text <| ItemKind.name kind ++ " "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| "($" ++ basePrice ++ ")" ]
@@ -193,12 +193,12 @@ view model =
                 , H.div [ HA.class "flex flex-col gap-2" ]
                     [ UI.bold "Items"
                     , H.p [] [ H.text "Click on an item to use its base price." ]
-                    , H.ul [] (List.map itemView ItemKind.all)
+                    , UI.ul [] (List.map itemView ItemKind.all)
                     ]
                 , H.div [ HA.class "flex flex-col gap-2" ]
                     [ UI.bold "Vendor"
                     , H.p [] [ H.text "Click on a vendor to use their barter skill %." ]
-                    , H.ul [] (List.map vendorView Shop.all)
+                    , UI.ul [] (List.map vendorView Shop.all)
                     ]
                 ]
             ]

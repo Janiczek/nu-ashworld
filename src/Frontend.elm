@@ -1722,7 +1722,7 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         , H.viewIf hasMaxTicks <|
             H.div [ HA.class "text-yellow" ] [ H.text "NOTE: You can't participate in quests - you have max ticks! Use your ticks to be able to participate in quests again." ]
         , H.viewIf hasQuests <|
-            H.ul []
+            UI.ul []
                 (quests
                     |> List.map (questView player questsProgress expandedQuests)
                 )
@@ -1913,7 +1913,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Quest Requirements" ]
-                    , H.ul
+                    , UI.ul
                         [ HA.class "ps-[4ch]" ]
                         (List.map
                             (\q ->
@@ -1935,7 +1935,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Player Requirements" ]
-                    , H.ul
+                    , UI.ul
                         [ HA.class "ps-[4ch]" ]
                         (List.map
                             (\req ->
@@ -1961,7 +1961,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.div
                         [ HA.class "mt-5" ]
                         [ H.text "Global Rewards" ]
-                    , H.ul
+                    , UI.ul
                         [ HA.class "ps-[4ch]" ]
                         (List.map
                             (Quest.globalRewardTitle
@@ -1991,7 +1991,7 @@ expandedQuestView player progress questsProgress quest =
                             ]
                         , H.text " ticks)"
                         ]
-                    , H.ul
+                    , UI.ul
                         [ HA.class "ps-[4ch]" ]
                         (List.map
                             (Quest.playerRewardTitle
@@ -2633,7 +2633,7 @@ newCharView hoveredItem newChar =
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.class "grid grid-cols-[42ch_42ch_38ch] gap-5" ]
+        [ HA.class "grid grid-cols-[42ch_32ch_40ch] gap-5" ]
         [ H.div [ HA.class "flex flex-col gap-8" ]
             [ newCharSpecialView newChar
             , newCharTraitsView newChar.traits
@@ -2711,7 +2711,7 @@ hoveredItemRenderer =
                         (\(Markdown.Block.ListItem _ children) ->
                             H.li [] children
                         )
-                    |> H.ul [ HA.class "flex flex-col" ]
+                    |> UI.ul [ HA.class "flex flex-col" ]
     }
 
 
@@ -2760,7 +2760,7 @@ newCharDerivedStatsView newChar =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
-        , H.ul [] <|
+        , UI.ul [] <|
             List.map itemView
                 [ ( "Hitpoints"
                   , String.fromInt <|
@@ -2913,7 +2913,7 @@ newCharTraitsView traits =
                     SeqSet.member trait traits
             in
             H.li
-                [ HA.class "flex flex-row gap-[1ch] pr-[2ch] justify-start cursor-pointer group"
+                [ HA.class "flex flex-row gap-[1ch] justify-start cursor-pointer group"
                 , TW.mod "hover" "text-yellow bg-green-800"
                 , HA.classList [ ( "text-yellow", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
@@ -2940,8 +2940,8 @@ newCharTraitsView traits =
                 [ H.text <| String.fromInt availableTraits ]
             , H.text " available)"
             ]
-        , H.ul
-            [ HA.class "w-max grid grid-cols-2 gap-x-[2ch]" ]
+        , UI.ul
+            [ HA.class "w-max grid grid-cols-2 gap-x-[2ch] ps-0" ]
             (List.map traitView Trait.all)
         , H.p
             [ HA.class "text-green-300" ]
@@ -3022,7 +3022,7 @@ choosePerkView maybeHoveredItem applicablePerks =
             [ HA.class "flex-1 grid grid-cols-[minmax(0,max-content)_minmax(0,60ch)] gap-8" ]
             [ H.div [ HA.class "flex flex-col gap-4" ]
                 [ H.h3 [] [ H.text "Choose a perk!" ]
-                , H.ul [] (List.map perkView applicablePerks)
+                , UI.ul [] (List.map perkView applicablePerks)
                 ]
             , H.viewMaybe perkDescriptionView maybeHoveredItem
             ]
@@ -3086,7 +3086,7 @@ charTraitsView traits =
                 [ H.text "You have no traits." ]
 
           else
-            H.ul [ HA.class "w-fit" ]
+            UI.ul [ HA.class "w-fit" ]
                 (List.map itemView <| SeqSet.toList traits)
         ]
 
@@ -3165,7 +3165,7 @@ charDerivedStatsView player =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
-        , H.ul [] <|
+        , UI.ul [] <|
             List.map itemView
                 [ ( "Max HP"
                   , String.fromInt <|
@@ -3451,7 +3451,7 @@ charPerksView perks =
             H.p [] [ H.text "No perks yet!" ]
 
           else
-            H.ul []
+            UI.ul []
                 (List.map itemView <| SeqDict.toList perks)
         ]
 
@@ -3622,7 +3622,7 @@ inventoryView _ player =
             H.p [] [ H.text "You have no items!" ]
 
           else
-            H.ul []
+            UI.ul []
                 (player.items
                     |> Dict.values
                     |> List.sortBy
@@ -3678,11 +3678,11 @@ inventoryView _ player =
             ]
           ]
             |> List.fastConcat
-            |> H.ul []
+            |> UI.ul []
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Defence stats" ]
-        , H.ul []
+        , UI.ul []
             [ H.li []
                 [ H.text "Armor Class: "
                 , H.span
@@ -3705,7 +3705,7 @@ inventoryView _ player =
         , H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Attack stats" ]
-        , H.ul []
+        , UI.ul []
             [ H.li []
                 [ H.text "Min Damage: "
                 , H.span
@@ -4159,7 +4159,7 @@ settingsFightStrategyView fightStrategyText _ player =
                                                 ":"
                                            )
                             ]
-                        , H.ul []
+                        , UI.ul []
                             (deadEnds
                                 |> List.sortBy deadEndCategorization
                                 |> List.fastConcatMap viewDeadEnd
@@ -4172,7 +4172,7 @@ settingsFightStrategyView fightStrategyText _ player =
                     else
                         [ H.p [ HA.class "text-green-300" ]
                             [ H.text "Warnings:" ]
-                        , H.ul []
+                        , UI.ul []
                             (List.map viewWarning warnings)
                         ]
                    )
@@ -4261,7 +4261,7 @@ fightView maybeFight _ player =
 
 worldInfoView : WorldInfo -> Html FrontendMsg
 worldInfoView data =
-    H.ul []
+    UI.ul []
         [ H.li []
             [ H.text "Name: "
             , H.span [ HA.class "text-green-100" ] [ H.text data.name ]
@@ -5034,7 +5034,7 @@ adminWorldHiscoresView worldName data =
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
             , H.div []
-                [ H.ul []
+                [ UI.ul []
                     (List.map viewMaxBy
                         [ ( "Most money", .caps )
                         , ( "Most items value"

@@ -14,6 +14,7 @@ import Html as H exposing (Html)
 import Html.Attributes as HA
 import List.Extra
 import Set exposing (Set)
+import UI
 
 
 type Name
@@ -488,17 +489,16 @@ view perceptionLevel fight yourName =
                                                             ++ issue
                                                             ++ "."
                                     in
-                                    H.li
-                                        [ HA.class "ps-[2ch]" ]
+                                    H.li []
                                         [ highlight names_.subject.nameCap
                                         , H.text " "
                                         , action_
                                         ]
                                 )
-                            |> H.ul []
+                            |> UI.ul []
                         ]
                 )
-            |> H.ul [ HA.class "flex flex-col gap-4" ]
+            |> UI.ul [ HA.class "flex flex-col gap-4" ]
         , H.div []
             [ H.span
                 [ HA.class "text-green-300" ]

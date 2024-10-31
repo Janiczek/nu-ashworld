@@ -6,6 +6,7 @@ module UI exposing
     , highContrastButton
     , input
     , textarea
+    , ul
     )
 
 import Html as H exposing (Attribute, Html)
@@ -95,3 +96,8 @@ checkbox { label, isOn, toggle } =
             , H.text label
             ]
         ]
+
+
+ul : List (Attribute msg) -> List (Html msg) -> Html msg
+ul attrs content =
+    H.ul (HA.class "list-outside ps-[4ch]" :: attrs) content
