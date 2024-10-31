@@ -217,12 +217,6 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
-        AskToTemporaryFinishQuest quest ->
-            ( model, Lamdera.sendToBackend (TemporaryFinishQuest quest) )
-
-        AskToTemporaryMaxOutTicks ->
-            ( model, Lamdera.sendToBackend TemporaryMaxOutTicks )
-
         GoToRoute route ->
             let
                 finalRoute =
@@ -1788,7 +1782,6 @@ collapsedQuestView progress quest =
         , H.viewIf isDone <|
             H.text " [DONE]"
         ]
-    , UI.button [ HE.onClick (AskToTemporaryFinishQuest quest) ] [ H.text "[TEMP FINISH]" ]
     ]
 
 
@@ -5146,8 +5139,6 @@ createdPlayerInfoView tickFrequency worldName zone time player =
                         [ HA.class "text-green-100 mb-4" ]
                         [ H.text <| nextTickTime zone time freq ]
                 )
-        , H.div [] [ UI.button [ HE.onClick AskToTemporaryMaxOutTicks ] [ H.text "[MAX]" ] ]
-        , H.div [] []
         , H.div
             [ HA.class "text-right text-green-300" ]
             [ H.text "Name:" ]
