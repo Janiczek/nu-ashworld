@@ -31,10 +31,11 @@ Current:
 
 Next up:
 
-- critical misses
+- onboarding / getting started guide
 
 Ideas floating around:
 
+- critical misses
 - some congratulation toast about a level-up?
 - some realtime toast about you being attacked by somebody?
 - weapon scope - minimal effective distance 8
