@@ -24,6 +24,7 @@ import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.SmallChunk as SmallChunk
+import Data.Map.Terrain as Terrain
 import Data.Message as Message
 import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
@@ -1546,8 +1547,17 @@ moveTo newCoords pathTaken clientId _ worldName player model =
         notEnoughTicks : Bool
         notEnoughTicks =
             tickCost > player.ticks
+
+        impassableTiles : Set TileCoords
+        impassableTiles =
+            pathTaken
+                |> Set.filter (Terrain.forCoords >> Terrain.isPassable >> not)
+
+        notAllPassable : Bool
+        notAllPassable =
+            not (Set.isEmpty impassableTiles)
     in
-    if isSamePosition || pathDoesntAgree || notEnoughTicks then
+    if isSamePosition || pathDoesntAgree || notEnoughTicks || notAllPassable then
         ( model, Cmd.none )
 
     else

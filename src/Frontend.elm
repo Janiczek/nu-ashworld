@@ -950,7 +950,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-[26ch] max-w-[26ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto fixed left-0 top-0 bottom-0" ]
+    H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-hidden fixed left-0 top-0 bottom-0" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
             (leftNav tickFrequency)
@@ -1000,7 +1000,7 @@ contentView model =
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
-    H.div [ HA.class "ml-[26ch] pt-8 px-10 pb-10 flex flex-col items-start min-h-vh" ]
+    H.div [ HA.class "ml-[28ch] pt-8 px-10 pb-10 flex flex-col items-start min-h-vh" ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -2203,7 +2203,7 @@ townStoreView barter shop location world player =
                                 H.div
                                     [ HA.class "flex" ]
                                     [ UI.input
-                                        [ HA.class "w-10 !bg-green-800 pl-[6px]"
+                                        [ HA.class "w-[6ch] !bg-green-800 px-[4px]"
                                         , HA.value transferNValue
                                         , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
                                         , HA.title "Transfer N caps"
@@ -2335,7 +2335,7 @@ townStoreView barter shop location world player =
                                 H.div
                                     [ HA.class "flex" ]
                                     [ UI.input
-                                        [ HA.class "w-10 !bg-green-800 pl-[6px]"
+                                        [ HA.class "w-[6ch] !bg-green-800 px-[4px]"
                                         , HA.value transferNValue
                                         , HE.onInput <| BarterMsg << SetTransferNInput position
                                         , HA.title "Transfer N items"
@@ -2612,7 +2612,7 @@ townStoreView barter shop location world player =
                 [ UI.button
                     [ HE.onClick (GoToRoute (PlayerRoute Route.TownMainSquare)) ]
                     [ H.text "[Back]" ]
-                , H.div [] [ H.text <| Shop.description shop ]
+                , H.div [ HA.class "max-w-[80ch]" ] [ H.text <| Shop.description shop ]
                 ]
             , H.div
                 [ HA.class "mt-10 self-stretch grid grid-cols-[repeat(4,1fr)]"
@@ -3493,7 +3493,7 @@ charPerksView perks =
             [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
         , if SeqDict.isEmpty perks then
-            H.p [] [ H.text "No perks yet!" ]
+            UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
 
           else
             UI.ul []

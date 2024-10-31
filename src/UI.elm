@@ -110,8 +110,8 @@ withTooltip tooltipText element =
     H.div [ HA.class "relative" ]
         [ H.div [ HA.class "peer/tooltip contents" ] [ element ]
         , H.div
-            [ HA.class "transition-opacity bg-green-200 text-green-900 px-[2ch] py-4 mt-4 absolute left-1/2 -translate-x-1/2 opacity-0 w-max max-w-[30ch] pointer-events-none"
-            , TW.mod "peer-hover/tooltip" "opacity-100"
+            [ HA.class "bg-green-200 text-green-900 px-[2ch] py-4 mt-4 absolute z-[3] left-1/2 -translate-x-1/2 hidden w-max max-w-[30ch] pointer-events-none"
+            , TW.mod "peer-hover/tooltip" "block"
             ]
             [ H.text tooltipText ]
         ]

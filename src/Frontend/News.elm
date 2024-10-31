@@ -33,7 +33,6 @@ Current:
 Next up:
 
 - tooltips around edge of screen - floating-ui.js?
-- shouldn't be able to travel in ocean
 - onboarding / getting started guide
 
 Ideas floating around:
