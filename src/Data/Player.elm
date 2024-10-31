@@ -384,10 +384,12 @@ fromNewChar currentTime auth newChar =
                 Dict.empty
             , traits = newChar.traits
             , addedSkillPercentages =
-                Logic.addedSkillPercentages
-                    { taggedSkills = newChar.taggedSkills
-                    , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
-                    }
+                Skill.all |> List.map (\s -> ( s, 300 )) |> SeqDict.fromList
+
+            --Logic.addedSkillPercentages
+            --    { taggedSkills = newChar.taggedSkills
+            --    , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
+            --    }
             , taggedSkills = newChar.taggedSkills
             , availableSkillPoints = 0
             , availablePerks = 0

@@ -372,28 +372,31 @@ update msg model =
                                                             |> postprocess worldName
 
                                                     Just nextWantedTick_ ->
-                                                        if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick_ then
-                                                            let
-                                                                nextTick =
-                                                                    Tick.nextTick tickFrequency currentTime
-                                                            in
-                                                            { model_
-                                                                | worlds =
-                                                                    model_.worlds
-                                                                        |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
-                                                            }
-                                                                -- Enough time elapsed, run the action.
-                                                                |> postprocess worldName
+                                                        -- TODO don't commit this:
+                                                        --if Time.posixToMillis currentTime >= Time.posixToMillis nextWantedTick_ then
+                                                        let
+                                                            nextTick =
+                                                                Tick.nextTick tickFrequency currentTime
+                                                        in
+                                                        { model_
+                                                            | worlds =
+                                                                model_.worlds
+                                                                    |> Dict.update worldName (Maybe.map (updateNextWantedTick nextTick))
+                                                        }
+                                                            -- Enough time elapsed, run the action.
+                                                            |> postprocess worldName
 
-                                                        else
-                                                            -- Not enough time elapsed, do nothing.
-                                                            ( model_
-                                                            , Cmd.none
-                                                            )
+                                            --else
+                                            --    -- Not enough time elapsed, do nothing.
+                                            --    ( model_
+                                            --    , Cmd.none
+                                            --    )
                                         in
                                         accModel
                                             |> processTick
-                                                world.tickFrequency
+                                                -- world.tickFrequency
+                                                -- TODO don't commit this
+                                                Time.Second
                                                 world.nextWantedTick
                                                 (\nextTick world_ -> { world_ | nextWantedTick = Just nextTick })
                                                 processGameTick
@@ -870,6 +873,27 @@ updateFromFrontend sessionId clientId msg model =
                 )
     in
     case msg of
+        TemporaryMaxOutTicks ->
+            withLoggedInCreatedPlayer <|
+                \cId _ wn player m ->
+                    m
+                        |> updatePlayer wn player.name (\sp -> { sp | ticks = Tick.limit // 2 })
+                        |> sendCurrentWorld wn player.name cId
+
+        TemporaryFinishQuest quest ->
+            withLoggedInCreatedPlayer <|
+                \cId _ wn player m ->
+                    m
+                        |> updateWorld wn
+                            (\world_ ->
+                                { world_
+                                    | questsProgress =
+                                        world_.questsProgress
+                                            |> SeqDict.update quest (\_ -> Just <| Dict.singleton player.name (Quest.ticksNeeded quest - 1))
+                                }
+                            )
+                        |> sendCurrentWorld wn player.name cId
+
         LogMeIn auth ->
             if Auth.isAdminName auth then
                 if Auth.adminPasswordChecksOut auth then

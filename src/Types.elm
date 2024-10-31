@@ -142,6 +142,8 @@ type FrontendMsg
     | CollapseQuestItem Quest.Name
     | AskToStopProgressing Quest.Name
     | AskToStartProgressing Quest.Name
+    | AskToTemporaryMaxOutTicks
+    | AskToTemporaryFinishQuest Quest.Name
 
 
 type BarterMsg
@@ -190,6 +192,8 @@ type ToBackend
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name
     | StartProgressing Quest.Name
+    | TemporaryMaxOutTicks
+    | TemporaryFinishQuest Quest.Name
 
 
 type AdminToBackend

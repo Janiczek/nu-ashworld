@@ -228,3 +228,14 @@ encodeToBackendMsg msg =
                 , ( "name", JE.string worldName )
                 , ( "fast", JE.bool fast )
                 ]
+
+        TemporaryFinishQuest q ->
+            JE.object
+                [ ( "type", JE.string "TemporaryFinishQuest" )
+                , ( "quest", Quest.encode q )
+                ]
+
+        TemporaryMaxOutTicks ->
+            JE.object
+                [ ( "type", JE.string "TemporaryMaxOutTicks" )
+                ]
