@@ -1,22 +1,19 @@
-@font-face {
-  font-family: "PixelOperator";
-  font-weight: 400;
-  src: url("../fonts/PixelOperator.ttf") format('truetype');
-}
+/*
+https://github.com/evilmartians/mono/releases
+https://gwfh.mranftl.com/fonts/martian-mono?subsets=latin,latin-ext
+*/
 
 @font-face {
-  font-family: "PixelOperator";
-  font-weight: 700;
-  src: url("../fonts/PixelOperatorHB.ttf") format('truetype');
+  font-display: swap;
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 300;
+  src: url('../fonts/MartianMono-StdLt.woff2') format('woff2');
 }
-
 @font-face {
-  font-family: "PixelOperator";
-  font-weight: 900;
-  src: url("../fonts/PixelOperatorHBSC.ttf") format('truetype');
-}
-
-@font-face {
-  font-family: "PixelOperatorMono";
-  src: url("../fonts/PixelOperatorMonoHB.ttf") format('truetype');
+  font-display: swap;
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../fonts/MartianMono-StdMd.woff2') format('woff2');
 }

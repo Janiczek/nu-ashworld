@@ -280,15 +280,15 @@ update msg ({ loginForm } as model) =
             else
                 logMeIn
 
-        Register ->
+        SignUp ->
             let
-                register =
+                signUp =
                     ( model
-                    , Lamdera.sendToBackend <| RegisterMe <| Auth.hash model.loginForm
+                    , Lamdera.sendToBackend <| SignMeUp <| Auth.hash model.loginForm
                     )
             in
             if Auth.isAdminName model.loginForm then
-                register
+                signUp
 
             else if String.isEmpty model.loginForm.worldName then
                 ( { model | alertMessage = Just "Select a world first" }
@@ -296,7 +296,7 @@ update msg ({ loginForm } as model) =
                 )
 
             else
-                register
+                signUp
 
         GotTime time ->
             ( { model | time = time }
@@ -740,7 +740,7 @@ updateFromBackend msg model =
             }
                 |> update (GoToRoute (AdminRoute AdminWorldsList))
 
-        YoureRegistered data ->
+        YoureSignedUp data ->
             { model
                 | worldData = IsPlayer data
                 , alertMessage = Nothing
@@ -892,7 +892,7 @@ view model =
                 |> Maybe.withDefault []
                 |> List.map .name
 
-        leftNav =
+        leftNav tickFrequency =
             case model.worldData of
                 IsAdmin _ ->
                     [ alertMessageView model.alertMessage
@@ -904,7 +904,7 @@ view model =
 
                 IsPlayer data ->
                     [ alertMessageView model.alertMessage
-                    , playerInfoView data.player
+                    , playerInfoView tickFrequency data.worldName model.zone model.time data.player
                     , H.div [ HA.class "flex flex-col gap-4" ]
                         [ loggedInLinksView data.player model.route
                         , commonLinksView model.route
@@ -926,7 +926,7 @@ view model =
 
 
 appView :
-    { leftNav : List (Html FrontendMsg) }
+    { leftNav : Maybe Time.Interval -> List (Html FrontendMsg) }
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
@@ -936,24 +936,16 @@ appView { leftNav } model =
         ]
 
 
-leftNavView : List (Html FrontendMsg) -> Model -> Html FrontendMsg
+leftNavView : (Maybe Time.Interval -> List (Html FrontendMsg)) -> Model -> Html FrontendMsg
 leftNavView leftNav model =
     let
-        tickData :
-            Maybe
-                { tickFrequency : Time.Interval
-                , worldName : String
-                }
-        tickData =
+        tickFrequency =
             case model.worldData of
                 IsAdmin _ ->
                     Nothing
 
                 IsPlayer data ->
-                    Just
-                        { tickFrequency = data.tickFrequency
-                        , worldName = data.worldName
-                        }
+                    Just data.tickFrequency
 
                 NotLoggedIn ->
                     Nothing
@@ -961,60 +953,25 @@ leftNavView leftNav model =
     H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
-            ((tickData |> H.viewMaybe (nextTickView model.zone model.time))
-                :: leftNav
-            )
+            (leftNav tickFrequency)
         ]
 
 
-nextTickView :
-    Time.Zone
-    -> Posix
-    ->
-        { tickFrequency : Time.Interval
-        , worldName : String
-        }
-    -> Html FrontendMsg
-nextTickView zone time { tickFrequency, worldName } =
+nextTickTime : Time.Zone -> Posix -> Time.Interval -> String
+nextTickTime zone time tickFrequency =
     let
-        millis =
-            Time.posixToMillis time
+        nextTick =
+            Tick.nextTick tickFrequency time
     in
-    -- The -0.5px is a hack to prevent text on Windows from being blurry (basically aligning it back to the pixel grid)
-    H.div [ HA.class "grid grid-cols-2 gap-x-[1ch] -translate-x-[0.5px]" ] <|
-        List.fastConcat
-            [ [ H.span
-                    [ HA.class "text-green-300 text-right" ]
-                    [ H.text "World:" ]
-              , H.span [] [ H.text worldName ]
-              ]
-            , if millis == 0 then
-                []
-
-              else
-                let
-                    nextTick =
-                        Tick.nextTick tickFrequency time
-
-                    nextTickString =
-                        DateFormat.format
-                            [ DateFormat.hourMilitaryFixed
-                            , DateFormat.text ":"
-                            , DateFormat.minuteFixed
-                            , DateFormat.text ":"
-                            , DateFormat.secondFixed
-                            ]
-                            zone
-                            nextTick
-                in
-                [ H.span
-                    [ HA.class "text-green-300 text-right" ]
-                    [ H.text "Next tick:" ]
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text nextTickString ]
-                ]
-            ]
+    DateFormat.format
+        [ DateFormat.hourMilitaryFixed
+        , DateFormat.text ":"
+        , DateFormat.minuteFixed
+        , DateFormat.text ":"
+        , DateFormat.secondFixed
+        ]
+        zone
+        nextTick
 
 
 contentView : Model -> Html FrontendMsg
@@ -1138,7 +1095,7 @@ contentView model =
 pageTitleView : String -> Html FrontendMsg
 pageTitleView title =
     H.h2
-        [ HA.class "text-lg font-extraBold mb-10" ]
+        [ HA.class "text-lg font-bold mb-10" ]
         [ H.text title ]
 
 
@@ -2752,7 +2709,7 @@ hoveredItemRenderer =
                 list
                     |> List.map
                         (\(Markdown.Block.ListItem _ children) ->
-                            H.li [] (UI.liBullet :: children)
+                            H.li [] children
                         )
                     |> H.ul [ HA.class "flex flex-col" ]
     }
@@ -2786,8 +2743,7 @@ newCharDerivedStatsView newChar =
                 (TW.mod "hover" "bg-green-800"
                     :: liAttrs
                 )
-                [ UI.liBullet
-                , H.text <| label ++ ": "
+                [ H.text <| label ++ ": "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text value ]
@@ -3054,8 +3010,7 @@ choosePerkView maybeHoveredItem applicablePerks =
                 , HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ UI.liBullet
-                , H.span
+                [ H.span
                     [ TW.mod "group-hover" "text-yellow"
                     ]
                     [ H.text <| Perk.name perk ]
@@ -3117,8 +3072,7 @@ charTraitsView traits =
                 , HE.onMouseOver <| HoverItem <| HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
-                [ UI.liBullet
-                , H.text <| Trait.name trait
+                [ H.text <| Trait.name trait
                 ]
     in
     H.div
@@ -3194,8 +3148,7 @@ charDerivedStatsView player =
                 (TW.mod "hover" "bg-green-800"
                     :: liAttrs
                 )
-                [ UI.liBullet
-                , H.text <| label ++ ": "
+                [ H.text <| label ++ ": "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text value ]
@@ -3482,8 +3435,7 @@ charPerksView perks =
                 , HA.class "pr-[2ch]"
                 , TW.mod "hover" "text-green-100 bg-green-800"
                 ]
-                [ UI.liBullet
-                , H.text <|
+                [ H.text <|
                     if maxRank == 1 then
                         Perk.name perk
 
@@ -3558,8 +3510,7 @@ inventoryView _ player =
             in
             H.li
                 [ HA.class "flex flex-row gap-[1ch] group" ]
-                [ UI.liBullet
-                , H.span
+                [ H.span
                     [ HA.class "flex flex-row" ]
                     [ UI.button
                         [ HE.onClick <| AskToUseItem item.id
@@ -3691,9 +3642,8 @@ inventoryView _ player =
             ]
                 |> List.map
                     (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
-                        H.div []
-                            [ UI.liBullet
-                            , H.text <| label ++ ": "
+                        H.li []
+                            [ H.text <| label ++ ": "
                             , H.span [ HA.class "text-green-100" ] <|
                                 case maybeItem of
                                     Nothing ->
@@ -3709,9 +3659,8 @@ inventoryView _ player =
                                         ]
                             ]
                     )
-          , [ H.div []
-                [ UI.liBullet
-                , H.text "Preferred ammo: "
+          , [ H.li []
+                [ H.text "Preferred ammo: "
                 , H.span [ HA.class "text-green-100" ] <|
                     case player.preferredAmmo of
                         Nothing ->
@@ -3735,22 +3684,19 @@ inventoryView _ player =
             [ H.text "Defence stats" ]
         , H.ul []
             [ H.li []
-                [ UI.liBullet
-                , H.text "Armor Class: "
+                [ H.text "Armor Class: "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt armorClass ]
                 ]
             , H.li []
-                [ UI.liBullet
-                , H.text "Damage Threshold: "
+                [ H.text "Damage Threshold: "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt damageThreshold ]
                 ]
             , H.li []
-                [ UI.liBullet
-                , H.text "Damage Resistance: "
+                [ H.text "Damage Resistance: "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt damageResistance ]
@@ -3761,15 +3707,13 @@ inventoryView _ player =
             [ H.text "Attack stats" ]
         , H.ul []
             [ H.li []
-                [ UI.liBullet
-                , H.text "Min Damage: "
+                [ H.text "Min Damage: "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt attackStats.minDamage ]
                 ]
             , H.li []
-                [ UI.liBullet
-                , H.text "Max Damage: "
+                [ H.text "Max Damage: "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| String.fromInt attackStats.maxDamage ]
@@ -3976,8 +3920,7 @@ settingsFightStrategyView fightStrategyText _ player =
         viewWarning warning =
             H.li
                 [ HA.class "text-yellow" ]
-                [ UI.liBullet
-                , H.text <|
+                [ H.text <|
                     case warning of
                         FightStrategy.ItemDoesntHeal itemKind ->
                             "Item doesn't heal: " ++ ItemKind.name itemKind
@@ -4042,8 +3985,7 @@ settingsFightStrategyView fightStrategyText _ player =
                     (\item ->
                         H.li
                             [ TW.mod "hover" "text-green-100" ]
-                            [ UI.liBullet
-                            , H.text item
+                            [ H.text item
                             ]
                     )
 
@@ -4127,7 +4069,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 -- TODO change ch measurements to some kind of pixels. We'll have to hardcode this
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
-                    , HA.class "!bg-green-800 w-[75ch] h-[25rem] my-4 py-4 px-4 rounded leading-[18px] overflow-x-auto whitespace-pre font-mono"
+                    , HA.class "!bg-green-800 w-[85ch] min-h-[25rem] my-4 py-4 px-4 rounded leading-[18px] overflow-x-auto whitespace-pre font-mono"
                     , HA.value fightStrategyText
                     ]
                     []
@@ -4135,10 +4077,10 @@ settingsFightStrategyView fightStrategyText _ player =
                     |> H.viewMaybe
                         (\{ row, col } ->
                             H.div
-                                [ HA.class "absolute left-4 top-4 pointer-events-none select-none w-[24px] h-4 -ml-0.5 pl-0.5 border-l border-l-yellow leading-[18px]"
+                                [ HA.class "absolute left-4 top-[9px] pointer-events-none select-none w-[24px] h-[17px] -ml-0.5 pl-0.5 border-l border-l-yellow leading-[18px]"
                                 , HA.class "bg-[linear-gradient(90deg,var(--yellow-transparent)_0%,var(--yellow-fully-transparent)_100%)]"
-                                , HA.class "translate-x-[calc((var(--error-col)-1)*8px+1px)]"
-                                , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px+1px)]"
+                                , HA.class "translate-x-[calc((var(--error-col)-1)*1ch)]"
+                                , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px)]"
                                 , cssVars
                                     [ ( "--error-row", String.fromInt row )
                                     , ( "--error-col", String.fromInt col )
@@ -4640,7 +4582,7 @@ loginFormView worlds auth =
     let
         input attrs children =
             UI.input
-                (HA.class "text-green-100 w-[18ch] font-extraBold"
+                (HA.class "text-green-100 w-[20ch] font-bold"
                     :: TW.mod "focus" "bg-green-900"
                     :: attrs
                 )
@@ -4652,14 +4594,14 @@ loginFormView worlds auth =
         ]
         [ input
             [ HA.value auth.name
-            , HA.placeholder "Username_______________"
+            , HA.placeholder "Username____________"
             , HE.onInput SetAuthName
             ]
             []
         , input
             [ HA.type_ "password"
             , HA.value <| Auth.unwrap auth.password
-            , HA.placeholder "Password_______________"
+            , HA.placeholder "Password____________"
             , HE.onInput SetAuthPassword
             ]
             []
@@ -4704,8 +4646,8 @@ loginFormView worlds auth =
                 [ HE.onClickPreventDefault Login ]
                 [ H.text "[ Login ]" ]
             , UI.button
-                [ HE.onClickPreventDefault Register ]
-                [ H.text "[ Register ]" ]
+                [ HE.onClickPreventDefault SignUp ]
+                [ H.text "[ Sign Up ]" ]
             ]
         ]
 
@@ -5131,81 +5073,85 @@ adminWorldHiscoresView worldName data =
             ]
 
 
-playerInfoView : Player CPlayer -> Html FrontendMsg
-playerInfoView player =
+playerInfoView : Maybe Time.Interval -> String -> Time.Zone -> Time.Posix -> Player CPlayer -> Html FrontendMsg
+playerInfoView tickFrequency worldName zone time player =
     player
         |> Player.getPlayerData
-        |> H.viewMaybe createdPlayerInfoView
+        |> H.viewMaybe (createdPlayerInfoView tickFrequency worldName zone time)
 
 
-createdPlayerInfoView : CPlayer -> Html FrontendMsg
-createdPlayerInfoView player =
+createdPlayerInfoView : Maybe Time.Interval -> String -> Time.Zone -> Time.Posix -> CPlayer -> Html FrontendMsg
+createdPlayerInfoView tickFrequency worldName zone time player =
     H.div
-        [ HA.class "grid grid-cols-2" ]
-        [ H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+        [ HA.class "grid grid-cols-[max-content_max-content] gap-x-[1ch]" ]
+        [ H.div [ HA.class "text-right text-green-300" ] [ H.text "World:" ]
+        , H.div [] [ H.text worldName ]
+        , H.viewIf (tickFrequency /= Nothing) <|
+            H.div [ HA.class "text-right text-green-300 mb-4" ] [ H.text "Next tick:" ]
+        , tickFrequency
+            |> H.viewMaybe
+                (\freq ->
+                    H.div
+                        [ HA.class "text-green-100 mb-4" ]
+                        [ H.text <| nextTickTime zone time freq ]
+                )
+        , H.div
+            [ HA.class "text-right text-green-300" ]
             [ H.text "Name:" ]
         , H.div
-            [ HA.class "col-start-2 text-green-100" ]
+            [ HA.class "text-green-100" ]
             [ H.text player.name ]
         , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
+            [ HA.class "text-right text-green-300"
             , HA.title "Hitpoints"
             ]
             [ H.text "HP:" ]
-        , H.div
-            [ HA.class "col-start-2" ]
+        , H.div []
             [ "{HP}/{MAXHP}"
                 |> String.replace "{HP}" (String.fromInt player.hp)
                 |> String.replace "{MAXHP}" (String.fromInt player.maxHp)
                 |> H.text
             ]
         , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
+            [ HA.class "text-right text-green-300"
             , HA.title "Experience points"
             ]
             [ H.text "XP:" ]
-        , H.div [ HA.class "col-start-2" ]
+        , H.div []
             [ H.span [] [ H.text <| String.fromInt player.xp ]
             , H.span
                 [ HA.class "text-green-300" ]
                 [ H.text <| "/" ++ String.fromInt (Xp.nextLevelXp player.xp) ]
             ]
         , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ HA.class "text-right text-green-300" ]
             [ H.text "Level:" ]
+        , H.div [] [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
         , H.div
-            [ HA.class "col-start-2" ]
-            [ H.text <| String.fromInt <| Xp.currentLevel player.xp ]
-        , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
+            [ HA.class "text-right text-green-300"
             , HA.title "Wins/Losses"
             ]
             [ H.text "W/L:" ]
-        , H.div
-            [ HA.class "col-start-2" ]
+        , H.div []
             [ "{WINS}/{LOSSES}"
                 |> String.replace "{WINS}" (String.fromInt player.wins)
                 |> String.replace "{LOSSES}" (String.fromInt player.losses)
                 |> H.text
             ]
         , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]" ]
+            [ HA.class "text-right text-green-300" ]
             [ H.text "Caps:" ]
-        , H.div
-            [ HA.class "col-start-2" ]
+        , H.div []
             [ "${CAPS}"
                 |> String.replace "{CAPS}" (String.fromInt player.caps)
                 |> H.text
             ]
         , H.div
-            [ HA.class "col-start-1 text-right text-green-300 mr-[1ch]"
+            [ HA.class "text-right text-green-300"
             , HA.title "Ticks"
             ]
             [ H.text "Ticks:" ]
-        , H.div
-            [ HA.class "col-start-2" ]
-            [ H.text <| String.fromInt player.ticks ]
+        , H.div [] [ H.text <| String.fromInt player.ticks ]
         ]
 
 

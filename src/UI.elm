@@ -5,7 +5,6 @@ module UI exposing
     , checkboxLabel
     , highContrastButton
     , input
-    , liBullet
     , textarea
     )
 
@@ -66,13 +65,6 @@ bold text =
     H.span
         [ HA.class "font-bold" ]
         [ H.text text ]
-
-
-liBullet : Html msg
-liBullet =
-    H.span
-        [ HA.class "text-green-300 pl-[1ch]" ]
-        [ H.text "- " ]
 
 
 checkboxLabel : Bool -> String

@@ -83,7 +83,7 @@ renderer =
                 list
                     |> List.map
                         (\(Markdown.Block.ListItem _ children) ->
-                            H.li [] (UI.liBullet :: children)
+                            H.li [] (children)
                         )
                     |> H.ul [ HA.class "flex flex-col" ]
     }

@@ -935,7 +935,7 @@ updateFromFrontend sessionId clientId msg model =
                                     , Lamdera.sendToFrontend clientId <| AlertMessage "Login failed"
                                     )
 
-        RegisterMe auth ->
+        SignMeUp auth ->
             if Auth.isAdminName auth then
                 ( model
                 , Lamdera.sendToFrontend clientId <| AlertMessage "Nuh-uh..."
@@ -980,7 +980,7 @@ updateFromFrontend sessionId clientId msg model =
                                     in
                                     ( newModel
                                     , Cmd.batch
-                                        [ Lamdera.sendToFrontend clientId <| YoureRegistered data
+                                        [ Lamdera.sendToFrontend clientId <| YoureSignedUp data
                                         , refreshAdminLoggedInPlayers newModel
                                         ]
                                     )

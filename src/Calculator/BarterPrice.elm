@@ -101,8 +101,7 @@ view model =
                 , TW.mod "hover" "bg-green-800 text-green-100"
                 , TW.mod "active" "text-yellow"
                 ]
-                [ UI.liBullet
-                , H.text <| ItemKind.name kind ++ " "
+                [H.text <| ItemKind.name kind ++ " "
                 , H.span
                     [ HA.class "text-green-100" ]
                     [ H.text <| "($" ++ basePrice ++ ")" ]
@@ -116,8 +115,7 @@ view model =
                 , TW.mod "hover" "bg-green-800 text-green-100"
                 , TW.mod "active" "text-yellow"
                 ]
-                [ UI.liBullet
-                , H.text <| Shop.personName shop ++ " "
+                [ H.text <| Shop.personName shop ++ " "
                 , H.span [ HA.class "text-green-300" ] [ H.text <| "(" ++ Location.name (Shop.location shop) ++ ", skill " ]
                 , H.span [ HA.class "text-green-100" ] [ H.text <| String.fromInt (Shop.barterSkill shop) ++ "%" ]
                 , H.span [ HA.class "text-green-300" ] [ H.text ")" ]
@@ -127,7 +125,7 @@ view model =
     , body =
         [ H.div [ HA.class "flex flex-col gap-2 p-4" ]
             [ H.h1
-                [ HA.class "text-lg font-extraBold mb-10" ]
+                [ HA.class "text-lg font-bold mb-10" ]
                 [ H.text "Barter Price Calculator" ]
             , H.div [ HA.class "grid grid-cols-[repeat(3,minmax(auto,1fr))] gap-2 flex-1" ]
                 [ H.div [ HA.class "flex flex-col gap-2 mt-14" ]

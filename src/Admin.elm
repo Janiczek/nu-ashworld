@@ -65,9 +65,9 @@ encodeToBackendMsg msg =
                 , ( "auth", Auth.encodeSanitized auth )
                 ]
 
-        RegisterMe auth ->
+        SignMeUp auth ->
             JE.object
-                [ ( "type", JE.string "RegisterMe" )
+                [ ( "type", JE.string "SignMeUp" )
                 , ( "auth", Auth.encodeSanitized auth )
                 ]
 

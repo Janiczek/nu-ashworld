@@ -9,11 +9,16 @@
 .link-label {
     color: var(--green-100);
     text-transform: uppercase;
-    width: 9ch;
-    min-width: 9ch;
+    width: 10ch;
+    min-width: 10ch;
     display: inline-block;
     margin: 0 1ch;
     white-space: pre;
+}
+
+.link[target="_blank"] .link-label {
+    width: 9ch;
+    min-width: 9ch;
 }
 
 .link[target="_blank"] .link-right-bracket::before {

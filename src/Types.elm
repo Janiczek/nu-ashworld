@@ -92,7 +92,7 @@ type FrontendMsg
     | GoToTownStore Shop
     | Logout
     | Login
-    | Register
+    | SignUp
     | GotZone Time.Zone
     | GotTime Time.Posix
     | AskToFight PlayerName
@@ -162,7 +162,7 @@ type BarterMsg
 
 type ToBackend
     = LogMeIn (Auth Hashed)
-    | RegisterMe (Auth Hashed)
+    | SignMeUp (Auth Hashed)
     | CreateNewChar NewChar
     | LogMeOut
     | Fight PlayerName
@@ -223,7 +223,7 @@ type ToFrontend
     | YoureLoggedOut (List WorldInfo)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedIn PlayerData
-    | YoureRegistered PlayerData
+    | YoureSignedUp PlayerData
     | CharCreationError NewChar.CreationError
     | YouHaveCreatedChar CPlayer PlayerData
     | AlertMessage String

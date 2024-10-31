@@ -39,14 +39,13 @@ body {
 }
 
 * {
-    font-family: "PixelOperator";
-    line-height: 17px;
-    font-size: 16px;
-    font-weight: normal;
+    font-family: "Martian Mono";
 
-    font-smooth: never;
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: none;
+    /* https://github.com/evilmartians/mono?tab=readme-ov-file#font-size-and-legibility */
+    font-size: 12.3px; /* empirically found to be better in Chrome @ Macbook than the recommended 12.5px */
+    line-height: 18px;
+
+    font-weight: 300;
 
     text-wrap: pretty;
 }
@@ -114,4 +113,18 @@ td:not(:first-child) {
 
 tr:hover td {
     background-color: var(--green-800);
+}
+
+ul {
+    list-style-position: outside;
+    padding-inline-start: 4ch !important;
+}
+
+ul li::marker {
+    content: "- ";
+    color: var(--green-300);
+}
+
+textarea {
+    field-sizing: content;
 }

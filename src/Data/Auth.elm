@@ -148,7 +148,7 @@ verifyPassword (Password tested) (Password correct) =
     tested == correct
 
 
-{-| Only use this when you have a good reason, eg. registering,
+{-| Only use this when you have a good reason, eg. signing up,
 changing a password, etc.
 -}
 promote : Auth Hashed -> Auth Verified
