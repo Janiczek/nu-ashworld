@@ -3,6 +3,7 @@ module Frontend.Route exposing
     , PlayerRoute(..)
     , Route(..)
     , fromUrl
+    , getShop
     , isMessagesRelatedRoute
     , loggedOut
     , needsAdmin
@@ -341,3 +342,63 @@ toString route =
                                     "world/" ++ world ++ "/hiscores"
                            )
            )
+
+
+getShop : Route -> Maybe Shop
+getShop route =
+    case route of
+        PlayerRoute subroute ->
+            case subroute of
+                TownStore shop_ ->
+                    Just shop_
+
+                AboutWorld ->
+                    Nothing
+
+                Character ->
+                    Nothing
+
+                Inventory ->
+                    Nothing
+
+                Ladder ->
+                    Nothing
+
+                TownMainSquare ->
+                    Nothing
+
+                Fight ->
+                    Nothing
+
+                Messages ->
+                    Nothing
+
+                Message _ ->
+                    Nothing
+
+                CharCreation ->
+                    Nothing
+
+                SettingsFightStrategy ->
+                    Nothing
+
+                SettingsFightStrategySyntaxHelp ->
+                    Nothing
+
+        About ->
+            Nothing
+
+        News ->
+            Nothing
+
+        Map ->
+            Nothing
+
+        WorldsList ->
+            Nothing
+
+        NotFound _ ->
+            Nothing
+
+        AdminRoute _ ->
+            Nothing

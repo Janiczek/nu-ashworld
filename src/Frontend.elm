@@ -707,6 +707,14 @@ updateLoggedInWorld data model =
     mapLoggedInWorld (always data) model
 
 
+resetBarterAfterTick : Model -> Model
+resetBarterAfterTick model =
+    { model
+        | barter = Barter.empty
+        , alertMessage = Just "The vendor changed stock. Resetting your trade."
+    }
+
+
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
@@ -784,8 +792,28 @@ updateFromBackend msg model =
 
         CurrentPlayer data ->
             ( case model.worldData of
-                IsPlayer _ ->
+                IsPlayer oldData ->
+                    let
+                        currentShop : Maybe Shop
+                        currentShop =
+                            Route.getShop model.route
+
+                        shouldResetBarter : Bool
+                        shouldResetBarter =
+                            case currentShop of
+                                Nothing ->
+                                    False
+
+                                Just currentShop_ ->
+                                    SeqDict.get currentShop_ oldData.vendors /= SeqDict.get currentShop_ data.vendors
+                    in
                     { model | worldData = IsPlayer data }
+                        |> (if shouldResetBarter then
+                                resetBarterAfterTick
+
+                            else
+                                identity
+                           )
 
                 _ ->
                     model
