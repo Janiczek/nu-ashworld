@@ -28,7 +28,8 @@ export const theme = {
     red: "#FC0001",
   },
   fontSize: {
-    lg: ["24.6px", "28px"], // 24.6px better than 25px. See comment in defaults.css
+    /* https://github.com/evilmartians/mono?tab=readme-ov-file#font-size-and-legibility */
+    lg: ["25px", "28px"],
   },
   fontFamily: {
     mono: "Martian Mono",

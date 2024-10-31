@@ -2,18 +2,10 @@
 https://github.com/evilmartians/mono/releases
 https://gwfh.mranftl.com/fonts/martian-mono?subsets=latin,latin-ext
 */
-
 @font-face {
   font-display: swap;
   font-family: 'Martian Mono';
-  font-style: normal;
-  font-weight: 300;
-  src: url('../fonts/MartianMono-StdLt.woff2') format('woff2');
-}
-@font-face {
-  font-display: swap;
-  font-family: 'Martian Mono';
-  font-style: normal;
-  font-weight: 500;
-  src: url('../fonts/MartianMono-StdMd.woff2') format('woff2');
+  src: url('../fonts/MartianMonoVF.woff2') format('woff2');
+  font-weight: 100 800;
+  font-stretch: 75% 112.5%;
 }

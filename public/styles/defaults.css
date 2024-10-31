@@ -42,12 +42,15 @@ body {
     font-family: "Martian Mono";
 
     /* https://github.com/evilmartians/mono?tab=readme-ov-file#font-size-and-legibility */
-    font-size: 12.3px; /* empirically found to be better in Chrome @ Macbook than the recommended 12.5px */
+    font-size: 12.5px;
     line-height: 18px;
 
     font-weight: 300;
 
     text-wrap: pretty;
+
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* VIGNETTE CORNERS */
@@ -73,7 +76,7 @@ body:after {
 
 /* To remove this style we'd have to use Dillon's Markdown package. Too lazy right now */
 strong {
-    font-weight: 400 !important;
+    font-weight: 500 !important;
     color: var(--yellow) !important;
 }
 
@@ -93,7 +96,7 @@ th {
     padding-right: 8px;
     padding-top: 4px;
     padding-bottom: 4px;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 th:not(:first-child) {
