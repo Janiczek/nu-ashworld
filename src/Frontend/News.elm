@@ -21,16 +21,19 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730206347
+    [ { date = 1730410488
       , title = "TODOs before release"
       , text =
             """
 Current:
 
 - quests UX + test them end-to-end
+- end of game
 
 Next up:
 
+- tooltips around edge of screen - floating-ui.js?
+- shouldn't be able to travel in ocean
 - onboarding / getting started guide
 
 Ideas floating around:

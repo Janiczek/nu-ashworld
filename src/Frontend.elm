@@ -930,7 +930,7 @@ appView :
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
-    H.div [ HA.class "flex flex-1 flex-row bg-green-900 max-w-vw max-h-vh overflow-hidden" ]
+    H.div [ HA.class "bg-green-900 min-w-vw max-w-vw min-h-vh max-h-vh" ]
         [ leftNavView leftNav model
         , contentView model
         ]
@@ -950,7 +950,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-fit px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto" ]
+    H.div [ HA.class "bg-green-800 min-w-[26ch] max-w-[26ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-auto fixed left-0 top-0 bottom-0" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
             (leftNav tickFrequency)
@@ -1000,7 +1000,7 @@ contentView model =
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
-    H.div [ HA.class "pt-8 px-10 pb-10 flex flex-col flex-1 items-start overflow-auto max-h-vh" ]
+    H.div [ HA.class "ml-[26ch] pt-8 px-10 pb-10 flex flex-col items-start min-h-vh" ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -1187,7 +1187,7 @@ adminMapView worldName adminData =
                     , ( "--map-rows", String.fromInt Map.rows )
                     , ( "--map-cell-size", String.fromInt Map.tileSize ++ "px" )
                     ]
-                , HA.class "relative bg-black bg-[url('/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none"
+                , HA.class "relative bg-black bg-[url('/images/map_whole.webp')] bg-[0_0] bg-no-repeat select-none mr-[100px]"
                 , HA.class "min-w-[calc(var(--map-columns)*var(--map-cell-size))]"
                 , HA.class "max-w-[calc(var(--map-columns)*var(--map-cell-size))]"
                 , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
@@ -1291,8 +1291,9 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                         )
 
                 tooltip =
+                    -- TODO use the style that UI.withTooltip uses
                     H.div
-                        [ HA.class "w-fit whitespace-nowrap p-5 bg-green-900 relative z-[3]"
+                        [ HA.class "w-fit max-w-[30ch] p-5 bg-green-900 relative z-[3]"
                         , HA.class pathTextColor
                         , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--tile-coord-x))-50%)]"
                         , HA.class "translate-y-[calc(var(--map-cell-size)*var(--tile-coord-y)-100%-10px)]"
@@ -3559,9 +3560,9 @@ inventoryView _ player =
                     [ UI.button
                         [ HE.onClick <| AskToUseItem item.id
                         , HA.disabled <| disabledTooltip /= Nothing
-                        , HA.attributeMaybe HA.title disabledTooltip
                         ]
                         [ H.text "[Use]" ]
+                        |> UI.withMaybeTooltip disabledTooltip
                     ]
                 , H.span [] [ H.text <| String.fromInt item.count ++ "x " ]
                 , H.span [ HA.class "text-green-100" ] [ H.text <| ItemKind.name item.kind ]
@@ -4714,7 +4715,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
                     ( H.a
                     , [ HA.href http
                       , HA.target "_blank"
-                      , HA.attributeMaybe HA.title tooltip
                       , HA.attributeIf highlighted <| HA.class "active"
                       ]
                     )
@@ -4722,7 +4722,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
                 LinkIn { route, isActive } ->
                     ( UI.button
                     , [ HE.onClick <| GoToRoute route
-                      , HA.attributeMaybe HA.title tooltip
                       , HA.attributeIf (isActive currentRoute || highlighted) <| HA.class "active"
                       , HA.disabled disabled
                       ]
@@ -4731,7 +4730,6 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
                 LinkMsg msg ->
                     ( UI.button
                     , [ HE.onClick msg
-                      , HA.attributeMaybe HA.title tooltip
                       , HA.attributeIf highlighted <| HA.class "active"
                       , HA.disabled disabled
                       ]
@@ -4752,6 +4750,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
             [ HA.class "link-right-bracket" ]
             [ H.text "]" ]
         ]
+                        |> UI.withMaybeTooltip tooltip
 
 
 type alias Link =
