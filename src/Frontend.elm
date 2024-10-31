@@ -3045,7 +3045,7 @@ perkDescriptionView hoveredItem =
 normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
 normalCharacterView maybeHoveredItem player =
     H.div
-        [ HA.class "grid grid-cols-[28ch_34ch_minmax(0,1fr)] gap-5" ]
+        [ HA.class "grid grid-cols-[28ch_34ch_minmax(0,1fr)] gap-x-5 gap-y-8" ]
         [ H.div [ HA.class "flex flex-col gap-8" ]
             [ charSpecialView player
             , charTraitsView player.traits
@@ -3058,6 +3058,29 @@ normalCharacterView maybeHoveredItem player =
             [ charDerivedStatsView player
             , charHelpView maybeHoveredItem
             ]
+        , H.div [ HA.class "flex flex-col gap-8 col-span-2" ]
+            [ charActiveQuestsView player ]
+        ]
+
+
+charActiveQuestsView : CPlayer -> Html FrontendMsg
+charActiveQuestsView player =
+    H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.h3 [ HA.class "text-green-300" ] [ H.text "Active quests" ]
+        , if SeqSet.isEmpty player.questsActive then
+            UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
+
+          else
+            player.questsActive
+                |> SeqSet.toList
+                |> List.map
+                    (\quest ->
+                        H.li []
+                            [ H.text <| Location.name (Quest.location quest) ++ ": "
+                            , H.span [ HA.class "text-green-100" ] [ H.text <| Quest.title quest ]
+                            ]
+                    )
+                |> UI.ul []
         ]
 
 
@@ -3076,7 +3099,7 @@ charTraitsView traits =
                 ]
     in
     H.div
-        [ HA.class "flex flex-col" ]
+        [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
@@ -3229,7 +3252,7 @@ charSpecialView player =
                 , HA.class "contents group"
                 ]
                 [ H.div
-                    [ HA.class "px-[1ch]"
+                    [ HA.class "pl-[1ch]"
                     , TW.mod "group-hover" "text-green-100 bg-green-800"
                     ]
                     [ H.text <| Special.label type_ ]
@@ -3246,7 +3269,7 @@ charSpecialView player =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "SPECIAL" ]
-        , H.div [ HA.class "grid grid-cols-[13ch_3ch]" ]
+        , H.div [ HA.class "grid grid-cols-[15ch_3ch]" ]
             (List.map specialItemView Special.all)
         ]
 

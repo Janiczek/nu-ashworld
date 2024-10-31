@@ -189,11 +189,11 @@ as much time honing your skills.
 * -40% chance to hit with two-handed weapons"""
 
         SmallFrame ->
+            -- TODO Carry Weight reduced to 25 + (15 * Strength) -- not implemented yet
             """You are not quite as big as other people, but that never slowed
 you down. You can't carry as much, but you are more agile.
 
 * +1 Agility
-* Carry Weight reduced to 25 + (15 * Strength) -- not implemented yet
 """
 
         Skilled ->
