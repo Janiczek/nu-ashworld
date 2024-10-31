@@ -2234,7 +2234,6 @@ townStoreView barter shop location world player =
                                         [ HA.class "w-[6ch] !bg-green-800 px-[4px]"
                                         , HA.value transferNValue
                                         , HE.onInput <| BarterMsg << SetTransferNInput transferNPosition
-                                        , HA.title "Transfer N caps"
                                         ]
                                         []
                                     , case String.toInt transferNValue of
@@ -2243,7 +2242,6 @@ townStoreView barter shop location world player =
                                                 [ HA.disabled True
                                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                                , HA.title "Transfer N caps"
                                                 ]
                                                 [ H.text "OK" ]
 
@@ -2253,7 +2251,6 @@ townStoreView barter shop location world player =
                                                 , HA.disabled <| n <= 0 || n > caps
                                                 , HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                                 , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
-                                                , HA.title "Transfer N caps"
                                                 ]
                                                 [ H.text "OK" ]
                                     , UI.highContrastButton
@@ -2269,10 +2266,10 @@ townStoreView barter shop location world player =
                                     [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
                                     , HA.disabled <| caps <= 0
-                                    , HA.title "Transfer N items"
                                     , HE.onClick <| BarterMsg <| SetTransferNActive transferNPosition
                                     ]
                                     [ H.text "N" ]
+                                    |> UI.withTooltip "Transfer N caps"
 
                         transferOneView =
                             UI.highContrastButton
@@ -2296,6 +2293,85 @@ townStoreView barter shop location world player =
                                 ]
                                 [ H.text <| Barter.doubleArrow arrowsDirection ]
 
+                        balanceAmount : Maybe { needed : Int, available : Int }
+                        balanceAmount =
+                            case transferNPosition of
+                                Barter.PlayerKeptCaps ->
+                                    let
+                                        needed =
+                                            vendorTradedValue - playerTradedValue
+
+                                        available =
+                                            clamp 0 playerKeptCaps needed
+                                    in
+                                    if available == 0 then
+                                        Nothing
+
+                                    else
+                                        Just { available = available, needed = needed }
+
+                                Barter.VendorKeptCaps ->
+                                    let
+                                        needed =
+                                            playerTradedValue - vendorTradedValue
+
+                                        available =
+                                            clamp 0 vendorKeptCaps needed
+                                    in
+                                    if available == 0 then
+                                        Nothing
+
+                                    else
+                                        Just { available = available, needed = needed }
+
+                                Barter.PlayerTradedCaps ->
+                                    Nothing
+
+                                Barter.VendorTradedCaps ->
+                                    Nothing
+
+                                Barter.PlayerKeptItem _ ->
+                                    Nothing
+
+                                Barter.VendorKeptItem _ ->
+                                    Nothing
+
+                                Barter.PlayerTradedItem _ ->
+                                    Nothing
+
+                                Barter.VendorTradedItem _ ->
+                                    Nothing
+
+                        balanceView =
+                            balanceAmount
+                                |> H.viewMaybe
+                                    (\{ available, needed } ->
+                                        let
+                                            hasEnough =
+                                                available == needed
+                                        in
+                                        UI.highContrastButton
+                                            [ HE.onClick <| transfer available
+                                            , HA.class "py-0.5 px-1 mx-1 bg-green-800"
+                                            , if hasEnough then
+                                                HA.class "text-green-200"
+
+                                              else
+                                                HA.class "text-yellow"
+                                            , HA.classList [ ( "hidden", isNActive ) ]
+                                            ]
+                                            [ H.text "=" ]
+                                            |> UI.withTooltip
+                                                ("Even up the trade (transfer " ++ String.fromInt available ++ " caps)"
+                                                    ++ (if hasEnough then
+                                                            ""
+
+                                                        else
+                                                            ". This is not enough (" ++ String.fromInt needed ++ " needed)."
+                                                       )
+                                                )
+                                    )
+
                         itemView =
                             H.span
                                 [ HA.class <| "flex-1 " ++ itemLabelClass ]
@@ -2313,11 +2389,13 @@ townStoreView barter shop location world player =
                                 [ transferAllView
                                 , transferNView
                                 , transferOneView
+                                , balanceView
                                 , itemView
                                 ]
 
                             Barter.ArrowRight ->
                                 [ itemView
+                                , balanceView
                                 , transferOneView
                                 , transferNView
                                 , transferAllView
@@ -2401,10 +2479,10 @@ townStoreView barter shop location world player =
                                     [ HA.class "py-0.5 px-1 mx-1 bg-green-800 text-green-200"
                                     , TW.mod "disabled" "text-green-300 opacity-50 pointer-events-none"
                                     , HA.disabled <| count <= 0
-                                    , HA.title "Transfer N items"
                                     , HE.onClick <| BarterMsg <| SetTransferNActive (transferNPosition id)
                                     ]
                                     [ H.text "N" ]
+                                    |> UI.withTooltip "Transfer N items"
 
                         transferOneView =
                             UI.highContrastButton
