@@ -4750,7 +4750,7 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
             [ HA.class "link-right-bracket" ]
             [ H.text "]" ]
         ]
-                        |> UI.withMaybeTooltip tooltip
+        |> UI.withMaybeTooltip tooltip
 
 
 type alias Link =

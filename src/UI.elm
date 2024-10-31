@@ -7,8 +7,8 @@ module UI exposing
     , input
     , textarea
     , ul
-    , withTooltip
     , withMaybeTooltip
+    , withTooltip
     )
 
 import Html as H exposing (Attribute, Html)
@@ -104,15 +104,24 @@ ul : List (Attribute msg) -> List (Html msg) -> Html msg
 ul attrs content =
     H.ul (HA.class "list-outside ps-[4ch]" :: attrs) content
 
+
 withTooltip : String -> Html msg -> Html msg
 withTooltip tooltipText element =
-    H.div [HA.class "relative"] [ H.div [HA.class "peer/tooltip contents"] [element],
-        H.div [ HA.class "transition-opacity bg-green-200 text-green-900 px-[2ch] py-4 mt-4 absolute left-1/2 -translate-x-1/2 opacity-0 w-max max-w-[30ch] pointer-events-none"
-        , TW.mod "peer-hover/tooltip" "opacity-100"] 
-        [H.text tooltipText]
-    ]
+    H.div [ HA.class "relative" ]
+        [ H.div [ HA.class "peer/tooltip contents" ] [ element ]
+        , H.div
+            [ HA.class "transition-opacity bg-green-200 text-green-900 px-[2ch] py-4 mt-4 absolute left-1/2 -translate-x-1/2 opacity-0 w-max max-w-[30ch] pointer-events-none"
+            , TW.mod "peer-hover/tooltip" "opacity-100"
+            ]
+            [ H.text tooltipText ]
+        ]
+
+
 withMaybeTooltip : Maybe String -> Html msg -> Html msg
 withMaybeTooltip maybeTooltipText element =
     case maybeTooltipText of
-        Nothing -> element
-        Just tooltipText -> withTooltip tooltipText element
+        Nothing ->
+            element
+
+        Just tooltipText ->
+            withTooltip tooltipText element
