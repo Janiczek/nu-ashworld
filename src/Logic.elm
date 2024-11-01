@@ -9,6 +9,7 @@ module Logic exposing
     , attackStats
     , attackStyleAndApCost
     , baseCriticalChance
+    , bestCombatSkill
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canBurst
@@ -2096,6 +2097,9 @@ attackStyleAndApCost kind =
         ItemKind.HnApNeedlerCartridge ->
             []
 
+        ItemKind.TankerFob ->
+            []
+
 
 unaimedAttackStyle : ItemKind.Kind -> AttackStyle
 unaimedAttackStyle kind =
@@ -2257,6 +2261,15 @@ questRequirementCombatSkills =
     ]
 
 
+bestCombatSkill : Special -> SeqDict Skill Int -> ( Skill, Int )
+bestCombatSkill special addedSkillPercentages_ =
+    questRequirementCombatSkills
+        |> List.map (\s -> ( s, Skill.get special addedSkillPercentages_ s ))
+        |> List.Extra.maximumBy Tuple.second
+        |> -- Really shouldn't happen (empty `questRequirementCombatSkills`)
+           Maybe.withDefault ( Skill.SmallGuns, 0 )
+
+
 passesPlayerRequirement :
     Quest.PlayerRequirement
     ->
@@ -2275,10 +2288,8 @@ passesPlayerRequirement req player =
                     let
                         maxCombatSkill : Int
                         maxCombatSkill =
-                            questRequirementCombatSkills
-                                |> List.map (Skill.get player.special player.addedSkillPercentages)
-                                |> List.maximum
-                                |> Maybe.withDefault 0
+                            bestCombatSkill player.special player.addedSkillPercentages
+                                |> Tuple.second
                     in
                     maxCombatSkill >= r.percentage
 

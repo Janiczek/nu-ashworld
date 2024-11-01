@@ -21,34 +21,32 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730410488
+    [ { date = 1730500914
       , title = "TODOs before release"
       , text =
             """
 Current:
 
-- quests UX + test them end-to-end
-- end of game
-- onboarding / getting started guide
-- the first message to a player to list some goals, link to Guide, etc.
+- guide: TOC
 
 Next up:
 
+- quests UX + test them end-to-end
+- end of game
+- the first message to a player to list some goals, link to Guide, etc.
+- location descriptions
+- quest descriptions
+- skill descriptions
+- item descriptions
+- weapons - show strength requirement somewhere (item description)
 - tooltips around edge of screen - floating-ui.js?
 - HtH Evade perk to only work if hands are empty
 - new char / char screen: show Sequence in derived stats
-
-Ideas floating around:
-
-- critical misses
-- some congratulation toast about a level-up?
-- some realtime toast about you being attacked by somebody?
-- More enemies?
-- Weapon/ammo part of item loot of enemies?
-- Fight Strategy: walk away
-- make movement on the map challenging (random encounters, fights you can't skip, have to be alive to move...)
-- steal skill gives you % chance of looting a random item from a player's inventory in PVP after defeating them
-- inventory: help on hover - show how much it will heal (either in a help section or in the "HP: ..." section of left nav
+- gecko skinning - is it doing anything?
+- skynet and k9 - doing anything?
+- awareness - info about players' weapon and armor?
+- perk - show max number of ranks
+- perk - show all perks, some grayed out, show the requirements?
 
 ~janiczek
 """

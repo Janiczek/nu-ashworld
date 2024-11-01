@@ -1695,6 +1695,7 @@ type GlobalReward
         , percentage : Int
         }
     | VendorAvailable Shop
+    | EndTheGame
 
 
 globalRewardTitle : GlobalReward -> String
@@ -1715,6 +1716,9 @@ globalRewardTitle reward =
             "{VENDOR}'s shop becomes available in {LOCATION}"
                 |> String.replace "{VENDOR}" (Shop.personName who)
                 |> String.replace "{LOCATION}" (Shop.location who |> Location.name)
+
+        EndTheGame ->
+            "The game ends! Leaderboards are frozen, the winners are declared and a new world begins."
 
 
 globalRewards : Name -> List GlobalReward
@@ -1979,7 +1983,9 @@ type PlayerReward
     = ItemReward { what : ItemKind.Kind, amount : Int }
     | SkillUpgrade { skill : Skill, percentage : Int }
     | PerkReward Perk
+    | CapsReward Int
     | CarReward
+    | TravelToEnclaveReward
 
 
 playerRewardTitle : PlayerReward -> String
@@ -1999,8 +2005,14 @@ playerRewardTitle reward =
         PerkReward perk ->
             "Perk: " ++ Perk.name perk
 
+        CapsReward amount ->
+            "$" ++ String.fromInt amount
+
         CarReward ->
             "A car!"
+
+        TravelToEnclaveReward ->
+            "You travel to the Enclave. This is what you wanted, right?"
 
 
 playerRewards : Name -> List PlayerReward
@@ -2019,10 +2031,12 @@ playerRewards name =
             [ ItemReward { what = ItemKind.Beer, amount = 10 } ]
 
         KlamathGuardTheBrahmin ->
-            []
+            [ CapsReward 300 ]
 
         KlamathRustleTheBrahmin ->
-            [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 } ]
+            [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 }
+            , CapsReward 200
+            ]
 
         KlamathKillRatGod ->
             [ ItemReward { what = ItemKind.RedRyderLEBBGun, amount = 1 } ]
@@ -2034,7 +2048,9 @@ playerRewards name =
             [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
 
         ToxicCavesRescueSmileyTrapper ->
-            [ PerkReward GeckoSkinning ]
+            [ PerkReward GeckoSkinning
+            , CapsReward 700
+            ]
 
         ToxicCavesRepairTheGenerator ->
             [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 100 } ]
@@ -2043,6 +2059,7 @@ playerRewards name =
             [ ItemReward { what = ItemKind.TeslaArmor, amount = 1 }
             , ItemReward { what = ItemKind.Bozar, amount = 1 }
             , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+            , CapsReward 10000
             ]
 
         DenFreeVicByPayingMetzger ->
@@ -2052,6 +2069,7 @@ playerRewards name =
         DenFreeVicByKillingOffSlaversGuild ->
             [ ItemReward { what = ItemKind.SawedOffShotgun, amount = 1 }
             , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
+            , CapsReward 4000
             ]
 
         DenDeliverMealToSmitty ->
@@ -2070,24 +2088,29 @@ playerRewards name =
             [ ItemReward { what = ItemKind.LockPicks, amount = 1 } ]
 
         ModocMediateBetweenSlagsAndJo ->
-            []
+            [ CapsReward 5000 ]
 
         ModocFindGoldWatchForCornelius ->
             [ ItemReward { what = ItemKind.Smg10mm, amount = 1 }
             , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
+            , CapsReward 3000
             ]
 
         ModocFindGoldWatchForFarrel ->
-            [ ItemReward { what = ItemKind.SuperSledge, amount = 1 } ]
+            [ ItemReward { what = ItemKind.SuperSledge, amount = 1 }
+            , CapsReward 2000
+            ]
 
         VaultCityGetPlowForMrSmith ->
             [ ItemReward { what = ItemKind.Stimpak, amount = 10 } ]
 
         VaultCityRescueAmandasHusband ->
-            []
+            [ CapsReward 2000 ]
 
         GeckoOptimizePowerPlant ->
-            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 } ]
+            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 }
+            , CapsReward 8000
+            ]
 
         ReddingClearWanamingoMine ->
             [ ItemReward { what = ItemKind.ScopedHuntingRifle, amount = 1 }
@@ -2104,22 +2127,26 @@ playerRewards name =
             [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
             , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
             , ItemReward { what = ItemKind.Wakizashi, amount = 1 }
+            , CapsReward 4000
             ]
 
         NewRenoHelpGuardSecretTransaction ->
             [ ItemReward { what = ItemKind.SniperRifle, amount = 1 }
             , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+            , CapsReward 5000
             ]
 
         NewRenoCollectTributeFromCorsicanBrothers ->
             [ ItemReward { what = ItemKind.SuperCattleProd, amount = 1 }
             , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+            , CapsReward 12000
             ]
 
         NewRenoWinBoxingTournament ->
             [ ItemReward { what = ItemKind.PowerFist, amount = 1 }
             , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
             , ItemReward { what = ItemKind.LittleJesus, amount = 1 }
+            , CapsReward 8000
             ]
 
         NewRenoAcquireElectronicLockpick ->
@@ -2128,10 +2155,13 @@ playerRewards name =
         NCRGuardBrahminCaravan ->
             [ ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 1 }
             , ItemReward { what = ItemKind.Jhp5mm, amount = 50 }
+            , CapsReward 4000
             ]
 
         NCRTestMutagenicSerum ->
-            [ ItemReward { what = ItemKind.BigBookOfScience, amount = 2 } ]
+            [ ItemReward { what = ItemKind.BigBookOfScience, amount = 2 }
+            , CapsReward 2000
+            ]
 
         NCRRetrieveComputerParts ->
             [ ItemReward { what = ItemKind.DeansElectronics, amount = 2 } ]
@@ -2142,16 +2172,18 @@ playerRewards name =
             ]
 
         NCRInvestigateBrahminRaids ->
-            []
+            [ CapsReward 3000 ]
 
         V15RescueChrissy ->
             [ ItemReward { what = ItemKind.HkP90c, amount = 3 }
             , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
+            , CapsReward 3000
             ]
 
         V15CompleteDealWithNCR ->
             [ ItemReward { what = ItemKind.LaserPistol, amount = 2 }
             , ItemReward { what = ItemKind.SmallEnergyCell, amount = 80 }
+            , CapsReward 10000
             ]
 
         V13FixVaultComputer ->
@@ -2165,7 +2197,9 @@ playerRewards name =
             [ ItemReward { what = ItemKind.GECK, amount = 1 } ]
 
         BrokenHillsFixMineAirPurifier ->
-            [ ItemReward { what = ItemKind.CombatArmor, amount = 1 } ]
+            [ ItemReward { what = ItemKind.CombatArmor, amount = 1 }
+            , CapsReward 9000
+            ]
 
         BrokenHillsBlowUpMineAirPurifier ->
             [ ItemReward { what = ItemKind.PlasmaRifle, amount = 1 }
@@ -2175,6 +2209,7 @@ playerRewards name =
         BrokenHillsFindMissingPeople ->
             [ ItemReward { what = ItemKind.NeedlerPistol, amount = 1 }
             , ItemReward { what = ItemKind.HnNeedlerCartridge, amount = 100 }
+            , CapsReward 3000
             ]
 
         BrokenHillsBeatFrancisAtArmwrestling ->
@@ -2183,12 +2218,15 @@ playerRewards name =
             ]
 
         RaidersFindEvidenceOfBishopTampering ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 20 } ]
+            [ ItemReward { what = ItemKind.Stimpak, amount = 20 }
+            , CapsReward 8000
+            ]
 
         RaidersKillEverybody ->
             [ ItemReward { what = ItemKind.CombatArmorMk2, amount = 3 }
             , ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 3 }
             , ItemReward { what = ItemKind.Jhp5mm, amount = 300 }
+            , CapsReward 20000
             ]
 
         SierraArmyDepotFindAbnormalBrainForSkynet ->
@@ -2233,35 +2271,40 @@ playerRewards name =
         SanFranciscoFindVertibirdPlansForHubologists ->
             [ ItemReward { what = ItemKind.TurboPlasmaRifle, amount = 1 }
             , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+            , CapsReward 20000
             ]
 
         SanFranciscoFindVertibirdPlansForShi ->
             [ ItemReward { what = ItemKind.GaussRifle, amount = 1 }
             , ItemReward { what = ItemKind.Ec2mm, amount = 100 }
+            , CapsReward 10000
             ]
 
         SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-            [ ItemReward { what = ItemKind.PowerArmor, amount = 1 } ]
+            [ ItemReward { what = ItemKind.PowerArmor, amount = 1 }
+            , CapsReward 5000
+            ]
 
         SanFranciscoFindBadgersGirlfriendInsideShip ->
             [ ItemReward { what = ItemKind.GaussPistol, amount = 1 }
             , ItemReward { what = ItemKind.Ec2mm, amount = 200 }
+            , CapsReward 5000
             ]
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            []
+            [ CapsReward 3000 ]
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            []
+            [ CapsReward 3000 ]
 
         SanFranciscoEmbarkForEnclave ->
-            []
+            [ TravelToEnclaveReward ]
 
         NavarroFixK9 ->
             [ ItemReward { what = ItemKind.K9, amount = 1 } ]
 
         NavarroRetrieveFobForTanker ->
-            []
+            [ ItemReward { what = ItemKind.TankerFob, amount = 1 } ]
 
         EnclavePersuadeControlCompanySquadToDesert ->
             [ ItemReward { what = ItemKind.PulseRifle, amount = 2 }
@@ -2532,7 +2575,7 @@ playerRequirements name =
             [ SkillRequirement { skill = Specific Skill.Unarmed, percentage = 200 } ]
 
         SanFranciscoEmbarkForEnclave ->
-            []
+            [ ItemRequirementOneOf [ ItemKind.TankerFob ] ]
 
         NavarroFixK9 ->
             [ SkillRequirement { skill = Specific Skill.Repair, percentage = 200 } ]

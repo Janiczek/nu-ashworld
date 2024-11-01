@@ -2802,7 +2802,8 @@ dropSpec type_ =
             , items =
                 [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 3 }
                 , item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
-                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.2 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.SuperStimpak { average = 1, maxDeviation = 2 }
                 , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
                 ]
             }
@@ -2827,10 +2828,12 @@ dropSpec type_ =
         GoldenGecko ->
             { caps = commonCaps { average = 100, maxDeviation = 40 }
             , items =
-                [ item 0.1 ItemKind.Fruit { average = 2, maxDeviation = 2 }
-                , item 0.15 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
-                , item 0.05 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
-                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                [ item 0.05 ItemKind.Fruit { average = 2, maxDeviation = 2 }
+                , item 0.15 ItemKind.HealingPowder { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.1 ItemKind.Ap10mm { average = 3, maxDeviation = 3 }
+                , item 0.1 ItemKind.Jhp10mm { average = 3, maxDeviation = 3 }
+                , item 0.1 ItemKind.ShotgunShell { average = 3, maxDeviation = 3 }
                 ]
             }
 
@@ -2840,25 +2843,31 @@ dropSpec type_ =
                 [ item 0.05 ItemKind.Fruit { average = 3, maxDeviation = 2 }
                 , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
                 , item 0.1 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
-                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                , item 0.1 ItemKind.Ap10mm { average = 5, maxDeviation = 3 }
+                , item 0.1 ItemKind.Jhp10mm { average = 5, maxDeviation = 3 }
+                , item 0.1 ItemKind.ShotgunShell { average = 5, maxDeviation = 3 }
                 ]
             }
 
         FireGecko ->
             { caps = commonCaps { average = 150, maxDeviation = 50 }
             , items =
-                [ item 0.2 ItemKind.HealingPowder { average = 2, maxDeviation = 2 }
-                , item 0.2 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
-                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                [ item 0.2 ItemKind.Stimpak { average = 1, maxDeviation = 2 }
+                , item 0.2 ItemKind.SuperStimpak { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.MicrofusionCell { average = 4, maxDeviation = 3 }
+                , item 0.1 ItemKind.ShotgunShell { average = 4, maxDeviation = 3 }
+                , item 0.1 ItemKind.Fmj223 { average = 4, maxDeviation = 3 }
                 ]
             }
 
         ToughFireGecko ->
             { caps = commonCaps { average = 200, maxDeviation = 60 }
             , items =
-                [ item 0.1 ItemKind.HealingPowder { average = 2, maxDeviation = 3 }
-                , item 0.3 ItemKind.Stimpak { average = 2, maxDeviation = 3 }
-                , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                [ item 0.2 ItemKind.Stimpak { average = 2, maxDeviation = 2 }
+                , item 0.3 ItemKind.SuperStimpak { average = 1, maxDeviation = 1 }
+                , item 0.1 ItemKind.MicrofusionCell { average = 5, maxDeviation = 3 }
+                , item 0.1 ItemKind.ShotgunShell { average = 5, maxDeviation = 3 }
+                , item 0.1 ItemKind.Fmj223 { average = 5, maxDeviation = 3 }
                 ]
             }
 

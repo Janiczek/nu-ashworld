@@ -61,7 +61,9 @@ import Dict.Extra as Dict
 import File
 import File.Download
 import File.Select
+import Frontend.Guide as Guide
 import Frontend.HoveredItem as HoveredItem exposing (HoveredItem(..))
+import Frontend.Links as Links
 import Frontend.News as News
 import Frontend.Route as Route
     exposing
@@ -1047,6 +1049,9 @@ contentView model =
             ( About, _ ) ->
                 aboutView
 
+            ( Guide, _ ) ->
+                guideView
+
             ( News, _ ) ->
                 newsView model.zone
 
@@ -1144,6 +1149,13 @@ aboutView =
             , H.span [ HA.class "text-green-100" ] [ H.text "can you stand up to the Enclave?" ]
             ]
         ]
+    ]
+
+
+guideView : List (Html FrontendMsg)
+guideView =
+    [ pageTitleView "Guide"
+    , H.div [ HA.class "flex flex-col gap-4 max-w-[70ch] font-bold text-green-100" ] Guide.view
     ]
 
 
@@ -1732,21 +1744,24 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
     in
     [ pageTitleView <| "Town: " ++ Location.name location
     , H.div [ HA.class "flex flex-col gap-4" ]
-        [ if List.isEmpty availableShops then
+        [ H.h3 [] [ H.text "Shops" ]
+        , if List.isEmpty availableShops then
             H.div [] [ H.text "No vendor in this town..." ]
 
           else
             availableShops
                 |> List.map
                     (\shop ->
-                        H.div [ HA.class "flex flex-row gap-[1ch]" ]
-                            [ H.text <| Shop.personName shop
-                            , UI.button
-                                [ HE.onClick <| GoToTownStore shop ]
-                                [ H.text "[Visit store]" ]
+                        H.li []
+                            [ H.div [ HA.class "flex flex-row gap-[1ch]" ]
+                                [ UI.button
+                                    [ HE.onClick <| GoToTownStore shop ]
+                                    [ H.text "[Visit store]" ]
+                                , H.text <| Shop.personName shop
+                                ]
                             ]
                     )
-                |> H.div [ HA.class "flex flex-col" ]
+                |> UI.ul []
         , if hasQuests then
             H.h3 [] [ H.text "Quests" ]
 
@@ -1982,14 +1997,42 @@ expandedQuestView player progress questsProgress quest =
                                 let
                                     isMet =
                                         progress.alreadyPaidRequirements || Logic.passesPlayerRequirement req player
-                                in
-                                Quest.playerRequirementTitle req
-                                    |> (if isMet then
-                                            highlightedLiText
 
-                                        else
-                                            yellowLiText
-                                       )
+                                    reqTitle =
+                                        Quest.playerRequirementTitle req
+                                in
+                                if isMet then
+                                    highlightedLiText reqTitle
+
+                                else
+                                    H.li []
+                                        [ H.span [ HA.class "text-yellow" ] [ H.text reqTitle ]
+                                        , H.span [ HA.class "text-green-300" ]
+                                            [ H.text <|
+                                                case req of
+                                                    Quest.SkillRequirement r ->
+                                                        case r.skill of
+                                                            Quest.Combat ->
+                                                                let
+                                                                    ( bestCombatSkill, bestCombatSkillPct ) =
+                                                                        Logic.bestCombatSkill player.special player.addedSkillPercentages
+                                                                in
+                                                                " (your best is {BEST_COMBAT_SKILL} with {PCT}%)"
+                                                                    |> String.replace "{BEST_COMBAT_SKILL}" (Skill.name bestCombatSkill)
+                                                                    |> String.replace "{PCT}" (String.fromInt bestCombatSkillPct)
+
+                                                            Quest.Specific skill ->
+                                                                " (you have {PCT}%)"
+                                                                    |> String.replace "{PCT}" (String.fromInt (Skill.get player.special player.addedSkillPercentages skill))
+
+                                                    Quest.ItemRequirementOneOf _ ->
+                                                        " (not owned by you)"
+
+                                                    Quest.CapsRequirement _ ->
+                                                        " (you have ${CAPS})"
+                                                            |> String.replace "{CAPS}" (String.fromInt player.caps)
+                                            ]
+                                        ]
                             )
                             playerRequirements
                         )
@@ -2909,7 +2952,7 @@ newCharDerivedStatsView newChar =
                             , fasterHealingPerkRanks = 0
                             }
                     )
-                        ++ " % of max HP"
+                        ++ "% of max HP"
                   , Nothing
                   )
                 , ( "Heal over time"
@@ -3337,7 +3380,7 @@ charDerivedStatsView player =
                             , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing player.perks
                             }
                     )
-                        ++ " % of max HP"
+                        ++ "% of max HP"
                   , Nothing
                   )
                 , ( "Heal over time"
@@ -4223,6 +4266,7 @@ settingsFightStrategyView fightStrategyText _ player =
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
                     , HA.class "!bg-green-800 w-[85ch] min-h-[25rem] my-4 py-4 px-4 rounded leading-[18px] overflow-x-auto whitespace-pre font-mono"
+                    , HA.class "[font-stretch:85%] text-sm"
                     , HA.value fightStrategyText
                     ]
                     []
@@ -4232,7 +4276,7 @@ settingsFightStrategyView fightStrategyText _ player =
                             H.div
                                 [ HA.class "absolute left-4 top-[9px] pointer-events-none select-none w-[24px] h-[17px] -ml-0.5 pl-0.5 border-l border-l-yellow leading-[18px]"
                                 , HA.class "bg-[linear-gradient(90deg,var(--yellow-transparent)_0%,var(--yellow-fully-transparent)_100%)]"
-                                , HA.class "translate-x-[calc((var(--error-col)-1)*1ch)]"
+                                , HA.class "translate-x-[calc((var(--error-col)-1)*8px)]"
                                 , HA.class "translate-y-[calc((var(--error-row)-1)*18px+16px)]"
                                 , cssVars
                                     [ ( "--error-row", String.fromInt row )
@@ -4933,17 +4977,17 @@ loggedInLinksView player currentRoute =
 
                         ( healTooltip, healDisabled ) =
                             if p.hp >= p.maxHp then
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
                                 , True
                                 )
 
                             else if p.ticks < 1 then
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
                                 , True
                                 )
 
                             else
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ " % of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
+                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
                                 , False
                                 )
 
@@ -5040,11 +5084,12 @@ commonLinksView currentRoute =
     H.div []
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
-         , linkOut "Discord" "https://discord.gg/SxymXxvehS" Nothing False
-         , linkOut "Twitter" "https://twitter.com/NuAshworld" Nothing False
-         , linkOut "GitHub" "https://github.com/Janiczek/nu-ashworld" Nothing False
-         , linkOut "Reddit" "https://www.reddit.com/r/NuAshworld/" Nothing False
-         , linkOut "Donate" "https://github.com/sponsors/Janiczek" Nothing False
+         , linkIn "Guide" Guide Nothing False
+         , linkOut "Discord" Links.discord Nothing False
+         , linkOut "Twitter" Links.twitter Nothing False
+         , linkOut "GitHub" Links.github Nothing False
+         , linkOut "Reddit" Links.reddit Nothing False
+         , linkOut "Donate" Links.donate Nothing False
          ]
             |> List.map (linkView currentRoute)
         )

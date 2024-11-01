@@ -287,6 +287,7 @@ type Kind
     | MotionSensor
     | K9
     | MeatJerky
+    | TankerFob
 
 
 all : List Kind
@@ -374,6 +375,7 @@ all =
     , MotionSensor
     , K9
     , MeatJerky
+    , TankerFob
     , Pistol223
     , Ripper
     , Knife
@@ -693,6 +695,9 @@ encode kind =
         MeatJerky ->
             JE.string "MeatJerky"
 
+        TankerFob ->
+            JE.string "TankerFob"
+
 
 decoder : Decoder Kind
 decoder =
@@ -972,6 +977,9 @@ decoder =
 
                     "MeatJerky" ->
                         JD.succeed MeatJerky
+
+                    "TankerFob" ->
+                        JD.succeed TankerFob
 
                     _ ->
                         JD.fail "Unrecognized constructor"
@@ -1282,6 +1290,9 @@ usageEffects kind =
         HnApNeedlerCartridge ->
             []
 
+        TankerFob ->
+            []
+
 
 baseValue : Kind -> Int
 baseValue kind =
@@ -1559,6 +1570,9 @@ baseValue kind =
         HnApNeedlerCartridge ->
             300
 
+        TankerFob ->
+            5000
+
 
 {-| This can be both positive and negative, so you need to ADD it in calculations, not SUBTRACT.
 -}
@@ -1833,6 +1847,9 @@ ammoDamageResistanceModifier kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -2110,6 +2127,9 @@ ammoDamageModifier kind =
         HnApNeedlerCartridge ->
             ( 2, 1 )
 
+        TankerFob ->
+            ( 0, 0 )
+
 
 {-| This can be negative, you need to ADD it in calculations, not SUBTRACT.
 -}
@@ -2386,6 +2406,9 @@ ammoArmorClassModifier kind =
         HnApNeedlerCartridge ->
             -10
 
+        TankerFob ->
+            0
+
 
 armorClass : Kind -> Int
 armorClass kind =
@@ -2658,6 +2681,9 @@ armorClass kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -2984,6 +3010,9 @@ armorDamageThresholdNormal kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageThresholdExplosion : Kind -> Int
 armorDamageThresholdExplosion kind =
@@ -3256,6 +3285,9 @@ armorDamageThresholdExplosion kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -3532,6 +3564,9 @@ armorDamageThresholdElectrical kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageThresholdEMP : Kind -> Int
 armorDamageThresholdEMP kind =
@@ -3804,6 +3839,9 @@ armorDamageThresholdEMP kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -4080,6 +4118,9 @@ armorDamageThresholdLaser kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageThresholdFire : Kind -> Int
 armorDamageThresholdFire kind =
@@ -4352,6 +4393,9 @@ armorDamageThresholdFire kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -4628,6 +4672,9 @@ armorDamageThresholdPlasma kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageResistanceNormal : Kind -> Int
 armorDamageResistanceNormal kind =
@@ -4900,6 +4947,9 @@ armorDamageResistanceNormal kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -5176,6 +5226,9 @@ armorDamageResistanceExplosion kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageResistanceElectrical : Kind -> Int
 armorDamageResistanceElectrical kind =
@@ -5448,6 +5501,9 @@ armorDamageResistanceElectrical kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -5724,6 +5780,9 @@ armorDamageResistanceEMP kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageResistanceLaser : Kind -> Int
 armorDamageResistanceLaser kind =
@@ -5996,6 +6055,9 @@ armorDamageResistanceLaser kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -6272,6 +6334,9 @@ armorDamageResistanceFire kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 armorDamageResistancePlasma : Kind -> Int
 armorDamageResistancePlasma kind =
@@ -6544,6 +6609,9 @@ armorDamageResistancePlasma kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -6828,6 +6896,9 @@ usableAmmoForWeapon kind =
         HnApNeedlerCartridge ->
             []
 
+        TankerFob ->
+            []
+
 
 weaponDamageType : Kind -> Maybe DamageType
 weaponDamageType kind =
@@ -7102,6 +7173,9 @@ weaponDamageType kind =
         HnApNeedlerCartridge ->
             Nothing
 
+        TankerFob ->
+            Nothing
+
 
 weaponStrengthRequirement : Kind -> Int
 weaponStrengthRequirement kind =
@@ -7374,6 +7448,9 @@ weaponStrengthRequirement kind =
             1
 
         HnApNeedlerCartridge ->
+            1
+
+        TankerFob ->
             1
 
 
@@ -7653,6 +7730,9 @@ isLongRangeWeapon kind =
         HnApNeedlerCartridge ->
             False
 
+        TankerFob ->
+            False
+
 
 {-| In other words, does the Weapon Penetrate perk apply?
 -}
@@ -7930,6 +8010,9 @@ isWeaponArmorPenetrating kind =
         HnApNeedlerCartridge ->
             False
 
+        TankerFob ->
+            False
+
 
 burstRange : Kind -> Int
 burstRange kind =
@@ -8202,6 +8285,9 @@ burstRange kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -8506,6 +8592,9 @@ isAccurateWeapon kind =
         HnApNeedlerCartridge ->
             False
 
+        TankerFob ->
+            False
+
 
 aimedRange : Kind -> Int
 aimedRange kind =
@@ -8780,6 +8869,9 @@ aimedRange kind =
         HnApNeedlerCartridge ->
             0
 
+        TankerFob ->
+            0
+
 
 unaimedRange : Kind -> Int
 unaimedRange kind =
@@ -9052,6 +9144,9 @@ unaimedRange kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -9343,6 +9438,9 @@ name kind =
         HnApNeedlerCartridge ->
             "HN AP Needler Cartridge"
 
+        TankerFob ->
+            "Tanker Fob"
+
 
 {-| Why the List: some weapons can be used in melee and be thrown, eg. Rock.
 Logic.neededSkill needs to take this + the chosen AttackStyle into account.
@@ -9619,6 +9717,9 @@ types kind =
 
         HnApNeedlerCartridge ->
             [ Type.Ammo ]
+
+        TankerFob ->
+            [ Type.Misc ]
 
 
 healAmount : Kind -> Maybe { min : Int, max : Int }
@@ -9906,6 +10007,9 @@ weaponDamage kind =
         HnApNeedlerCartridge ->
             mk 0 0
 
+        TankerFob ->
+            mk 0 0
+
 
 shotsPerBurst : Kind -> Int
 shotsPerBurst kind =
@@ -10175,6 +10279,9 @@ shotsPerBurst kind =
             0
 
         HnApNeedlerCartridge ->
+            0
+
+        TankerFob ->
             0
 
 
@@ -10447,4 +10554,7 @@ isTwoHandedWeapon kind =
             False
 
         HnApNeedlerCartridge ->
+            False
+
+        TankerFob ->
             False

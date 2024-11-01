@@ -20,6 +20,7 @@ import Url.Parser as P exposing ((</>), Parser)
 
 type Route
     = About
+    | Guide
     | News
     | Map
     | WorldsList
@@ -61,6 +62,9 @@ needsPlayer route =
         About ->
             False
 
+        Guide ->
+            False
+
         News ->
             False
 
@@ -84,6 +88,9 @@ needsAdmin route =
             False
 
         About ->
+            False
+
+        Guide ->
             False
 
         News ->
@@ -165,6 +172,7 @@ parser =
         [ P.map News P.top
         , P.map News <| P.s "news"
         , P.map About <| P.s "about"
+        , P.map Guide <| P.s "guide"
         , P.map Map <| P.s "map"
         , P.map WorldsList <| P.s "worlds"
         , P.map AdminRoute <| P.s "admin" </> adminParser
@@ -273,6 +281,9 @@ toString route =
         ++ (case route of
                 About ->
                     "about"
+
+                Guide ->
+                    "guide"
 
                 News ->
                     "news"
@@ -386,6 +397,9 @@ getShop route =
                     Nothing
 
         About ->
+            Nothing
+
+        Guide ->
             Nothing
 
         News ->

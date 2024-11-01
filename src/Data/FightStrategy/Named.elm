@@ -1,6 +1,7 @@
 module Data.FightStrategy.Named exposing
     ( all
     , default
+    , guideExample
     )
 
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle(..))
@@ -69,3 +70,17 @@ smart =
                 }
         }
     )
+
+
+guideExample : FightStrategy
+guideExample =
+    If
+        { condition = Operator { lhs = MyAmmoCount, op = GT_, rhs = Number 0 }
+        , then_ = Command (Attack ShootSingleUnaimed)
+        , else_ =
+            If
+                { condition = Operator { lhs = Distance, op = GT_, rhs = Number 1 }
+                , then_ = Command MoveForward
+                , else_ = Command (Attack UnarmedUnaimed)
+                }
+        }

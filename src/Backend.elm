@@ -641,9 +641,25 @@ applyPlayerQuestReward reward ( lastItemId, player ) =
               }
             )
 
+        Quest.CapsReward amount ->
+            ( lastItemId
+            , { player | caps = player.caps + amount }
+            )
+
         Quest.CarReward ->
             ( lastItemId
             , { player | hasCar = True }
+            )
+
+        Quest.TravelToEnclaveReward ->
+            -- TODO reset barter etc.? What might be happening while we're teleporting the player away?
+            ( lastItemId
+            , { player
+                | location =
+                    Location.EnclavePlatform
+                        |> Location.coords
+                        |> Map.toTileNum
+              }
             )
 
 
@@ -687,6 +703,10 @@ applyGlobalQuestReward reward world =
                     world.questRewardShops
                         |> SeqSet.insert who
             }
+
+        Quest.EndTheGame ->
+            -- TODO do something!
+            world
 
 
 withLoggedInPlayer_ :
