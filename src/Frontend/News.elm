@@ -29,18 +29,20 @@ Current:
 
 - quests UX + test them end-to-end
 - end of game
+- onboarding / getting started guide
+- the first message to a player to list some goals, link to Guide, etc.
 
 Next up:
 
 - tooltips around edge of screen - floating-ui.js?
-- onboarding / getting started guide
+- HtH Evade perk to only work if hands are empty
+- new char / char screen: show Sequence in derived stats
 
 Ideas floating around:
 
 - critical misses
 - some congratulation toast about a level-up?
 - some realtime toast about you being attacked by somebody?
-- weapon scope - minimal effective distance 8
 - More enemies?
 - Weapon/ammo part of item loot of enemies?
 - Fight Strategy: walk away

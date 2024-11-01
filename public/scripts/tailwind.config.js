@@ -29,7 +29,9 @@ export const theme = {
   },
   fontSize: {
     /* https://github.com/evilmartians/mono?tab=readme-ov-file#font-size-and-legibility */
-    lg: ["25px", "28px"],
+    rg: ["15px", "24px"],
+    md: ["20px", "32px"],
+    lg: ["25px", "36px"],
   },
   fontFamily: {
     mono: "Martian Mono",

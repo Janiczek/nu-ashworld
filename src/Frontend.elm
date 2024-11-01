@@ -2362,7 +2362,9 @@ townStoreView barter shop location world player =
                                             ]
                                             [ H.text "=" ]
                                             |> UI.withTooltip
-                                                ("Even up the trade (transfer " ++ String.fromInt available ++ " caps)"
+                                                ("Even up the trade (transfer "
+                                                    ++ String.fromInt available
+                                                    ++ " caps)"
                                                     ++ (if hasEnough then
                                                             ""
 
