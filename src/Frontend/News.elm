@@ -27,12 +27,11 @@ items =
             """
 Current:
 
-- guide: TOC
+- quests UX + test them end-to-end
+- end of game
 
 Next up:
 
-- quests UX + test them end-to-end
-- end of game
 - the first message to a player to list some goals, link to Guide, etc.
 - location descriptions
 - quest descriptions

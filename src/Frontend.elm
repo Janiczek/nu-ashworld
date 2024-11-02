@@ -150,6 +150,7 @@ init url key =
       , fightStrategyText = ""
       , expandedQuests = SeqSet.empty
       , userWantsToShowAreaDanger = False
+      , lastGuideTocSectionClick = 0
 
       -- backend state
       , lastTenToBackendMsgs = []
@@ -222,9 +223,15 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
-        ScrolledToGuideSectionViaLink ->
-            -- Already clicked it, URL / Route already changed, already scrolled the DOM. Nothing to do.
+        FailedScrollToGuideSectionViaLink ->
+            -- Might be indicative of a bug in the Guide
             ( model, Cmd.none )
+
+        ScrolledToGuideSectionViaLink millis ->
+            -- Already clicked it, URL / Route already changed, already scrolled the DOM. Nothing to do.
+            ( { model | lastGuideTocSectionClick = millis }
+            , Cmd.none
+            )
 
         ScrolledToGuideSection section ->
             -- URL / Route didn't change yet, but the DOM is already scrolled.
@@ -274,9 +281,20 @@ update msg ({ loginForm } as model) =
                             Cmd.none
 
                         Just heading ->
-                            Dom.getElement heading
-                                |> Task.andThen (\{ element } -> Dom.setViewport 0 element.y)
-                                |> Task.attempt (\_ -> ScrolledToGuideSectionViaLink)
+                            Task.map2 Tuple.pair
+                                Time.now
+                                (Dom.getElement heading
+                                    |> Task.andThen (\{ element } -> Dom.setViewport 0 element.y)
+                                )
+                                |> Task.attempt
+                                    (\result ->
+                                        case result of
+                                            Ok ( time, _ ) ->
+                                                ScrolledToGuideSectionViaLink (Time.posixToMillis time)
+
+                                            Err _ ->
+                                                FailedScrollToGuideSectionViaLink
+                                    )
             in
             ( { model | route = route }
             , scrollCmd
@@ -1073,7 +1091,7 @@ contentView model =
                 aboutView
 
             ( Guide heading, _ ) ->
-                guideView heading
+                guideView heading model.lastGuideTocSectionClick
 
             ( News, _ ) ->
                 newsView model.zone
@@ -1175,13 +1193,21 @@ aboutView =
     ]
 
 
-guideView : Maybe String -> List (Html FrontendMsg)
-guideView currentGuideHeading =
+guideView : Maybe String -> Int -> List (Html FrontendMsg)
+guideView currentGuideHeading lastGuideTocSectionClick =
     [ IntersectionObserver.view
         "div[data-guide-section]"
-        (\_ ->
-            JD.at [ "dataset", "guideSection" ] JD.string
-                |> JD.map ScrolledToGuideSection
+        (\intersection ->
+            let
+                _ =
+                    Debug.log "times" { i = intersection.time, last = lastGuideTocSectionClick }
+            in
+            if Time.posixToMillis intersection.time > lastGuideTocSectionClick + 500 then
+                JD.at [ "dataset", "guideSection" ] JD.string
+                    |> JD.map ScrolledToGuideSection
+
+            else
+                JD.fail "Too soon after clicking a guide link"
         )
         [ HA.class "flex flex-row gap-[4ch]" ]
         [ H.div [ HA.class "flex flex-col" ]

@@ -60,6 +60,7 @@ type alias FrontendModel =
     , fightStrategyText : String
     , expandedQuests : SeqSet Quest.Name
     , userWantsToShowAreaDanger : Bool
+    , lastGuideTocSectionClick : Int
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
@@ -142,7 +143,8 @@ type FrontendMsg
     | CollapseQuestItem Quest.Name
     | AskToStopProgressing Quest.Name
     | AskToStartProgressing Quest.Name
-    | ScrolledToGuideSectionViaLink
+    | FailedScrollToGuideSectionViaLink
+    | ScrolledToGuideSectionViaLink Int
     | ScrolledToGuideSection String
 
 
