@@ -77,6 +77,7 @@ import Html.Attributes.Extra as HA
 import Html.Events as HE
 import Html.Events.Extra as HE
 import Html.Extra as H
+import IntersectionObserver
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE
 import Lamdera
@@ -221,9 +222,15 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
-        Scrolled ->
-            -- OK, buddy
+        ScrolledToGuideSectionViaLink ->
+            -- Already clicked it, URL / Route already changed, already scrolled the DOM. Nothing to do.
             ( model, Cmd.none )
+
+        ScrolledToGuideSection section ->
+            -- URL / Route didn't change yet, but the DOM is already scrolled.
+            ( { model | route = Guide (Just (String.Extra.dasherize section)) }
+            , Cmd.none
+            )
 
         GoToRoute route ->
             let
@@ -269,7 +276,7 @@ update msg ({ loginForm } as model) =
                         Just heading ->
                             Dom.getElement heading
                                 |> Task.andThen (\{ element } -> Dom.setViewport 0 element.y)
-                                |> Task.attempt (\_ -> Scrolled)
+                                |> Task.attempt (\_ -> ScrolledToGuideSectionViaLink)
             in
             ( { model | route = route }
             , scrollCmd
@@ -1170,7 +1177,13 @@ aboutView =
 
 guideView : Maybe String -> List (Html FrontendMsg)
 guideView currentGuideHeading =
-    [ H.div [ HA.class "flex flex-row gap-[4ch]" ]
+    [ IntersectionObserver.view
+        "div[data-guide-section]"
+        (\_ ->
+            JD.at [ "dataset", "guideSection" ] JD.string
+                |> JD.map ScrolledToGuideSection
+        )
+        [ HA.class "flex flex-row gap-[4ch]" ]
         [ H.div [ HA.class "flex flex-col" ]
             [ pageTitleView "Guide"
             , H.div

@@ -142,7 +142,8 @@ type FrontendMsg
     | CollapseQuestItem Quest.Name
     | AskToStopProgressing Quest.Name
     | AskToStartProgressing Quest.Name
-    | Scrolled
+    | ScrolledToGuideSectionViaLink
+    | ScrolledToGuideSection String
 
 
 type BarterMsg

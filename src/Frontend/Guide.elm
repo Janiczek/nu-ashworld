@@ -18,8 +18,9 @@ import UI
 markdown : String
 markdown =
     """
+<div data-guide-section="Introduction">
 
-## Introduction
+### Introduction
 
 **NuAshworld** is a post-apocalyptic **MMO browser game** set in the wasteland world of Fallout 2. As one of the few survivors, you'll need to navigate this harsh world, fight monsters and other players alike, complete quests and in doing so **change the wasteland for everybody**, and build your character's skills, abilities, equipment and climb the social ladder.
 
@@ -31,13 +32,21 @@ This will take collective effort, and of course it's a dog-eat-dog world out the
 
 Here's a fairly complete list of things you can do in the game:
 
-## Create your character
+</div>
+
+<div data-guide-section="Create your character">
+
+### Create your character
 
 Filling your details and clicking the `[SIGN\u{00A0}UP]` button will lead you to the New Character screen.
 
 ![New Character](/images/guide/new_char.webp)
 
-## Fight
+</div>
+
+<div data-guide-section="Fight">
+
+### Fight
 
 Once you've created your character, you'll see the **Ladder**. Here you can fight other players and can see their stats.
 
@@ -54,7 +63,11 @@ You can also **wander** the wasteland and fight random creatures when not in tow
 
 **Winning fights** with players gives you **XP** and a portion of their **caps**; winning fights with random creatures gives you XP, caps and the ocassional **item drop**.
 
-## Write a fight strategy
+</div>
+
+<div data-guide-section="Write a fight strategy">
+
+### Write a fight strategy
 
 A fight strategy decides what your character does in a fight. Open `[SETTINGS]` to write your own or pick a preset. It can look like:
 
@@ -62,9 +75,13 @@ A fight strategy decides what your character does in a fight. Open `[SETTINGS]` 
 {FIGHT_STRATEGY}
 ```
 
-You can discuss and share strategies on the NuAshworld [Discord].
+You can discuss and share strategies on the NuAshworld [Discord]({DISCORD}).
 
-## Heal yourself
+</div>
+
+<div data-guide-section="Heal yourself">
+
+### Heal yourself
 
 Healing happens automatically over time as you gain ticks (in most worlds, this happens every hour on the hour).
 
@@ -78,7 +95,11 @@ You can also heal yourself:
 
 ![Heal in inventory](/images/guide/inventory.webp)
 
-## Move on the map
+</div>
+
+<div data-guide-section="Move on the map">
+
+### Move on the map
 
 The `[MAP]` page allows you to travel the wasteland.
 
@@ -88,7 +109,11 @@ Travelling also allows you to reach different towns and locations, each with uni
 
 ![Map with all the locations](/images/map_locations.webp)
 
-## Complete quests
+</div>
+
+<div data-guide-section="Complete quests">
+
+### Complete quests
 
 When inside a `[TOWN]` you can participate in quests.
 
@@ -104,7 +129,11 @@ Some quests are **exclusive with each other**: they're a different way of resolv
 
 ![Town square](/images/guide/town_square.webp)
 
-## Trade with NPC vendors
+</div>
+
+<div data-guide-section="Trade with NPC vendors">
+
+### Trade with NPC vendors
 
 In `[TOWN]` you can also **barter** with shopkeepers. They restock every tick (in most worlds this means every hour on the hour).
 
@@ -112,7 +141,11 @@ The value of items is determined by your and the vendor's **Barter skill**.
 
 ![Barter](/images/guide/barter.webp)
 
-## Level up skills
+</div>
+
+<div data-guide-section="Level up skills">
+
+### Level up skills
 
 Every time you level up, you gain **skill points** to spend on your skills. Do this on the `[CHARACTER]` page.
 
@@ -122,13 +155,21 @@ Above certain percentages the upgrades will cost more skill points per %.
 
 ![Character skills](/images/guide/char_skills.webp)
 
-## Choose perks
+</div>
+
+<div data-guide-section="Choose perks">
+
+### Choose perks
 
 Every three levels (or four with the **Skilled** trait) you get to choose a **perk** on the `[CHARACTER]` page. Perks give you bonuses across all areas of the gameplay - choose wisely!
 
 ![Choose a perk](/images/guide/perk.webp)
 
-## Equip armor and weapons
+</div>
+
+<div data-guide-section="Equip armor and weapons">
+
+### Equip armor and weapons
 
 Once you've looted some armor or weapon from a won fight, bought it from a shop or got it as a quest reward, you can **equip it** in the `[INVENTORY]` screen.
 
@@ -136,13 +177,21 @@ Once you've looted some armor or weapon from a won fight, bought it from a shop 
 
 Note that weapons have a varying **Strength requirement**. Failure to meet it will result in a **penalty** to your **chance to hit**.
 
-## Preferring ammo
+</div>
+
+<div data-guide-section="Preferring ammo">
+
+### Preferring ammo
 
 Different ammo behaves differently against armored and unarmored targets. You might want to **prefer certain ammo types** in your loadout.
 
 If you do, that ammo type **will be used first** in fights. Once it's gone your character will automatically switch to another compatible ammo type for the weapon. If there's no ammo left they'll try to fight with their fists.
 
-## Read books
+</div>
+
+<div data-guide-section="Read books">
+
+### Read books
 
 You can read books from the `[INVENTORY]` by using them. This will cost you some ticks (as reading books takes time), and will make you better at a specific skill.
 
@@ -150,7 +199,11 @@ Eg. reading the **Guns and Bullets** book will make you better with Small Guns. 
 
 The **max skill %** you can get to with books is **91%**.
 
-## Read messages
+</div>
+
+<div data-guide-section="Read messages">
+
+### Read messages
 
 Ocassionally the game will send you a **message**: when somebody attacks you, when you level up, etc.
 
@@ -158,7 +211,11 @@ Read these on the `[MESSAGES]` page.
 
 ![Messages](/images/guide/messages.webp)
 
-# Planned features
+</div>
+
+<div data-guide-section="Planned features">
+
+## Planned features
 
 - Quests:
   - Tug of war between exclusive quests
@@ -181,7 +238,7 @@ Read these on the `[MESSAGES]` page.
 - (opt-in) Background music
 - (opt-in) Sound effects
 
-[Discord]: {DISCORD}
+</div>
 """
         |> String.replace "{FIGHT_STRATEGY}"
             (Data.FightStrategy.Named.guideExample
@@ -204,20 +261,15 @@ tableOfContents =
     let
         tocRenderer : Markdown.Renderer.Renderer (List String)
         tocRenderer =
-            { heading =
-                \{ level, rawText } ->
-                    case level of
-                        Markdown.Block.H1 ->
-                            [ rawText ]
-
-                        Markdown.Block.H2 ->
-                            [ rawText ]
-
-                        _ ->
-                            []
+            { heading = \_ -> []
             , paragraph = \_ -> []
             , blockQuote = \_ -> []
-            , html = Markdown.Html.oneOf []
+            , html =
+                Markdown.Html.oneOf
+                    [ Markdown.Html.tag "div"
+                        (\guideSection _ -> [ guideSection ])
+                        |> Markdown.Html.withAttribute "data-guide-section"
+                    ]
             , text = \_ -> []
             , codeSpan = \_ -> []
             , strong = \_ -> []
@@ -255,18 +307,18 @@ renderer =
         , heading =
             \{ level, children, rawText } ->
                 let
-                    class =
+                    ( element, class ) =
                         case level of
-                            Markdown.Block.H1 ->
-                                Just "text-lg pt-8"
-
                             Markdown.Block.H2 ->
-                                Just "text-md pt-8"
+                                ( H.h2, Just "text-lg pt-8" )
+
+                            Markdown.Block.H3 ->
+                                ( H.h3, Just "text-md pt-8" )
 
                             _ ->
-                                Nothing
+                                ( H.span, Nothing )
                 in
-                H.span
+                element
                     [ HA.class "font-bold"
                     , HAE.attributeMaybe HA.class class
                     , HA.id (String.Extra.dasherize rawText)
@@ -318,4 +370,16 @@ renderer =
                 H.pre
                     [ HA.class "[font-stretch:85%] ml-[4ch] text-sm text-green-200 bg-green-800 px-[2ch] py-4 w-fit" ]
                     [ H.text body ]
+        , html =
+            Markdown.Html.oneOf
+                [ Markdown.Html.tag "div"
+                    (\guideSection contents ->
+                        H.div
+                            [ HA.class "flex flex-col gap-4"
+                            , HA.attribute "data-guide-section" guideSection
+                            ]
+                            contents
+                    )
+                    |> Markdown.Html.withAttribute "data-guide-section"
+                ]
     }
