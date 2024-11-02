@@ -1,4 +1,4 @@
-module Frontend.Guide exposing (view)
+module Frontend.Guide exposing (tableOfContents, view)
 
 import Data.FightStrategy
 import Data.FightStrategy.Named
@@ -7,8 +7,10 @@ import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HAE
 import Markdown.Block
+import Markdown.Html
 import Markdown.Parser
 import Markdown.Renderer exposing (defaultHtmlRenderer)
+import String.Extra
 import Tailwind as TW
 import UI
 
@@ -16,6 +18,9 @@ import UI
 markdown : String
 markdown =
     """
+
+## Introduction
+
 **NuAshworld** is a post-apocalyptic **MMO browser game** set in the wasteland world of Fallout 2. As one of the few survivors, you'll need to navigate this harsh world, fight monsters and other players alike, complete quests and in doing so **change the wasteland for everybody**, and build your character's skills, abilities, equipment and climb the social ladder.
 
 You're starting out in the relatively safe and remote village of **Arroyo**, but your search for power will lead you all across the wasteland. The **end goal** of each game world (think "season" in other games) is to somehow **get to the Enclave base** far out in the ocean and end their vertibird-ridden tyranny over the Southwest of what was once the United States of America.
@@ -194,6 +199,53 @@ view =
         |> Result.withDefault [ H.text "Failed to parse Markdown" ]
 
 
+tableOfContents : List String
+tableOfContents =
+    let
+        tocRenderer : Markdown.Renderer.Renderer (List String)
+        tocRenderer =
+            { heading =
+                \{ level, rawText } ->
+                    case level of
+                        Markdown.Block.H1 ->
+                            [ rawText ]
+
+                        Markdown.Block.H2 ->
+                            [ rawText ]
+
+                        _ ->
+                            []
+            , paragraph = \_ -> []
+            , blockQuote = \_ -> []
+            , html = Markdown.Html.oneOf []
+            , text = \_ -> []
+            , codeSpan = \_ -> []
+            , strong = \_ -> []
+            , emphasis = \_ -> []
+            , strikethrough = \_ -> []
+            , hardLineBreak = []
+            , link = \_ _ -> []
+            , image = \_ -> []
+            , unorderedList = \_ -> []
+            , orderedList = \_ _ -> []
+            , codeBlock = \_ -> []
+            , thematicBreak = []
+            , table = \_ -> []
+            , tableHeader = \_ -> []
+            , tableBody = \_ -> []
+            , tableRow = \_ -> []
+            , tableCell = \_ _ -> []
+            , tableHeaderCell = \_ _ -> []
+            }
+    in
+    markdown
+        |> Markdown.Parser.parse
+        |> Result.withDefault []
+        |> Markdown.Renderer.render tocRenderer
+        |> Result.withDefault []
+        |> List.concat
+
+
 renderer : Markdown.Renderer.Renderer (Html a)
 renderer =
     { defaultHtmlRenderer
@@ -201,15 +253,15 @@ renderer =
             \children ->
                 H.span [ HA.class "text-rg" ] children
         , heading =
-            \{ level, children } ->
+            \{ level, children, rawText } ->
                 let
                     class =
                         case level of
                             Markdown.Block.H1 ->
-                                Just "text-lg mt-8"
+                                Just "text-lg pt-8"
 
                             Markdown.Block.H2 ->
-                                Just "text-md mt-8"
+                                Just "text-md pt-8"
 
                             _ ->
                                 Nothing
@@ -217,6 +269,7 @@ renderer =
                 H.span
                     [ HA.class "font-bold"
                     , HAE.attributeMaybe HA.class class
+                    , HA.id (String.Extra.dasherize rawText)
                     ]
                     children
         , image =

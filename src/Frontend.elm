@@ -2,6 +2,7 @@ module Frontend exposing (..)
 
 import Admin
 import Browser exposing (UrlRequest(..))
+import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
@@ -90,6 +91,7 @@ import Result.Extra as Result
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 import Set exposing (Set)
+import String.Extra
 import Svg as S exposing (Svg)
 import Svg.Attributes as SA
 import Tailwind as TW
@@ -219,6 +221,10 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
+        Scrolled ->
+            -- OK, buddy
+            ( model, Cmd.none )
+
         GoToRoute route ->
             let
                 finalRoute =
@@ -254,9 +260,19 @@ update msg ({ loginForm } as model) =
                     url
                         |> Route.fromUrl
                         |> sanitizeRoute model.worldData
+
+                scrollCmd =
+                    case Route.getGuideHeading route of
+                        Nothing ->
+                            Cmd.none
+
+                        Just heading ->
+                            Dom.getElement heading
+                                |> Task.andThen (\{ element } -> Dom.setViewport 0 element.y)
+                                |> Task.attempt (\_ -> Scrolled)
             in
             ( { model | route = route }
-            , Cmd.none
+            , scrollCmd
             )
 
         Logout ->
@@ -1049,8 +1065,8 @@ contentView model =
             ( About, _ ) ->
                 aboutView
 
-            ( Guide, _ ) ->
-                guideView
+            ( Guide heading, _ ) ->
+                guideView heading
 
             ( News, _ ) ->
                 newsView model.zone
@@ -1152,11 +1168,47 @@ aboutView =
     ]
 
 
-guideView : List (Html FrontendMsg)
-guideView =
-    [ pageTitleView "Guide"
-    , H.div [ HA.class "flex flex-col gap-4 max-w-[70ch] font-bold text-green-100" ] Guide.view
+guideView : Maybe String -> List (Html FrontendMsg)
+guideView currentGuideHeading =
+    [ H.div [ HA.class "flex flex-row gap-[4ch]" ]
+        [ H.div [ HA.class "flex flex-col" ]
+            [ pageTitleView "Guide"
+            , H.div
+                [ HA.class "flex flex-col gap-4 max-w-[70ch] font-bold text-green-100" ]
+                Guide.view
+            ]
+        , H.div [ HA.class "relative" ]
+            [ H.div [ HA.class "sticky top-0 pt-8 -mt-8 flex flex-col gap-4 text-green-200" ]
+                [ H.h2
+                    [ HA.class "text-rg" ]
+                    [ H.text "Table of Contents" ]
+                , UI.ul []
+                    (Guide.tableOfContents
+                        |> List.map (guideTocItemView { current = currentGuideHeading })
+                    )
+                ]
+            ]
+        ]
     ]
+
+
+guideTocItemView : { current : Maybe String } -> String -> Html FrontendMsg
+guideTocItemView { current } item =
+    let
+        dasherized =
+            String.Extra.dasherize item
+
+        isActive =
+            current == Just dasherized
+    in
+    H.li
+        [ HA.classList [ ( "text-yellow", isActive ) ]
+        , TW.mod "hover" "text-green-100 bg-green-800"
+        ]
+        [ H.a
+            [ HA.href ("#" ++ dasherized) ]
+            [ H.text item ]
+        ]
 
 
 worldsListView : Maybe (List WorldInfo) -> List (Html FrontendMsg)
@@ -5084,7 +5136,7 @@ commonLinksView currentRoute =
     H.div []
         ([ linkIn "News" News Nothing False
          , linkIn "About" About Nothing False
-         , linkIn "Guide" Guide Nothing False
+         , linkIn "Guide" (Guide Nothing) Nothing False
          , linkOut "Discord" Links.discord Nothing False
          , linkOut "Twitter" Links.twitter Nothing False
          , linkOut "GitHub" Links.github Nothing False

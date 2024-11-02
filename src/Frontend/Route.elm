@@ -3,6 +3,7 @@ module Frontend.Route exposing
     , PlayerRoute(..)
     , Route(..)
     , fromUrl
+    , getGuideHeading
     , getShop
     , isMessagesRelatedRoute
     , loggedOut
@@ -20,7 +21,7 @@ import Url.Parser as P exposing ((</>), Parser)
 
 type Route
     = About
-    | Guide
+    | Guide (Maybe String)
     | News
     | Map
     | WorldsList
@@ -62,7 +63,7 @@ needsPlayer route =
         About ->
             False
 
-        Guide ->
+        Guide _ ->
             False
 
         News ->
@@ -90,7 +91,7 @@ needsAdmin route =
         About ->
             False
 
-        Guide ->
+        Guide _ ->
             False
 
         News ->
@@ -172,7 +173,7 @@ parser =
         [ P.map News P.top
         , P.map News <| P.s "news"
         , P.map About <| P.s "about"
-        , P.map Guide <| P.s "guide"
+        , P.map Guide <| P.s "guide" </> P.fragment identity
         , P.map Map <| P.s "map"
         , P.map WorldsList <| P.s "worlds"
         , P.map AdminRoute <| P.s "admin" </> adminParser
@@ -282,8 +283,17 @@ toString route =
                 About ->
                     "about"
 
-                Guide ->
-                    "guide"
+                Guide currentHeading ->
+                    let
+                        fragment =
+                            case currentHeading of
+                                Nothing ->
+                                    ""
+
+                                Just heading ->
+                                    "#" ++ heading
+                    in
+                    "guide" ++ fragment
 
                 News ->
                     "news"
@@ -399,7 +409,7 @@ getShop route =
         About ->
             Nothing
 
-        Guide ->
+        Guide _ ->
             Nothing
 
         News ->
@@ -415,4 +425,32 @@ getShop route =
             Nothing
 
         AdminRoute _ ->
+            Nothing
+
+
+getGuideHeading : Route -> Maybe String
+getGuideHeading route =
+    case route of
+        Guide currentHeading ->
+            currentHeading
+
+        About ->
+            Nothing
+
+        News ->
+            Nothing
+
+        Map ->
+            Nothing
+
+        WorldsList ->
+            Nothing
+
+        NotFound _ ->
+            Nothing
+
+        AdminRoute _ ->
+            Nothing
+
+        PlayerRoute _ ->
             Nothing
