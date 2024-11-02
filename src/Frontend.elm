@@ -2,7 +2,6 @@ module Frontend exposing (..)
 
 import Admin
 import Browser exposing (UrlRequest(..))
-import Browser.Dom as Dom
 import Browser.Navigation as Nav
 import Cmd.ExtraExtra as Cmd
 import Data.Auth as Auth exposing (Auth, Plaintext)
@@ -223,13 +222,8 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
-        FailedScrollToGuideSectionViaLink ->
-            -- Might be indicative of a bug in the Guide
-            ( model, Cmd.none )
-
-        ScrolledToGuideSectionViaLink millis ->
-            -- Already clicked it, URL / Route already changed, already scrolled the DOM. Nothing to do.
-            ( { model | lastGuideTocSectionClick = millis }
+        ClickedGuideSection time ->
+            ( { model | lastGuideTocSectionClick = time }
             , Cmd.none
             )
 
@@ -274,30 +268,9 @@ update msg ({ loginForm } as model) =
                     url
                         |> Route.fromUrl
                         |> sanitizeRoute model.worldData
-
-                scrollCmd =
-                    case Route.getGuideHeading route of
-                        Nothing ->
-                            Cmd.none
-
-                        Just heading ->
-                            Task.map2 Tuple.pair
-                                Time.now
-                                (Dom.getElement heading
-                                    |> Task.andThen (\{ element } -> Dom.setViewport 0 element.y)
-                                )
-                                |> Task.attempt
-                                    (\result ->
-                                        case result of
-                                            Ok ( time, _ ) ->
-                                                ScrolledToGuideSectionViaLink (Time.posixToMillis time)
-
-                                            Err _ ->
-                                                FailedScrollToGuideSectionViaLink
-                                    )
             in
             ( { model | route = route }
-            , scrollCmd
+            , Cmd.none
             )
 
         Logout ->
@@ -1198,10 +1171,6 @@ guideView currentGuideHeading lastGuideTocSectionClick =
     [ IntersectionObserver.view
         "div[data-guide-section]"
         (\intersection ->
-            let
-                _ =
-                    Debug.log "times" { i = intersection.time, last = lastGuideTocSectionClick }
-            in
             if Time.posixToMillis intersection.time > lastGuideTocSectionClick + 500 then
                 JD.at [ "dataset", "guideSection" ] JD.string
                     |> JD.map ScrolledToGuideSection
@@ -1245,7 +1214,13 @@ guideTocItemView { current } item =
         , TW.mod "hover" "text-green-100 bg-green-800"
         ]
         [ H.a
-            [ HA.href ("#" ++ dasherized) ]
+            [ HA.href ("#" ++ dasherized)
+            , HA.target "_self"
+            , HE.on "click"
+                (JD.map ClickedGuideSection
+                    (JD.field "timeStamp" (JD.float |> JD.map round))
+                )
+            ]
             [ H.text item ]
         ]
 

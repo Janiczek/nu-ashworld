@@ -28,7 +28,6 @@ customElements.define(
     }
 
     observedElements = new Set();
-    mountTime = Date.now();
 
     connectedCallback() {
       let lastIntersectionEntry = null;
@@ -64,7 +63,7 @@ customElements.define(
             const intersectionData = {
               element: targetEntry.target,
               isIntersecting: targetEntry.isIntersecting,
-              time: targetEntry.time + this.mountTime,
+              time: targetEntry.time,
             };
 
             lastIntersectionEntry = targetEntry;

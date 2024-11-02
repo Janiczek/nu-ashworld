@@ -60,7 +60,7 @@ type alias FrontendModel =
     , fightStrategyText : String
     , expandedQuests : SeqSet Quest.Name
     , userWantsToShowAreaDanger : Bool
-    , lastGuideTocSectionClick : Int
+    , lastGuideTocSectionClick : Int -- this is a timestamp where 0 is "page loaded", not 1970-01-01. Same with the intersection observer time.
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
@@ -143,9 +143,8 @@ type FrontendMsg
     | CollapseQuestItem Quest.Name
     | AskToStopProgressing Quest.Name
     | AskToStartProgressing Quest.Name
-    | FailedScrollToGuideSectionViaLink
-    | ScrolledToGuideSectionViaLink Int
     | ScrolledToGuideSection String
+    | ClickedGuideSection Int
 
 
 type BarterMsg
