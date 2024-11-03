@@ -5,6 +5,7 @@ module Frontend.Route exposing
     , fromUrl
     , getGuideHeading
     , getShop
+    , isGuideRelatedRoute
     , isMessagesRelatedRoute
     , loggedOut
     , needsAdmin
@@ -454,3 +455,31 @@ getGuideHeading route =
 
         PlayerRoute _ ->
             Nothing
+
+
+isGuideRelatedRoute : Route -> Bool
+isGuideRelatedRoute route =
+    case route of
+        Guide _ ->
+            True
+
+        About ->
+            False
+
+        News ->
+            False
+
+        Map ->
+            False
+
+        WorldsList ->
+            False
+
+        NotFound _ ->
+            False
+
+        AdminRoute _ ->
+            False
+
+        PlayerRoute _ ->
+            False

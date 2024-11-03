@@ -150,6 +150,7 @@ init url key =
       , expandedQuests = SeqSet.empty
       , userWantsToShowAreaDanger = False
       , lastGuideTocSectionClick = 0
+      , hoveredGuideNavLink = False
 
       -- backend state
       , lastTenToBackendMsgs = []
@@ -222,6 +223,11 @@ update msg ({ loginForm } as model) =
                     ( model, Cmd.none )
     in
     case msg of
+        HoveredGuideNavLink ->
+            ( { model | hoveredGuideNavLink = True }
+            , Cmd.none
+            )
+
         ClickedGuideSection time ->
             ( { model | lastGuideTocSectionClick = time }
             , Cmd.none
@@ -965,8 +971,29 @@ view model =
                     ]
     in
     { title = "NuAshworld " ++ Version.version
-    , body = [ appView { leftNav = leftNav } model ]
+    , body =
+        appView { leftNav = leftNav } model
+            :: preload model
     }
+
+
+preload : Model -> List (Html FrontendMsg)
+preload model =
+    if model.hoveredGuideNavLink then
+        Guide.images
+            |> List.map
+                (\img ->
+                    H.node "link"
+                        [ HA.href img
+                        , HA.rel "preload"
+                        , HA.attribute "as" "image"
+                        , HA.type_ "image/webp"
+                        ]
+                        []
+                )
+
+    else
+        []
 
 
 appView :
@@ -4915,42 +4942,72 @@ loginFormView worlds auth =
         ]
 
 
-type LinkType
-    = LinkOut String
-    | LinkIn
-        { route : Route
-        , isActive : Route -> Bool
-        }
-    | LinkMsg FrontendMsg
+type Link
+    = LinkOut { label : String, url : String }
+    | LinkIn { label : String, route : Route, highlight : LinkHighlight }
+    | LinkInFull { label : String, route : Route, hoverMsg : Maybe FrontendMsg, disabled : Bool, tooltip : Maybe String, highlight : LinkHighlight, isActive : Route -> Bool }
+    | LinkMsg { label : String, msg : FrontendMsg, disabled : Bool, tooltip : Maybe String }
+
+
+type LinkHighlight
+    = HNormal
+    | HDimmed
+    | HHighlighted
 
 
 linkView : Route -> Link -> Html FrontendMsg
-linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
+linkView currentRoute link =
     let
-        ( tag, linkAttrs ) =
-            case type_ of
-                LinkOut http ->
-                    ( H.a
-                    , [ HA.href http
-                      , HA.target "_blank"
-                      , HA.attributeIf highlighted <| HA.class "active"
-                      ]
+        ( ( tag, linkAttrs, label_ ), ( tooltip_, dimmed ) ) =
+            case link of
+                LinkOut { label, url } ->
+                    ( ( H.a
+                      , [ HA.href url
+                        , HA.target "_blank"
+                        ]
+                      , label
+                      )
+                    , ( Nothing
+                      , False
+                      )
                     )
 
-                LinkIn { route, isActive } ->
-                    ( UI.button
-                    , [ HE.onClick <| GoToRoute route
-                      , HA.attributeIf (isActive currentRoute || highlighted) <| HA.class "active"
-                      , HA.disabled disabled
-                      ]
+                LinkIn { label, route, highlight } ->
+                    ( ( UI.button
+                      , [ HE.onClick <| GoToRoute route
+                        , HA.classList [ ( "active", route == currentRoute || highlight == HHighlighted ) ]
+                        ]
+                      , label
+                      )
+                    , ( Nothing
+                      , highlight == HDimmed
+                      )
                     )
 
-                LinkMsg msg ->
-                    ( UI.button
-                    , [ HE.onClick msg
-                      , HA.attributeIf highlighted <| HA.class "active"
-                      , HA.disabled disabled
-                      ]
+                LinkInFull { label, route, hoverMsg, disabled, tooltip, highlight, isActive } ->
+                    ( ( UI.button
+                      , [ HE.onClick <| GoToRoute route
+                        , HA.attributeMaybe HE.onMouseOver hoverMsg
+                        , HA.classList [ ( "active", isActive currentRoute || highlight == HHighlighted ) ]
+                        , HA.disabled disabled
+                        ]
+                      , label
+                      )
+                    , ( tooltip
+                      , highlight == HDimmed
+                      )
+                    )
+
+                LinkMsg { label, msg, disabled, tooltip } ->
+                    ( ( UI.button
+                      , [ HE.onClick msg
+                        , HA.disabled disabled
+                        ]
+                      , label
+                      )
+                    , ( tooltip
+                      , False
+                      )
                     )
     in
     tag
@@ -4963,202 +5020,151 @@ linkView currentRoute { label, type_, tooltip, disabled, dimmed, highlighted } =
             [ H.text "[" ]
         , H.span
             [ HA.class "link-label" ]
-            [ H.text label ]
+            [ H.text label_ ]
         , H.span
             [ HA.class "link-right-bracket" ]
             [ H.text "]" ]
         ]
-        |> UI.withMaybeTooltip tooltip
-
-
-type alias Link =
-    { label : String
-    , type_ : LinkType
-    , tooltip : Maybe String
-    , disabled : Bool
-    , dimmed : Bool
-    , highlighted : Bool
-    }
-
-
-linkOut : String -> String -> Maybe String -> Bool -> Link
-linkOut label url tooltip disabled =
-    Link label (LinkOut url) tooltip disabled False False
-
-
-linkIn : String -> Route -> Maybe String -> Bool -> Link
-linkIn label route tooltip disabled =
-    Link label
-        (LinkIn
-            { route = route
-            , isActive = (==) route
-            }
-        )
-        tooltip
-        disabled
-        False
-        False
-
-
-linkInFull : String -> Route -> (Route -> Bool) -> Maybe String -> Bool -> Bool -> Bool -> Link
-linkInFull label route isActive tooltip disabled dimmed highlighted =
-    Link label
-        (LinkIn
-            { route = route
-            , isActive = isActive
-            }
-        )
-        tooltip
-        disabled
-        dimmed
-        highlighted
-
-
-linkMsg : String -> FrontendMsg -> Maybe String -> Bool -> Link
-linkMsg label msg tooltip disabled =
-    Link label (LinkMsg msg) tooltip disabled False False
+        |> UI.withMaybeTooltip tooltip_
 
 
 loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
 loggedInLinksView player currentRoute =
-    let
-        links =
-            case player of
-                NeedsCharCreated _ ->
-                    [ linkIn "New Char" (PlayerRoute Route.CharCreation) Nothing False
-                    , linkMsg "Logout" Logout Nothing False
-                    ]
+    (case player of
+        NeedsCharCreated _ ->
+            [ LinkIn { label = "New Char", route = PlayerRoute Route.CharCreation, highlight = HNormal }
+            , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
+            ]
 
-                Player p ->
-                    let
-                        tickHealPercentage =
-                            Logic.tickHealPercentage
-                                { special = p.special
-                                , addedSkillPercentages = p.addedSkillPercentages
-                                , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
-                                }
+        Player p ->
+            let
+                tickHealPercentage =
+                    Logic.tickHealPercentage
+                        { special = p.special
+                        , addedSkillPercentages = p.addedSkillPercentages
+                        , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
+                        }
 
-                        hpHealed =
-                            round <| toFloat tickHealPercentage / 100 * toFloat p.maxHp
+                hpHealed =
+                    round <| toFloat tickHealPercentage / 100 * toFloat p.maxHp
 
-                        ( healTooltip, healDisabled ) =
-                            if p.hp >= p.maxHp then
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
-                                , True
-                                )
-
-                            else if p.ticks < 1 then
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
-                                , True
-                                )
-
-                            else
-                                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
-                                , False
-                                )
-
-                        ( wanderTooltip, wanderDisabled ) =
-                            if p.hp <= 0 then
-                                ( Just "Find something to fight. Cost: 1 tick. You are dead!"
-                                , True
-                                )
-
-                            else if p.ticks < 1 then
-                                ( Just "Find something to fight. Cost: 1 tick. You have no ticks left!"
-                                , True
-                                )
-
-                            else
-                                ( Just "Find something to fight. Cost: 1 tick"
-                                , False
-                                )
-
-                        isInTown : Bool
-                        isInTown =
-                            Location.location p.location /= Nothing
-
-                        unreadMessages : Int
-                        unreadMessages =
-                            p.messages
-                                |> Dict.filter (always (not << .hasBeenRead))
-                                |> Dict.size
-                    in
-                    [ linkMsg "Heal" AskToHeal healTooltip healDisabled
-                    , linkMsg "Refresh" Refresh Nothing False
-                    , linkIn "Character" (PlayerRoute Route.Character) Nothing False
-                    , linkIn "Inventory" (PlayerRoute Route.Inventory) Nothing False
-                    , linkIn "Map" Map Nothing False
-                    , linkIn "Ladder" (PlayerRoute Route.Ladder) Nothing False
-                    , if isInTown then
-                        linkIn "Town" (PlayerRoute Route.TownMainSquare) Nothing False
-
-                      else
-                        linkMsg "Wander" AskToWander wanderTooltip wanderDisabled
-                    , linkIn "Settings"
-                        (PlayerRoute Route.SettingsFightStrategy)
-                        Nothing
-                        False
-                    , linkInFull "Messages"
-                        (PlayerRoute Route.Messages)
-                        Route.isMessagesRelatedRoute
-                        (if unreadMessages > 0 then
-                            Just "You have unread messages!"
-
-                         else
-                            Nothing
+                ( healTooltip, healDisabled ) =
+                    if p.hp >= p.maxHp then
+                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
+                        , True
                         )
-                        False
-                        (unreadMessages == 0)
-                        (unreadMessages > 0)
-                    , linkIn "World" (PlayerRoute Route.AboutWorld) Nothing False
-                    , linkMsg "Worlds" AskForWorldsAndGoToWorldsRoute Nothing False
-                    , linkMsg "Logout" Logout Nothing False
-                    ]
-    in
-    H.div []
-        (List.map (linkView currentRoute) links)
+
+                    else if p.ticks < 1 then
+                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
+                        , True
+                        )
+
+                    else
+                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
+                        , False
+                        )
+
+                ( wanderTooltip, wanderDisabled ) =
+                    if p.hp <= 0 then
+                        ( Just "Find something to fight. Cost: 1 tick. You are dead!"
+                        , True
+                        )
+
+                    else if p.ticks < 1 then
+                        ( Just "Find something to fight. Cost: 1 tick. You have no ticks left!"
+                        , True
+                        )
+
+                    else
+                        ( Just "Find something to fight. Cost: 1 tick"
+                        , False
+                        )
+
+                isInTown : Bool
+                isInTown =
+                    Location.location p.location /= Nothing
+
+                unreadMessages : Int
+                unreadMessages =
+                    p.messages
+                        |> Dict.filter (always (not << .hasBeenRead))
+                        |> Dict.size
+            in
+            [ LinkMsg { label = "Heal", msg = AskToHeal, tooltip = healTooltip, disabled = healDisabled }
+            , LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
+            , LinkIn { label = "Character", route = PlayerRoute Route.Character, highlight = HNormal }
+            , LinkIn { label = "Inventory", route = PlayerRoute Route.Inventory, highlight = HNormal }
+            , LinkIn { label = "Map", route = Map, highlight = HNormal }
+            , LinkIn { label = "Ladder", route = PlayerRoute Route.Ladder, highlight = HNormal }
+            , if isInTown then
+                LinkIn { label = "Town", route = PlayerRoute Route.TownMainSquare, highlight = HNormal }
+
+              else
+                LinkMsg { label = "Wander", msg = AskToWander, tooltip = wanderTooltip, disabled = wanderDisabled }
+            , LinkIn { label = "Settings", route = PlayerRoute Route.SettingsFightStrategy, highlight = HNormal }
+            , LinkInFull
+                { label = "Messages"
+                , route = PlayerRoute Route.Messages
+                , hoverMsg = Nothing
+                , tooltip =
+                    if unreadMessages > 0 then
+                        Just "You have unread messages!"
+
+                    else
+                        Nothing
+                , disabled = False
+                , highlight =
+                    if unreadMessages == 0 then
+                        HDimmed
+
+                    else
+                        HHighlighted
+                , isActive = Route.isMessagesRelatedRoute
+                }
+            , LinkIn { label = "World", route = PlayerRoute Route.AboutWorld, highlight = HNormal }
+            , LinkMsg { label = "Worlds", msg = AskForWorldsAndGoToWorldsRoute, tooltip = Nothing, disabled = False }
+            , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
+            ]
+    )
+        |> List.map (linkView currentRoute)
+        |> H.div []
 
 
 adminLinksView : Route -> Html FrontendMsg
 adminLinksView currentRoute =
-    let
-        links =
-            [ linkMsg "Refresh" Refresh Nothing False
-            , linkIn "Worlds" (AdminRoute AdminWorldsList) Nothing False
-            , linkMsg "Import" ImportButtonClicked Nothing False
-            , linkMsg "Export" AskForExport Nothing False
-            , linkMsg "Logout" Logout Nothing False
-            ]
-    in
-    H.div []
-        (List.map (linkView currentRoute) links)
+    [ LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
+    , LinkIn { label = "Worlds", route = AdminRoute AdminWorldsList, highlight = HNormal }
+    , LinkMsg { label = "Import", msg = ImportButtonClicked, tooltip = Nothing, disabled = False }
+    , LinkMsg { label = "Export", msg = AskForExport, tooltip = Nothing, disabled = False }
+    , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
+    ]
+        |> List.map (linkView currentRoute)
+        |> H.div []
 
 
 loggedOutLinksView : Route -> Html FrontendMsg
 loggedOutLinksView currentRoute =
-    H.div []
-        ([ linkMsg "Refresh" Refresh Nothing False
-         , linkIn "Map" Map Nothing False
-         , linkIn "Worlds" WorldsList Nothing False
-         ]
-            |> List.map (linkView currentRoute)
-        )
+    [ LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
+    , LinkIn { label = "Map", route = Map, highlight = HNormal }
+    , LinkIn { label = "Worlds", route = WorldsList, highlight = HNormal }
+    ]
+        |> List.map (linkView currentRoute)
+        |> H.div []
 
 
 commonLinksView : Route -> Html FrontendMsg
 commonLinksView currentRoute =
-    H.div []
-        ([ linkIn "News" News Nothing False
-         , linkIn "About" About Nothing False
-         , linkIn "Guide" (Guide Nothing) Nothing False
-         , linkOut "Discord" Links.discord Nothing False
-         , linkOut "Twitter" Links.twitter Nothing False
-         , linkOut "GitHub" Links.github Nothing False
-         , linkOut "Reddit" Links.reddit Nothing False
-         , linkOut "Donate" Links.donate Nothing False
-         ]
-            |> List.map (linkView currentRoute)
-        )
+    [ LinkIn { label = "News", route = News, highlight = HNormal }
+    , LinkIn { label = "About", route = About, highlight = HNormal }
+    , LinkInFull { label = "Guide", route = Guide Nothing, hoverMsg = Just HoveredGuideNavLink, highlight = HNormal, disabled = False, tooltip = Nothing, isActive = Route.isGuideRelatedRoute }
+    , LinkOut { label = "Discord", url = Links.discord }
+    , LinkOut { label = "Twitter", url = Links.twitter }
+    , LinkOut { label = "GitHub", url = Links.github }
+    , LinkOut { label = "Reddit", url = Links.reddit }
+    , LinkOut { label = "Donate", url = Links.donate }
+    ]
+        |> List.map (linkView currentRoute)
+        |> H.div []
 
 
 adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)

@@ -61,6 +61,7 @@ type alias FrontendModel =
     , expandedQuests : SeqSet Quest.Name
     , userWantsToShowAreaDanger : Bool
     , lastGuideTocSectionClick : Int -- this is a timestamp where 0 is "page loaded", not 1970-01-01. Same with the intersection observer time.
+    , hoveredGuideNavLink : Bool -- used to preload Guide images
 
     -- admin state
     , lastTenToBackendMsgs : List ( PlayerName, World.Name, ToBackend )
@@ -145,6 +146,7 @@ type FrontendMsg
     | AskToStartProgressing Quest.Name
     | ScrolledToGuideSection String
     | ClickedGuideSection Int
+    | HoveredGuideNavLink
 
 
 type BarterMsg

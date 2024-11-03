@@ -1,4 +1,4 @@
-module Frontend.Guide exposing (tableOfContents, view)
+module Frontend.Guide exposing (images, tableOfContents, view)
 
 import Data.FightStrategy
 import Data.FightStrategy.Named
@@ -254,6 +254,48 @@ view =
         |> Result.mapError (\_ -> "")
         |> Result.andThen (Markdown.Renderer.render renderer)
         |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+
+
+images : List String
+images =
+    let
+        imagesRenderer : Markdown.Renderer.Renderer (List String)
+        imagesRenderer =
+            { heading = \_ -> []
+            , paragraph = \x -> List.concat x
+            , blockQuote = \_ -> []
+            , html =
+                Markdown.Html.oneOf
+                    [ Markdown.Html.tag "div"
+                        (\_ x -> List.concat x)
+                        |> Markdown.Html.withAttribute "data-guide-section"
+                    ]
+            , text = \_ -> []
+            , codeSpan = \_ -> []
+            , strong = \_ -> []
+            , emphasis = \_ -> []
+            , strikethrough = \_ -> []
+            , hardLineBreak = []
+            , link = \_ _ -> []
+            , image = \{ src } -> [ src ]
+            , unorderedList = \_ -> []
+            , orderedList = \_ _ -> []
+            , codeBlock = \_ -> []
+            , thematicBreak = []
+            , table = \_ -> []
+            , tableHeader = \_ -> []
+            , tableBody = \_ -> []
+            , tableRow = \_ -> []
+            , tableCell = \_ _ -> []
+            , tableHeaderCell = \_ _ -> []
+            }
+    in
+    markdown
+        |> Markdown.Parser.parse
+        |> Result.withDefault []
+        |> Markdown.Renderer.render imagesRenderer
+        |> Result.withDefault []
+        |> List.concat
 
 
 tableOfContents : List String
