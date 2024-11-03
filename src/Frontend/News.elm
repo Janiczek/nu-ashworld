@@ -21,13 +21,16 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730500914
+    [ { date = 1730653425
       , title = "TODOs before release"
       , text =
             """
 Current:
 
 - quests UX + test them end-to-end
+- frontend: topologically sort the quests based on quest dependencies
+- quest completion: add a Message to the player: you completed a quest!
+- has car -> faster movement
 - end of game
 
 Next up:
@@ -40,7 +43,7 @@ Next up:
 - weapons - show strength requirement somewhere (item description)
 - tooltips around edge of screen - floating-ui.js?
 - HtH Evade perk to only work if hands are empty
-- new char / char screen: show Sequence in derived stats
+- new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
 - awareness - info about players' weapon and armor?

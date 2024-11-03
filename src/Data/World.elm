@@ -2,6 +2,7 @@ module Data.World exposing
     ( Name
     , World
     , codec
+    , enoughTicksGiven
     , init
     , isQuestDone
     , isQuestDone_
@@ -161,3 +162,16 @@ isQuestDone_ perPlayer quest =
     Dict.values perPlayer
         |> List.sum
         |> (\sum -> sum >= Quest.ticksNeeded quest)
+
+
+enoughTicksGiven : Quest.Name -> PlayerName -> SeqDict Quest.Name (Dict PlayerName Int) -> Bool
+enoughTicksGiven quest playerName questsProgress =
+    let
+        given =
+            questsProgress
+                |> SeqDict.get quest
+                |> Maybe.withDefault Dict.empty
+                |> Dict.get playerName
+                |> Maybe.withDefault 0
+    in
+    given >= Quest.ticksNeededForPlayerReward quest

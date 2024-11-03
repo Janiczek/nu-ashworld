@@ -561,7 +561,10 @@ processGameTickForQuests worldName model =
                                                                 ( lastItemId, players )
 
                                                             Player.Player playerData ->
-                                                                if SeqSet.member completedQuest playerData.questsActive then
+                                                                if
+                                                                    SeqSet.member completedQuest playerData.questsActive
+                                                                        && World.enoughTicksGiven completedQuest playerData.name world.questsProgress
+                                                                then
                                                                     let
                                                                         ( newLastItemId_, newPlayerData ) =
                                                                             { playerData
