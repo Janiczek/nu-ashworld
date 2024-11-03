@@ -1660,7 +1660,7 @@ locationView location =
         , TW.mod "before" <|
             "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
                 ++ borderWidth
-        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
+        , TW.mod "after" "content-[attr(data-location-name)] whitespace-pre block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute bg-black-transparent p-x-1"
         , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
         , cssVars <|
             List.fastConcat

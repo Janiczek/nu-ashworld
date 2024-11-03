@@ -287,7 +287,7 @@ name loc =
             "Den"
 
         EnclavePlatform ->
-            "Enclave Platform"
+            "Enclave\nPlatform"
 
         Gecko ->
             "Gecko"
