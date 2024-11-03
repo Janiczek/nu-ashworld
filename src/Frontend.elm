@@ -2033,7 +2033,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.text "[START]" ]
             ]
         , H.div [ HA.class "bg-green-800 p-[2ch]" ] <|
-            List.concat <|
+            List.concat
                 [ [ questProgressbarView
                         { ticksGiven = progress.ticksGiven
                         , ticksNeeded = ticksNeeded
@@ -4842,18 +4842,6 @@ contentUnavailableView reason =
         [ HE.onClick <| GoToRoute News ]
         [ H.text "[Back]" ]
     ]
-
-
-loadingNavView : Html FrontendMsg
-loadingNavView =
-    H.div []
-        [ H.text "Loading..."
-        , H.span
-            [ HA.class "loading-cursor"
-            , HA.class "inline-block w-[1ch] h-4 -mb-0.5 ml-0.5"
-            ]
-            []
-        ]
 
 
 alertMessageView : Maybe String -> Html FrontendMsg

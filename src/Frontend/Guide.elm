@@ -6,6 +6,7 @@ import Frontend.Links as Links
 import Html as H exposing (Html)
 import Html.Attributes as HA
 import Html.Attributes.Extra as HAE
+import List.ExtraExtra as List
 import Markdown.Block
 import Markdown.Html
 import Markdown.Parser
@@ -262,12 +263,12 @@ images =
         imagesRenderer : Markdown.Renderer.Renderer (List String)
         imagesRenderer =
             { heading = \_ -> []
-            , paragraph = \x -> List.concat x
+            , paragraph = \x -> List.fastConcat x
             , blockQuote = \_ -> []
             , html =
                 Markdown.Html.oneOf
                     [ Markdown.Html.tag "div"
-                        (\_ x -> List.concat x)
+                        (\_ x -> List.fastConcat x)
                         |> Markdown.Html.withAttribute "data-guide-section"
                     ]
             , text = \_ -> []
@@ -295,7 +296,7 @@ images =
         |> Result.withDefault []
         |> Markdown.Renderer.render imagesRenderer
         |> Result.withDefault []
-        |> List.concat
+        |> List.fastConcat
 
 
 tableOfContents : List String
@@ -337,7 +338,7 @@ tableOfContents =
         |> Result.withDefault []
         |> Markdown.Renderer.render tocRenderer
         |> Result.withDefault []
-        |> List.concat
+        |> List.fastConcat
 
 
 renderer : Markdown.Renderer.Renderer (Html a)

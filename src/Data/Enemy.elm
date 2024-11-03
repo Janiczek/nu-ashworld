@@ -11,13 +11,10 @@ module Data.Enemy exposing
 import Data.Enemy.Type exposing (EnemyType(..))
 import Data.Fight.AimedShot exposing (AimedShot(..))
 import Data.Fight.Critical as Critical exposing (Effect(..), EffectCategory(..), Message(..))
-import Data.Fight.DamageType exposing (DamageType(..))
-import Data.Fight.OpponentType exposing (OpponentType(..))
 import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.SmallChunk exposing (SmallChunk)
-import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Type(..))
 import Maybe.Extra as Maybe
 import NonemptyList exposing (NonemptyList)

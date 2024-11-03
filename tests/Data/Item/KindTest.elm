@@ -9,6 +9,7 @@ import Data.Quest as Quest
 import Data.Vendor.Shop as Shop
 import Expect
 import List.ExtraExtra as List
+import SeqDict
 import SeqSet exposing (SeqSet)
 import Test exposing (Test)
 
@@ -33,7 +34,8 @@ allObtainable =
                                 shop
                                     |> Shop.initialSpec
                                     |> .stock
-                                    |> List.map (\spec -> spec.uniqueKey.kind)
+                                    |> SeqDict.keys
+                                    |> List.map .kind
                             )
                         |> SeqSet.fromList
 
@@ -54,6 +56,9 @@ allObtainable =
                                                     Nothing
 
                                                 Quest.VendorAvailable _ ->
+                                                    Nothing
+
+                                                Quest.EndTheGame ->
                                                     Nothing
                                         )
                             )
@@ -79,6 +84,12 @@ allObtainable =
                                                     Nothing
 
                                                 Quest.CarReward ->
+                                                    Nothing
+
+                                                Quest.CapsReward _ ->
+                                                    Nothing
+
+                                                Quest.TravelToEnclaveReward ->
                                                     Nothing
                                         )
                             )

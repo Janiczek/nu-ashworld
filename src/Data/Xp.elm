@@ -4,7 +4,6 @@ module Data.Xp exposing
     , Xp
     , currentLevel
     , nextLevelXp
-    , xpForLevel
     )
 
 import List.Extra

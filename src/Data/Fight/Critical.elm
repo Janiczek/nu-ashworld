@@ -11,7 +11,6 @@ module Data.Fight.Critical exposing
     , toCategory
     )
 
-import Data.Fight.OpponentType exposing (OpponentType(..))
 import Data.Special as Special
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE

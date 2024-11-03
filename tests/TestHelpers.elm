@@ -1,66 +1,34 @@
 module TestHelpers exposing
     ( addedSkillPercentagesFuzzer
     , aimedAttackStyleFuzzer
-    , ammoKindFuzzer
     , armorClassFuzzer
-    , armorKindFuzzer
-    , attackStatsFuzzer
     , attackStyleFuzzer
     , canPass
-    , capsFuzzer
-    , commandFuzzer
-    , conditionFuzzer
-    , deadEndToString
     , distanceFuzzer
-    , dropsFuzzer
-    , enemyTypeFuzzer
-    , equippedArmorKindFuzzer
     , equippedWeaponKindFuzzer
-    , expectEqualParseResult
     , fightStrategyFuzzer
     , gunKindFuzzer
-    , healingItemKindFuzzer
-    , hpFuzzer
-    , ifDataFuzzer
-    , itemFuzzer
-    , itemKindFuzzer
     , itemsFuzzer
-    , levelFuzzer
-    , maxApFuzzer
-    , maxHpFuzzer
     , meleeWeaponKindFuzzer
-    , mostlyHealingItemKindFuzzer
     , multilineInput
-    , naturalArmorClassFuzzer
-    , operatorDataFuzzer
-    , operatorFuzzer
     , opponentFuzzer
-    , opponentTypeFuzzer
     , parserTest
     , perksFuzzer
-    , playerNameFuzzer
-    , playerOpponentFuzzer
     , posixFuzzer
     , preferredAmmoKindFuzzer
-    , problemToString
     , randomSeedFuzzer
-    , removeNewlinesAtEnds
-    , sequenceFuzzer
     , smallGunKindFuzzer
     , specialFuzzer
     , traitsFuzzer
     , unarmedWeaponKindFuzzer
     , usedAmmoFuzzer
-    , valueFuzzer
-    , weaponKindFuzzer
-    , xpFuzzer
     )
 
 import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Fight exposing (Opponent)
 import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle exposing (AttackStyle(..))
-import Data.Fight.OpponentType as OpponentType exposing (OpponentType(..), PlayerOpponent)
+import Data.Fight.OpponentType as OpponentType exposing (OpponentType, PlayerOpponent)
 import Data.FightStrategy
     exposing
         ( Command(..)
@@ -84,7 +52,7 @@ import Dict exposing (Dict)
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import List.ExtraExtra as List
-import Logic exposing (AttackStats, UsedAmmo)
+import Logic exposing (UsedAmmo)
 import Maybe.Extra as Maybe
 import Parser as P exposing (Parser, Problem(..))
 import Random
@@ -331,26 +299,11 @@ aimedAttackStyleFuzzer =
         )
 
 
-itemKindFuzzer : Fuzzer ItemKind.Kind
-itemKindFuzzer =
-    ItemKind.all
-        |> List.map Fuzz.constant
-        |> Fuzz.oneOf
-
-
 healingItemKindFuzzer : Fuzzer ItemKind.Kind
 healingItemKindFuzzer =
     ItemKind.allHealing
         |> List.map Fuzz.constant
         |> Fuzz.oneOf
-
-
-mostlyHealingItemKindFuzzer : Fuzzer ItemKind.Kind
-mostlyHealingItemKindFuzzer =
-    Fuzz.frequency
-        [ ( 9, healingItemKindFuzzer )
-        , ( 1, itemKindFuzzer )
-        ]
 
 
 posixFuzzer : Fuzzer Posix
@@ -514,16 +467,6 @@ itemFuzzer =
 naturalArmorClassFuzzer : Fuzzer Int
 naturalArmorClassFuzzer =
     Fuzz.intRange 0 10
-
-
-attackStatsFuzzer : Fuzzer AttackStats
-attackStatsFuzzer =
-    Fuzz.constant AttackStats
-        |> Fuzz.andMap (Fuzz.intRange 1 10)
-        |> Fuzz.andMap (Fuzz.intRange 1 30)
-        |> Fuzz.andMap (Fuzz.intRange 0 40)
-        -- sanitize:
-        |> Fuzz.map (\s -> { s | maxDamage = max s.minDamage s.maxDamage })
 
 
 addedSkillPercentagesFuzzer : Fuzzer (SeqDict Skill Int)

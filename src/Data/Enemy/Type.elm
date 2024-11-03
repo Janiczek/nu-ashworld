@@ -23,7 +23,7 @@ module Data.Enemy.Type exposing
 import Data.Fight.DamageType exposing (DamageType(..))
 import Data.Item.Kind as ItemKind
 import Data.Skill exposing (Skill(..))
-import Data.Special exposing (Special, Type(..))
+import Data.Special exposing (Special)
 import Data.Xp exposing (BaseXp(..))
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE

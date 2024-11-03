@@ -12,7 +12,6 @@ module Logic exposing
     , bestCombatSkill
     , bookAddedSkillPercentage
     , bookUseTickCost
-    , canBurst
     , canUseItem
     , chanceToHit
     , damageResistance
@@ -2110,12 +2109,6 @@ unaimedAttackStyle kind =
         |> Maybe.withDefault AttackStyle.UnarmedUnaimed
 
 
-canBurst : ItemKind.Kind -> Bool
-canBurst kind =
-    attackStyleAndApCost kind
-        |> List.any (\( style, _ ) -> style == ShootBurst)
-
-
 strengthRequirementChanceToHitPenalty :
     { strength : Int
     , equippedWeapon : ItemKind.Kind
@@ -2248,25 +2241,12 @@ maxPossibleMove r =
         0
 
 
-questRequirementCombatSkills : List Skill
-questRequirementCombatSkills =
-    [ Skill.SmallGuns
-    , Skill.BigGuns
-    , Skill.EnergyWeapons
-    , Skill.MeleeWeapons
-    , Skill.Throwing
-    , Skill.Unarmed
-
-    -- TODO traps?
-    ]
-
-
 bestCombatSkill : Special -> SeqDict Skill Int -> ( Skill, Int )
 bestCombatSkill special addedSkillPercentages_ =
-    questRequirementCombatSkills
+    Skill.combatSkills
         |> List.map (\s -> ( s, Skill.get special addedSkillPercentages_ s ))
         |> List.Extra.maximumBy Tuple.second
-        |> -- Really shouldn't happen (empty `questRequirementCombatSkills`)
+        |> -- Really shouldn't happen (empty `Skill.combatSkills`)
            Maybe.withDefault ( Skill.SmallGuns, 0 )
 
 

@@ -3,7 +3,6 @@ module Frontend.Route exposing
     , PlayerRoute(..)
     , Route(..)
     , fromUrl
-    , getGuideHeading
     , getShop
     , isGuideRelatedRoute
     , isMessagesRelatedRoute
@@ -426,34 +425,6 @@ getShop route =
             Nothing
 
         AdminRoute _ ->
-            Nothing
-
-
-getGuideHeading : Route -> Maybe String
-getGuideHeading route =
-    case route of
-        Guide currentHeading ->
-            currentHeading
-
-        About ->
-            Nothing
-
-        News ->
-            Nothing
-
-        Map ->
-            Nothing
-
-        WorldsList ->
-            Nothing
-
-        NotFound _ ->
-            Nothing
-
-        AdminRoute _ ->
-            Nothing
-
-        PlayerRoute _ ->
             Nothing
 
 

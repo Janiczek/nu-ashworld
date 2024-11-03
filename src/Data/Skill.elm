@@ -442,6 +442,8 @@ combatSkills =
     , Throwing
     , Unarmed
     , MeleeWeapons
+
+    -- TODO traps?
     ]
 
 
