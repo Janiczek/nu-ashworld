@@ -15,9 +15,10 @@ import Codec exposing (Codec)
 import Data.Fight as Fight
 import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
+import Data.Quest as Quest
 import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
-import Html exposing (Attribute, Html)
+import Html as H exposing (Attribute, Html)
 import Markdown
 import Time exposing (Posix)
 import Time.ExtraExtra as Time
@@ -50,6 +51,12 @@ type Content
         { target : PlayerName
         , fightInfo : Fight.Info
         }
+    | YouCompletedAQuest
+        { quest : Quest.Name
+        , xpReward : Int
+        , playerReward : Maybe (List Quest.PlayerReward)
+        , globalRewards : List Quest.GlobalReward
+        }
 
 
 isFightMessage : Content -> Bool
@@ -67,6 +74,9 @@ isFightMessage content_ =
         YouAttacked _ ->
             True
 
+        YouCompletedAQuest _ ->
+            False
+
 
 codec : Codec Message
 codec =
@@ -81,7 +91,7 @@ codec =
 contentCodec : Codec Content
 contentCodec =
     Codec.custom
-        (\welcomeEncoder youAdvancedLevelEncoder youWereAttackedEncoder youAttackedEncoder value ->
+        (\welcomeEncoder youAdvancedLevelEncoder youWereAttackedEncoder youAttackedEncoder youCompletedAQuestEncoder value ->
             case value of
                 Welcome ->
                     welcomeEncoder
@@ -94,6 +104,9 @@ contentCodec =
 
                 YouAttacked arg0 ->
                     youAttackedEncoder arg0
+
+                YouCompletedAQuest arg0 ->
+                    youCompletedAQuestEncoder arg0
         )
         |> Codec.variant0 "Welcome" Welcome
         |> Codec.variant1
@@ -117,6 +130,23 @@ contentCodec =
             (Codec.object (\target fightInfo -> { target = target, fightInfo = fightInfo })
                 |> Codec.field "target" .target Codec.string
                 |> Codec.field "fightInfo" .fightInfo Fight.infoCodec
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "YouCompletedAQuest"
+            YouCompletedAQuest
+            (Codec.object
+                (\quest xpReward playerReward globalRewards ->
+                    { quest = quest
+                    , xpReward = xpReward
+                    , playerReward = playerReward
+                    , globalRewards = globalRewards
+                    }
+                )
+                |> Codec.field "quest" .quest Quest.codec
+                |> Codec.field "xpReward" .xpReward Codec.int
+                |> Codec.field "playerReward" .playerReward (Codec.nullable (Codec.list Quest.playerRewardCodec))
+                |> Codec.field "globalRewards" .globalRewards (Codec.list Quest.globalRewardCodec)
                 |> Codec.buildObject
             )
         |> Codec.buildCustom
@@ -189,6 +219,9 @@ summary message =
                 Fight.NobodyDeadGivenUp ->
                     "You attacked " ++ r.target ++ " but nobody was able to kill the other"
 
+        YouCompletedAQuest r ->
+            "You completed the quest: " ++ Quest.title r.quest
+
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
@@ -206,7 +239,7 @@ Your current level is """
                     ++ "."
 
         YouWereAttacked r ->
-            Html.div attributes
+            H.div attributes
                 [ Data.Fight.View.view
                     perceptionLevel
                     r.fightInfo
@@ -214,12 +247,38 @@ Your current level is """
                 ]
 
         YouAttacked r ->
-            Html.div attributes
+            H.div attributes
                 [ Data.Fight.View.view
                     perceptionLevel
                     r.fightInfo
                     (Fight.opponentName r.fightInfo.attacker)
                 ]
+
+        YouCompletedAQuest r ->
+            [ Just ("You completed the quest: " ++ Quest.title r.quest)
+            , Just ("You earned " ++ String.fromInt r.xpReward ++ " XP.")
+            , Maybe.map
+                (\rewards ->
+                    String.join "\n"
+                        [ "Your rewards:"
+                        , String.join "\n" (List.map Quest.playerRewardTitle rewards)
+                        ]
+                )
+                r.playerReward
+            , if List.isEmpty r.globalRewards then
+                Nothing
+
+              else
+                Just
+                    (String.join "\n"
+                        [ "Global effects:"
+                        , String.join "\n" (List.map Quest.globalRewardTitle r.globalRewards)
+                        ]
+                    )
+            ]
+                |> List.filterMap identity
+                |> String.join "\n\n"
+                |> Markdown.toHtml attributes
 
 
 fullDate : Time.Zone -> Message -> String

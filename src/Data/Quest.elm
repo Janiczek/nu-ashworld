@@ -9,6 +9,7 @@ module Data.Quest exposing
     , allForLocation
     , codec
     , exclusiveWith
+    , globalRewardCodec
     , globalRewardTitle
     , globalRewards
     , isExclusiveWith
@@ -16,6 +17,7 @@ module Data.Quest exposing
     , locationQuestRequirements
     , playerRequirementTitle
     , playerRequirements
+    , playerRewardCodec
     , playerRewardTitle
     , playerRewards
     , questRequirements
@@ -3144,3 +3146,88 @@ isExclusiveWith : Name -> Name -> Bool
 isExclusiveWith quest1 quest2 =
     exclusiveWith quest1
         |> List.member quest2
+
+
+playerRewardCodec : Codec PlayerReward
+playerRewardCodec =
+    Codec.custom
+        (\itemRewardEncoder skillUpgradeEncoder perkRewardEncoder capsRewardEncoder carRewardEncoder travelToEnclaveRewardEncoder value ->
+            case value of
+                ItemReward arg0 ->
+                    itemRewardEncoder arg0
+
+                SkillUpgrade arg0 ->
+                    skillUpgradeEncoder arg0
+
+                PerkReward arg0 ->
+                    perkRewardEncoder arg0
+
+                CapsReward arg0 ->
+                    capsRewardEncoder arg0
+
+                CarReward ->
+                    carRewardEncoder
+
+                TravelToEnclaveReward ->
+                    travelToEnclaveRewardEncoder
+        )
+        |> Codec.variant1
+            "ItemReward"
+            ItemReward
+            (Codec.object (\what amount -> { what = what, amount = amount })
+                |> Codec.field "what" .what ItemKind.codec
+                |> Codec.field "amount" .amount Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "SkillUpgrade"
+            SkillUpgrade
+            (Codec.object (\skill percentage -> { skill = skill, percentage = percentage })
+                |> Codec.field "skill" .skill Skill.codec
+                |> Codec.field "percentage" .percentage Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1 "PerkReward" PerkReward Perk.codec
+        |> Codec.variant1 "CapsReward" CapsReward Codec.int
+        |> Codec.variant0 "CarReward" CarReward
+        |> Codec.variant0 "TravelToEnclaveReward" TravelToEnclaveReward
+        |> Codec.buildCustom
+
+
+globalRewardCodec : Codec GlobalReward
+globalRewardCodec =
+    Codec.custom
+        (\newItemsInStockEncoder discountEncoder vendorAvailableEncoder endTheGameEncoder value ->
+            case value of
+                NewItemsInStock arg0 ->
+                    newItemsInStockEncoder arg0
+
+                Discount arg0 ->
+                    discountEncoder arg0
+
+                VendorAvailable arg0 ->
+                    vendorAvailableEncoder arg0
+
+                EndTheGame ->
+                    endTheGameEncoder
+        )
+        |> Codec.variant1
+            "NewItemsInStock"
+            NewItemsInStock
+            (Codec.object (\who what amount -> { who = who, what = what, amount = amount })
+                |> Codec.field "who" .who Shop.codec
+                |> Codec.field "what" .what ItemKind.codec
+                |> Codec.field "amount" .amount Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "Discount"
+            Discount
+            (Codec.object (\who percentage -> { who = who, percentage = percentage })
+                |> Codec.field "who" .who Shop.codec
+                |> Codec.field "percentage" .percentage Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1 "VendorAvailable" VendorAvailable Shop.codec
+        |> Codec.variant0 "EndTheGame" EndTheGame
+        |> Codec.buildCustom
