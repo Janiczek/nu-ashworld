@@ -120,7 +120,7 @@ If you somehow get your hands on a **car**, you'll be able to move on the map mu
 
 Once you own a car, on the `[INVENTORY]` screen you'll be able to refuel it.
 
-***** TODO image *****
+![Refuel your car](/images/guide/car_refuel.webp)
 
 </div>
 
