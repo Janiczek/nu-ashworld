@@ -82,7 +82,7 @@ type alias SPlayer =
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
-    , hasCar : Bool
+    , carBatteryPromile : Maybe Int
     }
 
 
@@ -112,6 +112,7 @@ type alias CPlayer =
     , fightStrategy : FightStrategy
     , fightStrategyText : String
     , questsActive : SeqSet Quest.Name
+    , carBatteryPromile : Maybe Int
     }
 
 
@@ -169,7 +170,7 @@ sPlayerCodec =
         |> Codec.field "fightStrategy" .fightStrategy FightStrategy.codec
         |> Codec.field "fightStrategyText" .fightStrategyText Codec.string
         |> Codec.field "questsActive" .questsActive (SeqSet.codec Quest.codec)
-        |> Codec.field "hasCar" .hasCar Codec.bool
+        |> Codec.field "carBatteryPromile" .carBatteryPromile (Codec.nullable Codec.int)
         |> Codec.buildObject
 
 
@@ -199,6 +200,7 @@ serverToClient p =
     , fightStrategy = p.fightStrategy
     , fightStrategyText = p.fightStrategyText
     , questsActive = p.questsActive
+    , carBatteryPromile = p.carBatteryPromile
     }
 
 
@@ -326,6 +328,7 @@ fromNewChar currentTime auth newChar =
                 --    , ( 2, Item.create { lastId = 1, uniqueKey = { kind = ItemKind.Ap10mm }, count = 5 } |> Tuple.first )
                 --    , ( 3, Item.create { lastId = 2, uniqueKey = { kind = ItemKind.Fmj223 }, count = 5 } |> Tuple.first )
                 --    , ( 4, Item.create { lastId = 3, uniqueKey = { kind = ItemKind.Smg10mm }, count = 5 } |> Tuple.first )
+                --    , ( 5, Item.create { lastId = 4, uniqueKey = { kind = ItemKind.MicrofusionCell }, count = 10 } |> Tuple.first )
                 --    ]
                 Dict.empty
             , traits = newChar.traits
@@ -345,5 +348,5 @@ fromNewChar currentTime auth newChar =
                 Tuple.second FightStrategy.default
                     |> FightStrategy.toString
             , questsActive = SeqSet.empty
-            , hasCar = False
+            , carBatteryPromile = Nothing
             }

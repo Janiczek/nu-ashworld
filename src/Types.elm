@@ -147,6 +147,7 @@ type FrontendMsg
     | ScrolledToGuideSection String
     | ClickedGuideSection Int
     | HoveredGuideNavLink
+    | AskToRefuelCar ItemKind.Kind
 
 
 type BarterMsg
@@ -195,6 +196,7 @@ type ToBackend
     | AdminToBackend AdminToBackend
     | StopProgressing Quest.Name
     | StartProgressing Quest.Name
+    | RefuelCar ItemKind.Kind
 
 
 type AdminToBackend

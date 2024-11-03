@@ -50,7 +50,7 @@ backendModelCodec seed =
 toBackendMsgCodec : Codec ToBackend
 toBackendMsgCodec =
     Codec.custom
-        (\logMeInEncoder signMeUpEncoder createNewCharEncoder logMeOutEncoder fightEncoder healMeEncoder useItemEncoder wanderEncoder equipArmorEncoder equipWeaponEncoder preferAmmoEncoder setFightStrategyEncoder unequipArmorEncoder unequipWeaponEncoder clearPreferredAmmoEncoder refreshPleaseEncoder worldsPleaseEncoder tagSkillEncoder useSkillPointsEncoder choosePerkEncoder moveToEncoder messageWasReadEncoder removeMessageEncoder removeFightMessagesEncoder removeAllMessagesEncoder barterEncoder adminToBackendEncoder stopProgressingEncoder startProgressingEncoder value ->
+        (\logMeInEncoder signMeUpEncoder createNewCharEncoder logMeOutEncoder fightEncoder healMeEncoder useItemEncoder wanderEncoder equipArmorEncoder equipWeaponEncoder preferAmmoEncoder setFightStrategyEncoder unequipArmorEncoder unequipWeaponEncoder clearPreferredAmmoEncoder refreshPleaseEncoder worldsPleaseEncoder tagSkillEncoder useSkillPointsEncoder choosePerkEncoder moveToEncoder messageWasReadEncoder removeMessageEncoder removeFightMessagesEncoder removeAllMessagesEncoder barterEncoder adminToBackendEncoder stopProgressingEncoder startProgressingEncoder refuelCarEncoder value ->
             case value of
                 LogMeIn arg0 ->
                     logMeInEncoder arg0
@@ -138,6 +138,9 @@ toBackendMsgCodec =
 
                 StartProgressing arg0 ->
                     startProgressingEncoder arg0
+
+                RefuelCar arg0 ->
+                    refuelCarEncoder arg0
         )
         |> Codec.variant1 "LogMeIn" LogMeIn Auth.sanitizedCodec
         |> Codec.variant1 "SignMeUp" SignMeUp Auth.sanitizedCodec
@@ -172,6 +175,7 @@ toBackendMsgCodec =
         |> Codec.variant1 "AdminToBackend" AdminToBackend adminToBackendCodec
         |> Codec.variant1 "StopProgressing" StopProgressing Quest.codec
         |> Codec.variant1 "StartProgressing" StartProgressing Quest.codec
+        |> Codec.variant1 "RefuelCar" RefuelCar ItemKind.codec
         |> Codec.buildCustom
 
 

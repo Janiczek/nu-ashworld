@@ -645,6 +645,11 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| StartProgressing quest
             )
 
+        AskToRefuelCar fuelKind ->
+            ( model
+            , Lamdera.sendToBackend <| RefuelCar fuelKind
+            )
+
 
 resetBarter : Model -> ( Model, Cmd FrontendMsg )
 resetBarter model =
@@ -1364,20 +1369,21 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 notAllPassable =
                     not (Set.isEmpty impassableTiles)
 
-                cost : Int
-                cost =
-                    Pathfinding.tickCost
+                { tickCost } =
+                    -- We don't have use for the carBatteryPromileCost here.
+                    Pathfinding.cost
                         { pathTaken = pathTaken
                         , pathfinderPerkRanks = Perk.rank Perk.Pathfinder player.perks
+                        , carBatteryPromile = player.carBatteryPromile
                         }
 
                 tooDistant : Bool
                 tooDistant =
-                    cost > player.ticks
+                    tickCost > player.ticks
 
                 ticksString : String
                 ticksString =
-                    if cost == 1 then
+                    if tickCost == 1 then
                         "tick"
 
                     else
@@ -1440,7 +1446,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                           else
                             H.div []
-                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt cost ++ " " ++ ticksString ]
+                                [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt tickCost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
                                 , H.viewIf canShowAreaDanger <|
@@ -1547,6 +1553,15 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 , toggle = SetShowAreaDanger
                 , label = "Show area danger levels"
                 }
+        , case player.carBatteryPromile of
+            Nothing ->
+                H.nothing
+
+            Just promile ->
+                H.div []
+                    [ H.span [ HA.class "text-green-300" ] [ H.text "Car battery: " ]
+                    , H.span [ HA.class "text-green-100" ] [ H.text (carBatteryChargeString promile) ]
+                    ]
         , H.div
             [ cssVars
                 [ ( "--map-columns", String.fromInt Map.columns )
@@ -2008,7 +2023,7 @@ expandedQuestView player progress questsProgress quest =
                     H.text " [DONE]"
                 ]
             , if isDone then
-                H.text ""
+                H.nothing
 
               else if SeqSet.member quest player.questsActive then
                 UI.button
@@ -3823,7 +3838,7 @@ inventoryView _ player =
                   else
                     case player.equippedWeapon of
                         Nothing ->
-                            H.text ""
+                            H.nothing
 
                         Just weapon ->
                             if ItemKind.isAmmo item.kind && ItemKind.isUsableAmmoForWeapon weapon.kind item.kind then
@@ -3832,7 +3847,7 @@ inventoryView _ player =
                                     [ H.text "[Prefer]" ]
 
                             else
-                                H.text ""
+                                H.nothing
                 ]
 
         armorClass =
@@ -3899,117 +3914,187 @@ inventoryView _ player =
                 }
     in
     [ pageTitleView "Inventory"
-    , H.div [ HA.class "flex flex-col gap-4" ]
-        [ H.p []
-            [ H.text "Total value: "
-            , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
-            ]
-        , H.h3
-            [ HA.class "text-green-300" ]
-            [ H.text "Items" ]
-        , if Dict.isEmpty player.items then
-            H.p [] [ H.text "You have no items!" ]
+    , H.div [ HA.class "flex flex-col gap-4" ] <|
+        List.concat
+            [ [ H.p []
+                    [ H.text "Total value: "
+                    , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
+                    ]
+              , H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Items" ]
+              , if Dict.isEmpty player.items then
+                    H.p [ HA.class "ml-[2ch]" ] [ H.text "You have no items!" ]
 
-          else
-            UI.ul []
-                (player.items
-                    |> Dict.values
-                    |> List.sortBy
-                        (\{ kind } ->
-                            ( List.map ItemType.name (ItemKind.types kind)
-                            , ItemKind.baseValue kind
-                            , ItemKind.name kind
-                            )
+                else
+                    UI.ul []
+                        (player.items
+                            |> Dict.values
+                            |> List.sortBy
+                                (\{ kind } ->
+                                    ( List.map ItemType.name (ItemKind.types kind)
+                                    , ItemKind.baseValue kind
+                                    , ItemKind.name kind
+                                    )
+                                )
+                            |> List.map itemView
                         )
-                    |> List.map itemView
-                )
-        , H.h3
-            [ HA.class "text-green-300" ]
-            [ H.text "Equipment" ]
-        , [ [ ( player.equippedArmor, "Armor", ( AskToUnequipArmor, "[Unequip]" ) )
-            , ( player.equippedWeapon, "Weapon", ( AskToUnequipWeapon, "[Unequip]" ) )
-            ]
-                |> List.map
-                    (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
-                        H.li []
-                            [ H.text <| label ++ ": "
-                            , H.span [ HA.class "text-green-100" ] <|
-                                case maybeItem of
-                                    Nothing ->
-                                        [ H.text "None" ]
+              , H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Equipment" ]
+              , [ [ ( player.equippedArmor, "Armor", ( AskToUnequipArmor, "[Unequip]" ) )
+                  , ( player.equippedWeapon, "Weapon", ( AskToUnequipWeapon, "[Unequip]" ) )
+                  ]
+                    |> List.map
+                        (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
+                            H.li []
+                                [ H.text <| label ++ ": "
+                                , H.span [ HA.class "text-green-100" ] <|
+                                    case maybeItem of
+                                        Nothing ->
+                                            [ H.text "None" ]
 
-                                    Just item ->
-                                        [ H.text <| ItemKind.name item.kind
-                                        , UI.button
-                                            [ HE.onClick unequipMsg
-                                            , HA.class "ml-[1ch]"
+                                        Just item ->
+                                            [ H.text <| ItemKind.name item.kind
+                                            , UI.button
+                                                [ HE.onClick unequipMsg
+                                                , HA.class "ml-[1ch]"
+                                                ]
+                                                [ H.text unequipLabel ]
                                             ]
-                                            [ H.text unequipLabel ]
-                                        ]
-                            ]
-                    )
-          , [ H.li []
-                [ H.text "Preferred ammo: "
-                , H.span [ HA.class "text-green-100" ] <|
-                    case player.preferredAmmo of
-                        Nothing ->
-                            [ H.text "None" ]
-
-                        Just ammo ->
-                            [ H.text <| ItemKind.name ammo
-                            , UI.button
-                                [ HE.onClick AskToClearPreferredAmmo
-                                , HA.class "ml-[1ch]"
                                 ]
-                                [ H.text "[Clear]" ]
+                        )
+                , [ H.li []
+                        [ H.text "Preferred ammo: "
+                        , H.span [ HA.class "text-green-100" ] <|
+                            case player.preferredAmmo of
+                                Nothing ->
+                                    [ H.text "None" ]
+
+                                Just ammo ->
+                                    [ H.text <| ItemKind.name ammo
+                                    , UI.button
+                                        [ HE.onClick AskToClearPreferredAmmo
+                                        , HA.class "ml-[1ch]"
+                                        ]
+                                        [ H.text "[Clear]" ]
+                                    ]
+                        ]
+                  ]
+                ]
+                    |> List.fastConcat
+                    |> UI.ul []
+              ]
+            , case player.carBatteryPromile of
+                Nothing ->
+                    []
+
+                Just promile ->
+                    [ H.h3
+                        [ HA.class "text-green-300" ]
+                        [ H.text "Car" ]
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ H.span [ HA.class "ml-[2ch]" ]
+                            [ H.text "Current charge: "
+                            , H.span [ HA.class "text-green-100" ]
+                                [ H.text (carBatteryChargeString promile)
+                                ]
                             ]
-                ]
+                        , H.span [ HA.class "ml-[2ch] text-green-300" ] [ H.text "Refuel:" ]
+                        , UI.ul []
+                            (ItemKind.all
+                                |> List.filterMap
+                                    (\kind ->
+                                        ItemKind.carBatteryChargePromileAmount kind
+                                            |> Maybe.map (Tuple.pair kind)
+                                    )
+                                |> List.map
+                                    (\( fuelKind, chargeAmount ) ->
+                                        let
+                                            count =
+                                                player.items
+                                                    |> Dict.find (\_ item -> item.kind == fuelKind)
+                                                    |> Maybe.map (Tuple.second >> .count)
+                                                    |> Maybe.withDefault 0
+                                        in
+                                        H.li []
+                                            [ H.text <| ItemKind.name fuelKind ++ " (+" ++ carBatteryChargeString chargeAmount ++ "): "
+                                            , H.span
+                                                [ HA.class
+                                                    (if count > 0 then
+                                                        "text-green-100"
+
+                                                     else
+                                                        "text-green-300"
+                                                    )
+                                                ]
+                                                [ H.text <| String.fromInt count ++ "x available"
+                                                , if count > 0 then
+                                                    UI.button
+                                                        [ HE.onClick <| AskToRefuelCar fuelKind
+                                                        , HA.class "ml-[1ch]"
+                                                        ]
+                                                        [ H.text "[REFUEL]" ]
+
+                                                  else
+                                                    H.nothing
+                                                ]
+                                            ]
+                                    )
+                            )
+                        ]
+                    ]
+            , [ H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Defence stats" ]
+              , UI.ul []
+                    [ H.li []
+                        [ H.text "Armor Class: "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <| String.fromInt armorClass ]
+                        ]
+                    , H.li []
+                        [ H.text "Damage Threshold: "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <| String.fromInt damageThreshold ]
+                        ]
+                    , H.li []
+                        [ H.text "Damage Resistance: "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <| String.fromInt damageResistance ]
+                        ]
+                    ]
+              , H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Attack stats" ]
+              , UI.ul []
+                    [ H.li []
+                        [ H.text "Min Damage: "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <| String.fromInt attackStats.minDamage ]
+                        ]
+                    , H.li []
+                        [ H.text "Max Damage: "
+                        , H.span
+                            [ HA.class "text-green-100" ]
+                            [ H.text <| String.fromInt attackStats.maxDamage ]
+                        ]
+                    ]
+              ]
             ]
-          ]
-            |> List.fastConcat
-            |> UI.ul []
-        , H.h3
-            [ HA.class "text-green-300" ]
-            [ H.text "Defence stats" ]
-        , UI.ul []
-            [ H.li []
-                [ H.text "Armor Class: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt armorClass ]
-                ]
-            , H.li []
-                [ H.text "Damage Threshold: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt damageThreshold ]
-                ]
-            , H.li []
-                [ H.text "Damage Resistance: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt damageResistance ]
-                ]
-            ]
-        , H.h3
-            [ HA.class "text-green-300" ]
-            [ H.text "Attack stats" ]
-        , UI.ul []
-            [ H.li []
-                [ H.text "Min Damage: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt attackStats.minDamage ]
-                ]
-            , H.li []
-                [ H.text "Max Damage: "
-                , H.span
-                    [ HA.class "text-green-100" ]
-                    [ H.text <| String.fromInt attackStats.maxDamage ]
-                ]
-            ]
-        ]
     ]
+
+
+carBatteryChargeString : Int -> String
+carBatteryChargeString promile =
+    String.fromInt (promile // 10)
+        ++ "."
+        ++ String.fromInt (promile |> modBy 10)
+        ++ "%"
 
 
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)

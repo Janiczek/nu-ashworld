@@ -7,6 +7,7 @@ module Data.Item.Kind exposing
     , healAmount
     , isAmmo
     , ammoArmorClassModifier, ammoDamageModifier, ammoDamageResistanceModifier
+    , carBatteryChargePromileAmount
     , isArmor
     , armorClass, armorDamageResistance, armorDamageThreshold
     , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
@@ -34,6 +35,7 @@ module Data.Item.Kind exposing
 
 @docs isAmmo
 @docs ammoArmorClassModifier, ammoDamageModifier, ammoDamageResistanceModifier
+@docs carBatteryChargePromileAmount
 
 
 ## Armor
@@ -10364,3 +10366,277 @@ isTwoHandedWeapon kind =
 
         TankerFob ->
             False
+
+
+carBatteryChargePromileAmount : Kind -> Maybe Int
+carBatteryChargePromileAmount kind =
+    case kind of
+        MicrofusionCell ->
+            Just 500
+
+        SmallEnergyCell ->
+            Just 200
+
+        SuperSledge ->
+            Nothing
+
+        AssaultRifle ->
+            Nothing
+
+        ExpandedAssaultRifle ->
+            Nothing
+
+        HuntingRifle ->
+            Nothing
+
+        ScopedHuntingRifle ->
+            Nothing
+
+        RedRyderLEBBGun ->
+            Nothing
+
+        SniperRifle ->
+            Nothing
+
+        GaussRifle ->
+            Nothing
+
+        CombatShotgun ->
+            Nothing
+
+        HkCaws ->
+            Nothing
+
+        PancorJackhammer ->
+            Nothing
+
+        Shotgun ->
+            Nothing
+
+        Minigun ->
+            Nothing
+
+        Bozar ->
+            Nothing
+
+        RocketLauncher ->
+            Nothing
+
+        GatlingLaser ->
+            Nothing
+
+        LaserRifle ->
+            Nothing
+
+        LaserRifleExtCap ->
+            Nothing
+
+        PlasmaRifle ->
+            Nothing
+
+        TurboPlasmaRifle ->
+            Nothing
+
+        PulseRifle ->
+            Nothing
+
+        PowerFist ->
+            Nothing
+
+        MegaPowerFist ->
+            Nothing
+
+        GaussPistol ->
+            Nothing
+
+        Smg10mm ->
+            Nothing
+
+        HkP90c ->
+            Nothing
+
+        SawedOffShotgun ->
+            Nothing
+
+        LaserPistol ->
+            Nothing
+
+        FragGrenade ->
+            Nothing
+
+        CattleProd ->
+            Nothing
+
+        SuperCattleProd ->
+            Nothing
+
+        Mauser9mm ->
+            Nothing
+
+        Pistol14mm ->
+            Nothing
+
+        Flare ->
+            Nothing
+
+        Pistol223 ->
+            Nothing
+
+        Knife ->
+            Nothing
+
+        Wakizashi ->
+            Nothing
+
+        LittleJesus ->
+            Nothing
+
+        Ripper ->
+            Nothing
+
+        NeedlerPistol ->
+            Nothing
+
+        MagnetoLaserPistol ->
+            Nothing
+
+        PulsePistol ->
+            Nothing
+
+        Beer ->
+            Nothing
+
+        Fruit ->
+            Nothing
+
+        HealingPowder ->
+            Nothing
+
+        Stimpak ->
+            Nothing
+
+        SuperStimpak ->
+            Nothing
+
+        BigBookOfScience ->
+            Nothing
+
+        DeansElectronics ->
+            Nothing
+
+        FirstAidBook ->
+            Nothing
+
+        GunsAndBullets ->
+            Nothing
+
+        ScoutHandbook ->
+            Nothing
+
+        Robes ->
+            Nothing
+
+        LeatherJacket ->
+            Nothing
+
+        LeatherArmor ->
+            Nothing
+
+        MetalArmor ->
+            Nothing
+
+        TeslaArmor ->
+            Nothing
+
+        CombatArmor ->
+            Nothing
+
+        CombatArmorMk2 ->
+            Nothing
+
+        PowerArmor ->
+            Nothing
+
+        BBAmmo ->
+            Nothing
+
+        Fmj223 ->
+            Nothing
+
+        ShotgunShell ->
+            Nothing
+
+        Jhp10mm ->
+            Nothing
+
+        Jhp5mm ->
+            Nothing
+
+        Ec2mm ->
+            Nothing
+
+        Tool ->
+            Nothing
+
+        LockPicks ->
+            Nothing
+
+        ElectronicLockpick ->
+            Nothing
+
+        AbnormalBrain ->
+            Nothing
+
+        ChimpanzeeBrain ->
+            Nothing
+
+        HumanBrain ->
+            Nothing
+
+        CyberneticBrain ->
+            Nothing
+
+        GECK ->
+            Nothing
+
+        SkynetAim ->
+            Nothing
+
+        MotionSensor ->
+            Nothing
+
+        K9 ->
+            Nothing
+
+        MeatJerky ->
+            Nothing
+
+        Ap5mm ->
+            Nothing
+
+        Mm9 ->
+            Nothing
+
+        Ball9mm ->
+            Nothing
+
+        Ap10mm ->
+            Nothing
+
+        Ap14mm ->
+            Nothing
+
+        ExplosiveRocket ->
+            Nothing
+
+        RocketAp ->
+            Nothing
+
+        HnNeedlerCartridge ->
+            Nothing
+
+        HnApNeedlerCartridge ->
+            Nothing
+
+        TankerFob ->
+            Nothing

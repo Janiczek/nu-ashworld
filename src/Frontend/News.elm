@@ -27,14 +27,23 @@ items =
             """
 Current:
 
+- has car -> faster movement
+- use up fuel
+- let the player refuel from Inventory
+- Screenshot in Guide for refueling the car
+
+Next up: 
+
 - quests UX + test them end-to-end
 - frontend: topologically sort the quests based on quest dependencies
 - quest completion: add a Message to the player: you completed a quest!
-- has car -> faster movement
+- rework car quest - get fuel cell controller from Skeeter in Gecko (needs super tool kit)
+- rework car quest - get fuel cell regulator from abandoned Highwayman in Klamath
 - end of game
 
-Next up:
+Later: 
 
+- show other players on the map (purely cosmetic)
 - the first message to a player to list some goals, link to Guide, etc.
 - location descriptions
 - quest descriptions
@@ -49,6 +58,7 @@ Next up:
 - awareness - info about players' weapon and armor?
 - perk - show max number of ranks
 - perk - show all perks, some grayed out, show the requirements?
+- music in the bg (opt-in)
 
 ~janiczek
 """

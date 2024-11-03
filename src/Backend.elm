@@ -652,7 +652,7 @@ applyPlayerQuestReward reward ( lastItemId, player ) =
 
         Quest.CarReward ->
             ( lastItemId
-            , { player | hasCar = True }
+            , { player | carBatteryPromile = Just 1000 }
             )
 
         Quest.TravelToEnclaveReward ->
@@ -1170,6 +1170,9 @@ updateFromFrontend sessionId clientId msg model =
         StartProgressing quest ->
             withLoggedInCreatedPlayer (startProgressing quest)
 
+        RefuelCar fuelKind ->
+            withLoggedInCreatedPlayer (refuelCar fuelKind)
+
 
 updateAdmin : ClientId -> AdminToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateAdmin clientId msg model =
@@ -1542,11 +1545,11 @@ moveTo newCoords pathTaken clientId _ worldName player model =
         currentCoords =
             Map.toTileCoords player.location
 
-        tickCost : Int
-        tickCost =
-            Pathfinding.tickCost
+        { tickCost, carBatteryPromileCost } =
+            Pathfinding.cost
                 { pathTaken = pathTaken
                 , pathfinderPerkRanks = Perk.rank Perk.Pathfinder player.perks
+                , carBatteryPromile = player.carBatteryPromile
                 }
 
         isSamePosition : Bool
@@ -1594,6 +1597,7 @@ moveTo newCoords pathTaken clientId _ worldName player model =
                 player.name
                 (SPlayer.subtractTicks tickCost
                     >> SPlayer.setLocation (Map.toTileNum newCoords)
+                    >> SPlayer.removeCarBattery carBatteryPromileCost
                 )
             |> sendCurrentWorld worldName player.name clientId
             |> Cmd.andThen (\m -> ( m, refreshAdminData m ))
@@ -2479,6 +2483,23 @@ startProgressing quest clientId world worldName player model =
 
     else
         ( model, Cmd.none )
+
+
+refuelCar : ItemKind.Kind -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+refuelCar fuelKind clientId _ worldName player model =
+    let
+        newModel =
+            model
+                |> updatePlayer worldName player.name (SPlayer.refuelCar fuelKind)
+    in
+    getPlayerData worldName player.name newModel
+        |> Maybe.map
+            (\data ->
+                ( newModel
+                , Lamdera.sendToFrontend clientId <| CurrentPlayer data
+                )
+            )
+        |> Maybe.withDefault ( model, Cmd.none )
 
 
 notePlayerPaidRequirements : Quest.Name -> PlayerName -> World -> World

@@ -13,6 +13,7 @@ module Logic exposing
     , bookAddedSkillPercentage
     , bookUseTickCost
     , canUseItem
+    , carBatteryPromileCostPerTile
     , chanceToHit
     , damageResistance
     , damageThreshold
@@ -72,6 +73,11 @@ import List.Extra
 import Random exposing (Generator)
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
+
+
+carBatteryPromileCostPerTile : Int
+carBatteryPromileCostPerTile =
+    1
 
 
 unarmedApCost : Int

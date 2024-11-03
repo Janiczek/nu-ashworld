@@ -108,7 +108,19 @@ Some places are more dangerous than others, though in the current state of the g
 
 Travelling also allows you to reach different towns and locations, each with unique quests and shops.
 
+If you somehow get your hands on a **car**, you'll be able to move on the map much faster, at the expense of certain power sources like the **microfusion cells**.
+
 ![Map with all the locations](/images/map_locations.webp)
+
+</div>
+
+<div data-guide-section="Refuel your car">
+
+### Refuel your car
+
+Once you own a car, on the `[INVENTORY]` screen you'll be able to refuel it.
+
+***** TODO image *****
 
 </div>
 

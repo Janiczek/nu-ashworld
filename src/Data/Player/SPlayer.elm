@@ -1,5 +1,6 @@
 module Data.Player.SPlayer exposing
     ( addCaps
+    , addCarBattery
     , addHp
     , addItem
     , addItems
@@ -21,7 +22,9 @@ module Data.Player.SPlayer exposing
     , preferAmmo
     , readMessage
     , recalculateHp
+    , refuelCar
     , removeAllMessages
+    , removeCarBattery
     , removeFightMessages
     , removeItem
     , removeItems
@@ -57,11 +60,29 @@ import Data.Tick as Tick exposing (TickPerIntervalCurve)
 import Data.Trait as Trait
 import Data.Xp as Xp
 import Dict exposing (Dict)
-import Dict.Extra
+import Dict.Extra as Dict
 import Logic
 import SeqDict exposing (SeqDict)
 import SeqSet
 import Time exposing (Posix)
+
+
+addCarBattery : Int -> SPlayer -> SPlayer
+addCarBattery charge player =
+    { player
+        | carBatteryPromile =
+            player.carBatteryPromile
+                |> Maybe.map (\current -> min 1000 (current + charge))
+    }
+
+
+removeCarBattery : Int -> SPlayer -> SPlayer
+removeCarBattery used player =
+    { player
+        | carBatteryPromile =
+            player.carBatteryPromile
+                |> Maybe.map (\current -> max 0 (current - used))
+    }
 
 
 addTicks : Int -> SPlayer -> SPlayer
@@ -747,7 +768,7 @@ payQuestRequirements reqs player =
 
                 Quest.ItemRequirementOneOf requiredItems ->
                     -- Only pay the first item you find
-                    case Dict.Extra.find (\_ item -> List.member item.kind requiredItems && item.count >= 1) accPlayer.items of
+                    case Dict.find (\_ item -> List.member item.kind requiredItems && item.count >= 1) accPlayer.items of
                         Nothing ->
                             accPlayer
 
@@ -767,3 +788,31 @@ payQuestRequirements reqs player =
         )
         player
         reqs
+
+
+refuelCar : ItemKind.Kind -> SPlayer -> SPlayer
+refuelCar fuelKind player =
+    let
+        fuelItem : Maybe ( Item.Id, Item )
+        fuelItem =
+            -- TODO this could be a helper somewhere.
+            player.items
+                |> Dict.find (\_ item -> item.kind == fuelKind)
+    in
+    case fuelItem of
+        Nothing ->
+            player
+
+        Just ( itemId, item ) ->
+            if item.count > 0 then
+                case ItemKind.carBatteryChargePromileAmount fuelKind of
+                    Nothing ->
+                        player
+
+                    Just fuelCharge ->
+                        player
+                            |> removeItem itemId 1
+                            |> addCarBattery fuelCharge
+
+            else
+                player
