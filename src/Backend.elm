@@ -561,10 +561,7 @@ processGameTickForQuests worldName model =
                                                                 ( lastItemId, players )
 
                                                             Player.Player playerData ->
-                                                                if
-                                                                    SeqSet.member completedQuest playerData.questsActive
-                                                                        && World.enoughTicksGiven completedQuest playerData.name world.questsProgress
-                                                                then
+                                                                if SeqSet.member completedQuest playerData.questsActive then
                                                                     let
                                                                         ( newLastItemId_, newPlayerData ) =
                                                                             { playerData
@@ -572,7 +569,12 @@ processGameTickForQuests worldName model =
                                                                                     playerData.questsActive
                                                                                         |> SeqSet.remove completedQuest
                                                                             }
-                                                                                |> applyPlayerQuestRewards completedQuest lastItemId
+                                                                                |> (if World.enoughTicksGiven completedQuest playerData.name world.questsProgress then
+                                                                                        applyPlayerQuestRewards completedQuest lastItemId
+
+                                                                                    else
+                                                                                        \p -> ( lastItemId, p )
+                                                                                   )
                                                                     in
                                                                     ( newLastItemId_
                                                                     , players
