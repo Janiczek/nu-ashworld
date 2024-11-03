@@ -2,28 +2,24 @@ module Data.Vendor exposing
     ( Vendor
     , addCaps
     , addItem
+    , codec
     , emptyVendors
-    , encodeVendors
     , getFrom
     , removeItem
     , restockVendors
     , subtractCaps
-    , vendorsDecoder
     )
 
+import Codec exposing (Codec)
 import Data.Item as Item exposing (Item)
 import Data.Vendor.Shop as Shop exposing (Shop, ShopSpec)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 import Random exposing (Generator)
 import Random.Extra
 import Random.FloatExtra as Random
 import Random.List
 import SeqDict exposing (SeqDict)
-import SeqDict.Extra as SeqDict
 import SeqSet exposing (SeqSet)
 
 
@@ -160,35 +156,15 @@ restockVendors lastItemId vendors =
             (Random.constant ( vendors, lastItemId ))
 
 
-encodeVendors : SeqDict Shop Vendor -> JE.Value
-encodeVendors vendors =
-    SeqDict.encode Shop.encode encode vendors
-
-
-vendorsDecoder : Decoder (SeqDict Shop Vendor)
-vendorsDecoder =
-    SeqDict.decoder Shop.decoder decoder
-
-
-encode : Vendor -> JE.Value
-encode vendor =
-    JE.object
-        [ ( "shop", Shop.encode vendor.shop )
-        , ( "currentSpec", Shop.encodeSpec vendor.currentSpec )
-        , ( "items", Dict.encode JE.int Item.encode vendor.items )
-        , ( "caps", JE.int vendor.caps )
-        , ( "discountPct", JE.int vendor.discountPct )
-        ]
-
-
-decoder : Decoder Vendor
-decoder =
-    JD.succeed Vendor
-        |> JD.andMap (JD.field "shop" Shop.decoder)
-        |> JD.andMap (JD.field "currentSpec" Shop.specDecoder)
-        |> JD.andMap (JD.field "items" (Dict.decoder JD.int Item.decoder))
-        |> JD.andMap (JD.field "caps" JD.int)
-        |> JD.andMap (JD.field "discountPct" JD.int)
+codec : Codec Vendor
+codec =
+    Codec.object Vendor
+        |> Codec.field "shop" .shop Shop.codec
+        |> Codec.field "currentSpec" .currentSpec Shop.specCodec
+        |> Codec.field "items" .items (Dict.codec Codec.int Item.codec)
+        |> Codec.field "caps" .caps Codec.int
+        |> Codec.field "discountPct" .discountPct Codec.int
+        |> Codec.buildObject
 
 
 subtractCaps : Int -> Vendor -> Vendor

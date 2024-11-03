@@ -1,15 +1,12 @@
 module Data.Fight.OpponentType exposing
     ( OpponentType(..)
     , PlayerOpponent
-    , decoder
-    , encode
+    , codec
     )
 
+import Codec exposing (Codec)
 import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Player.PlayerName exposing (PlayerName)
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 
 
 type OpponentType
@@ -23,42 +20,25 @@ type alias PlayerOpponent =
     }
 
 
-decoder : Decoder OpponentType
-decoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "npc" ->
-                        JD.map Npc EnemyType.decoder
+codec : Codec OpponentType
+codec =
+    Codec.custom
+        (\npcEncoder playerEncoder value ->
+            case value of
+                Npc arg0 ->
+                    npcEncoder arg0
 
-                    "player" ->
-                        JD.map Player
-                            (JD.succeed PlayerOpponent
-                                |> JD.andMap (JD.field "name" JD.string)
-                                |> JD.andMap
-                                    (JD.maybe (JD.field "xp" JD.int)
-                                        |> JD.map (Maybe.withDefault 1)
-                                    )
-                            )
-
-                    _ ->
-                        JD.fail <| "Unknown Opponent type: '" ++ type_ ++ "'"
-            )
+                Player arg0 ->
+                    playerEncoder arg0
+        )
+        |> Codec.variant1 "Npc" Npc EnemyType.codec
+        |> Codec.variant1 "Player" Player playerOpponentCodec
+        |> Codec.buildCustom
 
 
-encode : OpponentType -> JE.Value
-encode opponentType =
-    case opponentType of
-        Npc enemyType ->
-            JE.object
-                [ ( "type", JE.string "npc" )
-                , ( "enemyType", EnemyType.encode enemyType )
-                ]
-
-        Player { name, xp } ->
-            JE.object
-                [ ( "type", JE.string "player" )
-                , ( "name", JE.string name )
-                , ( "xp", JE.int xp )
-                ]
+playerOpponentCodec : Codec PlayerOpponent
+playerOpponentCodec =
+    Codec.object PlayerOpponent
+        |> Codec.field "name" .name Codec.string
+        |> Codec.field "xp" .xp Codec.int
+        |> Codec.buildObject

@@ -4,6 +4,7 @@ import Admin
 import BiDict
 import Cmd.Extra as Cmd
 import Cmd.ExtraExtra as Cmd
+import Codec
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -768,7 +769,11 @@ logAndUpdateFromFrontend_ sessionId clientId msg model =
                                         , ( "client-id", JE.string clientId )
                                         , ( "player-name", JE.string playerName )
                                         , ( "world-name", JE.string worldName )
-                                        , ( "to-backend-msg", JE.string <| JE.encode 0 <| Admin.encodeToBackendMsg msg )
+                                        , ( "to-backend-msg"
+                                          , msg
+                                                |> Codec.encodeToString 0 Admin.toBackendMsgCodec
+                                                |> JE.string
+                                          )
                                         ]
                             , expect = Http.expectWhatever (always LoggedToBackendMsg)
                             , tracker = Nothing
@@ -1171,15 +1176,14 @@ updateAdmin clientId msg model =
                 json : String
                 json =
                     model
-                        |> Admin.encodeBackendModel
-                        |> JE.encode 0
+                        |> Codec.encodeToString 0 (Admin.backendModelCodec model.randomSeed)
             in
             ( model
             , Lamdera.sendToFrontend clientId <| JsonExportDone json
             )
 
         ImportJson jsonString ->
-            case JD.decodeString (Admin.backendModelDecoder model.randomSeed) jsonString of
+            case Codec.decodeString (Admin.backendModelCodec model.randomSeed) jsonString of
                 Ok newModel ->
                     ( { newModel | adminLoggedIn = model.adminLoggedIn }
                     , Cmd.batch

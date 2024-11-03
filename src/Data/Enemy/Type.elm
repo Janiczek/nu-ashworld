@@ -3,10 +3,9 @@ module Data.Enemy.Type exposing
     , actionPoints
     , addedSkillPercentages
     , all
+    , codec
     , damageResistance
     , damageThreshold
-    , decoder
-    , encode
     , equippedArmor
     , equippedWeapon
     , hp
@@ -20,13 +19,12 @@ module Data.Enemy.Type exposing
     , xpReward
     )
 
+import Codec exposing (Codec)
 import Data.Fight.DamageType exposing (DamageType(..))
 import Data.Item.Kind as ItemKind
 import Data.Skill exposing (Skill(..))
 import Data.Special exposing (Special)
 import Data.Xp exposing (BaseXp(..))
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 import SeqDict exposing (SeqDict)
 
 
@@ -216,118 +214,6 @@ hp type_ =
 
         ToughFireGecko ->
             80
-
-
-encode : EnemyType -> JE.Value
-encode type_ =
-    JE.string <|
-        case type_ of
-            Brahmin ->
-                "brahmin"
-
-            AngryBrahmin ->
-                "angry-brahmin"
-
-            WeakBrahmin ->
-                "weak-brahmin"
-
-            WildBrahmin ->
-                "wild-brahmin"
-
-            GiantAnt ->
-                "giant-ant"
-
-            ToughGiantAnt ->
-                "tough-giant-ant"
-
-            LesserRadscorpion ->
-                "lesser-radscorpion"
-
-            Radscorpion ->
-                "radscorpion"
-
-            BlackRadscorpion ->
-                "black-radscorpion"
-
-            LesserBlackRadscorpion ->
-                "lesser-black-radscorpion"
-
-            SilverGecko ->
-                "silver-gecko"
-
-            ToughSilverGecko ->
-                "tough-silver-gecko"
-
-            GoldenGecko ->
-                "golden-gecko"
-
-            ToughGoldenGecko ->
-                "tough-golden-gecko"
-
-            FireGecko ->
-                "fire-gecko"
-
-            ToughFireGecko ->
-                "tough-fire-gecko"
-
-
-decoder : Decoder EnemyType
-decoder =
-    JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "brahmin" ->
-                        JD.succeed Brahmin
-
-                    "angry-brahmin" ->
-                        JD.succeed AngryBrahmin
-
-                    "weak-brahmin" ->
-                        JD.succeed WeakBrahmin
-
-                    "wild-brahmin" ->
-                        JD.succeed WildBrahmin
-
-                    "giant-ant" ->
-                        JD.succeed GiantAnt
-
-                    "tough-giant-ant" ->
-                        JD.succeed ToughGiantAnt
-
-                    "lesser-radscorpion" ->
-                        JD.succeed LesserRadscorpion
-
-                    "radscorpion" ->
-                        JD.succeed Radscorpion
-
-                    "lesser-black-radscorpion" ->
-                        JD.succeed LesserBlackRadscorpion
-
-                    "black-radscorpion" ->
-                        JD.succeed BlackRadscorpion
-
-                    "silver-gecko" ->
-                        JD.succeed SilverGecko
-
-                    "tough-silver-gecko" ->
-                        JD.succeed ToughSilverGecko
-
-                    "golden-gecko" ->
-                        JD.succeed GoldenGecko
-
-                    "tough-golden-gecko" ->
-                        JD.succeed ToughGoldenGecko
-
-                    "fire-gecko" ->
-                        JD.succeed FireGecko
-
-                    "tough-fire-gecko" ->
-                        JD.succeed ToughFireGecko
-
-                    _ ->
-                        JD.fail <| "Unknown Enemy.Type: '" ++ type_ ++ "'"
-            )
 
 
 name : EnemyType -> String
@@ -1718,3 +1604,75 @@ damageThresholdPlasma type_ =
 
         AngryBrahmin ->
             0
+
+
+codec : Codec EnemyType
+codec =
+    Codec.custom
+        (\silverGeckoEncoder toughSilverGeckoEncoder goldenGeckoEncoder toughGoldenGeckoEncoder fireGeckoEncoder toughFireGeckoEncoder brahminEncoder angryBrahminEncoder weakBrahminEncoder wildBrahminEncoder giantAntEncoder toughGiantAntEncoder blackRadscorpionEncoder lesserBlackRadscorpionEncoder lesserRadscorpionEncoder radscorpionEncoder value ->
+            case value of
+                SilverGecko ->
+                    silverGeckoEncoder
+
+                ToughSilverGecko ->
+                    toughSilverGeckoEncoder
+
+                GoldenGecko ->
+                    goldenGeckoEncoder
+
+                ToughGoldenGecko ->
+                    toughGoldenGeckoEncoder
+
+                FireGecko ->
+                    fireGeckoEncoder
+
+                ToughFireGecko ->
+                    toughFireGeckoEncoder
+
+                Brahmin ->
+                    brahminEncoder
+
+                AngryBrahmin ->
+                    angryBrahminEncoder
+
+                WeakBrahmin ->
+                    weakBrahminEncoder
+
+                WildBrahmin ->
+                    wildBrahminEncoder
+
+                GiantAnt ->
+                    giantAntEncoder
+
+                ToughGiantAnt ->
+                    toughGiantAntEncoder
+
+                BlackRadscorpion ->
+                    blackRadscorpionEncoder
+
+                LesserBlackRadscorpion ->
+                    lesserBlackRadscorpionEncoder
+
+                LesserRadscorpion ->
+                    lesserRadscorpionEncoder
+
+                Radscorpion ->
+                    radscorpionEncoder
+        )
+        |> Codec.variant0 "SilverGecko" SilverGecko
+        |> Codec.variant0 "ToughSilverGecko" ToughSilverGecko
+        |> Codec.variant0 "GoldenGecko" GoldenGecko
+        |> Codec.variant0 "ToughGoldenGecko" ToughGoldenGecko
+        |> Codec.variant0 "FireGecko" FireGecko
+        |> Codec.variant0 "ToughFireGecko" ToughFireGecko
+        |> Codec.variant0 "Brahmin" Brahmin
+        |> Codec.variant0 "AngryBrahmin" AngryBrahmin
+        |> Codec.variant0 "WeakBrahmin" WeakBrahmin
+        |> Codec.variant0 "WildBrahmin" WildBrahmin
+        |> Codec.variant0 "GiantAnt" GiantAnt
+        |> Codec.variant0 "ToughGiantAnt" ToughGiantAnt
+        |> Codec.variant0 "BlackRadscorpion" BlackRadscorpion
+        |> Codec.variant0 "LesserBlackRadscorpion" LesserBlackRadscorpion
+        |> Codec.variant0 "LesserRadscorpion" LesserRadscorpion
+        |> Codec.variant0 "Radscorpion" Radscorpion
+        |> Codec.buildCustom

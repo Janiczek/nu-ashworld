@@ -2,9 +2,8 @@ module Data.Message exposing
     ( Content(..)
     , Id
     , Message
+    , codec
     , content
-    , dictDecoder
-    , encode
     , fullDate
     , isFightMessage
     , new
@@ -12,19 +11,16 @@ module Data.Message exposing
     , summary
     )
 
+import Codec exposing (Codec)
 import Data.Fight as Fight
 import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
-import Dict exposing (Dict)
 import Html exposing (Attribute, Html)
-import Iso8601
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 import Markdown
 import Time exposing (Posix)
+import Time.ExtraExtra as Time
 
 
 type alias Id =
@@ -72,106 +68,58 @@ isFightMessage content_ =
             True
 
 
-encode : Message -> JE.Value
-encode message =
-    JE.object
-        [ ( "id", JE.int message.id )
-        , ( "content", encodeContent message.content )
-        , ( "hasBeenRead", JE.bool message.hasBeenRead )
-        , ( "date", Iso8601.encode message.date )
-        ]
+codec : Codec Message
+codec =
+    Codec.object Message
+        |> Codec.field "id" .id Codec.int
+        |> Codec.field "content" .content contentCodec
+        |> Codec.field "hasBeenRead" .hasBeenRead Codec.bool
+        |> Codec.field "date" .date Time.posixCodec
+        |> Codec.buildObject
 
 
-{-| TODO sometime in the future, with hard reset, once all messages have IDs, we
-could change this back into decoder?
--}
-dictDecoder : Decoder (Dict Id Message)
-dictDecoder =
-    JD.oneOf
-        [ dictDecoderV1
-        ]
+contentCodec : Codec Content
+contentCodec =
+    Codec.custom
+        (\welcomeEncoder youAdvancedLevelEncoder youWereAttackedEncoder youAttackedEncoder value ->
+            case value of
+                Welcome ->
+                    welcomeEncoder
 
+                YouAdvancedLevel arg0 ->
+                    youAdvancedLevelEncoder arg0
 
-dictDecoderV1 : Decoder (Dict Id Message)
-dictDecoderV1 =
-    JD.list
-        (JD.succeed Message
-            |> JD.andMap (JD.field "id" JD.int)
-            |> JD.andMap (JD.field "content" contentDecoder)
-            |> JD.andMap (JD.field "hasBeenRead" JD.bool)
-            |> JD.andMap (JD.field "date" Iso8601.decoder)
+                YouWereAttacked arg0 ->
+                    youWereAttackedEncoder arg0
+
+                YouAttacked arg0 ->
+                    youAttackedEncoder arg0
         )
-        |> JD.map
-            (List.map (\message -> ( message.id, message ))
-                >> Dict.fromList
+        |> Codec.variant0 "Welcome" Welcome
+        |> Codec.variant1
+            "YouAdvancedLevel"
+            YouAdvancedLevel
+            (Codec.object (\newLevel -> { newLevel = newLevel })
+                |> Codec.field "newLevel" .newLevel Codec.int
+                |> Codec.buildObject
             )
-
-
-encodeContent : Content -> JE.Value
-encodeContent content_ =
-    case content_ of
-        Welcome ->
-            JE.object [ ( "type", JE.string "Welcome" ) ]
-
-        YouAdvancedLevel r ->
-            JE.object
-                [ ( "type", JE.string "YouAdvancedLevel" )
-                , ( "newLevel", JE.int r.newLevel )
-                ]
-
-        YouWereAttacked r ->
-            JE.object
-                [ ( "type", JE.string "YouWereAttacked" )
-                , ( "attacker", JE.string r.attacker )
-                , ( "fightInfo", Fight.encodeInfo r.fightInfo )
-                ]
-
-        YouAttacked r ->
-            JE.object
-                [ ( "type", JE.string "YouAttacked" )
-                , ( "target", JE.string r.target )
-                , ( "fightInfo", Fight.encodeInfo r.fightInfo )
-                ]
-
-
-contentDecoder : Decoder Content
-contentDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "Welcome" ->
-                        JD.succeed Welcome
-
-                    "YouAdvancedLevel" ->
-                        JD.field "newLevel" JD.int
-                            |> JD.map (\newLevel -> YouAdvancedLevel { newLevel = newLevel })
-
-                    "YouWereAttacked" ->
-                        JD.map2
-                            (\attacker fightInfo ->
-                                YouWereAttacked
-                                    { attacker = attacker
-                                    , fightInfo = fightInfo
-                                    }
-                            )
-                            (JD.field "attacker" JD.string)
-                            (JD.field "fightInfo" Fight.infoDecoder)
-
-                    "YouAttacked" ->
-                        JD.map2
-                            (\target fightInfo ->
-                                YouAttacked
-                                    { target = target
-                                    , fightInfo = fightInfo
-                                    }
-                            )
-                            (JD.field "target" JD.string)
-                            (JD.field "fightInfo" Fight.infoDecoder)
-
-                    _ ->
-                        JD.fail <| "Unknown Log Type: '" ++ type_ ++ "'"
+        |> Codec.variant1
+            "YouWereAttacked"
+            YouWereAttacked
+            (Codec.object (\attacker fightInfo -> { attacker = attacker, fightInfo = fightInfo })
+                |> Codec.field "attacker" .attacker Codec.string
+                |> Codec.field "fightInfo" .fightInfo Fight.infoCodec
+                |> Codec.buildObject
             )
+        |> Codec.variant1
+            "YouAttacked"
+            YouAttacked
+            (Codec.object (\target fightInfo -> { target = target, fightInfo = fightInfo })
+                |> Codec.field "target" .target Codec.string
+                |> Codec.field "fightInfo" .fightInfo Fight.infoCodec
+                |> Codec.buildObject
+            )
+        |> Codec.buildCustom
 
 
 new : Id -> Posix -> Content -> Message

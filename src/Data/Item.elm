@@ -1,25 +1,23 @@
 module Data.Item exposing
-    ( Item, decoder, encode
+    ( Item, codec
     , Id
-    , UniqueKey, encodeUniqueKey, uniqueKeyDecoder
+    , UniqueKey, uniqueKeyCodec
     , create, findMergeableId, getUniqueKey
     )
 
 {-|
 
-@docs Item, decoder, encode
+@docs Item, codec
 @docs Id
-@docs UniqueKey, encodeUniqueKey, uniqueKeyDecoder
+@docs UniqueKey, uniqueKeyCodec
 @docs create, findMergeableId, getUniqueKey
 
 -}
 
+import Codec exposing (Codec)
 import Data.Item.Kind as Kind exposing (Kind)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 
 
 type alias Item =
@@ -33,21 +31,13 @@ type alias Id =
     Int
 
 
-encode : Item -> JE.Value
-encode item =
-    JE.object
-        [ ( "id", JE.int item.id )
-        , ( "kind", Kind.encode item.kind )
-        , ( "count", JE.int item.count )
-        ]
-
-
-decoder : Decoder Item
-decoder =
-    JD.succeed Item
-        |> JD.andMap (JD.field "id" JD.int)
-        |> JD.andMap (JD.field "kind" Kind.decoder)
-        |> JD.andMap (JD.field "count" JD.int)
+codec : Codec Item
+codec =
+    Codec.object Item
+        |> Codec.field "id" .id Codec.int
+        |> Codec.field "kind" .kind Kind.codec
+        |> Codec.field "count" .count Codec.int
+        |> Codec.buildObject
 
 
 create :
@@ -92,17 +82,11 @@ type alias UniqueKey =
     }
 
 
-encodeUniqueKey : UniqueKey -> JE.Value
-encodeUniqueKey uniqueKey =
-    JE.object
-        [ ( "kind", Kind.encode uniqueKey.kind )
-        ]
-
-
-uniqueKeyDecoder : Decoder UniqueKey
-uniqueKeyDecoder =
-    JD.map UniqueKey
-        (JD.field "kind" Kind.decoder)
+uniqueKeyCodec : Codec UniqueKey
+uniqueKeyCodec =
+    Codec.object UniqueKey
+        |> Codec.field "kind" .kind Kind.codec
+        |> Codec.buildObject
 
 
 getUniqueKey : Item -> UniqueKey

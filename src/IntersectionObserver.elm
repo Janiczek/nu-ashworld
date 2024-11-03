@@ -4,7 +4,6 @@ import Html as H exposing (Attribute, Html)
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as JD exposing (Decoder)
-import Json.Encode
 import Time
 
 
@@ -26,7 +25,7 @@ view observedSelector toMsg attrs content =
 
 type alias Intersection =
     { isIntersecting : Bool
-    , element : Json.Encode.Value
+    , element : JD.Value
     , time : Time.Posix
     }
 

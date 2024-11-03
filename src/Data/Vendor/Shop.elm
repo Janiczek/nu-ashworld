@@ -1,28 +1,27 @@
 module Data.Vendor.Shop exposing
-    ( Shop(..), encode, decoder
+    ( Shop(..), codec
     , all, isAvailable
     , personName, description, barterSkill, initialSpec
     , location, forLocation, isInLocation
-    , ShopSpec, encodeSpec, specDecoder
+    , ShopSpec, specCodec
     )
 
 {-|
 
-@docs Shop, encode, decoder
+@docs Shop, codec
 @docs all, isAvailable
 @docs personName, description, barterSkill, initialSpec
 @docs location, forLocation, isInLocation
 
-@docs ShopSpec, encodeSpec, specDecoder
+@docs ShopSpec, specCodec
 
 -}
 
+import Codec exposing (Codec)
 import Data.Item as Item
 import Data.Item.Kind exposing (Kind(..))
 import Data.Map.Location as Location exposing (Location)
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
-import Random.FloatExtra as Random exposing (NormalIntSpec)
+import Random.FloatExtra as RandomFloat exposing (NormalIntSpec)
 import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
 import SeqSet exposing (SeqSet)
@@ -975,172 +974,105 @@ initialSpec shop =
             }
 
 
-encode : Shop -> JE.Value
-encode shop =
-    case shop of
-        ArroyoHakunin ->
-            JE.string "ArroyoHakunin"
+codec : Codec Shop
+codec =
+    Codec.custom
+        (\arroyoHakuninEncoder klamathMaidaEncoder klamathVicEncoder denFlickEncoder modocJoEncoder vaultCityRandalEncoder vaultCityHappyHarryEncoder geckoSurvivalGearPercyEncoder reddingAscortiEncoder brokenHillsGeneralStoreLizEncoder brokenHillsChemistJacobEncoder newRenoArmsEldridgeEncoder newRenoRenescoPharmacyEncoder nCRBusterEncoder nCRDuppoEncoder sanFranciscoFlyingDragon8LaoChouEncoder sanFranciscoRed888GunsMaiDaChiangEncoder sanFranciscoPunksCalEncoder sanFranciscoPunksJennaEncoder value ->
+            case value of
+                ArroyoHakunin ->
+                    arroyoHakuninEncoder
 
-        KlamathMaida ->
-            JE.string "KlamathMaida"
+                KlamathMaida ->
+                    klamathMaidaEncoder
 
-        KlamathVic ->
-            JE.string "KlamathVic"
+                KlamathVic ->
+                    klamathVicEncoder
 
-        DenFlick ->
-            JE.string "DenFlick"
+                DenFlick ->
+                    denFlickEncoder
 
-        ModocJo ->
-            JE.string "ModocJo"
+                ModocJo ->
+                    modocJoEncoder
 
-        VaultCityRandal ->
-            JE.string "VaultCityRandal"
+                VaultCityRandal ->
+                    vaultCityRandalEncoder
 
-        VaultCityHappyHarry ->
-            JE.string "VaultCityHappyHarry"
+                VaultCityHappyHarry ->
+                    vaultCityHappyHarryEncoder
 
-        GeckoSurvivalGearPercy ->
-            JE.string "GeckoSurvivalGearPercy"
+                GeckoSurvivalGearPercy ->
+                    geckoSurvivalGearPercyEncoder
 
-        ReddingAscorti ->
-            JE.string "ReddingAscorti"
+                ReddingAscorti ->
+                    reddingAscortiEncoder
 
-        BrokenHillsGeneralStoreLiz ->
-            JE.string "BrokenHillsGeneralStoreLiz"
+                BrokenHillsGeneralStoreLiz ->
+                    brokenHillsGeneralStoreLizEncoder
 
-        BrokenHillsChemistJacob ->
-            JE.string "BrokenHillsChemistJacob"
+                BrokenHillsChemistJacob ->
+                    brokenHillsChemistJacobEncoder
 
-        NewRenoArmsEldridge ->
-            JE.string "NewRenoArmsEldridge"
+                NewRenoArmsEldridge ->
+                    newRenoArmsEldridgeEncoder
 
-        NewRenoRenescoPharmacy ->
-            JE.string "NewRenoRenescoPharmacy"
+                NewRenoRenescoPharmacy ->
+                    newRenoRenescoPharmacyEncoder
 
-        NCRBuster ->
-            JE.string "NCRBuster"
+                NCRBuster ->
+                    nCRBusterEncoder
 
-        NCRDuppo ->
-            JE.string "NCRDuppo"
+                NCRDuppo ->
+                    nCRDuppoEncoder
 
-        SanFranciscoFlyingDragon8LaoChou ->
-            JE.string "SanFranciscoFlyingDragon8LaoChou"
+                SanFranciscoFlyingDragon8LaoChou ->
+                    sanFranciscoFlyingDragon8LaoChouEncoder
 
-        SanFranciscoRed888GunsMaiDaChiang ->
-            JE.string "SanFranciscoRed888GunsMaiDaChiang"
+                SanFranciscoRed888GunsMaiDaChiang ->
+                    sanFranciscoRed888GunsMaiDaChiangEncoder
 
-        SanFranciscoPunksCal ->
-            JE.string "SanFranciscoPunksCal"
+                SanFranciscoPunksCal ->
+                    sanFranciscoPunksCalEncoder
 
-        SanFranciscoPunksJenna ->
-            JE.string "SanFranciscoPunksJenna"
-
-
-decoder : Decoder Shop
-decoder =
-    JD.field "tag" JD.string
-        |> JD.andThen
-            (\ctor ->
-                case ctor of
-                    "ArroyoHakunin" ->
-                        JD.succeed ArroyoHakunin
-
-                    "KlamathMaida" ->
-                        JD.succeed KlamathMaida
-
-                    "KlamathVic" ->
-                        JD.succeed KlamathVic
-
-                    "DenFlick" ->
-                        JD.succeed DenFlick
-
-                    "ModocJo" ->
-                        JD.succeed ModocJo
-
-                    "VaultCityRandal" ->
-                        JD.succeed VaultCityRandal
-
-                    "VaultCityHappyHarry" ->
-                        JD.succeed VaultCityHappyHarry
-
-                    "GeckoSurvivalGearPercy" ->
-                        JD.succeed GeckoSurvivalGearPercy
-
-                    "ReddingAscorti" ->
-                        JD.succeed ReddingAscorti
-
-                    "BrokenHillsGeneralStoreLiz" ->
-                        JD.succeed BrokenHillsGeneralStoreLiz
-
-                    "BrokenHillsChemistJacob" ->
-                        JD.succeed BrokenHillsChemistJacob
-
-                    "NewRenoArmsEldridge" ->
-                        JD.succeed NewRenoArmsEldridge
-
-                    "NewRenoRenescoPharmacy" ->
-                        JD.succeed NewRenoRenescoPharmacy
-
-                    "NCRBuster" ->
-                        JD.succeed NCRBuster
-
-                    "NCRDuppo" ->
-                        JD.succeed NCRDuppo
-
-                    "SanFranciscoFlyingDragon8LaoChou" ->
-                        JD.succeed SanFranciscoFlyingDragon8LaoChou
-
-                    "SanFranciscoRed888GunsMaiDaChiang" ->
-                        JD.succeed SanFranciscoRed888GunsMaiDaChiang
-
-                    "SanFranciscoPunksCal" ->
-                        JD.succeed SanFranciscoPunksCal
-
-                    "SanFranciscoPunksJenna" ->
-                        JD.succeed SanFranciscoPunksJenna
-
-                    _ ->
-                        JD.fail "Unrecognized constructor"
-            )
-
-
-encodeSpec : ShopSpec -> JE.Value
-encodeSpec spec_ =
-    let
-        encodeItem : { maxCount : Int } -> JE.Value
-        encodeItem item =
-            JE.object
-                [ ( "maxCount", JE.int item.maxCount )
-                ]
-    in
-    JE.object
-        [ ( "capsAverage", JE.int spec_.caps.average )
-        , ( "capsMaxDeviation", JE.int spec_.caps.maxDeviation )
-        , ( "stock", SeqDict.encode Item.encodeUniqueKey encodeItem spec_.stock )
-        ]
-
-
-specDecoder : Decoder ShopSpec
-specDecoder =
-    JD.map2
-        (\caps stock ->
-            { caps = caps
-            , stock = stock
-            }
+                SanFranciscoPunksJenna ->
+                    sanFranciscoPunksJennaEncoder
         )
-        (JD.map2 Random.NormalIntSpec
-            (JD.field "capsAverage" JD.int)
-            (JD.field "capsMaxDeviation" JD.int)
-        )
-        (JD.field "stock"
-            (SeqDict.decoder
-                (JD.field "uniqueKey" Item.uniqueKeyDecoder)
-                (JD.field "maxCount" JD.int
-                    |> JD.map
-                        (\maxCount -> { maxCount = maxCount })
+        |> Codec.variant0 "ArroyoHakunin" ArroyoHakunin
+        |> Codec.variant0 "KlamathMaida" KlamathMaida
+        |> Codec.variant0 "KlamathVic" KlamathVic
+        |> Codec.variant0 "DenFlick" DenFlick
+        |> Codec.variant0 "ModocJo" ModocJo
+        |> Codec.variant0 "VaultCityRandal" VaultCityRandal
+        |> Codec.variant0 "VaultCityHappyHarry" VaultCityHappyHarry
+        |> Codec.variant0 "GeckoSurvivalGearPercy" GeckoSurvivalGearPercy
+        |> Codec.variant0 "ReddingAscorti" ReddingAscorti
+        |> Codec.variant0 "BrokenHillsGeneralStoreLiz" BrokenHillsGeneralStoreLiz
+        |> Codec.variant0 "BrokenHillsChemistJacob" BrokenHillsChemistJacob
+        |> Codec.variant0 "NewRenoArmsEldridge" NewRenoArmsEldridge
+        |> Codec.variant0 "NewRenoRenescoPharmacy" NewRenoRenescoPharmacy
+        |> Codec.variant0 "NCRBuster" NCRBuster
+        |> Codec.variant0 "NCRDuppo" NCRDuppo
+        |> Codec.variant0 "SanFranciscoFlyingDragon8LaoChou" SanFranciscoFlyingDragon8LaoChou
+        |> Codec.variant0 "SanFranciscoRed888GunsMaiDaChiang" SanFranciscoRed888GunsMaiDaChiang
+        |> Codec.variant0 "SanFranciscoPunksCal" SanFranciscoPunksCal
+        |> Codec.variant0 "SanFranciscoPunksJenna" SanFranciscoPunksJenna
+        |> Codec.buildCustom
+
+
+specCodec : Codec ShopSpec
+specCodec =
+    Codec.object ShopSpec
+        |> Codec.field "caps" .caps RandomFloat.normalIntSpecCodec
+        |> Codec.field
+            "stock"
+            .stock
+            (SeqDict.codec
+                Item.uniqueKeyCodec
+                (Codec.object (\maxCount -> { maxCount = maxCount })
+                    |> Codec.field "maxCount" .maxCount Codec.int
+                    |> Codec.buildObject
                 )
             )
-        )
+        |> Codec.buildObject
 
 
 locationsWithShops : SeqDict Location (List Shop)

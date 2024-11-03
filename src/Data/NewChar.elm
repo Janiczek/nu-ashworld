@@ -1,9 +1,9 @@
 module Data.NewChar exposing
     ( CreationError(..)
     , NewChar
+    , codec
     , decSpecial
     , dismissError
-    , encode
     , error
     , incSpecial
     , init
@@ -12,11 +12,10 @@ module Data.NewChar exposing
     , toggleTrait
     )
 
+import Codec exposing (Codec)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
-import Json.Encode as JE
-import Json.Encode.Extra as JE
 import Logic
 import SeqSet exposing (SeqSet)
 import SeqSet.Extra as SeqSet
@@ -149,32 +148,40 @@ dismissError char =
     { char | error = Nothing }
 
 
-encode : NewChar -> JE.Value
-encode newChar =
-    JE.object
-        [ ( "baseSpecial", Special.encode newChar.baseSpecial )
-        , ( "availableSpecial", JE.int newChar.availableSpecial )
-        , ( "taggedSkills", SeqSet.encode Skill.encode newChar.taggedSkills )
-        , ( "traits", SeqSet.encode Trait.encode newChar.traits )
-        , ( "error", JE.maybe encodeCreationError newChar.error )
-        ]
+codec : Codec NewChar
+codec =
+    Codec.object NewChar
+        |> Codec.field "baseSpecial" .baseSpecial Special.codec
+        |> Codec.field "availableSpecial" .availableSpecial Codec.int
+        |> Codec.field "taggedSkills" .taggedSkills (SeqSet.codec Skill.codec)
+        |> Codec.field "traits" .traits (SeqSet.codec Trait.codec)
+        |> Codec.field "error" .error (Codec.nullable creationErrorCodec)
+        |> Codec.buildObject
 
 
-encodeCreationError : CreationError -> JE.Value
-encodeCreationError err =
-    JE.string <|
-        case err of
-            DoesNotHaveThreeTaggedSkills ->
-                "DoesNotHaveThreeTaggedSkills"
+creationErrorCodec : Codec CreationError
+creationErrorCodec =
+    Codec.custom
+        (\doesNotHaveThreeTaggedSkillsEncoder hasSpecialPointsLeftEncoder usedMoreSpecialPointsThanAvailableEncoder hasSpecialOutOfRangeEncoder hasMoreThanTwoTraitsEncoder value ->
+            case value of
+                DoesNotHaveThreeTaggedSkills ->
+                    doesNotHaveThreeTaggedSkillsEncoder
 
-            HasSpecialPointsLeft ->
-                "HasSpecialPointsLeft"
+                HasSpecialPointsLeft ->
+                    hasSpecialPointsLeftEncoder
 
-            UsedMoreSpecialPointsThanAvailable ->
-                "UsedMoreSpecialPointsThanAvailable"
+                UsedMoreSpecialPointsThanAvailable ->
+                    usedMoreSpecialPointsThanAvailableEncoder
 
-            HasSpecialOutOfRange ->
-                "HasSpecialOutOfRange"
+                HasSpecialOutOfRange ->
+                    hasSpecialOutOfRangeEncoder
 
-            HasMoreThanTwoTraits ->
-                "HasMoreThanTwoTraits"
+                HasMoreThanTwoTraits ->
+                    hasMoreThanTwoTraitsEncoder
+        )
+        |> Codec.variant0 "DoesNotHaveThreeTaggedSkills" DoesNotHaveThreeTaggedSkills
+        |> Codec.variant0 "HasSpecialPointsLeft" HasSpecialPointsLeft
+        |> Codec.variant0 "UsedMoreSpecialPointsThanAvailable" UsedMoreSpecialPointsThanAvailable
+        |> Codec.variant0 "HasSpecialOutOfRange" HasSpecialOutOfRange
+        |> Codec.variant0 "HasMoreThanTwoTraits" HasMoreThanTwoTraits
+        |> Codec.buildCustom

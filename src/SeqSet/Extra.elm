@@ -1,21 +1,13 @@
-module SeqSet.Extra exposing (decoder, encode, toggle)
+module SeqSet.Extra exposing (codec, toggle)
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
 import SeqSet exposing (SeqSet)
 
 
-encode : (a -> JE.Value) -> SeqSet a -> JE.Value
-encode encodeItem set =
-    set
-        |> SeqSet.toList
-        |> JE.list encodeItem
-
-
-decoder : Decoder a -> Decoder (SeqSet a)
-decoder itemDecoder =
-    JD.list itemDecoder
-        |> JD.map SeqSet.fromList
+codec : Codec a -> Codec (SeqSet a)
+codec itemCodec =
+    Codec.list itemCodec
+        |> Codec.map SeqSet.fromList SeqSet.toList
 
 
 toggle : a -> SeqSet a -> SeqSet a

@@ -1,8 +1,7 @@
 module Data.Fight.AttackStyle exposing
     ( AttackStyle(..)
     , all
-    , decoder
-    , encode
+    , codec
     , isAimed
     , isUnaimed
     , isUnarmed
@@ -10,9 +9,8 @@ module Data.Fight.AttackStyle exposing
     , toString
     )
 
+import Codec exposing (Codec)
 import Data.Fight.AimedShot as AimedShot exposing (AimedShot)
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 import List.ExtraExtra as List
 
 
@@ -159,76 +157,44 @@ toString style =
             "burst"
 
 
-decoder : Decoder AttackStyle
-decoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "UnarmedUnaimed" ->
-                        JD.succeed UnarmedUnaimed
+codec : Codec AttackStyle
+codec =
+    Codec.custom
+        (\unarmedUnaimedEncoder unarmedAimedEncoder meleeUnaimedEncoder meleeAimedEncoder throwEncoder shootSingleUnaimedEncoder shootSingleAimedEncoder shootBurstEncoder value ->
+            case value of
+                UnarmedUnaimed ->
+                    unarmedUnaimedEncoder
 
-                    "UnarmedAimed" ->
-                        JD.map UnarmedAimed (JD.field "aimedShot" AimedShot.decoder)
+                UnarmedAimed arg0 ->
+                    unarmedAimedEncoder arg0
 
-                    "MeleeUnaimed" ->
-                        JD.succeed MeleeUnaimed
+                MeleeUnaimed ->
+                    meleeUnaimedEncoder
 
-                    "MeleeAimed" ->
-                        JD.map MeleeAimed (JD.field "aimedShot" AimedShot.decoder)
+                MeleeAimed arg0 ->
+                    meleeAimedEncoder arg0
 
-                    "Throw" ->
-                        JD.succeed Throw
+                Throw ->
+                    throwEncoder
 
-                    "ShootSingleUnaimed" ->
-                        JD.succeed ShootSingleUnaimed
+                ShootSingleUnaimed ->
+                    shootSingleUnaimedEncoder
 
-                    "ShootSingleAimed" ->
-                        JD.map ShootSingleAimed (JD.field "aimedShot" AimedShot.decoder)
+                ShootSingleAimed arg0 ->
+                    shootSingleAimedEncoder arg0
 
-                    "ShootBurst" ->
-                        JD.succeed ShootBurst
-
-                    _ ->
-                        JD.fail <| "Unknown AttackStyle type: " ++ type_
-            )
-
-
-encode : AttackStyle -> JE.Value
-encode attackStyle =
-    case attackStyle of
-        UnarmedUnaimed ->
-            JE.object [ ( "type", JE.string "UnarmedUnaimed" ) ]
-
-        UnarmedAimed aimedShot ->
-            JE.object
-                [ ( "type", JE.string "UnarmedAimed" )
-                , ( "aimedShot", AimedShot.encode aimedShot )
-                ]
-
-        MeleeUnaimed ->
-            JE.object [ ( "type", JE.string "MeleeUnaimed" ) ]
-
-        MeleeAimed aimedShot ->
-            JE.object
-                [ ( "type", JE.string "MeleeAimed" )
-                , ( "aimedShot", AimedShot.encode aimedShot )
-                ]
-
-        Throw ->
-            JE.object [ ( "type", JE.string "Throw" ) ]
-
-        ShootSingleUnaimed ->
-            JE.object [ ( "type", JE.string "ShootSingleUnaimed" ) ]
-
-        ShootSingleAimed aimedShot ->
-            JE.object
-                [ ( "type", JE.string "ShootSingleAimed" )
-                , ( "aimedShot", AimedShot.encode aimedShot )
-                ]
-
-        ShootBurst ->
-            JE.object [ ( "type", JE.string "ShootBurst" ) ]
+                ShootBurst ->
+                    shootBurstEncoder
+        )
+        |> Codec.variant0 "UnarmedUnaimed" UnarmedUnaimed
+        |> Codec.variant1 "UnarmedAimed" UnarmedAimed AimedShot.codec
+        |> Codec.variant0 "MeleeUnaimed" MeleeUnaimed
+        |> Codec.variant1 "MeleeAimed" MeleeAimed AimedShot.codec
+        |> Codec.variant0 "Throw" Throw
+        |> Codec.variant0 "ShootSingleUnaimed" ShootSingleUnaimed
+        |> Codec.variant1 "ShootSingleAimed" ShootSingleAimed AimedShot.codec
+        |> Codec.variant0 "ShootBurst" ShootBurst
+        |> Codec.buildCustom
 
 
 isUnarmed : AttackStyle -> Bool

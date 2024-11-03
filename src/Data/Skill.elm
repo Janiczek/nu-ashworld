@@ -1,18 +1,16 @@
 module Data.Skill exposing
     ( Skill(..)
     , all
+    , codec
     , combatSkills
-    , decoder
     , description
-    , encode
     , get
     , isUseful
     , name
     )
 
+import Codec exposing (Codec)
 import Data.Special exposing (Special)
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 import SeqDict exposing (SeqDict)
 
 
@@ -58,6 +56,86 @@ all =
     , Gambling
     , Outdoorsman
     ]
+
+
+codec : Codec Skill
+codec =
+    Codec.custom
+        (\smallGunsEncoder bigGunsEncoder energyWeaponsEncoder unarmedEncoder meleeWeaponsEncoder throwingEncoder firstAidEncoder doctorEncoder sneakEncoder lockpickEncoder stealEncoder trapsEncoder scienceEncoder repairEncoder speechEncoder barterEncoder gamblingEncoder outdoorsmanEncoder value ->
+            case value of
+                SmallGuns ->
+                    smallGunsEncoder
+
+                BigGuns ->
+                    bigGunsEncoder
+
+                EnergyWeapons ->
+                    energyWeaponsEncoder
+
+                Unarmed ->
+                    unarmedEncoder
+
+                MeleeWeapons ->
+                    meleeWeaponsEncoder
+
+                Throwing ->
+                    throwingEncoder
+
+                FirstAid ->
+                    firstAidEncoder
+
+                Doctor ->
+                    doctorEncoder
+
+                Sneak ->
+                    sneakEncoder
+
+                Lockpick ->
+                    lockpickEncoder
+
+                Steal ->
+                    stealEncoder
+
+                Traps ->
+                    trapsEncoder
+
+                Science ->
+                    scienceEncoder
+
+                Repair ->
+                    repairEncoder
+
+                Speech ->
+                    speechEncoder
+
+                Barter ->
+                    barterEncoder
+
+                Gambling ->
+                    gamblingEncoder
+
+                Outdoorsman ->
+                    outdoorsmanEncoder
+        )
+        |> Codec.variant0 "SmallGuns" SmallGuns
+        |> Codec.variant0 "BigGuns" BigGuns
+        |> Codec.variant0 "EnergyWeapons" EnergyWeapons
+        |> Codec.variant0 "Unarmed" Unarmed
+        |> Codec.variant0 "MeleeWeapons" MeleeWeapons
+        |> Codec.variant0 "Throwing" Throwing
+        |> Codec.variant0 "FirstAid" FirstAid
+        |> Codec.variant0 "Doctor" Doctor
+        |> Codec.variant0 "Sneak" Sneak
+        |> Codec.variant0 "Lockpick" Lockpick
+        |> Codec.variant0 "Steal" Steal
+        |> Codec.variant0 "Traps" Traps
+        |> Codec.variant0 "Science" Science
+        |> Codec.variant0 "Repair" Repair
+        |> Codec.variant0 "Speech" Speech
+        |> Codec.variant0 "Barter" Barter
+        |> Codec.variant0 "Gambling" Gambling
+        |> Codec.variant0 "Outdoorsman" Outdoorsman
+        |> Codec.buildCustom
 
 
 name : Skill -> String
@@ -190,130 +268,6 @@ get finalSpecial addedPercentages skill =
             specialPercentage skill finalSpecial
     in
     min maxPct <| added + viaSpecial
-
-
-encode : Skill -> JE.Value
-encode skill =
-    JE.string <|
-        case skill of
-            SmallGuns ->
-                "small_guns"
-
-            BigGuns ->
-                "big_guns"
-
-            EnergyWeapons ->
-                "energy_weapons"
-
-            Unarmed ->
-                "unarmed"
-
-            MeleeWeapons ->
-                "melee_weapons"
-
-            Throwing ->
-                "throwing"
-
-            FirstAid ->
-                "first_aid"
-
-            Doctor ->
-                "doctor"
-
-            Sneak ->
-                "sneak"
-
-            Lockpick ->
-                "lockpick"
-
-            Steal ->
-                "steal"
-
-            Traps ->
-                "traps"
-
-            Science ->
-                "science"
-
-            Repair ->
-                "repair"
-
-            Speech ->
-                "speech"
-
-            Barter ->
-                "barter"
-
-            Gambling ->
-                "gambling"
-
-            Outdoorsman ->
-                "outdoorsman"
-
-
-decoder : Decoder Skill
-decoder =
-    JD.string
-        |> JD.andThen
-            (\skill ->
-                case skill of
-                    "small_guns" ->
-                        JD.succeed SmallGuns
-
-                    "big_guns" ->
-                        JD.succeed BigGuns
-
-                    "energy_weapons" ->
-                        JD.succeed EnergyWeapons
-
-                    "unarmed" ->
-                        JD.succeed Unarmed
-
-                    "melee_weapons" ->
-                        JD.succeed MeleeWeapons
-
-                    "throwing" ->
-                        JD.succeed Throwing
-
-                    "first_aid" ->
-                        JD.succeed FirstAid
-
-                    "doctor" ->
-                        JD.succeed Doctor
-
-                    "sneak" ->
-                        JD.succeed Sneak
-
-                    "lockpick" ->
-                        JD.succeed Lockpick
-
-                    "steal" ->
-                        JD.succeed Steal
-
-                    "traps" ->
-                        JD.succeed Traps
-
-                    "science" ->
-                        JD.succeed Science
-
-                    "repair" ->
-                        JD.succeed Repair
-
-                    "speech" ->
-                        JD.succeed Speech
-
-                    "barter" ->
-                        JD.succeed Barter
-
-                    "gambling" ->
-                        JD.succeed Gambling
-
-                    "outdoorsman" ->
-                        JD.succeed Outdoorsman
-
-                    _ ->
-                        JD.fail <| "unknown Skill: '" ++ skill ++ "'"
-            )
 
 
 isUseful : Skill -> Bool

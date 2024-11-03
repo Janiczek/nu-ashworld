@@ -7,8 +7,7 @@ module Data.Quest exposing
     , SkillRequirement(..)
     , all
     , allForLocation
-    , decoder
-    , encode
+    , codec
     , exclusiveWith
     , globalRewardTitle
     , globalRewards
@@ -26,13 +25,12 @@ module Data.Quest exposing
     , xpPerTickGiven
     )
 
+import Codec exposing (Codec)
 import Data.Item.Kind as ItemKind
 import Data.Map.Location as Location exposing (Location)
 import Data.Perk as Perk exposing (Perk(..))
 import Data.Skill as Skill exposing (Skill)
 import Data.Vendor.Shop as Shop exposing (Shop)
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 import SeqDict exposing (SeqDict)
 
 
@@ -2836,464 +2834,310 @@ ticksNeededForPlayerReward name =
             0
 
 
-encode : Name -> JE.Value
-encode name =
-    JE.string <|
-        case name of
-            ArroyoKillEvilPlants ->
-                "ArroyoKillEvilPlants"
+codec : Codec Name
+codec =
+    Codec.custom
+        (\arroyoKillEvilPlantsEncoder arroyoFixWellForFeargusEncoder arroyoRescueNagorsDogEncoder klamathRefuelStillEncoder klamathGuardTheBrahminEncoder klamathRustleTheBrahminEncoder klamathKillRatGodEncoder klamathRescueTorrEncoder klamathSearchForSmileyTrapperEncoder toxicCavesRescueSmileyTrapperEncoder toxicCavesRepairTheGeneratorEncoder toxicCavesLootTheBunkerEncoder denFreeVicByPayingMetzgerEncoder denFreeVicByKillingOffSlaversGuildEncoder denDeliverMealToSmittyEncoder denFindCarPartsEncoder denFixTheCarEncoder modocInvestigateGhostFarmEncoder modocRemoveInfestationInFarrelsGardenEncoder modocMediateBetweenSlagsAndJoEncoder modocFindGoldWatchForCorneliusEncoder modocFindGoldWatchForFarrelEncoder vaultCityGetPlowForMrSmithEncoder vaultCityRescueAmandasHusbandEncoder geckoOptimizePowerPlantEncoder reddingClearWanamingoMineEncoder reddingFindExcavatorChipEncoder newRenoTrackDownPrettyBoyLloydEncoder newRenoHelpGuardSecretTransactionEncoder newRenoCollectTributeFromCorsicanBrothersEncoder newRenoWinBoxingTournamentEncoder newRenoAcquireElectronicLockpickEncoder nCRGuardBrahminCaravanEncoder nCRTestMutagenicSerumEncoder nCRRetrieveComputerPartsEncoder nCRFreeSlavesEncoder nCRInvestigateBrahminRaidsEncoder v15RescueChrissyEncoder v15CompleteDealWithNCREncoder v13FixVaultComputerEncoder v13FindTheGeckEncoder brokenHillsFixMineAirPurifierEncoder brokenHillsBlowUpMineAirPurifierEncoder brokenHillsFindMissingPeopleEncoder brokenHillsBeatFrancisAtArmwrestlingEncoder raidersFindEvidenceOfBishopTamperingEncoder raidersKillEverybodyEncoder sierraArmyDepotFindAbnormalBrainForSkynetEncoder sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder sierraArmyDepotFindHumanBrainForSkynetEncoder sierraArmyDepotFindCyberneticBrainForSkynetEncoder sierraArmyDepotAssembleBodyForSkynetEncoder militaryBaseExcavateTheEntranceEncoder militaryBaseKillMelchiorEncoder sanFranciscoFindFuelForTankerEncoder sanFranciscoFindLocationOfFobForTankerEncoder sanFranciscoFindNavCompPartForTankerEncoder sanFranciscoFindVertibirdPlansForHubologistsEncoder sanFranciscoFindVertibirdPlansForShiEncoder sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder sanFranciscoFindBadgersGirlfriendInsideShipEncoder sanFranciscoDefeatLoPanInRingForDragonEncoder sanFranciscoDefeatDragonInRingForLoPanEncoder sanFranciscoEmbarkForEnclaveEncoder navarroFixK9Encoder navarroRetrieveFobForTankerEncoder enclavePersuadeControlCompanySquadToDesertEncoder enclaveKillThePresidentStealthilyEncoder enclaveKillThePresidentTheUsualWayEncoder enclaveFindTheGeckEncoder enclaveRigTurretsToTargetFrankHorriganEncoder enclaveForceScientistToInitiateSelfDestructEncoder enclaveKillFrankHorriganEncoder enclaveReturnToMainlandEncoder value ->
+            case value of
+                ArroyoKillEvilPlants ->
+                    arroyoKillEvilPlantsEncoder
 
-            ArroyoFixWellForFeargus ->
-                "ArroyoFixWellForFeargus"
+                ArroyoFixWellForFeargus ->
+                    arroyoFixWellForFeargusEncoder
 
-            ArroyoRescueNagorsDog ->
-                "ArroyoRescueNagorsDog"
+                ArroyoRescueNagorsDog ->
+                    arroyoRescueNagorsDogEncoder
 
-            KlamathRefuelStill ->
-                "KlamathRefuelStill"
+                KlamathRefuelStill ->
+                    klamathRefuelStillEncoder
 
-            KlamathGuardTheBrahmin ->
-                "KlamathGuardTheBrahmin"
+                KlamathGuardTheBrahmin ->
+                    klamathGuardTheBrahminEncoder
 
-            KlamathRustleTheBrahmin ->
-                "KlamathRustleTheBrahmin"
+                KlamathRustleTheBrahmin ->
+                    klamathRustleTheBrahminEncoder
 
-            KlamathKillRatGod ->
-                "KlamathKillRatGod"
+                KlamathKillRatGod ->
+                    klamathKillRatGodEncoder
 
-            KlamathRescueTorr ->
-                "KlamathRescueTorr"
+                KlamathRescueTorr ->
+                    klamathRescueTorrEncoder
 
-            KlamathSearchForSmileyTrapper ->
-                "KlamathSearchForSmileyTrapper"
+                KlamathSearchForSmileyTrapper ->
+                    klamathSearchForSmileyTrapperEncoder
 
-            ToxicCavesRescueSmileyTrapper ->
-                "ToxicCavesRescueSmileyTrapper"
+                ToxicCavesRescueSmileyTrapper ->
+                    toxicCavesRescueSmileyTrapperEncoder
 
-            ToxicCavesRepairTheGenerator ->
-                "ToxicCavesRepairTheGenerator"
+                ToxicCavesRepairTheGenerator ->
+                    toxicCavesRepairTheGeneratorEncoder
 
-            ToxicCavesLootTheBunker ->
-                "ToxicCavesLootTheBunker"
+                ToxicCavesLootTheBunker ->
+                    toxicCavesLootTheBunkerEncoder
 
-            DenFreeVicByPayingMetzger ->
-                "DenFreeVicByPayingMetzger"
+                DenFreeVicByPayingMetzger ->
+                    denFreeVicByPayingMetzgerEncoder
 
-            DenFreeVicByKillingOffSlaversGuild ->
-                "DenFreeVicByKillingOffSlaversGuild"
+                DenFreeVicByKillingOffSlaversGuild ->
+                    denFreeVicByKillingOffSlaversGuildEncoder
 
-            DenDeliverMealToSmitty ->
-                "DenDeliverMealToSmitty"
+                DenDeliverMealToSmitty ->
+                    denDeliverMealToSmittyEncoder
 
-            DenFindCarParts ->
-                "DenFindCarParts"
+                DenFindCarParts ->
+                    denFindCarPartsEncoder
 
-            DenFixTheCar ->
-                "DenFixTheCar"
+                DenFixTheCar ->
+                    denFixTheCarEncoder
 
-            ModocInvestigateGhostFarm ->
-                "ModocInvestigateGhostFarm"
+                ModocInvestigateGhostFarm ->
+                    modocInvestigateGhostFarmEncoder
 
-            ModocRemoveInfestationInFarrelsGarden ->
-                "ModocRemoveInfestationInFarrelsGarden"
+                ModocRemoveInfestationInFarrelsGarden ->
+                    modocRemoveInfestationInFarrelsGardenEncoder
 
-            ModocMediateBetweenSlagsAndJo ->
-                "ModocMediateBetweenSlagsAndJo"
+                ModocMediateBetweenSlagsAndJo ->
+                    modocMediateBetweenSlagsAndJoEncoder
 
-            ModocFindGoldWatchForCornelius ->
-                "ModocFindGoldWatchForCornelius"
+                ModocFindGoldWatchForCornelius ->
+                    modocFindGoldWatchForCorneliusEncoder
 
-            ModocFindGoldWatchForFarrel ->
-                "ModocFindGoldWatchForFarrel"
+                ModocFindGoldWatchForFarrel ->
+                    modocFindGoldWatchForFarrelEncoder
 
-            VaultCityGetPlowForMrSmith ->
-                "VaultCityGetPlowForMrSmith"
+                VaultCityGetPlowForMrSmith ->
+                    vaultCityGetPlowForMrSmithEncoder
 
-            VaultCityRescueAmandasHusband ->
-                "VaultCityRescueAmandasHusband"
+                VaultCityRescueAmandasHusband ->
+                    vaultCityRescueAmandasHusbandEncoder
 
-            GeckoOptimizePowerPlant ->
-                "GeckoOptimizePowerPlant"
+                GeckoOptimizePowerPlant ->
+                    geckoOptimizePowerPlantEncoder
 
-            ReddingClearWanamingoMine ->
-                "ReddingClearWanamingoMine"
+                ReddingClearWanamingoMine ->
+                    reddingClearWanamingoMineEncoder
 
-            ReddingFindExcavatorChip ->
-                "ReddingFindExcavatorChip"
+                ReddingFindExcavatorChip ->
+                    reddingFindExcavatorChipEncoder
 
-            NewRenoTrackDownPrettyBoyLloyd ->
-                "NewRenoTrackDownPrettyBoyLloyd"
+                NewRenoTrackDownPrettyBoyLloyd ->
+                    newRenoTrackDownPrettyBoyLloydEncoder
 
-            NewRenoHelpGuardSecretTransaction ->
-                "NewRenoHelpGuardSecretTransaction"
+                NewRenoHelpGuardSecretTransaction ->
+                    newRenoHelpGuardSecretTransactionEncoder
 
-            NewRenoCollectTributeFromCorsicanBrothers ->
-                "NewRenoCollectTributeFromCorsicanBrothers"
+                NewRenoCollectTributeFromCorsicanBrothers ->
+                    newRenoCollectTributeFromCorsicanBrothersEncoder
 
-            NewRenoWinBoxingTournament ->
-                "NewRenoWinBoxingTournament"
+                NewRenoWinBoxingTournament ->
+                    newRenoWinBoxingTournamentEncoder
 
-            NewRenoAcquireElectronicLockpick ->
-                "NewRenoAcquireElectronicLockpick"
+                NewRenoAcquireElectronicLockpick ->
+                    newRenoAcquireElectronicLockpickEncoder
 
-            NCRGuardBrahminCaravan ->
-                "NCRGuardBrahminCaravan"
+                NCRGuardBrahminCaravan ->
+                    nCRGuardBrahminCaravanEncoder
 
-            NCRTestMutagenicSerum ->
-                "NCRTestMutagenicSerum"
+                NCRTestMutagenicSerum ->
+                    nCRTestMutagenicSerumEncoder
 
-            NCRRetrieveComputerParts ->
-                "NCRRetrieveComputerParts"
+                NCRRetrieveComputerParts ->
+                    nCRRetrieveComputerPartsEncoder
 
-            NCRFreeSlaves ->
-                "NCRFreeSlaves"
+                NCRFreeSlaves ->
+                    nCRFreeSlavesEncoder
 
-            NCRInvestigateBrahminRaids ->
-                "NCRInvestigateBrahminRaids"
+                NCRInvestigateBrahminRaids ->
+                    nCRInvestigateBrahminRaidsEncoder
 
-            V15RescueChrissy ->
-                "V15RescueChrissy"
+                V15RescueChrissy ->
+                    v15RescueChrissyEncoder
 
-            V15CompleteDealWithNCR ->
-                "V15CompleteDealWithNCR"
+                V15CompleteDealWithNCR ->
+                    v15CompleteDealWithNCREncoder
 
-            V13FixVaultComputer ->
-                "V13FixVaultComputer"
+                V13FixVaultComputer ->
+                    v13FixVaultComputerEncoder
 
-            V13FindTheGeck ->
-                "V13FindTheGeck"
+                V13FindTheGeck ->
+                    v13FindTheGeckEncoder
 
-            BrokenHillsFixMineAirPurifier ->
-                "BrokenHillsFixMineAirPurifier"
+                BrokenHillsFixMineAirPurifier ->
+                    brokenHillsFixMineAirPurifierEncoder
 
-            BrokenHillsBlowUpMineAirPurifier ->
-                "BrokenHillsBlowUpMineAirPurifier"
+                BrokenHillsBlowUpMineAirPurifier ->
+                    brokenHillsBlowUpMineAirPurifierEncoder
 
-            BrokenHillsFindMissingPeople ->
-                "BrokenHillsFindMissingPeople"
+                BrokenHillsFindMissingPeople ->
+                    brokenHillsFindMissingPeopleEncoder
 
-            BrokenHillsBeatFrancisAtArmwrestling ->
-                "BrokenHillsBeatFrancisAtArmwrestling"
+                BrokenHillsBeatFrancisAtArmwrestling ->
+                    brokenHillsBeatFrancisAtArmwrestlingEncoder
 
-            RaidersFindEvidenceOfBishopTampering ->
-                "RaidersFindEvidenceOfBishopTampering"
+                RaidersFindEvidenceOfBishopTampering ->
+                    raidersFindEvidenceOfBishopTamperingEncoder
 
-            RaidersKillEverybody ->
-                "RaidersKillEverybody"
+                RaidersKillEverybody ->
+                    raidersKillEverybodyEncoder
 
-            SierraArmyDepotFindAbnormalBrainForSkynet ->
-                "SierraArmyDepotFindAbnormalBrainForSkynet"
+                SierraArmyDepotFindAbnormalBrainForSkynet ->
+                    sierraArmyDepotFindAbnormalBrainForSkynetEncoder
 
-            SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-                "SierraArmyDepotFindChimpanzeeBrainForSkynet"
+                SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+                    sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder
 
-            SierraArmyDepotFindHumanBrainForSkynet ->
-                "SierraArmyDepotFindHumanBrainForSkynet"
+                SierraArmyDepotFindHumanBrainForSkynet ->
+                    sierraArmyDepotFindHumanBrainForSkynetEncoder
 
-            SierraArmyDepotFindCyberneticBrainForSkynet ->
-                "SierraArmyDepotFindCyberneticBrainForSkynet"
+                SierraArmyDepotFindCyberneticBrainForSkynet ->
+                    sierraArmyDepotFindCyberneticBrainForSkynetEncoder
 
-            SierraArmyDepotAssembleBodyForSkynet ->
-                "SierraArmyDepotAssembleBodyForSkynet"
+                SierraArmyDepotAssembleBodyForSkynet ->
+                    sierraArmyDepotAssembleBodyForSkynetEncoder
 
-            MilitaryBaseExcavateTheEntrance ->
-                "MilitaryBaseExcavateTheEntrance"
+                MilitaryBaseExcavateTheEntrance ->
+                    militaryBaseExcavateTheEntranceEncoder
 
-            MilitaryBaseKillMelchior ->
-                "MilitaryBaseKillMelchior"
+                MilitaryBaseKillMelchior ->
+                    militaryBaseKillMelchiorEncoder
 
-            SanFranciscoFindFuelForTanker ->
-                "SanFranciscoFindFuelForTanker"
-
-            SanFranciscoFindLocationOfFobForTanker ->
-                "SanFranciscoFindLocationOfFobForTanker"
-
-            SanFranciscoFindNavCompPartForTanker ->
-                "SanFranciscoFindNavCompPartForTanker"
-
-            SanFranciscoFindVertibirdPlansForHubologists ->
-                "SanFranciscoFindVertibirdPlansForHubologists"
-
-            SanFranciscoFindVertibirdPlansForShi ->
-                "SanFranciscoFindVertibirdPlansForShi"
-
-            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-                "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
-
-            SanFranciscoFindBadgersGirlfriendInsideShip ->
-                "SanFranciscoFindBadgersGirlfriendInsideShip"
-
-            SanFranciscoDefeatLoPanInRingForDragon ->
-                "SanFranciscoDefeatLoPanInRingForDragon"
-
-            SanFranciscoDefeatDragonInRingForLoPan ->
-                "SanFranciscoDefeatDragonInRingForLoPan"
-
-            SanFranciscoEmbarkForEnclave ->
-                "SanFranciscoEmbarkForEnclave"
-
-            NavarroFixK9 ->
-                "NavarroFixK9"
-
-            NavarroRetrieveFobForTanker ->
-                "NavarroRetrieveFobForTanker"
-
-            EnclavePersuadeControlCompanySquadToDesert ->
-                "EnclavePersuadeControlCompanySquadToDesert"
-
-            EnclaveKillThePresidentStealthily ->
-                "EnclaveKillThePresidentStealthily"
-
-            EnclaveKillThePresidentTheUsualWay ->
-                "EnclaveKillThePresidentTheUsualWay"
-
-            EnclaveFindTheGeck ->
-                "EnclaveFindTheGeck"
-
-            EnclaveRigTurretsToTargetFrankHorrigan ->
-                "EnclaveRigTurretsToTargetFrankHorrigan"
-
-            EnclaveForceScientistToInitiateSelfDestruct ->
-                "EnclaveForceScientistToInitiateSelfDestruct"
-
-            EnclaveKillFrankHorrigan ->
-                "EnclaveKillFrankHorrigan"
-
-            EnclaveReturnToMainland ->
-                "EnclaveReturnToMainland"
-
-
-decoder : Decoder Name
-decoder =
-    JD.string
-        |> JD.andThen
-            (\string ->
-                case string of
-                    "ArroyoKillEvilPlants" ->
-                        JD.succeed ArroyoKillEvilPlants
-
-                    "ArroyoFixWellForFeargus" ->
-                        JD.succeed ArroyoFixWellForFeargus
-
-                    "ArroyoRescueNagorsDog" ->
-                        JD.succeed ArroyoRescueNagorsDog
-
-                    "KlamathRefuelStill" ->
-                        JD.succeed KlamathRefuelStill
-
-                    "KlamathGuardTheBrahmin" ->
-                        JD.succeed KlamathGuardTheBrahmin
-
-                    "KlamathRustleTheBrahmin" ->
-                        JD.succeed KlamathRustleTheBrahmin
-
-                    "KlamathKillRatGod" ->
-                        JD.succeed KlamathKillRatGod
-
-                    "KlamathRescueTorr" ->
-                        JD.succeed KlamathRescueTorr
-
-                    "KlamathSearchForSmileyTrapper" ->
-                        JD.succeed KlamathSearchForSmileyTrapper
-
-                    "ToxicCavesRescueSmileyTrapper" ->
-                        JD.succeed ToxicCavesRescueSmileyTrapper
-
-                    "ToxicCavesRepairTheGenerator" ->
-                        JD.succeed ToxicCavesRepairTheGenerator
-
-                    "ToxicCavesLootTheBunker" ->
-                        JD.succeed ToxicCavesLootTheBunker
-
-                    "DenFreeVicByPayingMetzger" ->
-                        JD.succeed DenFreeVicByPayingMetzger
-
-                    "DenFreeVicByKillingOffSlaversGuild" ->
-                        JD.succeed DenFreeVicByKillingOffSlaversGuild
-
-                    "DenDeliverMealToSmitty" ->
-                        JD.succeed DenDeliverMealToSmitty
-
-                    "DenFindCarParts" ->
-                        JD.succeed DenFindCarParts
-
-                    "DenFixTheCar" ->
-                        JD.succeed DenFixTheCar
-
-                    "ModocInvestigateGhostFarm" ->
-                        JD.succeed ModocInvestigateGhostFarm
-
-                    "ModocRemoveInfestationInFarrelsGarden" ->
-                        JD.succeed ModocRemoveInfestationInFarrelsGarden
-
-                    "ModocMediateBetweenSlagsAndJo" ->
-                        JD.succeed ModocMediateBetweenSlagsAndJo
-
-                    "ModocFindGoldWatchForCornelius" ->
-                        JD.succeed ModocFindGoldWatchForCornelius
-
-                    "ModocFindGoldWatchForFarrel" ->
-                        JD.succeed ModocFindGoldWatchForFarrel
-
-                    "VaultCityGetPlowForMrSmith" ->
-                        JD.succeed VaultCityGetPlowForMrSmith
-
-                    "VaultCityRescueAmandasHusband" ->
-                        JD.succeed VaultCityRescueAmandasHusband
-
-                    "GeckoOptimizePowerPlant" ->
-                        JD.succeed GeckoOptimizePowerPlant
-
-                    "ReddingClearWanamingoMine" ->
-                        JD.succeed ReddingClearWanamingoMine
-
-                    "ReddingFindExcavatorChip" ->
-                        JD.succeed ReddingFindExcavatorChip
-
-                    "NewRenoTrackDownPrettyBoyLloyd" ->
-                        JD.succeed NewRenoTrackDownPrettyBoyLloyd
-
-                    "NewRenoHelpGuardSecretTransaction" ->
-                        JD.succeed NewRenoHelpGuardSecretTransaction
-
-                    "NewRenoCollectTributeFromCorsicanBrothers" ->
-                        JD.succeed NewRenoCollectTributeFromCorsicanBrothers
-
-                    "NewRenoWinBoxingTournament" ->
-                        JD.succeed NewRenoWinBoxingTournament
-
-                    "NewRenoAcquireElectronicLockpick" ->
-                        JD.succeed NewRenoAcquireElectronicLockpick
-
-                    "NCRGuardBrahminCaravan" ->
-                        JD.succeed NCRGuardBrahminCaravan
-
-                    "NCRTestMutagenicSerum" ->
-                        JD.succeed NCRTestMutagenicSerum
-
-                    "NCRRetrieveComputerParts" ->
-                        JD.succeed NCRRetrieveComputerParts
-
-                    "NCRFreeSlaves" ->
-                        JD.succeed NCRFreeSlaves
-
-                    "NCRInvestigateBrahminRaids" ->
-                        JD.succeed NCRInvestigateBrahminRaids
-
-                    "V15RescueChrissy" ->
-                        JD.succeed V15RescueChrissy
-
-                    "V15CompleteDealWithNCR" ->
-                        JD.succeed V15CompleteDealWithNCR
-
-                    "V13FixVaultComputer" ->
-                        JD.succeed V13FixVaultComputer
-
-                    "V13FindTheGeck" ->
-                        JD.succeed V13FindTheGeck
-
-                    "BrokenHillsFixMineAirPurifier" ->
-                        JD.succeed BrokenHillsFixMineAirPurifier
-
-                    "BrokenHillsBlowUpMineAirPurifier" ->
-                        JD.succeed BrokenHillsBlowUpMineAirPurifier
-
-                    "BrokenHillsFindMissingPeople" ->
-                        JD.succeed BrokenHillsFindMissingPeople
-
-                    "BrokenHillsBeatFrancisAtArmwrestling" ->
-                        JD.succeed BrokenHillsBeatFrancisAtArmwrestling
-
-                    "RaidersFindEvidenceOfBishopTampering" ->
-                        JD.succeed RaidersFindEvidenceOfBishopTampering
-
-                    "RaidersKillEverybody" ->
-                        JD.succeed RaidersKillEverybody
-
-                    "SierraArmyDepotFindAbnormalBrainForSkynet" ->
-                        JD.succeed SierraArmyDepotFindAbnormalBrainForSkynet
-
-                    "SierraArmyDepotFindChimpanzeeBrainForSkynet" ->
-                        JD.succeed SierraArmyDepotFindChimpanzeeBrainForSkynet
-
-                    "SierraArmyDepotFindHumanBrainForSkynet" ->
-                        JD.succeed SierraArmyDepotFindHumanBrainForSkynet
-
-                    "SierraArmyDepotFindCyberneticBrainForSkynet" ->
-                        JD.succeed SierraArmyDepotFindCyberneticBrainForSkynet
-
-                    "SierraArmyDepotAssembleBodyForSkynet" ->
-                        JD.succeed SierraArmyDepotAssembleBodyForSkynet
-
-                    "MilitaryBaseExcavateTheEntrance" ->
-                        JD.succeed MilitaryBaseExcavateTheEntrance
-
-                    "MilitaryBaseKillMelchior" ->
-                        JD.succeed MilitaryBaseKillMelchior
-
-                    "SanFranciscoFindFuelForTanker" ->
-                        JD.succeed SanFranciscoFindFuelForTanker
-
-                    "SanFranciscoFindLocationOfFobForTanker" ->
-                        JD.succeed SanFranciscoFindLocationOfFobForTanker
-
-                    "SanFranciscoFindNavCompPartForTanker" ->
-                        JD.succeed SanFranciscoFindNavCompPartForTanker
-
-                    "SanFranciscoFindVertibirdPlansForHubologists" ->
-                        JD.succeed SanFranciscoFindVertibirdPlansForHubologists
-
-                    "SanFranciscoFindVertibirdPlansForShi" ->
-                        JD.succeed SanFranciscoFindVertibirdPlansForShi
-
-                    "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel" ->
-                        JD.succeed SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
-
-                    "SanFranciscoFindBadgersGirlfriendInsideShip" ->
-                        JD.succeed SanFranciscoFindBadgersGirlfriendInsideShip
-
-                    "SanFranciscoDefeatLoPanInRingForDragon" ->
-                        JD.succeed SanFranciscoDefeatLoPanInRingForDragon
-
-                    "SanFranciscoDefeatDragonInRingForLoPan" ->
-                        JD.succeed SanFranciscoDefeatDragonInRingForLoPan
-
-                    "SanFranciscoEmbarkForEnclave" ->
-                        JD.succeed SanFranciscoEmbarkForEnclave
-
-                    "NavarroFixK9" ->
-                        JD.succeed NavarroFixK9
-
-                    "NavarroRetrieveFobForTanker" ->
-                        JD.succeed NavarroRetrieveFobForTanker
-
-                    "EnclavePersuadeControlCompanySquadToDesert" ->
-                        JD.succeed EnclavePersuadeControlCompanySquadToDesert
-
-                    "EnclaveKillThePresidentStealthily" ->
-                        JD.succeed EnclaveKillThePresidentStealthily
-
-                    "EnclaveKillThePresidentTheUsualWay" ->
-                        JD.succeed EnclaveKillThePresidentTheUsualWay
-
-                    "EnclaveFindTheGeck" ->
-                        JD.succeed EnclaveFindTheGeck
-
-                    "EnclaveRigTurretsToTargetFrankHorrigan" ->
-                        JD.succeed EnclaveRigTurretsToTargetFrankHorrigan
-
-                    "EnclaveForceScientistToInitiateSelfDestruct" ->
-                        JD.succeed EnclaveForceScientistToInitiateSelfDestruct
-
-                    "EnclaveKillFrankHorrigan" ->
-                        JD.succeed EnclaveKillFrankHorrigan
-
-                    "EnclaveReturnToMainland" ->
-                        JD.succeed EnclaveReturnToMainland
-
-                    _ ->
-                        JD.fail <| "Unknown quest name: '" ++ string ++ "'"
-            )
+                SanFranciscoFindFuelForTanker ->
+                    sanFranciscoFindFuelForTankerEncoder
+
+                SanFranciscoFindLocationOfFobForTanker ->
+                    sanFranciscoFindLocationOfFobForTankerEncoder
+
+                SanFranciscoFindNavCompPartForTanker ->
+                    sanFranciscoFindNavCompPartForTankerEncoder
+
+                SanFranciscoFindVertibirdPlansForHubologists ->
+                    sanFranciscoFindVertibirdPlansForHubologistsEncoder
+
+                SanFranciscoFindVertibirdPlansForShi ->
+                    sanFranciscoFindVertibirdPlansForShiEncoder
+
+                SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+                    sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder
+
+                SanFranciscoFindBadgersGirlfriendInsideShip ->
+                    sanFranciscoFindBadgersGirlfriendInsideShipEncoder
+
+                SanFranciscoDefeatLoPanInRingForDragon ->
+                    sanFranciscoDefeatLoPanInRingForDragonEncoder
+
+                SanFranciscoDefeatDragonInRingForLoPan ->
+                    sanFranciscoDefeatDragonInRingForLoPanEncoder
+
+                SanFranciscoEmbarkForEnclave ->
+                    sanFranciscoEmbarkForEnclaveEncoder
+
+                NavarroFixK9 ->
+                    navarroFixK9Encoder
+
+                NavarroRetrieveFobForTanker ->
+                    navarroRetrieveFobForTankerEncoder
+
+                EnclavePersuadeControlCompanySquadToDesert ->
+                    enclavePersuadeControlCompanySquadToDesertEncoder
+
+                EnclaveKillThePresidentStealthily ->
+                    enclaveKillThePresidentStealthilyEncoder
+
+                EnclaveKillThePresidentTheUsualWay ->
+                    enclaveKillThePresidentTheUsualWayEncoder
+
+                EnclaveFindTheGeck ->
+                    enclaveFindTheGeckEncoder
+
+                EnclaveRigTurretsToTargetFrankHorrigan ->
+                    enclaveRigTurretsToTargetFrankHorriganEncoder
+
+                EnclaveForceScientistToInitiateSelfDestruct ->
+                    enclaveForceScientistToInitiateSelfDestructEncoder
+
+                EnclaveKillFrankHorrigan ->
+                    enclaveKillFrankHorriganEncoder
+
+                EnclaveReturnToMainland ->
+                    enclaveReturnToMainlandEncoder
+        )
+        |> Codec.variant0 "ArroyoKillEvilPlants" ArroyoKillEvilPlants
+        |> Codec.variant0 "ArroyoFixWellForFeargus" ArroyoFixWellForFeargus
+        |> Codec.variant0 "ArroyoRescueNagorsDog" ArroyoRescueNagorsDog
+        |> Codec.variant0 "KlamathRefuelStill" KlamathRefuelStill
+        |> Codec.variant0 "KlamathGuardTheBrahmin" KlamathGuardTheBrahmin
+        |> Codec.variant0 "KlamathRustleTheBrahmin" KlamathRustleTheBrahmin
+        |> Codec.variant0 "KlamathKillRatGod" KlamathKillRatGod
+        |> Codec.variant0 "KlamathRescueTorr" KlamathRescueTorr
+        |> Codec.variant0 "KlamathSearchForSmileyTrapper" KlamathSearchForSmileyTrapper
+        |> Codec.variant0 "ToxicCavesRescueSmileyTrapper" ToxicCavesRescueSmileyTrapper
+        |> Codec.variant0 "ToxicCavesRepairTheGenerator" ToxicCavesRepairTheGenerator
+        |> Codec.variant0 "ToxicCavesLootTheBunker" ToxicCavesLootTheBunker
+        |> Codec.variant0 "DenFreeVicByPayingMetzger" DenFreeVicByPayingMetzger
+        |> Codec.variant0 "DenFreeVicByKillingOffSlaversGuild" DenFreeVicByKillingOffSlaversGuild
+        |> Codec.variant0 "DenDeliverMealToSmitty" DenDeliverMealToSmitty
+        |> Codec.variant0 "DenFindCarParts" DenFindCarParts
+        |> Codec.variant0 "DenFixTheCar" DenFixTheCar
+        |> Codec.variant0 "ModocInvestigateGhostFarm" ModocInvestigateGhostFarm
+        |> Codec.variant0 "ModocRemoveInfestationInFarrelsGarden" ModocRemoveInfestationInFarrelsGarden
+        |> Codec.variant0 "ModocMediateBetweenSlagsAndJo" ModocMediateBetweenSlagsAndJo
+        |> Codec.variant0 "ModocFindGoldWatchForCornelius" ModocFindGoldWatchForCornelius
+        |> Codec.variant0 "ModocFindGoldWatchForFarrel" ModocFindGoldWatchForFarrel
+        |> Codec.variant0 "VaultCityGetPlowForMrSmith" VaultCityGetPlowForMrSmith
+        |> Codec.variant0 "VaultCityRescueAmandasHusband" VaultCityRescueAmandasHusband
+        |> Codec.variant0 "GeckoOptimizePowerPlant" GeckoOptimizePowerPlant
+        |> Codec.variant0 "ReddingClearWanamingoMine" ReddingClearWanamingoMine
+        |> Codec.variant0 "ReddingFindExcavatorChip" ReddingFindExcavatorChip
+        |> Codec.variant0 "NewRenoTrackDownPrettyBoyLloyd" NewRenoTrackDownPrettyBoyLloyd
+        |> Codec.variant0 "NewRenoHelpGuardSecretTransaction" NewRenoHelpGuardSecretTransaction
+        |> Codec.variant0 "NewRenoCollectTributeFromCorsicanBrothers" NewRenoCollectTributeFromCorsicanBrothers
+        |> Codec.variant0 "NewRenoWinBoxingTournament" NewRenoWinBoxingTournament
+        |> Codec.variant0 "NewRenoAcquireElectronicLockpick" NewRenoAcquireElectronicLockpick
+        |> Codec.variant0 "NCRGuardBrahminCaravan" NCRGuardBrahminCaravan
+        |> Codec.variant0 "NCRTestMutagenicSerum" NCRTestMutagenicSerum
+        |> Codec.variant0 "NCRRetrieveComputerParts" NCRRetrieveComputerParts
+        |> Codec.variant0 "NCRFreeSlaves" NCRFreeSlaves
+        |> Codec.variant0 "NCRInvestigateBrahminRaids" NCRInvestigateBrahminRaids
+        |> Codec.variant0 "V15RescueChrissy" V15RescueChrissy
+        |> Codec.variant0 "V15CompleteDealWithNCR" V15CompleteDealWithNCR
+        |> Codec.variant0 "V13FixVaultComputer" V13FixVaultComputer
+        |> Codec.variant0 "V13FindTheGeck" V13FindTheGeck
+        |> Codec.variant0 "BrokenHillsFixMineAirPurifier" BrokenHillsFixMineAirPurifier
+        |> Codec.variant0 "BrokenHillsBlowUpMineAirPurifier" BrokenHillsBlowUpMineAirPurifier
+        |> Codec.variant0 "BrokenHillsFindMissingPeople" BrokenHillsFindMissingPeople
+        |> Codec.variant0 "BrokenHillsBeatFrancisAtArmwrestling" BrokenHillsBeatFrancisAtArmwrestling
+        |> Codec.variant0 "RaidersFindEvidenceOfBishopTampering" RaidersFindEvidenceOfBishopTampering
+        |> Codec.variant0 "RaidersKillEverybody" RaidersKillEverybody
+        |> Codec.variant0 "SierraArmyDepotFindAbnormalBrainForSkynet" SierraArmyDepotFindAbnormalBrainForSkynet
+        |> Codec.variant0 "SierraArmyDepotFindChimpanzeeBrainForSkynet" SierraArmyDepotFindChimpanzeeBrainForSkynet
+        |> Codec.variant0 "SierraArmyDepotFindHumanBrainForSkynet" SierraArmyDepotFindHumanBrainForSkynet
+        |> Codec.variant0 "SierraArmyDepotFindCyberneticBrainForSkynet" SierraArmyDepotFindCyberneticBrainForSkynet
+        |> Codec.variant0 "SierraArmyDepotAssembleBodyForSkynet" SierraArmyDepotAssembleBodyForSkynet
+        |> Codec.variant0 "MilitaryBaseExcavateTheEntrance" MilitaryBaseExcavateTheEntrance
+        |> Codec.variant0 "MilitaryBaseKillMelchior" MilitaryBaseKillMelchior
+        |> Codec.variant0 "SanFranciscoFindFuelForTanker" SanFranciscoFindFuelForTanker
+        |> Codec.variant0 "SanFranciscoFindLocationOfFobForTanker" SanFranciscoFindLocationOfFobForTanker
+        |> Codec.variant0 "SanFranciscoFindNavCompPartForTanker" SanFranciscoFindNavCompPartForTanker
+        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForHubologists" SanFranciscoFindVertibirdPlansForHubologists
+        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForShi" SanFranciscoFindVertibirdPlansForShi
+        |> Codec.variant0
+            "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
+            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
+        |> Codec.variant0 "SanFranciscoFindBadgersGirlfriendInsideShip" SanFranciscoFindBadgersGirlfriendInsideShip
+        |> Codec.variant0 "SanFranciscoDefeatLoPanInRingForDragon" SanFranciscoDefeatLoPanInRingForDragon
+        |> Codec.variant0 "SanFranciscoDefeatDragonInRingForLoPan" SanFranciscoDefeatDragonInRingForLoPan
+        |> Codec.variant0 "SanFranciscoEmbarkForEnclave" SanFranciscoEmbarkForEnclave
+        |> Codec.variant0 "NavarroFixK9" NavarroFixK9
+        |> Codec.variant0 "NavarroRetrieveFobForTanker" NavarroRetrieveFobForTanker
+        |> Codec.variant0 "EnclavePersuadeControlCompanySquadToDesert" EnclavePersuadeControlCompanySquadToDesert
+        |> Codec.variant0 "EnclaveKillThePresidentStealthily" EnclaveKillThePresidentStealthily
+        |> Codec.variant0 "EnclaveKillThePresidentTheUsualWay" EnclaveKillThePresidentTheUsualWay
+        |> Codec.variant0 "EnclaveFindTheGeck" EnclaveFindTheGeck
+        |> Codec.variant0 "EnclaveRigTurretsToTargetFrankHorrigan" EnclaveRigTurretsToTargetFrankHorrigan
+        |> Codec.variant0 "EnclaveForceScientistToInitiateSelfDestruct" EnclaveForceScientistToInitiateSelfDestruct
+        |> Codec.variant0 "EnclaveKillFrankHorrigan" EnclaveKillFrankHorrigan
+        |> Codec.variant0 "EnclaveReturnToMainland" EnclaveReturnToMainland
+        |> Codec.buildCustom
 
 
 isExclusiveWith : Name -> Name -> Bool

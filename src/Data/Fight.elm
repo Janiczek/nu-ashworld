@@ -7,8 +7,7 @@ module Data.Fight exposing
     , Who(..)
     , attackDamage
     , attackStyle
-    , encodeInfo
-    , infoDecoder
+    , infoCodec
     , isAttack
     , isCriticalAttack
     , isMiss
@@ -20,6 +19,7 @@ module Data.Fight exposing
     , theOther
     )
 
+import Codec exposing (Codec)
 import Data.Enemy.Type as EnemyType
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Critical as Critical
@@ -32,10 +32,6 @@ import Data.Skill exposing (Skill)
 import Data.Special exposing (Special)
 import Data.Trait exposing (Trait)
 import Dict exposing (Dict)
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
-import Json.Encode.Extra as JE
 import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
@@ -147,377 +143,226 @@ theOther who =
             Attacker
 
 
-infoDecoder : Decoder Info
-infoDecoder =
-    let
-        logItemDecoder : Decoder ( Who, Action )
-        logItemDecoder =
-            JD.map2 Tuple.pair
-                (JD.field "who" whoDecoder)
-                (JD.field "action" actionDecoder)
-    in
-    JD.succeed Info
-        |> JD.andMap (JD.field "attacker" OpponentType.decoder)
-        |> JD.andMap (JD.field "target" OpponentType.decoder)
-        |> JD.andMap (JD.field "log" (JD.list logItemDecoder))
-        |> JD.andMap (JD.field "result" resultDecoder)
+infoCodec : Codec Info
+infoCodec =
+    Codec.object Info
+        |> Codec.field "attacker" .attacker OpponentType.codec
+        |> Codec.field "target" .target OpponentType.codec
+        |> Codec.field "log" .log (Codec.list (Codec.tuple whoCodec actionCodec))
+        |> Codec.field "result" .result resultCodec
+        |> Codec.buildObject
 
 
-encodeInfo : Info -> JE.Value
-encodeInfo info =
-    let
-        encodeLogItem : ( Who, Action ) -> JE.Value
-        encodeLogItem ( who, action ) =
-            JE.object
-                [ ( "who", encodeWho who )
-                , ( "action", encodeAction action )
-                ]
-    in
-    JE.object
-        [ ( "attacker", OpponentType.encode info.attacker )
-        , ( "target", OpponentType.encode info.target )
-        , ( "log", JE.list encodeLogItem info.log )
-        , ( "result", encodeResult info.result )
-        ]
+whoCodec : Codec Who
+whoCodec =
+    Codec.custom
+        (\attackerEncoder targetEncoder value ->
+            case value of
+                Attacker ->
+                    attackerEncoder
+
+                Target ->
+                    targetEncoder
+        )
+        |> Codec.variant0 "Attacker" Attacker
+        |> Codec.variant0 "Target" Target
+        |> Codec.buildCustom
 
 
-encodeResult : Result -> JE.Value
-encodeResult result =
-    case result of
-        AttackerWon r ->
-            JE.object
-                [ ( "type", JE.string "AttackerWon" )
-                , ( "xpGained", JE.int r.xpGained )
-                , ( "capsGained", JE.int r.capsGained )
-                , ( "itemsGained", JE.list Item.encode r.itemsGained )
-                ]
+actionCodec : Codec Action
+actionCodec =
+    Codec.custom
+        (\startEncoder comeCloserEncoder attackEncoder missEncoder healEncoder skipTurnEncoder knockedOutEncoder standUpEncoder failToDoAnythingEncoder value ->
+            case value of
+                Start arg0 ->
+                    startEncoder arg0
 
-        TargetWon r ->
-            JE.object
-                [ ( "type", JE.string "TargetWon" )
-                , ( "xpGained", JE.int r.xpGained )
-                , ( "capsGained", JE.int r.capsGained )
-                , ( "itemsGained", JE.list Item.encode r.itemsGained )
-                ]
+                ComeCloser arg0 ->
+                    comeCloserEncoder arg0
 
-        TargetAlreadyDead ->
-            JE.object [ ( "type", JE.string "TargetAlreadyDead" ) ]
+                Attack arg0 ->
+                    attackEncoder arg0
 
-        BothDead ->
-            JE.object [ ( "type", JE.string "BothDead" ) ]
+                Miss arg0 ->
+                    missEncoder arg0
 
-        NobodyDead ->
-            JE.object [ ( "type", JE.string "NobodyDead" ) ]
+                Heal arg0 ->
+                    healEncoder arg0
 
-        NobodyDeadGivenUp ->
-            JE.object [ ( "type", JE.string "NobodyDeadGivenUp" ) ]
+                SkipTurn ->
+                    skipTurnEncoder
 
+                KnockedOut ->
+                    knockedOutEncoder
 
-resultDecoder : Decoder Result
-resultDecoder =
-    JD.oneOf
-        [ resultDecoderV1
-        ]
+                StandUp arg0 ->
+                    standUpEncoder arg0
 
-
-resultDecoderV1 : Decoder Result
-resultDecoderV1 =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "AttackerWon" ->
-                        JD.map3
-                            (\xp caps items ->
-                                AttackerWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = items
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-                            (JD.field "itemsGained" (JD.list Item.decoder))
-
-                    "TargetWon" ->
-                        JD.map3
-                            (\xp caps items ->
-                                TargetWon
-                                    { xpGained = xp
-                                    , capsGained = caps
-                                    , itemsGained = items
-                                    }
-                            )
-                            (JD.field "xpGained" JD.int)
-                            (JD.field "capsGained" JD.int)
-                            (JD.field "itemsGained" (JD.list Item.decoder))
-
-                    "TargetAlreadyDead" ->
-                        JD.succeed TargetAlreadyDead
-
-                    "BothDead" ->
-                        JD.succeed BothDead
-
-                    "NobodyDead" ->
-                        JD.succeed NobodyDead
-
-                    "NobodyDeadGivenUp" ->
-                        JD.succeed NobodyDeadGivenUp
-
-                    _ ->
-                        JD.fail <| "Unknown Fight.Result: '" ++ type_ ++ "'"
+                FailToDoAnything arg0 ->
+                    failToDoAnythingEncoder arg0
+        )
+        |> Codec.variant1
+            "Start"
+            Start
+            (Codec.object (\distanceHexes -> { distanceHexes = distanceHexes })
+                |> Codec.field "distanceHexes" .distanceHexes Codec.int
+                |> Codec.buildObject
             )
-
-
-encodeWho : Who -> JE.Value
-encodeWho who =
-    case who of
-        Attacker ->
-            JE.string "attacker"
-
-        Target ->
-            JE.string "target"
-
-
-whoDecoder : Decoder Who
-whoDecoder =
-    JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "attacker" ->
-                        JD.succeed Attacker
-
-                    "target" ->
-                        JD.succeed Target
-
-                    _ ->
-                        JD.fail <| "Unknown Who: '" ++ type_ ++ "'"
+        |> Codec.variant1
+            "ComeCloser"
+            ComeCloser
+            (Codec.object
+                (\hexes remainingDistanceHexes -> { hexes = hexes, remainingDistanceHexes = remainingDistanceHexes })
+                |> Codec.field "hexes" .hexes Codec.int
+                |> Codec.field "remainingDistanceHexes" .remainingDistanceHexes Codec.int
+                |> Codec.buildObject
             )
-
-
-encodeAction : Action -> JE.Value
-encodeAction action =
-    case action of
-        Start r ->
-            JE.object
-                [ ( "type", JE.string "Start" )
-                , ( "distanceHexes", JE.int r.distanceHexes )
-                ]
-
-        ComeCloser r ->
-            JE.object
-                [ ( "type", JE.string "ComeCloser" )
-                , ( "hexes", JE.int r.hexes )
-                , ( "remainingDistanceHexes", JE.int r.remainingDistanceHexes )
-                ]
-
-        Attack r ->
-            JE.object
-                [ ( "type", JE.string "Attack" )
-                , ( "damage", JE.int r.damage )
-                , ( "attackStyle", AttackStyle.encode r.attackStyle )
-                , ( "remainingHp", JE.int r.remainingHp )
-                , ( "critical"
-                  , JE.maybe
-                        (\( effects, message ) ->
-                            JE.object
-                                [ ( "effects", JE.list Critical.encodeEffect effects )
-                                , ( "message", Critical.encodeMessage message )
-                                ]
-                        )
-                        r.critical
-                  )
-                , ( "apCost", JE.int r.apCost )
-                ]
-
-        Miss r ->
-            JE.object
-                [ ( "type", JE.string "Miss" )
-                , ( "attackStyle", AttackStyle.encode r.attackStyle )
-                , ( "apCost", JE.int r.apCost )
-                ]
-
-        Heal r ->
-            JE.object
-                [ ( "type", JE.string "Heal" )
-                , ( "itemKind", ItemKind.encode r.itemKind )
-                , ( "healedHp", JE.int r.healedHp )
-                , ( "newHp", JE.int r.newHp )
-                ]
-
-        SkipTurn ->
-            JE.object
-                [ ( "type", JE.string "SkipTurn" )
-                ]
-
-        KnockedOut ->
-            JE.object [ ( "type", JE.string "KnockedOut" ) ]
-
-        StandUp { apCost } ->
-            JE.object
-                [ ( "type", JE.string "StandUp" )
-                , ( "apCost", JE.int apCost )
-                ]
-
-        FailToDoAnything reason ->
-            JE.object
-                [ ( "type", JE.string "FailToDoAnything" )
-                , ( "reason"
-                  , JE.string <|
-                        case reason of
-                            Heal_ItemNotPresent ->
-                                "Heal_ItemNotPresent"
-
-                            Heal_ItemDoesNotHeal ->
-                                "Heal_ItemDoesNotHeal"
-
-                            Heal_AlreadyFullyHealed ->
-                                "Heal_AlreadyFullyHealed"
-
-                            HealWithAnything_NoHealingItem ->
-                                "HealWithAnything_NoHealingItem"
-
-                            HealWithAnything_AlreadyFullyHealed ->
-                                "HealWithAnything_AlreadyFullyHealed"
-
-                            MoveForward_AlreadyNextToEachOther ->
-                                "MoveForward_AlreadyNextToEachOther"
-
-                            Attack_NotCloseEnough ->
-                                "Attack_NotCloseEnough"
-
-                            Attack_NotEnoughAP ->
-                                "Attack_NotEnoughAP"
-                  )
-                ]
-
-
-actionDecoder : Decoder Action
-actionDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "Start" ->
-                        JD.field "distanceHexes" JD.int
-                            |> JD.map (\distance -> Start { distanceHexes = distance })
-
-                    "ComeCloser" ->
-                        JD.map2
-                            (\hexes remaining ->
-                                ComeCloser
-                                    { hexes = hexes
-                                    , remainingDistanceHexes = remaining
-                                    }
-                            )
-                            (JD.field "hexes" JD.int)
-                            (JD.field "remainingDistanceHexes" JD.int)
-
-                    "Attack" ->
-                        attackActionDecoder
-
-                    "Miss" ->
-                        JD.map2
-                            (\attackStyle_ apCost ->
-                                Miss
-                                    { attackStyle = attackStyle_
-                                    , apCost = apCost
-                                    }
-                            )
-                            (JD.field "attackStyle" AttackStyle.decoder)
-                            (JD.field "apCost" JD.int)
-
-                    "Heal" ->
-                        JD.map3
-                            (\itemKind healedHp newHp ->
-                                Heal
-                                    { itemKind = itemKind
-                                    , healedHp = healedHp
-                                    , newHp = newHp
-                                    }
-                            )
-                            (JD.field "itemKind" ItemKind.decoder)
-                            (JD.field "healedHp" JD.int)
-                            (JD.field "newHp" JD.int)
-
-                    "SkipTurn" ->
-                        JD.succeed SkipTurn
-
-                    "KnockedOut" ->
-                        JD.succeed KnockedOut
-
-                    "StandUp" ->
-                        JD.map (\apCost -> StandUp { apCost = apCost })
-                            (JD.field "apCost" JD.int)
-
-                    "FailToDoAnything" ->
-                        JD.map FailToDoAnything (JD.field "reason" commandRejectionReasonDecoder)
-
-                    _ ->
-                        JD.fail <| "Unknown Fight.Action: '" ++ type_ ++ "'"
-            )
-
-
-commandRejectionReasonDecoder : Decoder CommandRejectionReason
-commandRejectionReasonDecoder =
-    JD.string
-        |> JD.andThen
-            (\reason ->
-                case reason of
-                    "Heal_AlreadyFullyHealed" ->
-                        JD.succeed Heal_AlreadyFullyHealed
-
-                    "Heal_ItemDoesNotHeal" ->
-                        JD.succeed Heal_ItemDoesNotHeal
-
-                    "Heal_ItemNotPresent" ->
-                        JD.succeed Heal_ItemNotPresent
-
-                    "HealWithAnything_NoHealingItem" ->
-                        JD.succeed HealWithAnything_NoHealingItem
-
-                    "HealWithAnything_AlreadyFullyHealed" ->
-                        JD.succeed HealWithAnything_AlreadyFullyHealed
-
-                    "Attack_NotCloseEnough" ->
-                        JD.succeed Attack_NotCloseEnough
-
-                    "Attack_NotEnoughAP" ->
-                        JD.succeed Attack_NotEnoughAP
-
-                    "MoveForward_AlreadyNextToEachOther" ->
-                        JD.succeed MoveForward_AlreadyNextToEachOther
-
-                    _ ->
-                        JD.fail <| "Unknown CommandRejectionReason: '" ++ reason ++ "'"
-            )
-
-
-attackActionDecoder : Decoder Action
-attackActionDecoder =
-    JD.map5
-        (\damage attackStyle_ remainingHp critical apCost ->
+        |> Codec.variant1
+            "Attack"
             Attack
-                { damage = damage
-                , attackStyle = attackStyle_
-                , remainingHp = remainingHp
-                , critical = critical
-                , apCost = apCost
-                }
-        )
-        (JD.field "damage" JD.int)
-        (JD.field "attackStyle" AttackStyle.decoder)
-        (JD.field "remainingHp" JD.int)
-        (JD.field "critical"
-            (JD.maybe
-                (JD.map2 Tuple.pair
-                    (JD.field "effects" (JD.list Critical.effectDecoder))
-                    (JD.field "message" Critical.messageDecoder)
+            (Codec.object
+                (\damage attackStyle_ remainingHp critical apCost ->
+                    { damage = damage
+                    , attackStyle = attackStyle_
+                    , remainingHp = remainingHp
+                    , critical = critical
+                    , apCost = apCost
+                    }
                 )
+                |> Codec.field "damage" .damage Codec.int
+                |> Codec.field "attackStyle" .attackStyle AttackStyle.codec
+                |> Codec.field "remainingHp" .remainingHp Codec.int
+                |> Codec.field "critical" .critical (Codec.nullable (Codec.tuple (Codec.list Critical.effectCodec) Critical.messageCodec))
+                |> Codec.field "apCost" .apCost Codec.int
+                |> Codec.buildObject
             )
+        |> Codec.variant1
+            "Miss"
+            Miss
+            (Codec.object
+                (\attackStyle_ apCost ->
+                    { attackStyle = attackStyle_
+                    , apCost = apCost
+                    }
+                )
+                |> Codec.field "attackStyle" .attackStyle AttackStyle.codec
+                |> Codec.field "apCost" .apCost Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "Heal"
+            Heal
+            (Codec.object (\itemKind healedHp newHp -> { itemKind = itemKind, healedHp = healedHp, newHp = newHp })
+                |> Codec.field "itemKind" .itemKind ItemKind.codec
+                |> Codec.field "healedHp" .healedHp Codec.int
+                |> Codec.field "newHp" .newHp Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant0 "SkipTurn" SkipTurn
+        |> Codec.variant0 "KnockedOut" KnockedOut
+        |> Codec.variant1
+            "StandUp"
+            StandUp
+            (Codec.object (\apCost -> { apCost = apCost })
+                |> Codec.field "apCost" .apCost Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1 "FailToDoAnything" FailToDoAnything commandRejectionReasonCodec
+        |> Codec.buildCustom
+
+
+commandRejectionReasonCodec : Codec CommandRejectionReason
+commandRejectionReasonCodec =
+    Codec.custom
+        (\heal_ItemNotPresentEncoder heal_ItemDoesNotHealEncoder heal_AlreadyFullyHealedEncoder healWithAnything_NoHealingItemEncoder healWithAnything_AlreadyFullyHealedEncoder moveForward_AlreadyNextToEachOtherEncoder attack_NotCloseEnoughEncoder attack_NotEnoughAPEncoder value ->
+            case value of
+                Heal_ItemNotPresent ->
+                    heal_ItemNotPresentEncoder
+
+                Heal_ItemDoesNotHeal ->
+                    heal_ItemDoesNotHealEncoder
+
+                Heal_AlreadyFullyHealed ->
+                    heal_AlreadyFullyHealedEncoder
+
+                HealWithAnything_NoHealingItem ->
+                    healWithAnything_NoHealingItemEncoder
+
+                HealWithAnything_AlreadyFullyHealed ->
+                    healWithAnything_AlreadyFullyHealedEncoder
+
+                MoveForward_AlreadyNextToEachOther ->
+                    moveForward_AlreadyNextToEachOtherEncoder
+
+                Attack_NotCloseEnough ->
+                    attack_NotCloseEnoughEncoder
+
+                Attack_NotEnoughAP ->
+                    attack_NotEnoughAPEncoder
         )
-        (JD.field "apCost" JD.int)
+        |> Codec.variant0 "Heal_ItemNotPresent" Heal_ItemNotPresent
+        |> Codec.variant0 "Heal_ItemDoesNotHeal" Heal_ItemDoesNotHeal
+        |> Codec.variant0 "Heal_AlreadyFullyHealed" Heal_AlreadyFullyHealed
+        |> Codec.variant0 "HealWithAnything_NoHealingItem" HealWithAnything_NoHealingItem
+        |> Codec.variant0 "HealWithAnything_AlreadyFullyHealed" HealWithAnything_AlreadyFullyHealed
+        |> Codec.variant0 "MoveForward_AlreadyNextToEachOther" MoveForward_AlreadyNextToEachOther
+        |> Codec.variant0 "Attack_NotCloseEnough" Attack_NotCloseEnough
+        |> Codec.variant0 "Attack_NotEnoughAP" Attack_NotEnoughAP
+        |> Codec.buildCustom
+
+
+resultCodec : Codec Result
+resultCodec =
+    Codec.custom
+        (\attackerWonEncoder targetWonEncoder targetAlreadyDeadEncoder bothDeadEncoder nobodyDeadEncoder nobodyDeadGivenUpEncoder value ->
+            case value of
+                AttackerWon arg0 ->
+                    attackerWonEncoder arg0
+
+                TargetWon arg0 ->
+                    targetWonEncoder arg0
+
+                TargetAlreadyDead ->
+                    targetAlreadyDeadEncoder
+
+                BothDead ->
+                    bothDeadEncoder
+
+                NobodyDead ->
+                    nobodyDeadEncoder
+
+                NobodyDeadGivenUp ->
+                    nobodyDeadGivenUpEncoder
+        )
+        |> Codec.variant1
+            "AttackerWon"
+            AttackerWon
+            (Codec.object
+                (\xpGained capsGained itemsGained ->
+                    { xpGained = xpGained, capsGained = capsGained, itemsGained = itemsGained }
+                )
+                |> Codec.field "xpGained" .xpGained Codec.int
+                |> Codec.field "capsGained" .capsGained Codec.int
+                |> Codec.field "itemsGained" .itemsGained (Codec.list Item.codec)
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "TargetWon"
+            TargetWon
+            (Codec.object
+                (\xpGained capsGained itemsGained ->
+                    { xpGained = xpGained, capsGained = capsGained, itemsGained = itemsGained }
+                )
+                |> Codec.field "xpGained" .xpGained Codec.int
+                |> Codec.field "capsGained" .capsGained Codec.int
+                |> Codec.field "itemsGained" .itemsGained (Codec.list Item.codec)
+                |> Codec.buildObject
+            )
+        |> Codec.variant0 "TargetAlreadyDead" TargetAlreadyDead
+        |> Codec.variant0 "BothDead" BothDead
+        |> Codec.variant0 "NobodyDead" NobodyDead
+        |> Codec.variant0 "NobodyDeadGivenUp" NobodyDeadGivenUp
+        |> Codec.buildCustom
 
 
 opponentName : OpponentType -> String

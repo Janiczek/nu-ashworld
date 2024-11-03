@@ -4,16 +4,13 @@ module Data.Fight.Critical exposing
     , EffectCategory(..)
     , Message(..)
     , Spec
-    , effectDecoder
-    , encodeEffect
-    , encodeMessage
-    , messageDecoder
+    , effectCodec
+    , messageCodec
     , toCategory
     )
 
+import Codec exposing (Codec)
 import Data.Special as Special
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 
 
 type EffectCategory
@@ -89,123 +86,72 @@ type alias Critical =
     }
 
 
-encodeEffect : Effect -> JE.Value
-encodeEffect effect =
-    case effect of
-        Knockout ->
-            JE.string "Knockout"
+messageCodec : Codec Message
+messageCodec =
+    Codec.custom
+        (\playerMessageEncoder otherMessageEncoder value ->
+            case value of
+                PlayerMessage arg0 ->
+                    playerMessageEncoder arg0
 
-        Knockdown ->
-            JE.string "Knockdown"
-
-        CrippledLeftLeg ->
-            JE.string "CrippledLeftLeg"
-
-        CrippledRightLeg ->
-            JE.string "CrippledRightLeg"
-
-        CrippledLeftArm ->
-            JE.string "CrippledLeftArm"
-
-        CrippledRightArm ->
-            JE.string "CrippledRightArm"
-
-        Blinded ->
-            JE.string "Blinded"
-
-        Death ->
-            JE.string "Death"
-
-        BypassArmor ->
-            JE.string "BypassArmor"
-
-        LoseNextTurn ->
-            JE.string "LoseNextTurn"
-
-
-effectDecoder : Decoder Effect
-effectDecoder =
-    JD.string
-        |> JD.andThen
-            (\str ->
-                case str of
-                    "Knockout" ->
-                        JD.succeed Knockout
-
-                    "Knockdown" ->
-                        JD.succeed Knockdown
-
-                    "CrippledLeftLeg" ->
-                        JD.succeed CrippledLeftLeg
-
-                    "CrippledRightLeg" ->
-                        JD.succeed CrippledRightLeg
-
-                    "CrippledLeftArm" ->
-                        JD.succeed CrippledLeftArm
-
-                    "CrippledRightArm" ->
-                        JD.succeed CrippledRightArm
-
-                    "Blinded" ->
-                        JD.succeed Blinded
-
-                    "Death" ->
-                        JD.succeed Death
-
-                    "BypassArmor" ->
-                        JD.succeed BypassArmor
-
-                    "LoseNextTurn" ->
-                        JD.succeed LoseNextTurn
-
-                    _ ->
-                        JD.fail <| "Unknown effect: " ++ str
+                OtherMessage arg0 ->
+                    otherMessageEncoder arg0
+        )
+        |> Codec.variant1
+            "PlayerMessage"
+            PlayerMessage
+            (Codec.object (\you them -> { you = you, them = them })
+                |> Codec.field "you" .you Codec.string
+                |> Codec.field "them" .them Codec.string
+                |> Codec.buildObject
             )
+        |> Codec.variant1 "OtherMessage" OtherMessage Codec.string
+        |> Codec.buildCustom
 
 
-encodeMessage : Message -> JE.Value
-encodeMessage message =
-    case message of
-        PlayerMessage arg0 ->
-            JE.object
-                [ ( "tag", JE.string "PlayerMessage" )
-                , ( "message"
-                  , JE.object
-                        [ ( "you", JE.string arg0.you )
-                        , ( "them", JE.string arg0.them )
-                        ]
-                  )
-                ]
+effectCodec : Codec Effect
+effectCodec =
+    Codec.custom
+        (\knockoutEncoder knockdownEncoder crippledLeftLegEncoder crippledRightLegEncoder crippledLeftArmEncoder crippledRightArmEncoder blindedEncoder deathEncoder bypassArmorEncoder loseNextTurnEncoder value ->
+            case value of
+                Knockout ->
+                    knockoutEncoder
 
-        OtherMessage arg0 ->
-            JE.object
-                [ ( "tag", JE.string "OtherMessage" )
-                , ( "message", JE.string arg0 )
-                ]
+                Knockdown ->
+                    knockdownEncoder
 
+                CrippledLeftLeg ->
+                    crippledLeftLegEncoder
 
-messageDecoder : Decoder Message
-messageDecoder =
-    JD.field "tag" JD.string
-        |> JD.andThen
-            (\ctor ->
-                case ctor of
-                    "PlayerMessage" ->
-                        JD.map
-                            PlayerMessage
-                            (JD.field
-                                "message"
-                                (JD.map2
-                                    (\you them -> { you = you, them = them })
-                                    (JD.field "you" JD.string)
-                                    (JD.field "them" JD.string)
-                                )
-                            )
+                CrippledRightLeg ->
+                    crippledRightLegEncoder
 
-                    "OtherMessage" ->
-                        JD.map OtherMessage (JD.field "message" JD.string)
+                CrippledLeftArm ->
+                    crippledLeftArmEncoder
 
-                    _ ->
-                        JD.fail <| "Unrecognized constructor: " ++ ctor
-            )
+                CrippledRightArm ->
+                    crippledRightArmEncoder
+
+                Blinded ->
+                    blindedEncoder
+
+                Death ->
+                    deathEncoder
+
+                BypassArmor ->
+                    bypassArmorEncoder
+
+                LoseNextTurn ->
+                    loseNextTurnEncoder
+        )
+        |> Codec.variant0 "Knockout" Knockout
+        |> Codec.variant0 "Knockdown" Knockdown
+        |> Codec.variant0 "CrippledLeftLeg" CrippledLeftLeg
+        |> Codec.variant0 "CrippledRightLeg" CrippledRightLeg
+        |> Codec.variant0 "CrippledLeftArm" CrippledLeftArm
+        |> Codec.variant0 "CrippledRightArm" CrippledRightArm
+        |> Codec.variant0 "Blinded" Blinded
+        |> Codec.variant0 "Death" Death
+        |> Codec.variant0 "BypassArmor" BypassArmor
+        |> Codec.variant0 "LoseNextTurn" LoseNextTurn
+        |> Codec.buildCustom

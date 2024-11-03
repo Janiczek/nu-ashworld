@@ -230,11 +230,49 @@ chanceToHitSuite =
                         , attackerSpecial = args.attackerSpecial |> Special.set Special.Strength 10
                         , attackerAddedSkillPercentages =
                             args.attackerAddedSkillPercentages
-                                |> SeqDict.insert SmallGuns 20
+                                |> SeqDict.insert SmallGuns 40
                         , equippedWeapon = Just weapon
                         , distanceHexes = 1
                         , targetArmorClass = 0
                         , crippledArms = 0
+                    }
+                    |> Expect.greaterThan 0
+        , Test.test "Ranged + good range - regression" <|
+            \() ->
+                Logic.chanceToHit
+                    { attackStyle = AttackStyle.ShootSingleUnaimed
+                    , attackerAddedSkillPercentages =
+                        SeqDict.fromList
+                            [ ( FirstAid, -1 )
+                            , ( Doctor, -1 )
+                            , ( Sneak, -1 )
+                            , ( Lockpick, -1 )
+                            , ( Steal, -1 )
+                            , ( Traps, -1 )
+                            , ( Science, -1 )
+                            , ( Repair, -1 )
+                            , ( Speech, -1 )
+                            , ( Barter, -1 )
+                            , ( Gambling, -1 )
+                            , ( Outdoorsman, -1 )
+                            , ( SmallGuns, 40 )
+                            ]
+                    , attackerPerks = SeqDict.fromList []
+                    , attackerSpecial =
+                        { agility = 1
+                        , charisma = 1
+                        , endurance = 1
+                        , intelligence = 1
+                        , luck = 1
+                        , perception = 4
+                        , strength = 10
+                        }
+                    , attackerTraits = SeqSet.fromList [ Trait.OneHander ]
+                    , crippledArms = 0
+                    , distanceHexes = 1
+                    , equippedWeapon = Just ItemKind.AssaultRifle
+                    , targetArmorClass = 0
+                    , usedAmmo = Logic.NoAmmoNeeded
                     }
                     |> Expect.greaterThan 0
         , Test.fuzz2 chanceToHitArgsFuzzer TestHelpers.gunKindFuzzer "Ranged outside range: cannot hit" <|

@@ -1,13 +1,11 @@
 module Data.Fight.AimedShot exposing
     ( AimedShot(..)
     , all
-    , decoder
-    , encode
+    , codec
     , toString
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
 
 
 type AimedShot
@@ -32,69 +30,6 @@ all =
     , LeftLeg
     , RightLeg
     ]
-
-
-encode : AimedShot -> JE.Value
-encode aimed =
-    case aimed of
-        Head ->
-            JE.string "Head"
-
-        Torso ->
-            JE.string "Torso"
-
-        Eyes ->
-            JE.string "Eyes"
-
-        Groin ->
-            JE.string "Groin"
-
-        LeftArm ->
-            JE.string "LeftArm"
-
-        RightArm ->
-            JE.string "RightArm"
-
-        LeftLeg ->
-            JE.string "LeftLeg"
-
-        RightLeg ->
-            JE.string "RightLeg"
-
-
-decoder : Decoder AimedShot
-decoder =
-    JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "Head" ->
-                        JD.succeed Head
-
-                    "Torso" ->
-                        JD.succeed Torso
-
-                    "Eyes" ->
-                        JD.succeed Eyes
-
-                    "Groin" ->
-                        JD.succeed Groin
-
-                    "LeftArm" ->
-                        JD.succeed LeftArm
-
-                    "RightArm" ->
-                        JD.succeed RightArm
-
-                    "LeftLeg" ->
-                        JD.succeed LeftLeg
-
-                    "RightLeg" ->
-                        JD.succeed RightLeg
-
-                    _ ->
-                        JD.fail <| "Unknown AimedShot: '" ++ type_ ++ "'"
-            )
 
 
 {-| TODO What purpose is this string for? Name the function better
@@ -125,3 +60,43 @@ toString aimedShot =
 
         RightLeg ->
             "right leg"
+
+
+codec : Codec AimedShot
+codec =
+    Codec.custom
+        (\headEncoder torsoEncoder eyesEncoder groinEncoder leftArmEncoder rightArmEncoder leftLegEncoder rightLegEncoder value ->
+            case value of
+                Head ->
+                    headEncoder
+
+                Torso ->
+                    torsoEncoder
+
+                Eyes ->
+                    eyesEncoder
+
+                Groin ->
+                    groinEncoder
+
+                LeftArm ->
+                    leftArmEncoder
+
+                RightArm ->
+                    rightArmEncoder
+
+                LeftLeg ->
+                    leftLegEncoder
+
+                RightLeg ->
+                    rightLegEncoder
+        )
+        |> Codec.variant0 "Head" Head
+        |> Codec.variant0 "Torso" Torso
+        |> Codec.variant0 "Eyes" Eyes
+        |> Codec.variant0 "Groin" Groin
+        |> Codec.variant0 "LeftArm" LeftArm
+        |> Codec.variant0 "RightArm" RightArm
+        |> Codec.variant0 "LeftLeg" LeftLeg
+        |> Codec.variant0 "RightLeg" RightLeg
+        |> Codec.buildCustom

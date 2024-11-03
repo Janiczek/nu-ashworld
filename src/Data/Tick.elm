@@ -1,14 +1,12 @@
 module Data.Tick exposing
     ( TickPerIntervalCurve(..)
-    , curveDecoder
-    , encodeCurve
+    , curveCodec
     , limit
     , nextTick
     , ticksAddedPerInterval
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
 import Time exposing (Posix)
 import Time.Extra as Time
 
@@ -31,49 +29,6 @@ type TickPerIntervalCurve
     | Linear Int
 
 
-encodeCurve : TickPerIntervalCurve -> JE.Value
-encodeCurve curve =
-    case curve of
-        QuarterAndRest { quarter, rest } ->
-            JE.object
-                [ ( "type", JE.string "quarterAndRest" )
-                , ( "quarter", JE.int quarter )
-                , ( "rest", JE.int rest )
-                ]
-
-        Linear n ->
-            JE.object
-                [ ( "type", JE.string "linear" )
-                , ( "n", JE.int n )
-                ]
-
-
-curveDecoder : Decoder TickPerIntervalCurve
-curveDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "quarterAndRest" ->
-                        JD.map2
-                            (\quarter rest ->
-                                QuarterAndRest
-                                    { quarter = quarter
-                                    , rest = rest
-                                    }
-                            )
-                            (JD.field "quarter" JD.int)
-                            (JD.field "rest" JD.int)
-
-                    "linear" ->
-                        JD.map Linear
-                            (JD.field "n" JD.int)
-
-                    _ ->
-                        JD.fail <| "Unknown curve type: '" ++ type_ ++ "'"
-            )
-
-
 ticksAddedPerInterval : TickPerIntervalCurve -> Int -> Int
 ticksAddedPerInterval curve currentTicks =
     case curve of
@@ -93,3 +48,26 @@ ticksAddedPerInterval curve currentTicks =
 
             else
                 0
+
+
+curveCodec : Codec TickPerIntervalCurve
+curveCodec =
+    Codec.custom
+        (\quarterAndRestEncoder linearEncoder value ->
+            case value of
+                QuarterAndRest arg0 ->
+                    quarterAndRestEncoder arg0
+
+                Linear arg0 ->
+                    linearEncoder arg0
+        )
+        |> Codec.variant1
+            "QuarterAndRest"
+            QuarterAndRest
+            (Codec.object (\quarter rest -> { quarter = quarter, rest = rest })
+                |> Codec.field "quarter" .quarter Codec.int
+                |> Codec.field "rest" .rest Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1 "Linear" Linear Codec.int
+        |> Codec.buildCustom

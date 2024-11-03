@@ -4,11 +4,10 @@ module Data.Special exposing
     , all
     , canDecrement
     , canIncrement
-    , decoder
+    , codec
     , decrement
     , decrementNewChar
     , description
-    , encode
     , fromList
     , get
     , increment
@@ -22,9 +21,7 @@ module Data.Special exposing
     , toList
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
+import Codec exposing (Codec)
 
 
 type alias Special =
@@ -197,31 +194,6 @@ init =
     Special 5 5 5 5 5 5 5
 
 
-encode : Special -> JE.Value
-encode special =
-    JE.object
-        [ ( "strength", JE.int special.strength )
-        , ( "perception", JE.int special.perception )
-        , ( "endurance", JE.int special.endurance )
-        , ( "charisma", JE.int special.charisma )
-        , ( "intelligence", JE.int special.intelligence )
-        , ( "agility", JE.int special.agility )
-        , ( "luck", JE.int special.luck )
-        ]
-
-
-decoder : Decoder Special
-decoder =
-    JD.succeed Special
-        |> JD.andMap (JD.field "strength" JD.int)
-        |> JD.andMap (JD.field "perception" JD.int)
-        |> JD.andMap (JD.field "endurance" JD.int)
-        |> JD.andMap (JD.field "charisma" JD.int)
-        |> JD.andMap (JD.field "intelligence" JD.int)
-        |> JD.andMap (JD.field "agility" JD.int)
-        |> JD.andMap (JD.field "luck" JD.int)
-
-
 isInRange : Special -> Bool
 isInRange special =
     let
@@ -352,3 +324,16 @@ fromList list =
 
         _ ->
             Nothing
+
+
+codec : Codec Special
+codec =
+    Codec.object Special
+        |> Codec.field "strength" .strength Codec.int
+        |> Codec.field "perception" .perception Codec.int
+        |> Codec.field "endurance" .endurance Codec.int
+        |> Codec.field "charisma" .charisma Codec.int
+        |> Codec.field "intelligence" .intelligence Codec.int
+        |> Codec.field "agility" .agility Codec.int
+        |> Codec.field "luck" .luck Codec.int
+        |> Codec.buildObject

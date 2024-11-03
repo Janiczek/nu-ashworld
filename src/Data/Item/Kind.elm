@@ -1,5 +1,5 @@
 module Data.Item.Kind exposing
-    ( Kind(..), decoder, encode
+    ( Kind(..), codec
     , all, allNonempty, allHealing, allHealingNonempty
     , name, baseValue, types
     , usageEffects
@@ -17,7 +17,7 @@ module Data.Item.Kind exposing
 
 {-|
 
-@docs Kind, decoder, encode
+@docs Kind, codec
 @docs all, allNonempty, allHealing, allHealingNonempty
 
 @docs name, baseValue, types
@@ -53,13 +53,12 @@ TODO weight : Kind -> Int
 
 -}
 
+import Codec exposing (Codec)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.DamageType as DamageType exposing (DamageType)
 import Data.Item.Effect as Effect exposing (Effect)
 import Data.Item.Type as Type exposing (Type)
 import Data.Skill as Skill
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 
 
 type Kind
@@ -425,565 +424,372 @@ isHealing kind =
     List.any Effect.isHealing (usageEffects kind)
 
 
-encode : Kind -> JE.Value
-encode kind =
-    case kind of
-        Beer ->
-            JE.string "Beer"
+codec : Codec Kind
+codec =
+    Codec.custom
+        (\beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder value ->
+            case value of
+                Beer ->
+                    beerEncoder
 
-        Fruit ->
-            JE.string "Fruit"
+                Fruit ->
+                    fruitEncoder
 
-        HealingPowder ->
-            JE.string "HealingPowder"
+                HealingPowder ->
+                    healingPowderEncoder
 
-        Stimpak ->
-            JE.string "Stimpak"
+                Stimpak ->
+                    stimpakEncoder
 
-        SuperStimpak ->
-            JE.string "SuperStimpak"
+                SuperStimpak ->
+                    superStimpakEncoder
 
-        BigBookOfScience ->
-            JE.string "BigBookOfScience"
+                BigBookOfScience ->
+                    bigBookOfScienceEncoder
 
-        DeansElectronics ->
-            JE.string "DeansElectronics"
+                DeansElectronics ->
+                    deansElectronicsEncoder
 
-        FirstAidBook ->
-            JE.string "FirstAidBook"
+                FirstAidBook ->
+                    firstAidBookEncoder
 
-        GunsAndBullets ->
-            JE.string "GunsAndBullets"
+                GunsAndBullets ->
+                    gunsAndBulletsEncoder
 
-        ScoutHandbook ->
-            JE.string "ScoutHandbook"
+                ScoutHandbook ->
+                    scoutHandbookEncoder
 
-        Robes ->
-            JE.string "Robes"
+                Robes ->
+                    robesEncoder
 
-        LeatherJacket ->
-            JE.string "LeatherJacket"
+                LeatherJacket ->
+                    leatherJacketEncoder
 
-        LeatherArmor ->
-            JE.string "LeatherArmor"
+                LeatherArmor ->
+                    leatherArmorEncoder
 
-        MetalArmor ->
-            JE.string "MetalArmor"
+                MetalArmor ->
+                    metalArmorEncoder
 
-        TeslaArmor ->
-            JE.string "TeslaArmor"
+                TeslaArmor ->
+                    teslaArmorEncoder
 
-        CombatArmor ->
-            JE.string "CombatArmor"
+                CombatArmor ->
+                    combatArmorEncoder
 
-        CombatArmorMk2 ->
-            JE.string "CombatArmorMk2"
+                CombatArmorMk2 ->
+                    combatArmorMk2Encoder
 
-        PowerArmor ->
-            JE.string "PowerArmor"
+                PowerArmor ->
+                    powerArmorEncoder
 
-        PowerFist ->
-            JE.string "PowerFist"
+                PowerFist ->
+                    powerFistEncoder
 
-        MegaPowerFist ->
-            JE.string "MegaPowerFist"
+                MegaPowerFist ->
+                    megaPowerFistEncoder
 
-        CattleProd ->
-            JE.string "CattleProd"
+                CattleProd ->
+                    cattleProdEncoder
 
-        SuperCattleProd ->
-            JE.string "SuperCattleProd"
+                SuperCattleProd ->
+                    superCattleProdEncoder
 
-        Knife ->
-            JE.string "Knife"
+                Knife ->
+                    knifeEncoder
 
-        Wakizashi ->
-            JE.string "Wakizashi"
+                Wakizashi ->
+                    wakizashiEncoder
 
-        LittleJesus ->
-            JE.string "LittleJesus"
+                LittleJesus ->
+                    littleJesusEncoder
 
-        Ripper ->
-            JE.string "Ripper"
+                Ripper ->
+                    ripperEncoder
 
-        SuperSledge ->
-            JE.string "SuperSledge"
+                SuperSledge ->
+                    superSledgeEncoder
 
-        Pistol223 ->
-            JE.string "Pistol223"
+                Pistol223 ->
+                    pistol223Encoder
 
-        Mauser9mm ->
-            JE.string "Mauser9mm"
+                Mauser9mm ->
+                    mauser9mmEncoder
 
-        Pistol14mm ->
-            JE.string "Pistol14mm"
+                Pistol14mm ->
+                    pistol14mmEncoder
 
-        NeedlerPistol ->
-            JE.string "NeedlerPistol"
+                NeedlerPistol ->
+                    needlerPistolEncoder
 
-        GaussPistol ->
-            JE.string "GaussPistol"
+                GaussPistol ->
+                    gaussPistolEncoder
 
-        Smg10mm ->
-            JE.string "Smg10mm"
+                Smg10mm ->
+                    smg10mmEncoder
 
-        HkP90c ->
-            JE.string "HkP90c"
+                HkP90c ->
+                    hkP90cEncoder
 
-        AssaultRifle ->
-            JE.string "AssaultRifle"
+                AssaultRifle ->
+                    assaultRifleEncoder
 
-        ExpandedAssaultRifle ->
-            JE.string "ExpandedAssaultRifle"
+                ExpandedAssaultRifle ->
+                    expandedAssaultRifleEncoder
 
-        HuntingRifle ->
-            JE.string "HuntingRifle"
+                HuntingRifle ->
+                    huntingRifleEncoder
 
-        ScopedHuntingRifle ->
-            JE.string "ScopedHuntingRifle"
+                ScopedHuntingRifle ->
+                    scopedHuntingRifleEncoder
 
-        RedRyderLEBBGun ->
-            JE.string "RedRyderLEBBGun"
+                RedRyderLEBBGun ->
+                    redRyderLEBBGunEncoder
 
-        SniperRifle ->
-            JE.string "SniperRifle"
+                SniperRifle ->
+                    sniperRifleEncoder
 
-        GaussRifle ->
-            JE.string "GaussRifle"
+                GaussRifle ->
+                    gaussRifleEncoder
 
-        CombatShotgun ->
-            JE.string "CombatShotgun"
+                CombatShotgun ->
+                    combatShotgunEncoder
 
-        HkCaws ->
-            JE.string "HkCaws"
+                HkCaws ->
+                    hkCawsEncoder
 
-        PancorJackhammer ->
-            JE.string "PancorJackhammer"
+                PancorJackhammer ->
+                    pancorJackhammerEncoder
 
-        Shotgun ->
-            JE.string "Shotgun"
+                Shotgun ->
+                    shotgunEncoder
 
-        SawedOffShotgun ->
-            JE.string "SawedOffShotgun"
+                SawedOffShotgun ->
+                    sawedOffShotgunEncoder
 
-        Minigun ->
-            JE.string "Minigun"
+                Minigun ->
+                    minigunEncoder
 
-        Bozar ->
-            JE.string "Bozar"
+                Bozar ->
+                    bozarEncoder
 
-        RocketLauncher ->
-            JE.string "RocketLauncher"
+                RocketLauncher ->
+                    rocketLauncherEncoder
 
-        LaserPistol ->
-            JE.string "LaserPistol"
+                LaserPistol ->
+                    laserPistolEncoder
 
-        MagnetoLaserPistol ->
-            JE.string "MagnetoLaserPistol"
+                MagnetoLaserPistol ->
+                    magnetoLaserPistolEncoder
 
-        PulsePistol ->
-            JE.string "PulsePistol"
+                PulsePistol ->
+                    pulsePistolEncoder
 
-        GatlingLaser ->
-            JE.string "GatlingLaser"
+                GatlingLaser ->
+                    gatlingLaserEncoder
 
-        LaserRifle ->
-            JE.string "LaserRifle"
+                LaserRifle ->
+                    laserRifleEncoder
 
-        LaserRifleExtCap ->
-            JE.string "LaserRifleExtCap"
+                LaserRifleExtCap ->
+                    laserRifleExtCapEncoder
 
-        PlasmaRifle ->
-            JE.string "PlasmaRifle"
+                PlasmaRifle ->
+                    plasmaRifleEncoder
 
-        TurboPlasmaRifle ->
-            JE.string "TurboPlasmaRifle"
+                TurboPlasmaRifle ->
+                    turboPlasmaRifleEncoder
 
-        PulseRifle ->
-            JE.string "PulseRifle"
+                PulseRifle ->
+                    pulseRifleEncoder
 
-        Flare ->
-            JE.string "Flare"
+                Flare ->
+                    flareEncoder
 
-        FragGrenade ->
-            JE.string "FragGrenade"
+                FragGrenade ->
+                    fragGrenadeEncoder
 
-        BBAmmo ->
-            JE.string "BBAmmo"
+                BBAmmo ->
+                    bBAmmoEncoder
 
-        SmallEnergyCell ->
-            JE.string "SmallEnergyCell"
+                SmallEnergyCell ->
+                    smallEnergyCellEncoder
 
-        Fmj223 ->
-            JE.string "Fmj223"
+                Fmj223 ->
+                    fmj223Encoder
 
-        Ap5mm ->
-            JE.string "Ap5mm"
+                Ap5mm ->
+                    ap5mmEncoder
 
-        Mm9 ->
-            JE.string "Mm9"
+                Mm9 ->
+                    mm9Encoder
 
-        Ball9mm ->
-            JE.string "Ball9mm"
+                Ball9mm ->
+                    ball9mmEncoder
 
-        Ap10mm ->
-            JE.string "Ap10mm"
+                Ap10mm ->
+                    ap10mmEncoder
 
-        Ap14mm ->
-            JE.string "Ap14mm"
+                Ap14mm ->
+                    ap14mmEncoder
 
-        ExplosiveRocket ->
-            JE.string "ExplosiveRocket"
+                ExplosiveRocket ->
+                    explosiveRocketEncoder
 
-        RocketAp ->
-            JE.string "RocketAp"
+                RocketAp ->
+                    rocketApEncoder
 
-        HnNeedlerCartridge ->
-            JE.string "HnNeedlerCartridge"
+                HnNeedlerCartridge ->
+                    hnNeedlerCartridgeEncoder
 
-        HnApNeedlerCartridge ->
-            JE.string "HnApNeedlerCartridge"
+                HnApNeedlerCartridge ->
+                    hnApNeedlerCartridgeEncoder
 
-        ShotgunShell ->
-            JE.string "ShotgunShell"
+                ShotgunShell ->
+                    shotgunShellEncoder
 
-        Jhp10mm ->
-            JE.string "Jhp10mm"
+                Jhp10mm ->
+                    jhp10mmEncoder
 
-        Jhp5mm ->
-            JE.string "Jhp5mm"
+                Jhp5mm ->
+                    jhp5mmEncoder
 
-        MicrofusionCell ->
-            JE.string "MicrofusionCell"
+                MicrofusionCell ->
+                    microfusionCellEncoder
 
-        Ec2mm ->
-            JE.string "Ec2mm"
-
-        Tool ->
-            JE.string "Tool"
-
-        LockPicks ->
-            JE.string "LockPicks"
-
-        ElectronicLockpick ->
-            JE.string "ElectronicLockpick"
-
-        AbnormalBrain ->
-            JE.string "AbnormalBrain"
-
-        ChimpanzeeBrain ->
-            JE.string "ChimpanzeeBrain"
-
-        HumanBrain ->
-            JE.string "HumanBrain"
-
-        CyberneticBrain ->
-            JE.string "CyberneticBrain"
-
-        GECK ->
-            JE.string "GECK"
-
-        SkynetAim ->
-            JE.string "SkynetAim"
-
-        MotionSensor ->
-            JE.string "MotionSensor"
-
-        K9 ->
-            JE.string "K9"
-
-        MeatJerky ->
-            JE.string "MeatJerky"
-
-        TankerFob ->
-            JE.string "TankerFob"
-
-
-decoder : Decoder Kind
-decoder =
-    JD.field "tag" JD.string
-        |> JD.andThen
-            (\ctor ->
-                case ctor of
-                    "Beer" ->
-                        JD.succeed Beer
-
-                    "Fruit" ->
-                        JD.succeed Fruit
-
-                    "HealingPowder" ->
-                        JD.succeed HealingPowder
-
-                    "Stimpak" ->
-                        JD.succeed Stimpak
-
-                    "SuperStimpak" ->
-                        JD.succeed SuperStimpak
-
-                    "BigBookOfScience" ->
-                        JD.succeed BigBookOfScience
-
-                    "DeansElectronics" ->
-                        JD.succeed DeansElectronics
-
-                    "FirstAidBook" ->
-                        JD.succeed FirstAidBook
-
-                    "GunsAndBullets" ->
-                        JD.succeed GunsAndBullets
-
-                    "ScoutHandbook" ->
-                        JD.succeed ScoutHandbook
-
-                    "Robes" ->
-                        JD.succeed Robes
-
-                    "LeatherJacket" ->
-                        JD.succeed LeatherJacket
-
-                    "LeatherArmor" ->
-                        JD.succeed LeatherArmor
-
-                    "MetalArmor" ->
-                        JD.succeed MetalArmor
-
-                    "TeslaArmor" ->
-                        JD.succeed TeslaArmor
-
-                    "CombatArmor" ->
-                        JD.succeed CombatArmor
-
-                    "CombatArmorMk2" ->
-                        JD.succeed CombatArmorMk2
-
-                    "PowerArmor" ->
-                        JD.succeed PowerArmor
-
-                    "PowerFist" ->
-                        JD.succeed PowerFist
-
-                    "MegaPowerFist" ->
-                        JD.succeed MegaPowerFist
-
-                    "CattleProd" ->
-                        JD.succeed CattleProd
-
-                    "SuperCattleProd" ->
-                        JD.succeed SuperCattleProd
-
-                    "Knife" ->
-                        JD.succeed Knife
-
-                    "Wakizashi" ->
-                        JD.succeed Wakizashi
-
-                    "LittleJesus" ->
-                        JD.succeed LittleJesus
-
-                    "Ripper" ->
-                        JD.succeed Ripper
-
-                    "SuperSledge" ->
-                        JD.succeed SuperSledge
-
-                    "Pistol223" ->
-                        JD.succeed Pistol223
-
-                    "Mauser9mm" ->
-                        JD.succeed Mauser9mm
-
-                    "Pistol14mm" ->
-                        JD.succeed Pistol14mm
-
-                    "NeedlerPistol" ->
-                        JD.succeed NeedlerPistol
-
-                    "GaussPistol" ->
-                        JD.succeed GaussPistol
-
-                    "Smg10mm" ->
-                        JD.succeed Smg10mm
-
-                    "HkP90c" ->
-                        JD.succeed HkP90c
-
-                    "AssaultRifle" ->
-                        JD.succeed AssaultRifle
-
-                    "ExpandedAssaultRifle" ->
-                        JD.succeed ExpandedAssaultRifle
-
-                    "HuntingRifle" ->
-                        JD.succeed HuntingRifle
-
-                    "ScopedHuntingRifle" ->
-                        JD.succeed ScopedHuntingRifle
-
-                    "RedRyderLEBBGun" ->
-                        JD.succeed RedRyderLEBBGun
-
-                    "SniperRifle" ->
-                        JD.succeed SniperRifle
-
-                    "GaussRifle" ->
-                        JD.succeed GaussRifle
-
-                    "CombatShotgun" ->
-                        JD.succeed CombatShotgun
-
-                    "HkCaws" ->
-                        JD.succeed HkCaws
-
-                    "PancorJackhammer" ->
-                        JD.succeed PancorJackhammer
-
-                    "Shotgun" ->
-                        JD.succeed Shotgun
-
-                    "SawedOffShotgun" ->
-                        JD.succeed SawedOffShotgun
-
-                    "Minigun" ->
-                        JD.succeed Minigun
-
-                    "Bozar" ->
-                        JD.succeed Bozar
-
-                    "RocketLauncher" ->
-                        JD.succeed RocketLauncher
-
-                    -- "AlienBlaster" ->
-                    --     JD.succeed AlienBlaster
-                    "LaserPistol" ->
-                        JD.succeed LaserPistol
-
-                    "MagnetoLaserPistol" ->
-                        JD.succeed MagnetoLaserPistol
-
-                    -- "SolarScorcher" ->
-                    --     JD.succeed SolarScorcher
-                    "PulsePistol" ->
-                        JD.succeed PulsePistol
-
-                    "GatlingLaser" ->
-                        JD.succeed GatlingLaser
-
-                    "LaserRifle" ->
-                        JD.succeed LaserRifle
-
-                    "LaserRifleExtCap" ->
-                        JD.succeed LaserRifleExtCap
-
-                    "PlasmaRifle" ->
-                        JD.succeed PlasmaRifle
-
-                    "TurboPlasmaRifle" ->
-                        JD.succeed TurboPlasmaRifle
-
-                    "PulseRifle" ->
-                        JD.succeed PulseRifle
-
-                    "Flare" ->
-                        JD.succeed Flare
-
-                    "FragGrenade" ->
-                        JD.succeed FragGrenade
-
-                    -- "HolyHandGrenade" ->
-                    --     JD.succeed HolyHandGrenade
-                    "BBAmmo" ->
-                        JD.succeed BBAmmo
-
-                    "SmallEnergyCell" ->
-                        JD.succeed SmallEnergyCell
-
-                    "Fmj223" ->
-                        JD.succeed Fmj223
-
-                    "Ap5mm" ->
-                        JD.succeed Ap5mm
-
-                    "Mm9" ->
-                        JD.succeed Mm9
-
-                    "Ball9mm" ->
-                        JD.succeed Ball9mm
-
-                    "Ap10mm" ->
-                        JD.succeed Ap10mm
-
-                    "Ap14mm" ->
-                        JD.succeed Ap14mm
-
-                    "ExplosiveRocket" ->
-                        JD.succeed ExplosiveRocket
-
-                    "RocketAp" ->
-                        JD.succeed RocketAp
-
-                    "HnNeedlerCartridge" ->
-                        JD.succeed HnNeedlerCartridge
-
-                    "HnApNeedlerCartridge" ->
-                        JD.succeed HnApNeedlerCartridge
-
-                    "ShotgunShell" ->
-                        JD.succeed ShotgunShell
-
-                    "Jhp10mm" ->
-                        JD.succeed Jhp10mm
-
-                    "Jhp5mm" ->
-                        JD.succeed Jhp5mm
-
-                    "MicrofusionCell" ->
-                        JD.succeed MicrofusionCell
-
-                    "Ec2mm" ->
-                        JD.succeed Ec2mm
-
-                    "Tool" ->
-                        JD.succeed Tool
-
-                    "LockPicks" ->
-                        JD.succeed LockPicks
-
-                    "ElectronicLockpick" ->
-                        JD.succeed ElectronicLockpick
-
-                    "AbnormalBrain" ->
-                        JD.succeed AbnormalBrain
-
-                    "ChimpanzeeBrain" ->
-                        JD.succeed ChimpanzeeBrain
-
-                    "HumanBrain" ->
-                        JD.succeed HumanBrain
-
-                    "CyberneticBrain" ->
-                        JD.succeed CyberneticBrain
-
-                    "GECK" ->
-                        JD.succeed GECK
-
-                    "SkynetAim" ->
-                        JD.succeed SkynetAim
-
-                    "MotionSensor" ->
-                        JD.succeed MotionSensor
-
-                    "K9" ->
-                        JD.succeed K9
-
-                    "MeatJerky" ->
-                        JD.succeed MeatJerky
-
-                    "TankerFob" ->
-                        JD.succeed TankerFob
-
-                    _ ->
-                        JD.fail "Unrecognized constructor"
-            )
+                Ec2mm ->
+                    ec2mmEncoder
+
+                Tool ->
+                    toolEncoder
+
+                LockPicks ->
+                    lockPicksEncoder
+
+                ElectronicLockpick ->
+                    electronicLockpickEncoder
+
+                AbnormalBrain ->
+                    abnormalBrainEncoder
+
+                ChimpanzeeBrain ->
+                    chimpanzeeBrainEncoder
+
+                HumanBrain ->
+                    humanBrainEncoder
+
+                CyberneticBrain ->
+                    cyberneticBrainEncoder
+
+                GECK ->
+                    gECKEncoder
+
+                SkynetAim ->
+                    skynetAimEncoder
+
+                MotionSensor ->
+                    motionSensorEncoder
+
+                K9 ->
+                    k9Encoder
+
+                MeatJerky ->
+                    meatJerkyEncoder
+
+                TankerFob ->
+                    tankerFobEncoder
+        )
+        |> Codec.variant0 "Beer" Beer
+        |> Codec.variant0 "Fruit" Fruit
+        |> Codec.variant0 "HealingPowder" HealingPowder
+        |> Codec.variant0 "Stimpak" Stimpak
+        |> Codec.variant0 "SuperStimpak" SuperStimpak
+        |> Codec.variant0 "BigBookOfScience" BigBookOfScience
+        |> Codec.variant0 "DeansElectronics" DeansElectronics
+        |> Codec.variant0 "FirstAidBook" FirstAidBook
+        |> Codec.variant0 "GunsAndBullets" GunsAndBullets
+        |> Codec.variant0 "ScoutHandbook" ScoutHandbook
+        |> Codec.variant0 "Robes" Robes
+        |> Codec.variant0 "LeatherJacket" LeatherJacket
+        |> Codec.variant0 "LeatherArmor" LeatherArmor
+        |> Codec.variant0 "MetalArmor" MetalArmor
+        |> Codec.variant0 "TeslaArmor" TeslaArmor
+        |> Codec.variant0 "CombatArmor" CombatArmor
+        |> Codec.variant0 "CombatArmorMk2" CombatArmorMk2
+        |> Codec.variant0 "PowerArmor" PowerArmor
+        |> Codec.variant0 "PowerFist" PowerFist
+        |> Codec.variant0 "MegaPowerFist" MegaPowerFist
+        |> Codec.variant0 "CattleProd" CattleProd
+        |> Codec.variant0 "SuperCattleProd" SuperCattleProd
+        |> Codec.variant0 "Knife" Knife
+        |> Codec.variant0 "Wakizashi" Wakizashi
+        |> Codec.variant0 "LittleJesus" LittleJesus
+        |> Codec.variant0 "Ripper" Ripper
+        |> Codec.variant0 "SuperSledge" SuperSledge
+        |> Codec.variant0 "Pistol223" Pistol223
+        |> Codec.variant0 "Mauser9mm" Mauser9mm
+        |> Codec.variant0 "Pistol14mm" Pistol14mm
+        |> Codec.variant0 "NeedlerPistol" NeedlerPistol
+        |> Codec.variant0 "GaussPistol" GaussPistol
+        |> Codec.variant0 "Smg10mm" Smg10mm
+        |> Codec.variant0 "HkP90c" HkP90c
+        |> Codec.variant0 "AssaultRifle" AssaultRifle
+        |> Codec.variant0 "ExpandedAssaultRifle" ExpandedAssaultRifle
+        |> Codec.variant0 "HuntingRifle" HuntingRifle
+        |> Codec.variant0 "ScopedHuntingRifle" ScopedHuntingRifle
+        |> Codec.variant0 "RedRyderLEBBGun" RedRyderLEBBGun
+        |> Codec.variant0 "SniperRifle" SniperRifle
+        |> Codec.variant0 "GaussRifle" GaussRifle
+        |> Codec.variant0 "CombatShotgun" CombatShotgun
+        |> Codec.variant0 "HkCaws" HkCaws
+        |> Codec.variant0 "PancorJackhammer" PancorJackhammer
+        |> Codec.variant0 "Shotgun" Shotgun
+        |> Codec.variant0 "SawedOffShotgun" SawedOffShotgun
+        |> Codec.variant0 "Minigun" Minigun
+        |> Codec.variant0 "Bozar" Bozar
+        |> Codec.variant0 "RocketLauncher" RocketLauncher
+        |> Codec.variant0 "LaserPistol" LaserPistol
+        |> Codec.variant0 "MagnetoLaserPistol" MagnetoLaserPistol
+        |> Codec.variant0 "PulsePistol" PulsePistol
+        |> Codec.variant0 "GatlingLaser" GatlingLaser
+        |> Codec.variant0 "LaserRifle" LaserRifle
+        |> Codec.variant0 "LaserRifleExtCap" LaserRifleExtCap
+        |> Codec.variant0 "PlasmaRifle" PlasmaRifle
+        |> Codec.variant0 "TurboPlasmaRifle" TurboPlasmaRifle
+        |> Codec.variant0 "PulseRifle" PulseRifle
+        |> Codec.variant0 "Flare" Flare
+        |> Codec.variant0 "FragGrenade" FragGrenade
+        |> Codec.variant0 "BBAmmo" BBAmmo
+        |> Codec.variant0 "SmallEnergyCell" SmallEnergyCell
+        |> Codec.variant0 "Fmj223" Fmj223
+        |> Codec.variant0 "Ap5mm" Ap5mm
+        |> Codec.variant0 "Mm9" Mm9
+        |> Codec.variant0 "Ball9mm" Ball9mm
+        |> Codec.variant0 "Ap10mm" Ap10mm
+        |> Codec.variant0 "Ap14mm" Ap14mm
+        |> Codec.variant0 "ExplosiveRocket" ExplosiveRocket
+        |> Codec.variant0 "RocketAp" RocketAp
+        |> Codec.variant0 "HnNeedlerCartridge" HnNeedlerCartridge
+        |> Codec.variant0 "HnApNeedlerCartridge" HnApNeedlerCartridge
+        |> Codec.variant0 "ShotgunShell" ShotgunShell
+        |> Codec.variant0 "Jhp10mm" Jhp10mm
+        |> Codec.variant0 "Jhp5mm" Jhp5mm
+        |> Codec.variant0 "MicrofusionCell" MicrofusionCell
+        |> Codec.variant0 "Ec2mm" Ec2mm
+        |> Codec.variant0 "Tool" Tool
+        |> Codec.variant0 "LockPicks" LockPicks
+        |> Codec.variant0 "ElectronicLockpick" ElectronicLockpick
+        |> Codec.variant0 "AbnormalBrain" AbnormalBrain
+        |> Codec.variant0 "ChimpanzeeBrain" ChimpanzeeBrain
+        |> Codec.variant0 "HumanBrain" HumanBrain
+        |> Codec.variant0 "CyberneticBrain" CyberneticBrain
+        |> Codec.variant0 "GECK" GECK
+        |> Codec.variant0 "SkynetAim" SkynetAim
+        |> Codec.variant0 "MotionSensor" MotionSensor
+        |> Codec.variant0 "K9" K9
+        |> Codec.variant0 "MeatJerky" MeatJerky
+        |> Codec.variant0 "TankerFob" TankerFob
+        |> Codec.buildCustom
 
 
 usageEffects : Kind -> List Effect

@@ -1,9 +1,11 @@
 module Random.FloatExtra exposing
     ( NormalIntSpec
     , NormalSpec
+    , normalIntSpecCodec
     , normallyDistributedInt
     )
 
+import Codec exposing (Codec)
 import Random exposing (Generator)
 import Random.Float
 
@@ -48,3 +50,11 @@ normallyDistributedInt { average, maxDeviation } =
         , maxDeviation = toFloat maxDeviation
         }
         |> Random.map round
+
+
+normalIntSpecCodec : Codec NormalIntSpec
+normalIntSpecCodec =
+    Codec.object NormalIntSpec
+        |> Codec.field "average" .average Codec.int
+        |> Codec.field "maxDeviation" .maxDeviation Codec.int
+        |> Codec.buildObject

@@ -1,40 +1,16 @@
 module SeqDict.Extra exposing
-    ( decoder
-    , encode
+    ( codec
     , groupBy
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
 import SeqDict exposing (SeqDict)
 
 
-encode : (k -> JE.Value) -> (v -> JE.Value) -> SeqDict k v -> JE.Value
-encode encodeKey encodeValue dict =
-    let
-        encodeTuple : ( k, v ) -> JE.Value
-        encodeTuple ( k, v ) =
-            JE.object
-                [ ( "key", encodeKey k )
-                , ( "value", encodeValue v )
-                ]
-    in
-    dict
-        |> SeqDict.toList
-        |> JE.list encodeTuple
-
-
-decoder : Decoder k -> Decoder v -> Decoder (SeqDict k v)
-decoder keyDecoder valueDecoder =
-    let
-        tupleDecoder : Decoder ( k, v )
-        tupleDecoder =
-            JD.map2 Tuple.pair
-                (JD.field "key" keyDecoder)
-                (JD.field "value" valueDecoder)
-    in
-    JD.list tupleDecoder
-        |> JD.map SeqDict.fromList
+codec : Codec k -> Codec v -> Codec (SeqDict k v)
+codec keyCodec valueCodec =
+    Codec.list (Codec.tuple keyCodec valueCodec)
+        |> Codec.map SeqDict.fromList SeqDict.toList
 
 
 groupBy : (a -> b) -> List a -> SeqDict b (List a)

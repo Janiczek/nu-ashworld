@@ -8,11 +8,11 @@ module Data.Barter exposing
     , addVendorCaps
     , addVendorItem
     , arrowsDirection
+    , codec
     , defaultTransferN
     , dismissMessage
     , doubleArrow
     , empty
-    , encode
     , messageText
     , removePlayerCaps
     , removePlayerItem
@@ -25,11 +25,10 @@ module Data.Barter exposing
     , unsetTransferNActive
     )
 
+import Codec exposing (Codec)
 import Data.Item as Item
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
-import Json.Encode as JE
-import Json.Encode.Extra as JE
 import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
 
@@ -284,71 +283,74 @@ unsetTransferNActive state =
     { state | activeN = Nothing }
 
 
-encode : State -> JE.Value
-encode state =
-    JE.object
-        [ ( "playerItems", Dict.encode JE.int JE.int state.playerItems )
-        , ( "vendorItems", Dict.encode JE.int JE.int state.vendorItems )
-        , ( "playerCaps", JE.int state.playerCaps )
-        , ( "vendorCaps", JE.int state.vendorCaps )
-        , ( "lastMessage", JE.maybe encodeMessage state.lastMessage )
-        , ( "transferNInputs", SeqDict.encode encodeTransferNPosition JE.string state.transferNInputs )
-        , ( "transferNActive", JE.maybe encodeTransferNPosition state.activeN )
-        ]
+codec : Codec State
+codec =
+    Codec.object State
+        |> Codec.field "playerItems" .playerItems (Dict.codec Codec.int Codec.int)
+        |> Codec.field "vendorItems" .vendorItems (Dict.codec Codec.int Codec.int)
+        |> Codec.field "playerCaps" .playerCaps Codec.int
+        |> Codec.field "vendorCaps" .vendorCaps Codec.int
+        |> Codec.field "lastMessage" .lastMessage (Codec.nullable messageCodec)
+        |> Codec.field "transferNInputs" .transferNInputs (SeqDict.codec transferNPositionCodec Codec.string)
+        |> Codec.field "activeN" .activeN (Codec.nullable transferNPositionCodec)
+        |> Codec.buildObject
 
 
-encodeTransferNPosition : TransferNPosition -> JE.Value
-encodeTransferNPosition position =
-    case position of
-        PlayerKeptItem itemId ->
-            JE.object
-                [ ( "type", JE.string "PlayerKeptItem" )
-                , ( "itemId", JE.int itemId )
-                ]
+messageCodec : Codec Message
+messageCodec =
+    Codec.custom
+        (\barterIsEmptyEncoder playerOfferNotValuableEnoughEncoder youGaveStuffForFreeEncoder value ->
+            case value of
+                BarterIsEmpty ->
+                    barterIsEmptyEncoder
 
-        VendorKeptItem itemId ->
-            JE.object
-                [ ( "type", JE.string "VendorKeptItem" )
-                , ( "itemId", JE.int itemId )
-                ]
+                PlayerOfferNotValuableEnough ->
+                    playerOfferNotValuableEnoughEncoder
 
-        PlayerTradedItem itemId ->
-            JE.object
-                [ ( "type", JE.string "PlayerTradedItem" )
-                , ( "itemId", JE.int itemId )
-                ]
-
-        VendorTradedItem itemId ->
-            JE.object
-                [ ( "type", JE.string "VendorTradedItem" )
-                , ( "itemId", JE.int itemId )
-                ]
-
-        PlayerKeptCaps ->
-            JE.object
-                [ ( "type", JE.string "PlayerKeptCaps" ) ]
-
-        VendorKeptCaps ->
-            JE.object
-                [ ( "type", JE.string "VendorKeptCaps" ) ]
-
-        PlayerTradedCaps ->
-            JE.object
-                [ ( "type", JE.string "PlayerTradedCaps" ) ]
-
-        VendorTradedCaps ->
-            JE.object
-                [ ( "type", JE.string "VendorTradedCaps" ) ]
+                YouGaveStuffForFree ->
+                    youGaveStuffForFreeEncoder
+        )
+        |> Codec.variant0 "BarterIsEmpty" BarterIsEmpty
+        |> Codec.variant0 "PlayerOfferNotValuableEnough" PlayerOfferNotValuableEnough
+        |> Codec.variant0 "YouGaveStuffForFree" YouGaveStuffForFree
+        |> Codec.buildCustom
 
 
-encodeMessage : Message -> JE.Value
-encodeMessage message =
-    case message of
-        BarterIsEmpty ->
-            JE.string "BarterIsEmpty"
+transferNPositionCodec : Codec TransferNPosition
+transferNPositionCodec =
+    Codec.custom
+        (\playerKeptItemEncoder vendorKeptItemEncoder playerTradedItemEncoder vendorTradedItemEncoder playerKeptCapsEncoder vendorKeptCapsEncoder playerTradedCapsEncoder vendorTradedCapsEncoder value ->
+            case value of
+                PlayerKeptItem arg0 ->
+                    playerKeptItemEncoder arg0
 
-        PlayerOfferNotValuableEnough ->
-            JE.string "PlayerOfferNotValuableEnough"
+                VendorKeptItem arg0 ->
+                    vendorKeptItemEncoder arg0
 
-        YouGaveStuffForFree ->
-            JE.string "YouGaveStuffForFree"
+                PlayerTradedItem arg0 ->
+                    playerTradedItemEncoder arg0
+
+                VendorTradedItem arg0 ->
+                    vendorTradedItemEncoder arg0
+
+                PlayerKeptCaps ->
+                    playerKeptCapsEncoder
+
+                VendorKeptCaps ->
+                    vendorKeptCapsEncoder
+
+                PlayerTradedCaps ->
+                    playerTradedCapsEncoder
+
+                VendorTradedCaps ->
+                    vendorTradedCapsEncoder
+        )
+        |> Codec.variant1 "PlayerKeptItem" PlayerKeptItem Codec.int
+        |> Codec.variant1 "VendorKeptItem" VendorKeptItem Codec.int
+        |> Codec.variant1 "PlayerTradedItem" PlayerTradedItem Codec.int
+        |> Codec.variant1 "VendorTradedItem" VendorTradedItem Codec.int
+        |> Codec.variant0 "PlayerKeptCaps" PlayerKeptCaps
+        |> Codec.variant0 "VendorKeptCaps" VendorKeptCaps
+        |> Codec.variant0 "PlayerTradedCaps" PlayerTradedCaps
+        |> Codec.variant0 "VendorTradedCaps" VendorTradedCaps
+        |> Codec.buildCustom

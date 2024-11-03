@@ -1,15 +1,13 @@
 module Data.Trait exposing
     ( Trait(..)
     , all
-    , decoder
+    , codec
     , description
-    , encode
     , isSelected
     , name
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
 import SeqSet exposing (SeqSet)
 
 
@@ -77,74 +75,48 @@ name trait =
             "One Hander"
 
 
-encode : Trait -> JE.Value
-encode trait =
-    JE.string <|
-        case trait of
-            Kamikaze ->
-                "kamikaze"
+codec : Codec Trait
+codec =
+    Codec.custom
+        (\bruiserEncoder fastShotEncoder finesseEncoder giftedEncoder heavyHandedEncoder kamikazeEncoder oneHanderEncoder skilledEncoder smallFrameEncoder value ->
+            case value of
+                Bruiser ->
+                    bruiserEncoder
 
-            Bruiser ->
-                "bruiser"
+                FastShot ->
+                    fastShotEncoder
 
-            Gifted ->
-                "gifted"
+                Finesse ->
+                    finesseEncoder
 
-            SmallFrame ->
-                "small-frame"
+                Gifted ->
+                    giftedEncoder
 
-            Skilled ->
-                "skilled"
+                HeavyHanded ->
+                    heavyHandedEncoder
 
-            OneHander ->
-                "one-hander"
+                Kamikaze ->
+                    kamikazeEncoder
 
-            HeavyHanded ->
-                "heavy-handed"
+                OneHander ->
+                    oneHanderEncoder
 
-            Finesse ->
-                "finesse"
+                Skilled ->
+                    skilledEncoder
 
-            FastShot ->
-                "fast-shot"
-
-
-decoder : Decoder Trait
-decoder =
-    JD.string
-        |> JD.andThen
-            (\trait ->
-                case trait of
-                    "kamikaze" ->
-                        JD.succeed Kamikaze
-
-                    "bruiser" ->
-                        JD.succeed Bruiser
-
-                    "gifted" ->
-                        JD.succeed Gifted
-
-                    "small-frame" ->
-                        JD.succeed SmallFrame
-
-                    "skilled" ->
-                        JD.succeed Skilled
-
-                    "one-hander" ->
-                        JD.succeed OneHander
-
-                    "heavy-handed" ->
-                        JD.succeed HeavyHanded
-
-                    "finesse" ->
-                        JD.succeed Finesse
-
-                    "fast-shot" ->
-                        JD.succeed FastShot
-
-                    _ ->
-                        JD.fail <| "unknown Trait: '" ++ trait ++ "'"
-            )
+                SmallFrame ->
+                    smallFrameEncoder
+        )
+        |> Codec.variant0 "Bruiser" Bruiser
+        |> Codec.variant0 "FastShot" FastShot
+        |> Codec.variant0 "Finesse" Finesse
+        |> Codec.variant0 "Gifted" Gifted
+        |> Codec.variant0 "HeavyHanded" HeavyHanded
+        |> Codec.variant0 "Kamikaze" Kamikaze
+        |> Codec.variant0 "OneHander" OneHander
+        |> Codec.variant0 "Skilled" Skilled
+        |> Codec.variant0 "SmallFrame" SmallFrame
+        |> Codec.buildCustom
 
 
 isSelected : Trait -> SeqSet Trait -> Bool

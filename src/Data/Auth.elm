@@ -6,27 +6,23 @@ module Data.Auth exposing
     , Plaintext
     , Verified
     , adminPasswordChecksOut
-    , encode
-    , encodePassword
-    , encodeSanitized
+    , codec
     , hash
     , init
     , isAdminName
     , isEmpty
+    , passwordCodec
     , promote
+    , sanitizedCodec
     , selectDefaultWorld
     , setPlaintextPassword
     , unwrap
-    , verifiedDecoder
-    , verifiedPasswordDecoder
     , verify
     )
 
+import Codec exposing (Codec)
 import Data.WorldInfo exposing (WorldInfo)
 import Env
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 import Logic
 import Sha256
 
@@ -46,47 +42,45 @@ init =
     }
 
 
-encode : Auth a -> JE.Value
-encode auth =
-    JE.object
-        [ ( "name", JE.string auth.name )
-        , ( "password", encodePassword auth.password )
-        , ( "worldName", JE.string auth.worldName )
-        ]
+codec : Codec (Auth a)
+codec =
+    Codec.object
+        (\name password worldName ->
+            { name = name
+            , password = password
+            , worldName = worldName
+            }
+        )
+        |> Codec.field "name" .name Codec.string
+        |> Codec.field "password" .password passwordCodec
+        |> Codec.field "worldName" .worldName Codec.string
+        |> Codec.buildObject
 
 
-encodeSanitized : Auth a -> JE.Value
-encodeSanitized auth =
-    JE.object
-        [ ( "name", JE.string auth.name )
-        , ( "password", JE.string "<omitted>" )
-        , ( "worldName", JE.string auth.worldName )
-        ]
+sanitizedCodec : Codec (Auth a)
+sanitizedCodec =
+    Codec.object
+        (\name worldName ->
+            { name = name
+            , password = Password "<omitted>"
+            , worldName = worldName
+            }
+        )
+        |> Codec.field "name" .name Codec.string
+        |> Codec.field "worldName" .worldName Codec.string
+        |> Codec.buildObject
 
 
-encodePassword : Password a -> JE.Value
-encodePassword password =
-    JE.string <| unwrap password
-
-
-verifiedDecoder : Decoder (Auth Verified)
-verifiedDecoder =
-    JD.oneOf
-        [ verifiedDecoderV1
-        ]
-
-
-verifiedDecoderV1 : Decoder (Auth Verified)
-verifiedDecoderV1 =
-    JD.succeed Auth
-        |> JD.andMap (JD.field "name" JD.string)
-        |> JD.andMap (JD.field "password" verifiedPasswordDecoder)
-        |> JD.andMap (JD.field "worldName" JD.string)
-
-
-verifiedPasswordDecoder : Decoder (Password Verified)
-verifiedPasswordDecoder =
-    JD.map Password JD.string
+passwordCodec : Codec (Password a)
+passwordCodec =
+    Codec.custom
+        (\passwordEncoder value ->
+            case value of
+                Password arg0 ->
+                    passwordEncoder arg0
+        )
+        |> Codec.variant1 "Password" Password Codec.string
+        |> Codec.buildCustom
 
 
 type Password a

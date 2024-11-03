@@ -7,19 +7,16 @@ module Data.FightStrategy exposing
     , OperatorData
     , ValidationWarning(..)
     , Value(..)
-    , decoder
+    , codec
     , doWhatever
-    , encode
     , toString
     , warnings
     )
 
+import Codec exposing (Codec)
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Item.Kind as ItemKind
 import Data.Trait as Trait exposing (Trait)
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
 import List.ExtraExtra as List
 import SeqSet exposing (SeqSet)
 
@@ -84,6 +81,196 @@ type Command
     | MoveForward
     | DoWhatever
     | SkipTurn
+
+
+codec : Codec FightStrategy
+codec =
+    Codec.custom
+        (\ifEncoder commandEncoder value ->
+            case value of
+                If arg0 ->
+                    ifEncoder arg0
+
+                Command arg0 ->
+                    commandEncoder arg0
+        )
+        |> Codec.variant1 "If" If ifDataCodec
+        |> Codec.variant1 "Command" Command commandCodec
+        |> Codec.buildCustom
+
+
+ifDataCodec : Codec IfData
+ifDataCodec =
+    Codec.object IfData
+        |> Codec.field "condition" .condition conditionCodec
+        |> Codec.field "then_" .then_ (Codec.lazy (\() -> codec))
+        |> Codec.field "else_" .else_ (Codec.lazy (\() -> codec))
+        |> Codec.buildObject
+
+
+conditionCodec : Codec Condition
+conditionCodec =
+    Codec.custom
+        (\orEncoder andEncoder operatorEncoder opponentIsPlayerEncoder opponentIsNPCEncoder value ->
+            case value of
+                Or arg0 arg1 ->
+                    orEncoder arg0 arg1
+
+                And arg0 arg1 ->
+                    andEncoder arg0 arg1
+
+                Operator arg0 ->
+                    operatorEncoder arg0
+
+                OpponentIsPlayer ->
+                    opponentIsPlayerEncoder
+
+                OpponentIsNPC ->
+                    opponentIsNPCEncoder
+        )
+        |> Codec.variant2 "Or" Or (Codec.lazy (\() -> conditionCodec)) (Codec.lazy (\() -> conditionCodec))
+        |> Codec.variant2 "And" And (Codec.lazy (\() -> conditionCodec)) (Codec.lazy (\() -> conditionCodec))
+        |> Codec.variant1 "Operator" Operator operatorDataCodec
+        |> Codec.variant0 "OpponentIsPlayer" OpponentIsPlayer
+        |> Codec.variant0 "OpponentIsNPC" OpponentIsNPC
+        |> Codec.buildCustom
+
+
+operatorDataCodec : Codec OperatorData
+operatorDataCodec =
+    Codec.object OperatorData
+        |> Codec.field "lhs" .lhs valueCodec
+        |> Codec.field "op" .op operatorCodec
+        |> Codec.field "rhs" .rhs valueCodec
+        |> Codec.buildObject
+
+
+valueCodec : Codec Value
+valueCodec =
+    Codec.custom
+        (\myHPEncoder myMaxHPEncoder myAPEncoder myItemCountEncoder myHealingItemCountEncoder myAmmoCountEncoder itemsUsedEncoder healingItemsUsedEncoder ammoUsedEncoder chanceToHitEncoder rangeNeededEncoder distanceEncoder numberEncoder value ->
+            case value of
+                MyHP ->
+                    myHPEncoder
+
+                MyMaxHP ->
+                    myMaxHPEncoder
+
+                MyAP ->
+                    myAPEncoder
+
+                MyItemCount arg0 ->
+                    myItemCountEncoder arg0
+
+                MyHealingItemCount ->
+                    myHealingItemCountEncoder
+
+                MyAmmoCount ->
+                    myAmmoCountEncoder
+
+                ItemsUsed arg0 ->
+                    itemsUsedEncoder arg0
+
+                HealingItemsUsed ->
+                    healingItemsUsedEncoder
+
+                AmmoUsed ->
+                    ammoUsedEncoder
+
+                ChanceToHit arg0 ->
+                    chanceToHitEncoder arg0
+
+                RangeNeeded arg0 ->
+                    rangeNeededEncoder arg0
+
+                Distance ->
+                    distanceEncoder
+
+                Number arg0 ->
+                    numberEncoder arg0
+        )
+        |> Codec.variant0 "MyHP" MyHP
+        |> Codec.variant0 "MyMaxHP" MyMaxHP
+        |> Codec.variant0 "MyAP" MyAP
+        |> Codec.variant1 "MyItemCount" MyItemCount ItemKind.codec
+        |> Codec.variant0 "MyHealingItemCount" MyHealingItemCount
+        |> Codec.variant0 "MyAmmoCount" MyAmmoCount
+        |> Codec.variant1 "ItemsUsed" ItemsUsed ItemKind.codec
+        |> Codec.variant0 "HealingItemsUsed" HealingItemsUsed
+        |> Codec.variant0 "AmmoUsed" AmmoUsed
+        |> Codec.variant1 "ChanceToHit" ChanceToHit AttackStyle.codec
+        |> Codec.variant1 "RangeNeeded" RangeNeeded AttackStyle.codec
+        |> Codec.variant0 "Distance" Distance
+        |> Codec.variant1 "Number" Number Codec.int
+        |> Codec.buildCustom
+
+
+operatorCodec : Codec Operator
+operatorCodec =
+    Codec.custom
+        (\lT_Encoder lTEEncoder eQ_Encoder nEEncoder gTEEncoder gT_Encoder value ->
+            case value of
+                LT_ ->
+                    lT_Encoder
+
+                LTE ->
+                    lTEEncoder
+
+                EQ_ ->
+                    eQ_Encoder
+
+                NE ->
+                    nEEncoder
+
+                GTE ->
+                    gTEEncoder
+
+                GT_ ->
+                    gT_Encoder
+        )
+        |> Codec.variant0 "LT_" LT_
+        |> Codec.variant0 "LTE" LTE
+        |> Codec.variant0 "EQ_" EQ_
+        |> Codec.variant0 "NE" NE
+        |> Codec.variant0 "GTE" GTE
+        |> Codec.variant0 "GT_" GT_
+        |> Codec.buildCustom
+
+
+commandCodec : Codec Command
+commandCodec =
+    Codec.custom
+        (\attackEncoder attackRandomlyEncoder healEncoder healWithAnythingEncoder moveForwardEncoder doWhateverEncoder skipTurnEncoder value ->
+            case value of
+                Attack arg0 ->
+                    attackEncoder arg0
+
+                AttackRandomly ->
+                    attackRandomlyEncoder
+
+                Heal arg0 ->
+                    healEncoder arg0
+
+                HealWithAnything ->
+                    healWithAnythingEncoder
+
+                MoveForward ->
+                    moveForwardEncoder
+
+                DoWhatever ->
+                    doWhateverEncoder
+
+                SkipTurn ->
+                    skipTurnEncoder
+        )
+        |> Codec.variant1 "Attack" Attack AttackStyle.codec
+        |> Codec.variant0 "AttackRandomly" AttackRandomly
+        |> Codec.variant1 "Heal" Heal ItemKind.codec
+        |> Codec.variant0 "HealWithAnything" HealWithAnything
+        |> Codec.variant0 "MoveForward" MoveForward
+        |> Codec.variant0 "DoWhatever" DoWhatever
+        |> Codec.variant0 "SkipTurn" SkipTurn
+        |> Codec.buildCustom
 
 
 indent : String -> String
@@ -229,365 +416,6 @@ operatorToString operator =
 
         GT_ ->
             ">"
-
-
-encode : FightStrategy -> JE.Value
-encode strategy =
-    case strategy of
-        If { condition, then_, else_ } ->
-            JE.object
-                [ ( "type", JE.string "If" )
-                , ( "condition", encodeCondition condition )
-                , ( "then", encode then_ )
-                , ( "else", encode else_ )
-                ]
-
-        Command command ->
-            JE.object
-                [ ( "type", JE.string "Command" )
-                , ( "command", encodeCommand command )
-                ]
-
-
-encodeCommand : Command -> JE.Value
-encodeCommand command =
-    case command of
-        Attack attackStyle ->
-            JE.object
-                [ ( "type", JE.string "Attack" )
-                , ( "attackStyle", AttackStyle.encode attackStyle )
-                ]
-
-        AttackRandomly ->
-            JE.object
-                [ ( "type", JE.string "AttackRandomly" )
-                ]
-
-        Heal itemKind ->
-            JE.object
-                [ ( "type", JE.string "Heal" )
-                , ( "itemKind", ItemKind.encode itemKind )
-                ]
-
-        HealWithAnything ->
-            JE.object
-                [ ( "type", JE.string "HealWithAnything" )
-                ]
-
-        MoveForward ->
-            JE.object
-                [ ( "type", JE.string "MoveForward" )
-                ]
-
-        DoWhatever ->
-            JE.object
-                [ ( "type", JE.string "DoWhatever" )
-                ]
-
-        SkipTurn ->
-            JE.object
-                [ ( "type", JE.string "SkipTurn" )
-                ]
-
-
-encodeCondition : Condition -> JE.Value
-encodeCondition condition =
-    case condition of
-        Or c1 c2 ->
-            JE.object
-                [ ( "type", JE.string "Or" )
-                , ( "c1", encodeCondition c1 )
-                , ( "c2", encodeCondition c2 )
-                ]
-
-        And c1 c2 ->
-            JE.object
-                [ ( "type", JE.string "And" )
-                , ( "c1", encodeCondition c1 )
-                , ( "c2", encodeCondition c2 )
-                ]
-
-        OpponentIsPlayer ->
-            JE.object
-                [ ( "type", JE.string "OpponentIsPlayer" )
-                ]
-
-        OpponentIsNPC ->
-            JE.object
-                [ ( "type", JE.string "OpponentIsNPC" )
-                ]
-
-        Operator { lhs, op, rhs } ->
-            JE.object
-                [ ( "type", JE.string "Operator" )
-                , ( "operator", encodeOperator op )
-                , ( "lhs", encodeValue lhs )
-                , ( "rhs", encodeValue rhs )
-                ]
-
-
-encodeOperator : Operator -> JE.Value
-encodeOperator op =
-    JE.string <|
-        case op of
-            LT_ ->
-                "LT_"
-
-            LTE ->
-                "LTE"
-
-            EQ_ ->
-                "EQ_"
-
-            NE ->
-                "NE"
-
-            GTE ->
-                "GTE"
-
-            GT_ ->
-                "GT_"
-
-
-encodeValue : Value -> JE.Value
-encodeValue value =
-    case value of
-        MyHP ->
-            JE.object
-                [ ( "type", JE.string "MyHP" )
-                ]
-
-        MyMaxHP ->
-            JE.object
-                [ ( "type", JE.string "MyMaxHP" )
-                ]
-
-        MyAP ->
-            JE.object
-                [ ( "type", JE.string "MyAP" )
-                ]
-
-        MyItemCount itemKind ->
-            JE.object
-                [ ( "type", JE.string "MyItemCount" )
-                , ( "item", ItemKind.encode itemKind )
-                ]
-
-        MyHealingItemCount ->
-            JE.object
-                [ ( "type", JE.string "MyHealingItemCount" )
-                ]
-
-        MyAmmoCount ->
-            JE.object
-                [ ( "type", JE.string "MyAmmoCount" )
-                ]
-
-        ItemsUsed itemKind ->
-            JE.object
-                [ ( "type", JE.string "ItemsUsed" )
-                , ( "item", ItemKind.encode itemKind )
-                ]
-
-        HealingItemsUsed ->
-            JE.object
-                [ ( "type", JE.string "HealingItemsUsed" )
-                ]
-
-        AmmoUsed ->
-            JE.object
-                [ ( "type", JE.string "AmmoUsed" )
-                ]
-
-        ChanceToHit attackStyle ->
-            JE.object
-                [ ( "type", JE.string "ChanceToHit" )
-                , ( "attackStyle", AttackStyle.encode attackStyle )
-                ]
-
-        RangeNeeded attackStyle ->
-            JE.object
-                [ ( "type", JE.string "RangeNeeded" )
-                , ( "attackStyle", AttackStyle.encode attackStyle )
-                ]
-
-        Distance ->
-            JE.object
-                [ ( "type", JE.string "Distance" )
-                ]
-
-        Number n ->
-            JE.object
-                [ ( "type", JE.string "Number" )
-                , ( "value", JE.int n )
-                ]
-
-
-decoder : Decoder FightStrategy
-decoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "If" ->
-                        JD.succeed IfData
-                            |> JD.andMap (JD.field "condition" conditionDecoder)
-                            |> JD.andMap (JD.field "then" decoder)
-                            |> JD.andMap (JD.field "else" decoder)
-                            |> JD.map If
-
-                    "Command" ->
-                        JD.succeed Command
-                            |> JD.andMap (JD.field "command" commandDecoder)
-
-                    _ ->
-                        JD.fail <| "Unknown FightStrategy type: " ++ type_
-            )
-
-
-conditionDecoder : Decoder Condition
-conditionDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "Or" ->
-                        JD.succeed Or
-                            |> JD.andMap (JD.field "c1" conditionDecoder)
-                            |> JD.andMap (JD.field "c2" conditionDecoder)
-
-                    "And" ->
-                        JD.succeed And
-                            |> JD.andMap (JD.field "c1" conditionDecoder)
-                            |> JD.andMap (JD.field "c2" conditionDecoder)
-
-                    "OpponentIsPlayer" ->
-                        JD.succeed OpponentIsPlayer
-
-                    "OpponentIsNPC" ->
-                        JD.succeed OpponentIsNPC
-
-                    "Operator" ->
-                        JD.succeed OperatorData
-                            |> JD.andMap (JD.field "lhs" valueDecoder)
-                            |> JD.andMap (JD.field "operator" operatorDecoder)
-                            |> JD.andMap (JD.field "rhs" valueDecoder)
-                            |> JD.map Operator
-
-                    _ ->
-                        JD.fail <| "Unknown Condition type: " ++ type_
-            )
-
-
-valueDecoder : Decoder Value
-valueDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "MyHP" ->
-                        JD.succeed MyHP
-
-                    "MyMaxHP" ->
-                        JD.succeed MyMaxHP
-
-                    "MyAP" ->
-                        JD.succeed MyAP
-
-                    "MyItemCount" ->
-                        JD.succeed MyItemCount
-                            |> JD.andMap (JD.field "item" ItemKind.decoder)
-
-                    "MyHealingItemCount" ->
-                        JD.succeed MyHealingItemCount
-
-                    "ItemsUsed" ->
-                        JD.succeed ItemsUsed
-                            |> JD.andMap (JD.field "item" ItemKind.decoder)
-
-                    "HealingItemsUsed" ->
-                        JD.succeed HealingItemsUsed
-
-                    "ChanceToHit" ->
-                        JD.succeed ChanceToHit
-                            |> JD.andMap (JD.field "attackStyle" AttackStyle.decoder)
-
-                    "RangeNeeded" ->
-                        JD.succeed RangeNeeded
-                            |> JD.andMap (JD.field "attackStyle" AttackStyle.decoder)
-
-                    "Distance" ->
-                        JD.succeed Distance
-
-                    "Number" ->
-                        JD.map Number JD.int
-
-                    _ ->
-                        JD.fail <| "Unknown Value type: " ++ type_
-            )
-
-
-commandDecoder : Decoder Command
-commandDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "Attack" ->
-                        JD.succeed Attack
-                            |> JD.andMap (JD.field "attackStyle" AttackStyle.decoder)
-
-                    "AttackRandomly" ->
-                        JD.succeed AttackRandomly
-
-                    "Heal" ->
-                        JD.succeed Heal
-                            |> JD.andMap (JD.field "itemKind" ItemKind.decoder)
-
-                    "HealWithAnything" ->
-                        JD.succeed HealWithAnything
-
-                    "MoveForward" ->
-                        JD.succeed MoveForward
-
-                    "DoWhatever" ->
-                        JD.succeed DoWhatever
-
-                    "SkipTurn" ->
-                        JD.succeed SkipTurn
-
-                    _ ->
-                        JD.fail <| "Unknown Command type: " ++ type_
-            )
-
-
-operatorDecoder : Decoder Operator
-operatorDecoder =
-    JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "LT_" ->
-                        JD.succeed LT_
-
-                    "LTE" ->
-                        JD.succeed LTE
-
-                    "EQ_" ->
-                        JD.succeed EQ_
-
-                    "NE" ->
-                        JD.succeed NE
-
-                    "GTE" ->
-                        JD.succeed GTE
-
-                    "GT_" ->
-                        JD.succeed GT_
-
-                    _ ->
-                        JD.fail <| "Unknown Operator type: " ++ type_
-            )
 
 
 doWhatever : FightStrategy

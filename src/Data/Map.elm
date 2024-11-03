@@ -4,7 +4,6 @@ module Data.Map exposing
     , TileNum
     , allTileCoords
     , columns
-    , encodeCoords
     , neighbours
     , rows
     , tileCenterPx
@@ -14,7 +13,6 @@ module Data.Map exposing
     , toTileNum
     )
 
-import Json.Encode as JE
 import List.ExtraExtra as List
 import Set exposing (Set)
 
@@ -137,11 +135,6 @@ neighbours ( x, y ) =
     ]
         |> List.filterMap identity
         |> Set.fromList
-
-
-encodeCoords : TileCoords -> JE.Value
-encodeCoords ( x, y ) =
-    JE.list JE.int [ x, y ]
 
 
 allTileCoords : List TileCoords

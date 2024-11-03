@@ -4,18 +4,17 @@ module Data.Player exposing
     , Player(..)
     , SPlayer
     , clientToClientOther
-    , decoder
-    , encode
-    , encodeSPlayer
+    , codec
     , fromNewChar
     , getAuth
     , getPlayerData
     , map
-    , sPlayerDecoder
+    , sPlayerCodec
     , serverToClient
     , serverToClientOther
     )
 
+import Codec exposing (Codec)
 import Data.Auth as Auth
     exposing
         ( Auth
@@ -32,7 +31,7 @@ import Data.Map as Map exposing (TileNum)
 import Data.Map.Location as Location
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
-import Data.Perk as Perk exposing (Perk)
+import Data.Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
@@ -42,10 +41,6 @@ import Data.Trait as Trait exposing (Trait)
 import Data.Xp as Xp exposing (Level, Xp)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
-import Json.Encode.Extra as JE
 import Logic
 import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
@@ -129,102 +124,53 @@ type alias COtherPlayer =
     }
 
 
-encode : (a -> JE.Value) -> Player a -> JE.Value
-encode encodeInner player =
-    case player of
-        NeedsCharCreated auth ->
-            JE.object
-                [ ( "type", JE.string "needs-char-created" )
-                , ( "auth", Auth.encode auth )
-                ]
+codec : Codec a -> Codec (Player a)
+codec other =
+    Codec.custom
+        (\needsCharCreatedEncoder playerEncoder value ->
+            case value of
+                NeedsCharCreated auth ->
+                    needsCharCreatedEncoder auth
 
-        Player inner ->
-            JE.object
-                [ ( "type", JE.string "player" )
-                , ( "data", encodeInner inner )
-                ]
-
-
-encodeSPlayer : SPlayer -> JE.Value
-encodeSPlayer player =
-    JE.object
-        [ ( "name", JE.string player.name )
-        , ( "password", Auth.encodePassword player.password )
-        , ( "worldName", JE.string player.worldName )
-        , ( "hp", JE.int player.hp )
-        , ( "maxHp", JE.int player.maxHp )
-        , ( "xp", JE.int player.xp )
-        , ( "special", Special.encode player.special )
-        , ( "caps", JE.int player.caps )
-        , ( "ticks", JE.int player.ticks )
-        , ( "wins", JE.int player.wins )
-        , ( "losses", JE.int player.losses )
-        , ( "location", JE.int player.location )
-        , ( "perks", SeqDict.encode Perk.encode JE.int player.perks )
-        , ( "messages", JE.list Message.encode (Dict.values player.messages) )
-        , ( "items", Dict.encode JE.int Item.encode player.items )
-        , ( "traits", SeqSet.encode Trait.encode player.traits )
-        , ( "addedSkillPercentages", SeqDict.encode Skill.encode JE.int player.addedSkillPercentages )
-        , ( "taggedSkills", SeqSet.encode Skill.encode player.taggedSkills )
-        , ( "availableSkillPoints", JE.int player.availableSkillPoints )
-        , ( "availablePerks", JE.int player.availablePerks )
-        , ( "equippedArmor", JE.maybe Item.encode player.equippedArmor )
-        , ( "fightStrategy", FightStrategy.encode player.fightStrategy )
-        , ( "fightStrategyText", JE.string player.fightStrategyText )
-        , ( "questsActive", SeqSet.encode Quest.encode player.questsActive )
-        , ( "hasCar", JE.bool player.hasCar )
-        ]
+                Player data ->
+                    playerEncoder data
+        )
+        |> Codec.variant1 "NeedsCharCreated" NeedsCharCreated Auth.codec
+        |> Codec.variant1 "Player" Player other
+        |> Codec.buildCustom
 
 
-decoder : Decoder a -> Decoder (Player a)
-decoder innerDecoder =
-    JD.field "type" JD.string
-        |> JD.andThen
-            (\type_ ->
-                case type_ of
-                    "needs-char-created" ->
-                        JD.field "auth" Auth.verifiedDecoder
-                            |> JD.map NeedsCharCreated
-
-                    "player" ->
-                        JD.field "data" innerDecoder
-                            |> JD.map Player
-
-                    _ ->
-                        JD.fail <| "Unknown player type: '" ++ type_ ++ "'"
-            )
-
-
-sPlayerDecoder : Decoder SPlayer
-sPlayerDecoder =
-    JD.succeed SPlayer
-        |> JD.andMap (JD.field "name" JD.string)
-        |> JD.andMap (JD.field "password" Auth.verifiedPasswordDecoder)
-        |> JD.andMap (JD.field "worldName" JD.string)
-        |> JD.andMap (JD.field "hp" JD.parseInt)
-        |> JD.andMap (JD.field "maxHp" JD.parseInt)
-        |> JD.andMap (JD.field "xp" JD.parseInt)
-        |> JD.andMap (JD.field "special" Special.decoder)
-        |> JD.andMap (JD.field "caps" JD.parseInt)
-        |> JD.andMap (JD.field "ticks" JD.parseInt)
-        |> JD.andMap (JD.field "wins" JD.parseInt)
-        |> JD.andMap (JD.field "losses" JD.parseInt)
-        |> JD.andMap (JD.field "location" JD.parseInt)
-        |> JD.andMap (JD.field "perks" (SeqDict.decoder Perk.decoder JD.parseInt))
-        |> JD.andMap (JD.field "messages" Message.dictDecoder)
-        |> JD.andMap (JD.field "items" (Dict.decoder JD.parseInt Item.decoder))
-        |> JD.andMap (JD.field "traits" (SeqSet.decoder Trait.decoder))
-        |> JD.andMap (JD.field "addedSkillPercentages" (SeqDict.decoder Skill.decoder JD.parseInt))
-        |> JD.andMap (JD.field "taggedSkills" (SeqSet.decoder Skill.decoder))
-        |> JD.andMap (JD.field "availableSkillPoints" JD.parseInt)
-        |> JD.andMap (JD.field "availablePerks" JD.parseInt)
-        |> JD.andMap (JD.field "equippedArmor" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "equippedWeapon" (JD.maybe Item.decoder))
-        |> JD.andMap (JD.field "preferredAmmo" (JD.maybe ItemKind.decoder))
-        |> JD.andMap (JD.field "fightStrategy" FightStrategy.decoder)
-        |> JD.andMap (JD.field "fightStrategyText" JD.string)
-        |> JD.andMap (JD.field "questsActive" (SeqSet.decoder Quest.decoder))
-        |> JD.andMap (JD.field "hasCar" JD.bool)
+sPlayerCodec : Codec SPlayer
+sPlayerCodec =
+    Codec.object SPlayer
+        |> Codec.field "name" .name Codec.string
+        |> Codec.field "password" .password Auth.passwordCodec
+        |> Codec.field "worldName" .worldName Codec.string
+        |> Codec.field "hp" .hp Codec.int
+        |> Codec.field "maxHp" .maxHp Codec.int
+        |> Codec.field "xp" .xp Codec.int
+        |> Codec.field "special" .special Special.codec
+        |> Codec.field "caps" .caps Codec.int
+        |> Codec.field "ticks" .ticks Codec.int
+        |> Codec.field "wins" .wins Codec.int
+        |> Codec.field "losses" .losses Codec.int
+        |> Codec.field "location" .location Codec.int
+        |> Codec.field "perks" .perks (SeqDict.codec Data.Perk.codec Codec.int)
+        |> Codec.field "messages" .messages (Dict.codec Codec.int Message.codec)
+        |> Codec.field "items" .items (Dict.codec Codec.int Item.codec)
+        |> Codec.field "traits" .traits (SeqSet.codec Trait.codec)
+        |> Codec.field "addedSkillPercentages" .addedSkillPercentages (SeqDict.codec Skill.codec Codec.int)
+        |> Codec.field "taggedSkills" .taggedSkills (SeqSet.codec Skill.codec)
+        |> Codec.field "availableSkillPoints" .availableSkillPoints Codec.int
+        |> Codec.field "availablePerks" .availablePerks Codec.int
+        |> Codec.field "equippedArmor" .equippedArmor (Codec.nullable Item.codec)
+        |> Codec.field "equippedWeapon" .equippedWeapon (Codec.nullable Item.codec)
+        |> Codec.field "preferredAmmo" .preferredAmmo (Codec.nullable ItemKind.codec)
+        |> Codec.field "fightStrategy" .fightStrategy FightStrategy.codec
+        |> Codec.field "fightStrategyText" .fightStrategyText Codec.string
+        |> Codec.field "questsActive" .questsActive (SeqSet.codec Quest.codec)
+        |> Codec.field "hasCar" .hasCar Codec.bool
+        |> Codec.buildObject
 
 
 serverToClient : SPlayer -> CPlayer

@@ -1,123 +1,84 @@
 module Time.ExtraExtra exposing
-    ( encodeInterval
-    , intervalDecoder
+    ( intervalCodec
     , intervalToString
+    , posixCodec
     )
 
-import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
+import Codec exposing (Codec)
+import Time exposing (Posix)
 import Time.Extra exposing (Interval(..))
 
 
-encodeInterval : Interval -> JE.Value
-encodeInterval interval =
-    case interval of
-        Year ->
-            JE.string "Year"
+intervalCodec : Codec Interval
+intervalCodec =
+    Codec.custom
+        (\yearEncoder quarterEncoder monthEncoder weekEncoder mondayEncoder tuesdayEncoder wednesdayEncoder thursdayEncoder fridayEncoder saturdayEncoder sundayEncoder dayEncoder hourEncoder minuteEncoder secondEncoder millisecondEncoder value ->
+            case value of
+                Time.Extra.Year ->
+                    yearEncoder
 
-        Quarter ->
-            JE.string "Quarter"
+                Time.Extra.Quarter ->
+                    quarterEncoder
 
-        Month ->
-            JE.string "Month"
+                Time.Extra.Month ->
+                    monthEncoder
 
-        Week ->
-            JE.string "Week"
+                Time.Extra.Week ->
+                    weekEncoder
 
-        Monday ->
-            JE.string "Monday"
+                Time.Extra.Monday ->
+                    mondayEncoder
 
-        Tuesday ->
-            JE.string "Tuesday"
+                Time.Extra.Tuesday ->
+                    tuesdayEncoder
 
-        Wednesday ->
-            JE.string "Wednesday"
+                Time.Extra.Wednesday ->
+                    wednesdayEncoder
 
-        Thursday ->
-            JE.string "Thursday"
+                Time.Extra.Thursday ->
+                    thursdayEncoder
 
-        Friday ->
-            JE.string "Friday"
+                Time.Extra.Friday ->
+                    fridayEncoder
 
-        Saturday ->
-            JE.string "Saturday"
+                Time.Extra.Saturday ->
+                    saturdayEncoder
 
-        Sunday ->
-            JE.string "Sunday"
+                Time.Extra.Sunday ->
+                    sundayEncoder
 
-        Day ->
-            JE.string "Day"
+                Time.Extra.Day ->
+                    dayEncoder
 
-        Hour ->
-            JE.string "Hour"
+                Time.Extra.Hour ->
+                    hourEncoder
 
-        Minute ->
-            JE.string "Minute"
+                Time.Extra.Minute ->
+                    minuteEncoder
 
-        Second ->
-            JE.string "Second"
+                Time.Extra.Second ->
+                    secondEncoder
 
-        Millisecond ->
-            JE.string "Millisecond"
-
-
-intervalDecoder : Decoder Interval
-intervalDecoder =
-    JD.string
-        |> JD.andThen
-            (\interval ->
-                case interval of
-                    "Year" ->
-                        JD.succeed Year
-
-                    "Quarter" ->
-                        JD.succeed Quarter
-
-                    "Month" ->
-                        JD.succeed Month
-
-                    "Week" ->
-                        JD.succeed Week
-
-                    "Monday" ->
-                        JD.succeed Monday
-
-                    "Tuesday" ->
-                        JD.succeed Tuesday
-
-                    "Wednesday" ->
-                        JD.succeed Wednesday
-
-                    "Thursday" ->
-                        JD.succeed Thursday
-
-                    "Friday" ->
-                        JD.succeed Friday
-
-                    "Saturday" ->
-                        JD.succeed Saturday
-
-                    "Sunday" ->
-                        JD.succeed Sunday
-
-                    "Day" ->
-                        JD.succeed Day
-
-                    "Hour" ->
-                        JD.succeed Hour
-
-                    "Minute" ->
-                        JD.succeed Minute
-
-                    "Second" ->
-                        JD.succeed Second
-
-                    "Millisecond" ->
-                        JD.succeed Millisecond
-
-                    _ ->
-                        JD.fail <| "Unknown interval: '" ++ interval ++ "'"
-            )
+                Time.Extra.Millisecond ->
+                    millisecondEncoder
+        )
+        |> Codec.variant0 "Year" Time.Extra.Year
+        |> Codec.variant0 "Quarter" Time.Extra.Quarter
+        |> Codec.variant0 "Month" Time.Extra.Month
+        |> Codec.variant0 "Week" Time.Extra.Week
+        |> Codec.variant0 "Monday" Time.Extra.Monday
+        |> Codec.variant0 "Tuesday" Time.Extra.Tuesday
+        |> Codec.variant0 "Wednesday" Time.Extra.Wednesday
+        |> Codec.variant0 "Thursday" Time.Extra.Thursday
+        |> Codec.variant0 "Friday" Time.Extra.Friday
+        |> Codec.variant0 "Saturday" Time.Extra.Saturday
+        |> Codec.variant0 "Sunday" Time.Extra.Sunday
+        |> Codec.variant0 "Day" Time.Extra.Day
+        |> Codec.variant0 "Hour" Time.Extra.Hour
+        |> Codec.variant0 "Minute" Time.Extra.Minute
+        |> Codec.variant0 "Second" Time.Extra.Second
+        |> Codec.variant0 "Millisecond" Time.Extra.Millisecond
+        |> Codec.buildCustom
 
 
 intervalToString : Interval -> String
@@ -170,3 +131,9 @@ intervalToString interval =
 
         Millisecond ->
             "millisecond"
+
+
+posixCodec : Codec Posix
+posixCodec =
+    Codec.int
+        |> Codec.map Time.millisToPosix Time.posixToMillis

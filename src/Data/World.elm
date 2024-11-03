@@ -1,13 +1,13 @@
 module Data.World exposing
     ( Name
     , World
-    , decoder
-    , encode
+    , codec
     , init
     , isQuestDone
     , isQuestDone_
     )
 
+import Codec exposing (Codec)
 import Data.Player as Player exposing (Player, SPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
@@ -16,11 +16,6 @@ import Data.Vendor as Vendor exposing (Vendor)
 import Data.Vendor.Shop as Shop exposing (Shop)
 import Dict exposing (Dict)
 import Dict.ExtraExtra as Dict
-import Iso8601
-import Json.Decode as JD exposing (Decoder)
-import Json.Decode.Extra as JD
-import Json.Encode as JE
-import Json.Encode.Extra as JEE
 import List.ExtraExtra as List
 import SeqDict exposing (SeqDict)
 import SeqDict.Extra as SeqDict
@@ -93,28 +88,6 @@ init { fast } =
     }
 
 
-encode : World -> JE.Value
-encode world =
-    JE.object
-        [ ( "players"
-          , world.players
-                |> Dict.values
-                |> JE.list (Player.encode Player.encodeSPlayer)
-          )
-        , ( "nextWantedTick", JEE.maybe Iso8601.encode world.nextWantedTick )
-        , ( "nextVendorRestockTick", JEE.maybe Iso8601.encode world.nextVendorRestockTick )
-        , ( "vendors", Vendor.encodeVendors world.vendors )
-        , ( "description", JE.string world.description )
-        , ( "startedAt", Iso8601.encode world.startedAt )
-        , ( "tickFrequency", Time.encodeInterval world.tickFrequency )
-        , ( "tickPerIntervalCurve", Tick.encodeCurve world.tickPerIntervalCurve )
-        , ( "vendorRestockFrequency", Time.encodeInterval world.vendorRestockFrequency )
-        , ( "questsProgress", SeqDict.encode Quest.encode (JE.dict identity JE.int) world.questsProgress )
-        , ( "questRewardShops", SeqSet.encode Shop.encode world.questRewardShops )
-        , ( "questRequirementsPaid", SeqDict.encode Quest.encode (JE.set JE.string) world.questRequirementsPaid )
-        ]
-
-
 lastItemId : Dict PlayerName (Player SPlayer) -> SeqDict Shop Vendor -> Int
 lastItemId players vendors =
     let
@@ -138,9 +111,9 @@ lastItemId players vendors =
     max lastPlayersItemId lastVendorsItemId
 
 
-decoder : Decoder World
-decoder =
-    JD.succeed
+codec : Codec World
+codec =
+    Codec.object
         (\players nextWantedTick nextVendorRestockTick vendors description startedAt tickFrequency tickPerIntervalCurve vendorRestockFrequency questsProgress questRewardShops questRequirementsPaid ->
             { players = players
             , nextWantedTick = nextWantedTick
@@ -157,26 +130,22 @@ decoder =
             , questRequirementsPaid = questRequirementsPaid
             }
         )
-        |> JD.andMap
-            (JD.field "players"
-                (JD.list
-                    (Player.decoder Player.sPlayerDecoder
-                        |> JD.map (\player -> ( Player.getAuth player |> .name, player ))
-                    )
-                    |> JD.map Dict.fromList
-                )
-            )
-        |> JD.andMap (JD.field "nextWantedTick" (JD.maybe Iso8601.decoder))
-        |> JD.andMap (JD.field "nextVendorRestockTick" (JD.maybe Iso8601.decoder))
-        |> JD.andMap (JD.field "vendors" Vendor.vendorsDecoder)
-        |> JD.andMap (JD.field "description" JD.string)
-        |> JD.andMap (JD.field "startedAt" Iso8601.decoder)
-        |> JD.andMap (JD.field "tickFrequency" Time.intervalDecoder)
-        |> JD.andMap (JD.field "tickPerIntervalCurve" Tick.curveDecoder)
-        |> JD.andMap (JD.field "vendorRestockFrequency" Time.intervalDecoder)
-        |> JD.andMap (JD.field "questsProgress" (SeqDict.decoder Quest.decoder (Dict.decoder JD.string JD.int)))
-        |> JD.andMap (JD.field "questRewardShops" (SeqSet.decoder Shop.decoder))
-        |> JD.andMap (JD.field "questRequirementsPaid" (SeqDict.decoder Quest.decoder (JD.set JD.string)))
+        |> Codec.field "players" .players (Dict.codec Codec.string (Player.codec Player.sPlayerCodec))
+        |> Codec.field "nextWantedTick" .nextWantedTick (Codec.nullable Time.posixCodec)
+        |> Codec.field "nextVendorRestockTick" .nextVendorRestockTick (Codec.nullable Time.posixCodec)
+        |> Codec.field "vendors" .vendors (SeqDict.codec Shop.codec Vendor.codec)
+        |> Codec.field "description" .description Codec.string
+        |> Codec.field "startedAt" .startedAt Time.posixCodec
+        |> Codec.field "tickFrequency" .tickFrequency Time.intervalCodec
+        |> Codec.field "tickPerIntervalCurve" .tickPerIntervalCurve Tick.curveCodec
+        |> Codec.field "vendorRestockFrequency" .vendorRestockFrequency Time.intervalCodec
+        |> Codec.field "questsProgress" .questsProgress (SeqDict.codec Quest.codec (Dict.codec Codec.string Codec.int))
+        |> Codec.field "questRewardShops" .questRewardShops (SeqSet.codec Shop.codec)
+        |> Codec.field
+            "questRequirementsPaid"
+            .questRequirementsPaid
+            (SeqDict.codec Quest.codec (Codec.set Codec.string))
+        |> Codec.buildObject
 
 
 isQuestDone : World -> Quest.Name -> Bool

@@ -4,6 +4,7 @@ import Admin
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Cmd.ExtraExtra as Cmd
+import Codec
 import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
@@ -78,7 +79,6 @@ import Html.Events.Extra as HE
 import Html.Extra as H
 import IntersectionObserver
 import Json.Decode as JD exposing (Decoder)
-import Json.Encode as JE
 import Lamdera
 import List.ExtraExtra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
@@ -2033,7 +2033,7 @@ expandedQuestView player progress questsProgress quest =
                     [ H.text "[START]" ]
             ]
         , H.div [ HA.class "bg-green-800 p-[2ch]" ] <|
-            List.concat
+            List.fastConcat
                 [ [ questProgressbarView
                         { ticksGiven = progress.ticksGiven
                         , ticksNeeded = ticksNeeded
@@ -5233,8 +5233,8 @@ adminWorldActivityView lastTenToBackendMsgs worldName data =
                                 [ H.td [] [ H.text msgWorldName ]
                                 , H.td [] [ H.text playerName ]
                                 , H.td []
-                                    [ Admin.encodeToBackendMsg msg
-                                        |> JE.encode 0
+                                    [ msg
+                                        |> Codec.encodeToString 0 Admin.toBackendMsgCodec
                                         |> H.text
                                     ]
                                 ]
