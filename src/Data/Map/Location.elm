@@ -4,6 +4,7 @@ module Data.Map.Location exposing
     , allLocations
     , coords
     , default
+    , enclave
     , location
     , name
     , size
@@ -344,3 +345,8 @@ dict =
 location : TileNum -> Maybe Location
 location tile =
     Dict.get tile dict
+
+
+enclave : TileCoords
+enclave =
+    coords EnclavePlatform

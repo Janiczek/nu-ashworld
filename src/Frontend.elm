@@ -1441,7 +1441,10 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                             , ( "--tile-coord-y", String.fromInt y )
                             ]
                         ]
-                        [ if notAllPassable then
+                        [ if ( x, y ) == Location.enclave && playerCoords /= Location.enclave then
+                            H.text "You'll have to try harder than that."
+
+                          else if notAllPassable then
                             H.text "Not all tiles in your path are passable."
 
                           else
