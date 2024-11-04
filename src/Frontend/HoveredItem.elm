@@ -2,6 +2,8 @@ module Frontend.HoveredItem exposing (HoveredItem(..), text)
 
 import Data.FightStrategy.Help as FightStrategyHelp
 import Data.Perk as Perk exposing (Perk)
+import Data.Perk.Requirement as PerkRequirement
+import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -25,6 +27,10 @@ text hoveredItem =
             , description =
                 [ Perk.description perk
                 , "Max rank: " ++ String.fromInt (Perk.maxRank perk)
+                , "Requirements:"
+                , PerkRequirement.requirements perk
+                    |> List.map (\req -> "- " ++ requirementText req)
+                    |> String.join "\n"
                 ]
                     |> String.join "\n\n"
             }
@@ -60,3 +66,29 @@ text hoveredItem =
             { title = "Perception Level: " ++ Perception.label perceptionLevel
             , description = Perception.tooltip perceptionLevel
             }
+
+
+requirementText : PerkRequirement.Requirement -> String
+requirementText req =
+    case req of
+        PerkRequirement.ROneOf reqs ->
+            "One of:\n"
+                ++ (List.map requirementText reqs
+                        |> List.map (\req_ -> "  - " ++ req_)
+                        |> String.join "\n"
+                   )
+
+        PerkRequirement.RLevel lvl ->
+            "Level " ++ String.fromInt lvl
+
+        PerkRequirement.RSpecial special n ->
+            Special.label special ++ " " ++ String.fromInt n
+
+        PerkRequirement.RSpecialLT special n ->
+            Special.label special ++ " < " ++ String.fromInt n
+
+        PerkRequirement.RSkill skill n ->
+            Skill.name skill ++ ": " ++ String.fromInt n ++ "%"
+
+        PerkRequirement.RQuest quest ->
+            "Quest: " ++ Quest.title quest

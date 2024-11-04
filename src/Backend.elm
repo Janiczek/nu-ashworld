@@ -29,6 +29,7 @@ import Data.Map.Terrain as Terrain
 import Data.Message as Message
 import Data.NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
+import Data.Perk.Requirement as PerkRequirement
 import Data.Player as Player
     exposing
         ( CPlayer
@@ -2353,17 +2354,18 @@ oneTimePerkEffects currentTime =
 
 
 choosePerk : Perk -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-choosePerk perk clientId _ worldName player model =
+choosePerk perk clientId world worldName player model =
     let
         level =
             Xp.currentLevel player.xp
     in
     if
-        Perk.isApplicableForLevelup
+        PerkRequirement.isApplicable
             { addedSkillPercentages = player.addedSkillPercentages
             , special = player.special
             , level = level
             , perks = player.perks
+            , questsDone = questsReceivedRewardFor player.name world
             }
             perk
     then
@@ -2386,6 +2388,27 @@ choosePerk perk clientId _ worldName player model =
 
     else
         ( model, Cmd.none )
+
+
+questsReceivedRewardFor : PlayerName -> World -> SeqSet Quest.Name
+questsReceivedRewardFor playerName world =
+    world.questsProgress
+        |> SeqDict.toList
+        |> List.filterMap
+            (\( quest, progress ) ->
+                let
+                    givenEnough =
+                        Dict.get playerName progress
+                            |> Maybe.withDefault 0
+                            |> (\given -> given >= (Quest.playerRewards quest).ticksNeeded)
+                in
+                if givenEnough then
+                    Just quest
+
+                else
+                    Nothing
+            )
+        |> SeqSet.fromList
 
 
 sendCurrentWorld : World.Name -> PlayerName -> ClientId -> Model -> ( Model, Cmd BackendMsg )

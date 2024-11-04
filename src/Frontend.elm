@@ -29,6 +29,7 @@ import Data.Map.Terrain as Terrain
 import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk as Perk exposing (Perk)
+import Data.Perk.Requirement as PerkRequirement
 import Data.Player as Player
     exposing
         ( COtherPlayer
@@ -3306,37 +3307,55 @@ newCharSkillsView newChar =
 
 
 characterView : Maybe HoveredItem -> PlayerData -> CPlayer -> List (Html FrontendMsg)
-characterView maybeHoveredItem _ player =
+characterView maybeHoveredItem world player =
     let
         level =
             Xp.currentLevel player.xp
 
-        applicablePerks : List Perk
-        applicablePerks =
-            Perk.allApplicableForLevelup
+        partitioned =
+            PerkRequirement.allApplicable
                 { level = level
                 , special = player.special
                 , addedSkillPercentages = player.addedSkillPercentages
                 , perks = player.perks
+                , questsDone =
+                    world.questsProgress
+                        |> SeqDict.toList
+                        |> List.filterMap
+                            (\( quest, progress ) ->
+                                if progress.ticksGivenByPlayer >= (Quest.playerRewards quest).ticksNeeded then
+                                    Just quest
+
+                                else
+                                    Nothing
+                            )
+                        |> SeqSet.fromList
                 }
     in
     [ pageTitleView "Character"
-    , if player.availablePerks > 0 && not (List.isEmpty applicablePerks) then
-        choosePerkView maybeHoveredItem applicablePerks
+    , if player.availablePerks > 0 && not (List.isEmpty partitioned.applicablePerks) then
+        choosePerkView maybeHoveredItem partitioned
 
       else
         normalCharacterView maybeHoveredItem player
     ]
 
 
-choosePerkView : Maybe HoveredItem -> List Perk -> Html FrontendMsg
-choosePerkView maybeHoveredItem applicablePerks =
+choosePerkView :
+    Maybe HoveredItem
+    ->
+        { applicablePerks : List Perk
+        , nonapplicablePerks : List Perk
+        }
+    -> Html FrontendMsg
+choosePerkView maybeHoveredItem { applicablePerks, nonapplicablePerks } =
     let
-        perkView : Perk -> Html FrontendMsg
-        perkView perk =
+        perkView : String -> Perk -> Html FrontendMsg
+        perkView textColor perk =
             H.li
                 [ HE.onClick <| AskToChoosePerk perk
                 , HA.class "cursor-pointer group"
+                , HA.class textColor
                 , HE.onMouseOver <| HoverItem <| HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
@@ -3351,8 +3370,14 @@ choosePerkView maybeHoveredItem applicablePerks =
         [ H.div
             [ HA.class "flex-1 grid grid-cols-[minmax(0,max-content)_minmax(0,60ch)] gap-8" ]
             [ H.div [ HA.class "flex flex-col gap-4" ]
-                [ H.h3 [] [ H.text "Choose a perk!" ]
-                , UI.ul [] (List.map perkView applicablePerks)
+                [ H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Choose a perk!" ]
+                , UI.ul [] (List.map (perkView "text-green-200") applicablePerks)
+                , H.h3
+                    [ HA.class "text-green-300" ]
+                    [ H.text "Inaccessible perks:" ]
+                , UI.ul [] (List.map (perkView "text-green-300") nonapplicablePerks)
                 ]
             , H.viewMaybe perkDescriptionView maybeHoveredItem
             ]

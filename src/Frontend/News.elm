@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730747519
+    [ { date = 1730752535
       , title = "TODOs before release"
       , text =
             """
@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- perk - show all perks, some grayed out, show the requirements?
+- new char / char screen: show Sequence and other stats in derived stats
 
 Next up: 
 
@@ -48,7 +48,6 @@ Later:
 - item descriptions
 - weapons - show strength requirement somewhere (item description)
 - tooltips around edge of screen - floating-ui.js?
-- new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
 - music in the bg (opt-in)

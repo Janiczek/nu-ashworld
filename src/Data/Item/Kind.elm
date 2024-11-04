@@ -1607,9 +1607,15 @@ ammoDamageResistanceModifier kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -1909,9 +1915,15 @@ ammoDamageModifier kind =
 
         Tool ->
             ( 1, 1 )
-        SuperToolKit -> (1,1)
-        FuelCellRegulator -> (1,1)
-        FuelCellController -> (1,1)
+
+        SuperToolKit ->
+            ( 1, 1 )
+
+        FuelCellRegulator ->
+            ( 1, 1 )
+
+        FuelCellController ->
+            ( 1, 1 )
 
         LockPicks ->
             ( 1, 1 )
@@ -2145,9 +2157,15 @@ ammoArmorClassModifier kind =
         Tool ->
             0
 
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
+
         LockPicks ->
             0
 
@@ -2415,9 +2433,15 @@ armorClass kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -2745,9 +2769,15 @@ armorDamageThresholdNormal kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -3025,9 +3055,15 @@ armorDamageThresholdExplosion kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -3305,9 +3341,15 @@ armorDamageThresholdElectrical kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -3585,9 +3627,15 @@ armorDamageThresholdEMP kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -3865,9 +3913,15 @@ armorDamageThresholdLaser kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -4145,9 +4199,15 @@ armorDamageThresholdFire kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -4425,9 +4485,15 @@ armorDamageThresholdPlasma kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -4705,9 +4771,15 @@ armorDamageResistanceNormal kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -4985,9 +5057,15 @@ armorDamageResistanceExplosion kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -5265,9 +5343,15 @@ armorDamageResistanceElectrical kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -5545,9 +5629,15 @@ armorDamageResistanceEMP kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -5825,9 +5915,15 @@ armorDamageResistanceLaser kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -6105,9 +6201,15 @@ armorDamageResistanceFire kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -6385,9 +6487,15 @@ armorDamageResistancePlasma kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -6708,9 +6816,15 @@ usableAmmoForWeapon kind =
 
         Tool ->
             []
-        SuperToolKit -> []
-        FuelCellRegulator -> []
-        FuelCellController -> []
+
+        SuperToolKit ->
+            []
+
+        FuelCellRegulator ->
+            []
+
+        FuelCellController ->
+            []
 
         LockPicks ->
             []
@@ -7013,9 +7127,15 @@ weaponDamageType kind =
 
         Tool ->
             Nothing
-        SuperToolKit -> Nothing
-        FuelCellRegulator -> Nothing
-        FuelCellController -> Nothing
+
+        SuperToolKit ->
+            Nothing
+
+        FuelCellRegulator ->
+            Nothing
+
+        FuelCellController ->
+            Nothing
 
         LockPicks ->
             Nothing
@@ -7242,9 +7362,15 @@ weaponStrengthRequirement kind =
 
         Tool ->
             1
-        SuperToolKit -> 1
-        FuelCellRegulator -> 1
-        FuelCellController -> 1
+
+        SuperToolKit ->
+            1
+
+        FuelCellRegulator ->
+            1
+
+        FuelCellController ->
+            1
 
         LockPicks ->
             1
@@ -7525,9 +7651,15 @@ isLongRangeWeapon kind =
 
         Tool ->
             False
-        SuperToolKit -> False
-        FuelCellRegulator -> False
-        FuelCellController -> False
+
+        SuperToolKit ->
+            False
+
+        FuelCellRegulator ->
+            False
+
+        FuelCellController ->
+            False
 
         LockPicks ->
             False
@@ -7833,9 +7965,15 @@ isWeaponArmorPenetrating kind =
 
         Tool ->
             False
-        SuperToolKit -> False
-        FuelCellRegulator -> False
-        FuelCellController -> False
+
+        SuperToolKit ->
+            False
+
+        FuelCellRegulator ->
+            False
+
+        FuelCellController ->
+            False
 
         LockPicks ->
             False
@@ -8094,9 +8232,15 @@ burstRange kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         GECK ->
             0
@@ -8422,9 +8566,15 @@ isAccurateWeapon kind =
 
         Tool ->
             False
-        SuperToolKit -> False
-        FuelCellRegulator -> False
-        FuelCellController -> False
+
+        SuperToolKit ->
+            False
+
+        FuelCellRegulator ->
+            False
+
+        FuelCellController ->
+            False
 
         LockPicks ->
             False
@@ -8682,9 +8832,15 @@ aimedRange kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         GECK ->
             0
@@ -8962,9 +9118,15 @@ unaimedRange kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         GECK ->
             0
@@ -9257,9 +9419,15 @@ name kind =
 
         Tool ->
             "Tool"
-        SuperToolKit ->"Super Tool Kit"
-        FuelCellRegulator -> "Fuel Cell Regulator"
-        FuelCellController -> "Fuel Cell Controller"
+
+        SuperToolKit ->
+            "Super Tool Kit"
+
+        FuelCellRegulator ->
+            "Fuel Cell Regulator"
+
+        FuelCellController ->
+            "Fuel Cell Controller"
 
         GECK ->
             "GECK"
@@ -9540,9 +9708,15 @@ types kind =
 
         Tool ->
             [ Type.Misc ]
-        SuperToolKit -> [Type.Misc]
-        FuelCellRegulator -> [Type.Misc]
-        FuelCellController -> [Type.Misc]
+
+        SuperToolKit ->
+            [ Type.Misc ]
+
+        FuelCellRegulator ->
+            [ Type.Misc ]
+
+        FuelCellController ->
+            [ Type.Misc ]
 
         GECK ->
             [ Type.Misc ]
@@ -9878,9 +10052,14 @@ weaponDamage kind =
         Tool ->
             mk 0 0
 
-        SuperToolKit -> mk 0 0
-        FuelCellRegulator -> mk 0 0
-        FuelCellController -> mk 0 0
+        SuperToolKit ->
+            mk 0 0
+
+        FuelCellRegulator ->
+            mk 0 0
+
+        FuelCellController ->
+            mk 0 0
 
         LockPicks ->
             mk 0 0
@@ -10155,9 +10334,15 @@ shotsPerBurst kind =
 
         Tool ->
             0
-        SuperToolKit -> 0
-        FuelCellRegulator -> 0
-        FuelCellController -> 0
+
+        SuperToolKit ->
+            0
+
+        FuelCellRegulator ->
+            0
+
+        FuelCellController ->
+            0
 
         LockPicks ->
             0
@@ -10433,9 +10618,15 @@ isTwoHandedWeapon kind =
 
         Tool ->
             False
-        SuperToolKit -> False
-        FuelCellRegulator -> False
-        FuelCellController -> False
+
+        SuperToolKit ->
+            False
+
+        FuelCellRegulator ->
+            False
+
+        FuelCellController ->
+            False
 
         LockPicks ->
             False
@@ -10710,9 +10901,15 @@ carBatteryChargePromileAmount kind =
 
         Tool ->
             Nothing
-        SuperToolKit -> Nothing
-        FuelCellRegulator -> Nothing
-        FuelCellController -> Nothing
+
+        SuperToolKit ->
+            Nothing
+
+        FuelCellRegulator ->
+            Nothing
+
+        FuelCellController ->
+            Nothing
 
         LockPicks ->
             Nothing
