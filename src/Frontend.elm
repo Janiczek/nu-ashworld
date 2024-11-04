@@ -2948,7 +2948,10 @@ newCharView : Maybe HoveredItem -> NewChar -> List (Html FrontendMsg)
 newCharView hoveredItem newChar =
     let
         createBtnView =
-            H.div [ HA.class "mt-10" ]
+            H.div
+                [ HA.class "mt-10 items-start"
+                , HA.style "grid-area" "create"
+                ]
                 [ UI.button
                     [ HE.onClick CreateChar ]
                     [ H.text "[ Create ]" ]
@@ -2957,27 +2960,26 @@ newCharView hoveredItem newChar =
         errorView =
             H.viewMaybe
                 (\error ->
-                    H.div [ HA.class "text-yellow mt-5" ]
+                    H.div
+                        [ HA.class "text-yellow mt-5"
+                        , HA.style "grid-area" "error"
+                        ]
                         [ H.text <| NewChar.error error ]
                 )
                 newChar.error
     in
     [ pageTitleView "New Character"
     , H.div
-        [ HA.class "grid grid-cols-[42ch_32ch_40ch] gap-5" ]
-        [ H.div [ HA.class "flex flex-col gap-8" ]
-            [ newCharSpecialView newChar
-            , newCharTraitsView newChar.traits
-            , createBtnView
-            , errorView
-            ]
-        , H.div [ HA.class "flex flex-col gap-8" ]
-            [ newCharSkillsView newChar
-            ]
-        , H.div [ HA.class "flex flex-col gap-8" ]
-            [ newCharDerivedStatsView newChar
-            , newCharHelpView hoveredItem
-            ]
+        [ HA.class "grid grid-cols-[42ch_32ch_40ch] gap-x-5 gap-y-8 grid-rows-[repeat(4,min-content)_1fr]"
+        , HA.class "new-character-grid"
+        ]
+        [ newCharSpecialView newChar
+        , newCharTraitsView newChar.traits
+        , createBtnView
+        , errorView
+        , newCharSkillsView newChar
+        , newCharDerivedStatsView newChar
+        , newCharHelpView hoveredItem
         ]
     ]
 
@@ -2998,7 +3000,7 @@ newCharHelpView maybeHoveredItem =
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-2" ]
+                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
                         [ H.h4
                             [ HA.class "text-yellow" ]
                             [ H.text title ]
@@ -3007,11 +3009,13 @@ newCharHelpView maybeHoveredItem =
                             |> Result.mapError (\_ -> "")
                             |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
                             |> Result.withDefault [ H.text "Failed to parse Markdown" ]
-                            |> H.div [ HA.class "flex flex-col gap-2" ]
+                            |> H.div [ HA.class "flex flex-col gap-4" ]
                         ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "help"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Help" ]
@@ -3087,7 +3091,10 @@ newCharDerivedStatsView newChar =
                 , hasAwarenessPerk = False
                 }
     in
-    H.div [ HA.class "flex flex-col gap-4" ]
+    H.div
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "derived-stats"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
@@ -3212,7 +3219,9 @@ newCharSpecialView newChar =
                 ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "special"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "SPECIAL ("
@@ -3262,7 +3271,9 @@ newCharTraitsView traits =
                 ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "traits"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Traits ("
@@ -3404,27 +3415,25 @@ perkDescriptionView hoveredItem =
 normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
 normalCharacterView maybeHoveredItem player =
     H.div
-        [ HA.class "grid grid-cols-[28ch_34ch_minmax(0,1fr)] gap-x-5 gap-y-8" ]
-        [ H.div [ HA.class "flex flex-col gap-8" ]
-            [ charSpecialView player
-            , charTraitsView player.traits
-            , charPerksView player.perks
-            ]
-        , H.div [ HA.class "flex flex-col gap-8" ]
-            [ charSkillsView player
-            ]
-        , H.div [ HA.class "flex flex-col gap-8" ]
-            [ charDerivedStatsView player
-            , charHelpView maybeHoveredItem
-            ]
-        , H.div [ HA.class "flex flex-col gap-8 col-span-2" ]
-            [ charActiveQuestsView player ]
+        [ HA.class "grid gap-x-5 gap-y-8 grid-cols-[28ch_34ch_minmax(0,1fr)] grid-rows-[repeat(4,min-content)_1fr]"
+        , HA.class "character-grid"
+        ]
+        [ charSpecialView player
+        , charTraitsView player.traits
+        , charPerksView player.perks
+        , charSkillsView player
+        , charDerivedStatsView player
+        , charHelpView maybeHoveredItem
+        , charActiveQuestsView player
         ]
 
 
 charActiveQuestsView : CPlayer -> Html FrontendMsg
 charActiveQuestsView player =
-    H.div [ HA.class "flex flex-col gap-4" ]
+    H.div
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "active-quests"
+        ]
         [ H.h3 [ HA.class "text-green-300" ] [ H.text "Active quests" ]
         , if SeqSet.isEmpty player.questsActive then
             UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
@@ -3458,7 +3467,9 @@ charTraitsView traits =
                 ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "traits"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
@@ -3489,7 +3500,7 @@ charHelpView maybeHoveredItem =
                         { title, description } =
                             HoveredItem.text hoveredItem
                     in
-                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-2" ]
+                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
                         [ H.h4
                             [ HA.class "text-yellow" ]
                             [ H.text title ]
@@ -3502,7 +3513,9 @@ charHelpView maybeHoveredItem =
                         ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "help"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Help" ]
@@ -3543,7 +3556,10 @@ charDerivedStatsView player =
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
     in
-    H.div [ HA.class "flex flex-col gap-4" ]
+    H.div
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "derived-stats"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Derived stats" ]
@@ -3624,7 +3640,9 @@ charSpecialView player =
                 ]
     in
     H.div
-        [ HA.class "flex flex-col gap-4" ]
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "special"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "SPECIAL" ]
@@ -3756,7 +3774,9 @@ skillsView_ r =
     in
     if r.isNewChar then
         H.div
-            [ HA.class "flex flex-col gap-4" ]
+            [ HA.class "flex flex-col gap-4"
+            , HA.style "grid-area" "skills"
+            ]
             [ H.h3
                 [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
@@ -3773,7 +3793,10 @@ skillsView_ r =
             ]
 
     else
-        H.div [ HA.class "flex flex-col gap-4" ]
+        H.div
+            [ HA.class "flex flex-col gap-4"
+            , HA.style "grid-area" "skills"
+            ]
             [ H.h3
                 [ HA.class "text-green-300" ]
                 [ H.text "Skills ("
@@ -3825,7 +3848,10 @@ charPerksView perks =
                         Perk.name perk ++ " (" ++ String.fromInt rank ++ "x)"
                 ]
     in
-    H.div [ HA.class "flex flex-col gap-4" ]
+    H.div
+        [ HA.class "flex flex-col gap-4"
+        , HA.style "grid-area" "perks"
+        ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Perks" ]

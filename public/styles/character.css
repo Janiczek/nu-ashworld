@@ -1,0 +1,17 @@
+.character-grid {
+    grid-template-areas:
+        "special       skills        derived-stats"
+        "special       skills        help"
+        "traits        skills        help"
+        "perks         skills        help"
+        "active-quests active-quests help";
+}
+
+.new-character-grid {
+    grid-template-areas:
+        "special skills derived-stats"
+        "special skills help"
+        "traits  skills help"
+        "create  skills help"
+        "error   error  help";
+}
