@@ -423,7 +423,7 @@ renderer =
         , codeBlock =
             \{ body } ->
                 H.pre
-                    [ HA.class "[font-stretch:85%] ml-[4ch] text-sm text-green-200 bg-green-800 px-[2ch] py-4 w-fit" ]
+                    [ HA.class "ml-[4ch] text-green-200 bg-green-800 px-[2ch] py-4 w-fit" ]
                     [ H.text body ]
         , html =
             Markdown.Html.oneOf

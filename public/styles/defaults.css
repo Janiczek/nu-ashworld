@@ -54,6 +54,18 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+.text-lg,
+.text-md {
+    font-stretch: 112.5%;
+}
+
+pre,
+textarea {
+    font-stretch: 85%;
+    font-size: 15px;
+    line-height: 18px;
+}
+
 /* VIGNETTE CORNERS */
 body:after {
     position: fixed;

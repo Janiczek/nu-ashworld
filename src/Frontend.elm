@@ -3445,9 +3445,9 @@ charTraitsView traits =
             [ HA.class "text-green-300" ]
             [ H.text "Traits" ]
         , if SeqSet.isEmpty traits then
-            H.p
-                [ HA.class "text-green-300" ]
-                [ H.text "You have no traits." ]
+            UI.ul []
+                [ H.li [ HA.class "text-green-300" ] [ H.text "None" ]
+                ]
 
           else
             UI.ul [ HA.class "w-fit" ]
@@ -3807,7 +3807,7 @@ charPerksView perks =
                         Perk.name perk ++ " (" ++ String.fromInt rank ++ "x)"
                 ]
     in
-    H.div []
+    H.div [ HA.class "flex flex-col gap-4" ]
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "Perks" ]
@@ -3984,7 +3984,7 @@ inventoryView _ player =
                     [ HA.class "text-green-300" ]
                     [ H.text "Items" ]
               , if Dict.isEmpty player.items then
-                    H.p [ HA.class "ml-[2ch]" ] [ H.text "You have no items!" ]
+                    UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
 
                 else
                     UI.ul []
@@ -4523,7 +4523,6 @@ settingsFightStrategyView fightStrategyText _ player =
                 [ UI.textarea
                     [ HE.onInput SetFightStrategyText
                     , HA.class "!bg-green-800 w-[85ch] min-h-[25rem] my-4 py-4 px-4 rounded leading-[18px] overflow-x-auto whitespace-pre font-mono"
-                    , HA.class "[font-stretch:85%] text-sm"
                     , HA.value fightStrategyText
                     ]
                     []
