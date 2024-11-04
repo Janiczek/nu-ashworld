@@ -2091,7 +2091,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
                                 fight_.messageForTarget
                     )
                     fight_.finalTarget
-                |> (case fight_.fightInfo.result of
+                |> (case fight_.fightInfoForAttacker.result of
                         Fight.BothDead ->
                             identity
 
@@ -2161,7 +2161,7 @@ processFight clientId worldName sPlayer ( fight_, newItemId ) model =
                 ( newModel
                 , Lamdera.sendToFrontend clientId <|
                     YourFightResult
-                        ( fight_.fightInfo
+                        ( fight_.fightInfoForAttacker
                         , world
                         )
                 )

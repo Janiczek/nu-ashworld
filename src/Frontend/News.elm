@@ -33,6 +33,7 @@ announcement!
 Current TODOs:
 
 - show other players' weapons / armor with Awareness perk (fight)
+- Messages link in menu is dimmed even when hovered
 
 Next up: 
 

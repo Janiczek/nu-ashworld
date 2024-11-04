@@ -47,7 +47,7 @@ import Time exposing (Posix)
 type alias Fight =
     { finalAttacker : Opponent
     , finalTarget : Opponent
-    , fightInfo : Fight.Info
+    , fightInfoForAttacker : Fight.Info
     , messageForTarget : Message.Content
     , messageForAttacker : Message.Content
     }
@@ -747,27 +747,63 @@ generator r =
                     else
                         Fight.NobodyDead
 
-                fightInfo : Fight.Info
-                fightInfo =
+                fightInfoForTarget : Fight.Info
+                fightInfoForTarget =
                     { attacker = r.attacker.type_
                     , target = r.target.type_
                     , log = List.reverse ongoing.reverseLog
                     , result = result
+                    , attackerEquipment =
+                        if Perk.rank Perk.Awareness ongoing.target.perks > 0 then
+                            Just
+                                { weapon = ongoing.attacker.equippedWeapon
+                                , armor = ongoing.attacker.equippedArmor
+                                }
+
+                        else
+                            Nothing
+                    , targetEquipment =
+                        Just
+                            { weapon = ongoing.target.equippedWeapon
+                            , armor = ongoing.target.equippedArmor
+                            }
+                    }
+
+                fightInfoForAttacker : Fight.Info
+                fightInfoForAttacker =
+                    { attacker = r.attacker.type_
+                    , target = r.target.type_
+                    , log = List.reverse ongoing.reverseLog
+                    , result = result
+                    , attackerEquipment =
+                        Just
+                            { weapon = ongoing.attacker.equippedWeapon
+                            , armor = ongoing.attacker.equippedArmor
+                            }
+                    , targetEquipment =
+                        if Perk.rank Perk.Awareness ongoing.attacker.perks > 0 then
+                            Just
+                                { weapon = ongoing.target.equippedWeapon
+                                , armor = ongoing.target.equippedArmor
+                                }
+
+                        else
+                            Nothing
                     }
 
                 messageForTarget =
                     YouWereAttacked
                         { attacker = attackerName
-                        , fightInfo = fightInfo
+                        , fightInfo = fightInfoForTarget
                         }
 
                 messageForAttacker =
                     YouAttacked
                         { target = targetName
-                        , fightInfo = fightInfo
+                        , fightInfo = fightInfoForAttacker
                         }
             in
-            { fightInfo = fightInfo
+            { fightInfoForAttacker = fightInfoForAttacker
             , messageForTarget = messageForTarget
             , messageForAttacker = messageForAttacker
             , finalAttacker = ongoing.attacker
@@ -1760,28 +1796,65 @@ targetAlreadyDead r =
         targetName =
             Fight.opponentName r.target.type_
 
-        fightInfo =
+        fightInfoForAttacker : Fight.Info
+        fightInfoForAttacker =
             { attacker = r.attacker.type_
             , target = r.target.type_
             , log = []
             , result = Fight.TargetAlreadyDead
+            , attackerEquipment =
+                Just
+                    { weapon = r.attacker.equippedWeapon
+                    , armor = r.attacker.equippedArmor
+                    }
+            , targetEquipment =
+                if Perk.rank Perk.Awareness r.attacker.perks > 0 then
+                    Just
+                        { weapon = r.target.equippedWeapon
+                        , armor = r.target.equippedArmor
+                        }
+
+                else
+                    Nothing
+            }
+
+        fightInfoForTarget : Fight.Info
+        fightInfoForTarget =
+            { attacker = r.attacker.type_
+            , target = r.target.type_
+            , log = []
+            , result = Fight.TargetAlreadyDead
+            , attackerEquipment =
+                if Perk.rank Perk.Awareness r.target.perks > 0 then
+                    Just
+                        { weapon = r.attacker.equippedWeapon
+                        , armor = r.attacker.equippedArmor
+                        }
+
+                else
+                    Nothing
+            , targetEquipment =
+                Just
+                    { weapon = r.target.equippedWeapon
+                    , armor = r.target.equippedArmor
+                    }
             }
 
         messageForTarget =
             YouWereAttacked
                 { attacker = attackerName
-                , fightInfo = fightInfo
+                , fightInfo = fightInfoForTarget
                 }
 
         messageForAttacker =
             YouAttacked
                 { target = targetName
-                , fightInfo = fightInfo
+                , fightInfo = fightInfoForAttacker
                 }
     in
     { finalAttacker = r.attacker
     , finalTarget = r.target
-    , fightInfo = fightInfo
+    , fightInfoForAttacker = fightInfoForAttacker
     , messageForTarget = messageForTarget
     , messageForAttacker = messageForAttacker
     }

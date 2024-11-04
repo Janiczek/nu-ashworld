@@ -1,6 +1,7 @@
 module Data.Fight exposing
     ( Action(..)
     , CommandRejectionReason(..)
+    , Equipment
     , Info
     , Opponent
     , Result(..)
@@ -36,11 +37,22 @@ import SeqDict exposing (SeqDict)
 import SeqSet exposing (SeqSet)
 
 
+type alias Equipment =
+    -- Maybes because the player might not have the item equipped
+    { weapon : Maybe ItemKind.Kind
+    , armor : Maybe ItemKind.Kind
+    }
+
+
 type alias Info =
     { attacker : OpponentType
     , target : OpponentType
     , log : List ( Who, Action )
     , result : Result
+
+    -- Maybe because the info might not be available due to player not having the Awareness perk
+    , attackerEquipment : Maybe Equipment
+    , targetEquipment : Maybe Equipment
     }
 
 
@@ -150,6 +162,16 @@ infoCodec =
         |> Codec.field "target" .target OpponentType.codec
         |> Codec.field "log" .log (Codec.list (Codec.tuple whoCodec actionCodec))
         |> Codec.field "result" .result resultCodec
+        |> Codec.field "attackerEquipment" .attackerEquipment (Codec.nullable equipmentCodec)
+        |> Codec.field "targetEquipment" .targetEquipment (Codec.nullable equipmentCodec)
+        |> Codec.buildObject
+
+
+equipmentCodec : Codec Equipment
+equipmentCodec =
+    Codec.object Equipment
+        |> Codec.field "weapon" .weapon (Codec.nullable ItemKind.codec)
+        |> Codec.field "armor" .armor (Codec.nullable ItemKind.codec)
         |> Codec.buildObject
 
 

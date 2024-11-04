@@ -12,6 +12,7 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Html as H exposing (Html)
 import Html.Attributes as HA
+import Html.Extra as H
 import List.Extra
 import Set exposing (Set)
 import UI
@@ -168,7 +169,57 @@ view perceptionLevel fight yourName =
                     Enemy.aimedShotName enemyType aimedShot
     in
     H.div [ HA.class "flex flex-col gap-4" ]
-        [ fight.log
+        [ if fight.attackerEquipment /= Nothing || fight.targetEquipment /= Nothing then
+            let
+                yourEquipment =
+                    if youAreAttacker then
+                        fight.attackerEquipment
+
+                    else
+                        fight.targetEquipment
+
+                theirEquipment =
+                    if youAreAttacker then
+                        fight.targetEquipment
+
+                    else
+                        fight.attackerEquipment
+
+                itemName : Maybe ItemKind.Kind -> ( String, String )
+                itemName maybeKind =
+                    case maybeKind of
+                        Nothing ->
+                            ( "text-green-300", "None" )
+
+                        Just kind ->
+                            ( "text-green-100", ItemKind.name kind )
+
+                equipmentName : (Fight.Equipment -> Maybe ItemKind.Kind) -> Maybe Fight.Equipment -> ( String, String )
+                equipmentName getter maybeEquipment =
+                    case maybeEquipment of
+                        Nothing ->
+                            ( "text-green-300", "?" )
+
+                        Just e ->
+                            e |> getter |> itemName
+            in
+            [ ( "Your weapon", equipmentName .weapon yourEquipment )
+            , ( "Your armor", equipmentName .armor yourEquipment )
+            , ( "Their weapon", equipmentName .weapon theirEquipment )
+            , ( "Their armor", equipmentName .armor theirEquipment )
+            ]
+                |> List.map
+                    (\( label, ( color, content ) ) ->
+                        H.li []
+                            [ H.span [ HA.class "text-green-300" ] [ H.text <| label ++ ": " ]
+                            , H.span [ HA.class color ] [ H.text content ]
+                            ]
+                    )
+                |> UI.ul []
+
+          else
+            H.nothing
+        , fight.log
             |> List.Extra.groupWhile (\( a, _ ) ( b, _ ) -> a == b)
             |> List.map
                 (\( ( who, _ ) as first, rest ) ->
