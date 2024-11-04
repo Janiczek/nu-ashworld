@@ -27,7 +27,7 @@ import Data.FightStrategy.Named as FightStrategy
 import Data.HealthStatus as HealthStatus exposing (HealthStatus)
 import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
-import Data.Map as Map exposing (TileNum)
+import Data.Map as Map exposing (TileCoords)
 import Data.Map.Location as Location
 import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
@@ -66,7 +66,7 @@ type alias SPlayer =
     , ticks : Int
     , wins : Int
     , losses : Int
-    , location : TileNum
+    , location : TileCoords
     , perks : SeqDict Perk Int
     , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
@@ -96,7 +96,7 @@ type alias CPlayer =
     , ticks : Int
     , wins : Int
     , losses : Int
-    , location : TileNum
+    , location : TileCoords
     , perks : SeqDict Perk Int
     , messages : Dict Message.Id Message
     , items : Dict Item.Id Item
@@ -122,6 +122,7 @@ type alias COtherPlayer =
     , wins : Int
     , losses : Int
     , healthStatus : HealthStatus
+    , location : TileCoords
     }
 
 
@@ -155,7 +156,7 @@ sPlayerCodec =
         |> Codec.field "ticks" .ticks Codec.int
         |> Codec.field "wins" .wins Codec.int
         |> Codec.field "losses" .losses Codec.int
-        |> Codec.field "location" .location Codec.int
+        |> Codec.field "location" .location Map.tileCoordsCodec
         |> Codec.field "perks" .perks (SeqDict.codec Data.Perk.codec Codec.int)
         |> Codec.field "messages" .messages (Dict.codec Codec.int Message.codec)
         |> Codec.field "items" .items (Dict.codec Codec.int Item.codec)
@@ -211,6 +212,7 @@ serverToClientOther perceptionLevel p =
     , wins = p.wins
     , losses = p.losses
     , healthStatus = HealthStatus.check perceptionLevel p
+    , location = p.location
     }
 
 
@@ -225,6 +227,7 @@ clientToClientOther p =
             { current = p.hp
             , max = p.maxHp
             }
+    , location = p.location
     }
 
 
@@ -299,11 +302,10 @@ fromNewChar currentTime auth newChar =
                         , lifegiverPerkRanks = 0
                         }
 
-                startingTileNum : TileNum
-                startingTileNum =
+                startingTileCoords : TileCoords
+                startingTileCoords =
                     Location.default
                         |> Location.coords
-                        |> Map.toTileNum
             in
             { name = auth.name
             , password = auth.password
@@ -316,7 +318,7 @@ fromNewChar currentTime auth newChar =
             , ticks = 50
             , wins = 0
             , losses = 0
-            , location = startingTileNum
+            , location = startingTileCoords
             , perks = SeqDict.empty
             , messages =
                 [ Message.new 0 currentTime Message.Welcome ]

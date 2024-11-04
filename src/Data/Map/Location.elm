@@ -10,7 +10,7 @@ module Data.Map.Location exposing
     , size
     )
 
-import Data.Map as Map exposing (TileCoords, TileNum)
+import Data.Map exposing (TileCoords)
 import Dict exposing (Dict)
 
 
@@ -335,14 +335,14 @@ name loc =
             "Vault City"
 
 
-dict : Dict TileNum Location
+dict : Dict TileCoords Location
 dict =
     allLocations
-        |> List.map (\loc -> ( Map.toTileNum <| coords loc, loc ))
+        |> List.map (\loc -> ( coords loc, loc ))
         |> Dict.fromList
 
 
-location : TileNum -> Maybe Location
+location : TileCoords -> Maybe Location
 location tile =
     Dict.get tile dict
 

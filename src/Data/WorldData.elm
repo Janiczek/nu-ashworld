@@ -5,6 +5,7 @@ module Data.WorldData exposing
     , allPlayers
     , isAdmin
     , isPlayer
+    , setOtherPlayers
     )
 
 import Data.Ladder as Ladder
@@ -107,3 +108,22 @@ isAdmin data =
 
         NotLoggedIn ->
             False
+
+
+mapPlayerData : (PlayerData -> PlayerData) -> WorldData -> WorldData
+mapPlayerData fn data =
+    case data of
+        IsPlayer playerData ->
+            IsPlayer (fn playerData)
+
+        IsAdmin _ ->
+            data
+
+        NotLoggedIn ->
+            data
+
+
+setOtherPlayers : List COtherPlayer -> WorldData -> WorldData
+setOtherPlayers otherPlayers world =
+    world
+        |> mapPlayerData (\playerData -> { playerData | otherPlayers = otherPlayers })

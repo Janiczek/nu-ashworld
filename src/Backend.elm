@@ -21,7 +21,7 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Ladder as Ladder
-import Data.Map as Map exposing (TileCoords)
+import Data.Map exposing (TileCoords)
 import Data.Map.Location as Location exposing (Location)
 import Data.Map.Pathfinding as Pathfinding
 import Data.Map.SmallChunk as SmallChunk
@@ -657,7 +657,6 @@ applyPlayerQuestReward reward ( lastItemId, player ) =
                 | location =
                     Location.EnclavePlatform
                         |> Location.coords
-                        |> Map.toTileNum
               }
             )
 
@@ -1617,12 +1616,8 @@ removeFightMessages clientId _ worldName player model =
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-moveTo newCoords pathTaken clientId _ worldName player model =
+moveTo newCoords pathTaken clientId world worldName player model =
     let
-        currentCoords : TileCoords
-        currentCoords =
-            Map.toTileCoords player.location
-
         { tickCost, carBatteryPromileCost } =
             Pathfinding.cost
                 { pathTaken = pathTaken
@@ -1632,7 +1627,7 @@ moveTo newCoords pathTaken clientId _ worldName player model =
 
         isSamePosition : Bool
         isSamePosition =
-            currentCoords == newCoords
+            player.location == newCoords
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -1644,10 +1639,10 @@ moveTo newCoords pathTaken clientId _ worldName player model =
         pathDoesntAgree : Bool
         pathDoesntAgree =
             pathTaken
-                /= Set.remove currentCoords
+                /= Set.remove player.location
                     (Pathfinding.path
                         perceptionLevel
-                        { from = currentCoords
+                        { from = player.location
                         , to = newCoords
                         }
                     )
@@ -1674,11 +1669,82 @@ moveTo newCoords pathTaken clientId _ worldName player model =
                 worldName
                 player.name
                 (SPlayer.subtractTicks tickCost
-                    >> SPlayer.setLocation (Map.toTileNum newCoords)
+                    >> SPlayer.setLocation newCoords
                     >> SPlayer.removeCarBattery carBatteryPromileCost
                 )
             |> sendCurrentWorld worldName player.name clientId
             |> Cmd.andThen (\m -> ( m, refreshAdminData m ))
+            |> Cmd.andThen (\m -> ( m, refreshOtherPlayers worldName player.name m ))
+
+
+{-| Don't send anything to the `initiatorPlayerName`, they already got a msg
+with their full data. The others just need to know the location changed.
+-}
+refreshOtherPlayers : World.Name -> PlayerName -> Model -> Cmd BackendMsg
+refreshOtherPlayers worldName initiatorPlayerName model =
+    case Dict.get worldName model.worlds of
+        Nothing ->
+            Cmd.none
+
+        Just world ->
+            let
+                allLoggedInPlayers : List ( ClientId, PlayerName )
+                allLoggedInPlayers =
+                    model.loggedInPlayers
+                        |> BiDict.toList
+                        |> List.filterMap
+                            (\( clientId, ( wn, playerName ) ) ->
+                                if wn == worldName then
+                                    Just ( clientId, playerName )
+
+                                else
+                                    Nothing
+                            )
+            in
+            allLoggedInPlayers
+                |> List.filterMap
+                    (\( clientId, playerName ) ->
+                        if playerName == initiatorPlayerName then
+                            -- Don't send anything to this one
+                            Nothing
+
+                        else
+                            Dict.get playerName world.players
+                                |> Maybe.andThen Player.getPlayerData
+                                |> Maybe.andThen
+                                    (\player ->
+                                        -- We want to create a List COtherPlayer for this `player`.
+                                        -- Let's go through all the players in the world again, filter out `playerName`
+                                        -- and collect the data.
+                                        let
+                                            perceptionLevel =
+                                                Perception.level
+                                                    { perception = player.special.perception
+                                                    , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                                                    }
+                                        in
+                                        world.players
+                                            |> Dict.values
+                                            |> List.filterMap
+                                                (\otherPlayer ->
+                                                    otherPlayer
+                                                        |> Player.getPlayerData
+                                                        |> Maybe.andThen
+                                                            (\otherPlayerData ->
+                                                                if otherPlayerData.name == playerName then
+                                                                    Nothing
+
+                                                                else
+                                                                    Player.serverToClientOther perceptionLevel otherPlayerData
+                                                                        |> Just
+                                                            )
+                                                )
+                                            |> CurrentOtherPlayers
+                                            |> Lamdera.sendToFrontend clientId
+                                            |> Just
+                                    )
+                    )
+                |> Cmd.batch
 
 
 createNewChar : NewChar -> ClientId -> World -> World.Name -> Player SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1949,7 +2015,6 @@ wander clientId world worldName player model =
             possibleEnemies : List EnemyType
             possibleEnemies =
                 player.location
-                    |> Map.toTileCoords
                     |> SmallChunk.forCoords
                     |> Enemy.forSmallChunk
 

@@ -1,24 +1,19 @@
 module Data.Map exposing
     ( PxCoords
     , TileCoords
-    , TileNum
     , allTileCoords
     , columns
     , neighbours
     , rows
     , tileCenterPx
+    , tileCoordsCodec
     , tileSize
     , tileSizeFloat
-    , toTileCoords
-    , toTileNum
     )
 
+import Codec exposing (Codec)
 import List.ExtraExtra as List
 import Set exposing (Set)
-
-
-type alias TileNum =
-    Int
 
 
 type alias TileCoords =
@@ -27,6 +22,11 @@ type alias TileCoords =
 
 type alias PxCoords =
     ( Float, Float )
+
+
+tileCoordsCodec : Codec TileCoords
+tileCoordsCodec =
+    Codec.tuple Codec.int Codec.int
 
 
 columns : Int
@@ -54,23 +54,6 @@ tileCenterPx ( x, y ) =
     ( tileSizeFloat * (toFloat x + 0.5)
     , tileSizeFloat * (toFloat y + 0.5)
     )
-
-
-toTileCoords : TileNum -> TileCoords
-toTileCoords tileNum =
-    let
-        x =
-            tileNum |> remainderBy columns
-
-        y =
-            tileNum // columns
-    in
-    ( x, y )
-
-
-toTileNum : TileCoords -> TileNum
-toTileNum ( x, y ) =
-    y * columns + x
 
 
 neighbours : TileCoords -> Set TileCoords

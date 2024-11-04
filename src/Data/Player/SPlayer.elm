@@ -49,7 +49,7 @@ module Data.Player.SPlayer exposing
 import Data.FightStrategy exposing (FightStrategy)
 import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
-import Data.Map exposing (TileNum)
+import Data.Map exposing (TileCoords)
 import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
@@ -235,9 +235,9 @@ subtractTicks n player =
     { player | ticks = max 0 (player.ticks - n) }
 
 
-setLocation : TileNum -> SPlayer -> SPlayer
-setLocation tileNum player =
-    { player | location = tileNum }
+setLocation : TileCoords -> SPlayer -> SPlayer
+setLocation tileCoords player =
+    { player | location = tileCoords }
 
 
 recalculateHp : SPlayer -> SPlayer

@@ -13,7 +13,7 @@ import Data.Map exposing (TileCoords)
 import Data.Message as Message
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
-import Data.Player exposing (CPlayer)
+import Data.Player exposing (COtherPlayer, CPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
 import Data.Skill exposing (Skill)
@@ -53,7 +53,7 @@ type alias FrontendModel =
     -- player frontend state:
     , alertMessage : Maybe String
     , newChar : NewChar
-    , mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
+    , mapMouseCoords : Maybe { coords : TileCoords, path : Set TileCoords }
     , hoveredItem : Maybe HoveredItem
     , fightInfo : Maybe Fight.Info
     , barter : Barter.State
@@ -225,6 +225,7 @@ type alias PlayerData_ =
 
 type ToFrontend
     = CurrentPlayer PlayerData
+    | CurrentOtherPlayers (List COtherPlayer)
     | CurrentWorlds (List WorldInfo)
     | CurrentAdmin AdminData
     | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))

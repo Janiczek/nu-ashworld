@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- show other players on the map (purely cosmetic)
+- show other players' weapons / armor with Awareness perk (update its description too)
 
 Next up: 
 

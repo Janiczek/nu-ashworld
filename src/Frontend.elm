@@ -521,20 +521,18 @@ update msg ({ loginForm } as model) =
                                         { perception = cPlayer.special.perception
                                         , hasAwarenessPerk = Perk.rank Perk.Awareness cPlayer.perks > 0
                                         }
-
-                                playerCoords =
-                                    Map.toTileCoords cPlayer.location
                             in
                             ( { model
                                 | mapMouseCoords =
                                     Just
-                                        ( mouseCoords
-                                        , Pathfinding.path
-                                            perceptionLevel
-                                            { from = playerCoords
-                                            , to = mouseCoords
-                                            }
-                                        )
+                                        { coords = mouseCoords
+                                        , path =
+                                            Pathfinding.path
+                                                perceptionLevel
+                                                { from = cPlayer.location
+                                                , to = mouseCoords
+                                                }
+                                        }
                               }
                             , Cmd.none
                             )
@@ -552,9 +550,9 @@ update msg ({ loginForm } as model) =
                 Nothing ->
                     ( model, Cmd.none )
 
-                Just ( newCoords, path ) ->
+                Just r ->
                     ( model
-                    , Lamdera.sendToBackend <| MoveTo newCoords path
+                    , Lamdera.sendToBackend <| MoveTo r.coords r.path
                     )
 
         SetShowAreaDanger newShow ->
@@ -818,6 +816,15 @@ updateFromBackend msg model =
                 , loginForm =
                     model.loginForm
                         |> Auth.selectDefaultWorld worlds
+              }
+            , Cmd.none
+            )
+
+        CurrentOtherPlayers otherPlayers ->
+            ( { model
+                | worldData =
+                    model.worldData
+                        |> WorldData.setOtherPlayers otherPlayers
               }
             , Cmd.none
             )
@@ -1322,7 +1329,7 @@ adminMapView worldName adminData =
                     world.players
                         |> Dict.values
                         |> List.filterMap Player.getPlayerData
-                        |> List.map (.location >> Map.toTileCoords)
+                        |> List.map .location
             in
             H.div
                 [ cssVars
@@ -1343,13 +1350,13 @@ adminMapView worldName adminData =
 
 mapView :
     { model
-        | mapMouseCoords : Maybe ( TileCoords, Set TileCoords )
+        | mapMouseCoords : Maybe { coords : TileCoords, path : Set TileCoords }
         , userWantsToShowAreaDanger : Bool
     }
     -> PlayerData
     -> CPlayer
     -> List (Html FrontendMsg)
-mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
+mapView { mapMouseCoords, userWantsToShowAreaDanger } world player =
     let
         perceptionLevel : PerceptionLevel
         perceptionLevel =
@@ -1358,16 +1365,15 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
                 }
 
-        playerCoords : TileCoords
-        playerCoords =
-            Map.toTileCoords player.location
-
-        mouseRelatedView : ( TileCoords, Set TileCoords ) -> Html FrontendMsg
-        mouseRelatedView ( ( x, y ) as mouseCoords, pathTaken ) =
+        mouseRelatedView : { coords : TileCoords, path : Set TileCoords } -> Html FrontendMsg
+        mouseRelatedView r =
             let
+                ( x, y ) =
+                    r.coords
+
                 impassableTiles : Set TileCoords
                 impassableTiles =
-                    pathTaken
+                    r.path
                         |> Set.filter (Terrain.forCoords >> Terrain.isPassable >> not)
 
                 notAllPassable : Bool
@@ -1377,7 +1383,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                 { tickCost } =
                     -- We don't have use for the carBatteryPromileCost here.
                     Pathfinding.cost
-                        { pathTaken = pathTaken
+                        { pathTaken = r.path
                         , pathfinderPerkRanks = Perk.rank Perk.Pathfinder player.perks
                         , carBatteryPromile = player.carBatteryPromile
                         }
@@ -1396,7 +1402,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
                 bigChunk : BigChunk
                 bigChunk =
-                    BigChunk.forCoords mouseCoords
+                    BigChunk.forCoords r.coords
 
                 impossiblePath : Bool
                 impossiblePath =
@@ -1413,7 +1419,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                     H.div
                         [ tileClass
                         , HA.class
-                            (if Set.member mouseCoords impassableTiles then
+                            (if Set.member r.coords impassableTiles then
                                 "bg-red"
 
                              else
@@ -1431,8 +1437,12 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                     H.div
                         [ HA.class "absolute inset-0" ]
                         (List.map (pathTileView pathBgColor impassableTiles)
-                            (Set.toList (Set.remove mouseCoords pathTaken))
+                            (Set.toList (Set.remove r.coords r.path))
                         )
+
+                otherPlayers =
+                    world.otherPlayers
+                        |> List.filter (\otherPlayer -> otherPlayer.location == r.coords)
 
                 tooltip =
                     -- TODO use the style that UI.withTooltip uses
@@ -1446,19 +1456,26 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
                             , ( "--tile-coord-y", String.fromInt y )
                             ]
                         ]
-                        [ if ( x, y ) == Location.enclave && playerCoords /= Location.enclave then
+                        [ if ( x, y ) == Location.enclave && player.location /= Location.enclave then
                             H.text "You'll have to try harder than that."
 
                           else if notAllPassable then
                             H.text "Not all tiles in your path are passable."
 
                           else
-                            H.div []
+                            H.div [ HA.class "flex flex-col gap-4" ]
                                 [ H.div [] [ H.text <| "Path cost: " ++ String.fromInt tickCost ++ " " ++ ticksString ]
                                 , H.viewIf tooDistant <|
                                     H.div [] [ H.text "You don't have enough ticks." ]
                                 , H.viewIf canShowAreaDanger <|
                                     H.div [] [ H.text <| "Map area danger: " ++ BigChunk.difficulty bigChunk ]
+                                , H.viewIf (not (List.isEmpty otherPlayers)) <|
+                                    H.div []
+                                        [ H.text "Other players here:"
+                                        , otherPlayers
+                                            |> List.map (\p -> H.li [] [ H.text p.name ])
+                                            |> UI.ul []
+                                        ]
                                 ]
                         ]
             in
@@ -1491,7 +1508,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
 
         mouseCoordsOnly : Maybe TileCoords
         mouseCoordsOnly =
-            Maybe.map Tuple.first mapMouseCoords
+            Maybe.map .coords mapMouseCoords
 
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
@@ -1582,13 +1599,18 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } _ player =
             , HA.class "min-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             , HA.class "max-h-[calc(var(--map-rows)*var(--map-cell-size))]"
             ]
-            [ locationsView
-            , mapMarkerView playerCoords
-            , bigChunkLayerView
-                |> H.viewIfLazy showAreaDanger
-            , mouseEventCatcherView
-            , H.viewMaybe mouseRelatedView mapMouseCoords
-            ]
+            (List.fastConcat
+                [ [ locationsView
+                  , mapMarkerView player.location
+                  ]
+                , otherMapMarkersView world.otherPlayers player.location
+                , [ bigChunkLayerView
+                        |> H.viewIfLazy showAreaDanger
+                  , mouseEventCatcherView
+                  , H.viewMaybe mouseRelatedView mapMouseCoords
+                  ]
+                ]
+            )
         ]
     ]
 
@@ -1729,6 +1751,33 @@ mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
         [ HA.class "absolute left-0 top-0 z-[2]"
+        , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
+        , HA.class "translate-y-[calc(var(--map-cell-size)*(0.5+var(--player-coord-y))-50%)]"
+        , cssVars
+            [ ( "--player-coord-x", String.fromInt x )
+            , ( "--player-coord-y", String.fromInt y )
+            ]
+        , HA.src "/images/map_marker.webp"
+        , HA.width 25
+        , HA.height 13
+        ]
+        []
+
+
+otherMapMarkersView : List COtherPlayer -> TileCoords -> List (Html FrontendMsg)
+otherMapMarkersView otherPlayers you =
+    otherPlayers
+        |> List.map .location
+        |> Set.fromList
+        |> Set.remove you
+        |> Set.toList
+        |> List.map otherMapMarkerView
+
+
+otherMapMarkerView : TileCoords -> Html FrontendMsg
+otherMapMarkerView ( x, y ) =
+    H.img
+        [ HA.class "absolute left-0 top-0 z-[2] opacity-60"
         , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
         , HA.class "translate-y-[calc(var(--map-cell-size)*(0.5+var(--player-coord-y))-50%)]"
         , cssVars
@@ -4029,7 +4078,7 @@ inventoryView _ player =
                                                     |> Maybe.withDefault 0
                                         in
                                         H.li []
-                                            [ H.text <| ItemKind.name fuelKind ++ " (+" ++ carBatteryChargeString chargeAmount ++ "): "
+                                            [ H.text <| ItemKind.name fuelKind ++ " (+" ++ carBatteryChargeStringShort chargeAmount ++ "): "
                                             , H.span
                                                 [ HA.class
                                                     (if count > 0 then
@@ -4106,6 +4155,25 @@ carBatteryChargeString promile =
         ++ "."
         ++ String.fromInt (promile |> modBy 10)
         ++ "%"
+
+
+carBatteryChargeStringShort : Int -> String
+carBatteryChargeStringShort promile =
+    let
+        whole =
+            String.fromInt (promile // 10)
+
+        fraction =
+            modBy 10 promile
+    in
+    if fraction == 0 then
+        whole
+
+    else
+        whole
+            ++ "."
+            ++ String.fromInt fraction
+            ++ "%"
 
 
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
