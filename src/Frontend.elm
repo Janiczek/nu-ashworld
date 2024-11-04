@@ -1891,7 +1891,11 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         , H.viewIf hasQuests <|
             UI.ul []
                 (quests
-                    |> List.filter (\q -> not (List.any isQuestDone (Quest.exclusiveWith q)))
+                    |> List.filter
+                        (\q ->
+                            not (List.any isQuestDone (Quest.exclusiveWith q))
+                                && List.all (\req -> isQuestDone req) (Quest.questRequirements q)
+                        )
                     |> List.map (questView player questsProgress expandedQuests)
                 )
         ]
@@ -1976,7 +1980,6 @@ expandedQuestView player progress questsProgress quest =
         globalRewards =
             Quest.globalRewards quest
 
-        playerRewards : List Quest.PlayerReward
         playerRewards =
             Quest.playerRewards quest
 
@@ -2010,7 +2013,7 @@ expandedQuestView player progress questsProgress quest =
 
         gaveEnough : Bool
         gaveEnough =
-            progress.ticksGivenByPlayer >= Quest.ticksNeededForPlayerReward quest
+            progress.ticksGivenByPlayer >= playerRewards.ticksNeeded
     in
     [ H.div [ HA.class "flex flex-col gap-[2ch]" ]
         [ H.div []
@@ -2173,7 +2176,7 @@ expandedQuestView player progress questsProgress quest =
                             globalRewards
                         )
                     ]
-                , if List.isEmpty playerRewards then
+                , if List.isEmpty playerRewards.rewards then
                     []
 
                   else
@@ -2184,7 +2187,7 @@ expandedQuestView player progress questsProgress quest =
                         , H.span
                             [ HA.class "text-green-100" ]
                             [ H.text <|
-                                String.fromInt (Quest.ticksNeededForPlayerReward quest)
+                                String.fromInt playerRewards.ticksNeeded
                                     ++ "+"
                             ]
                         , H.text " ticks)"
@@ -2203,7 +2206,7 @@ expandedQuestView player progress questsProgress quest =
                                         liText
                                    )
                             )
-                            playerRewards
+                            playerRewards.rewards
                         )
                     ]
                 , if List.isEmpty exclusiveQuests then

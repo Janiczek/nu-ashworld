@@ -535,8 +535,11 @@ processGameTickForQuests worldName model =
                                                                         xpReward =
                                                                             Quest.xpPerTickGiven completedQuest * ticksGiven
 
+                                                                        playerRewards =
+                                                                            Quest.playerRewards completedQuest
+
                                                                         enoughTicksGivenForReward =
-                                                                            World.enoughTicksGiven completedQuest playerData.name world.questsProgress
+                                                                            ticksGiven >= playerRewards.ticksNeeded
 
                                                                         ( newLastItemId_, newPlayerData ) =
                                                                             { playerData
@@ -552,7 +555,7 @@ processGameTickForQuests worldName model =
                                                                                         , xpReward = xpReward
                                                                                         , playerReward =
                                                                                             if enoughTicksGivenForReward then
-                                                                                                Just (Quest.playerRewards completedQuest)
+                                                                                                Just playerRewards.rewards
 
                                                                                             else
                                                                                                 Nothing
@@ -560,7 +563,7 @@ processGameTickForQuests worldName model =
                                                                                         }
                                                                                     )
                                                                                 |> (if enoughTicksGivenForReward then
-                                                                                        applyPlayerQuestRewards completedQuest lastItemId
+                                                                                        applyPlayerQuestRewards playerRewards.rewards lastItemId
 
                                                                                     else
                                                                                         \p -> ( lastItemId, p )
@@ -592,12 +595,12 @@ processGameTickForQuests worldName model =
             (SeqSet.toList completedQuests)
 
 
-applyPlayerQuestRewards : Quest.Name -> Int -> SPlayer -> ( Int, SPlayer )
-applyPlayerQuestRewards quest lastItemId player =
+applyPlayerQuestRewards : List Quest.PlayerReward -> Int -> SPlayer -> ( Int, SPlayer )
+applyPlayerQuestRewards rewards lastItemId player =
     List.foldl
         applyPlayerQuestReward
         ( lastItemId, player )
-        (Quest.playerRewards quest)
+        rewards
 
 
 applyPlayerQuestReward : Quest.PlayerReward -> ( Int, SPlayer ) -> ( Int, SPlayer )

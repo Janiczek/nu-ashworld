@@ -25,17 +25,19 @@ items =
       , title = "TODOs before release"
       , text =
             """
-Hey all! The game is still in a pre-release state, so don't get attached to any characters you create! It's really close to release though, so keep an eye out for the announcement!
+Hey all! The game is still in a pre-release state, so don't get attached to any
+characters you create, as the game will sometimes need to get reset as I work on
+stuff. It's really close to release though, so keep an eye out for the
+announcement!
 
 Current TODOs:
 
-- frontend: topologically sort the quests based on quest dependencies
+- rework car quest - get fuel cell controller from Skeeter in Gecko (needs super tool kit)
+- rework car quest - get fuel cell regulator from abandoned Highwayman in Klamath
 
 Next up: 
 
 - quests UX + test them end-to-end
-- rework car quest - get fuel cell controller from Skeeter in Gecko (needs super tool kit)
-- rework car quest - get fuel cell regulator from abandoned Highwayman in Klamath
 - end of game
 
 Later: 

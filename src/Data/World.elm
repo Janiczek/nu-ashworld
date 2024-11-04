@@ -2,7 +2,6 @@ module Data.World exposing
     ( Name
     , World
     , codec
-    , enoughTicksGiven
     , init
     , isQuestDone
     , isQuestDone_
@@ -172,8 +171,3 @@ ticksGiven quest playerName questsProgress =
         |> Maybe.withDefault Dict.empty
         |> Dict.get playerName
         |> Maybe.withDefault 0
-
-
-enoughTicksGiven : Quest.Name -> PlayerName -> SeqDict Quest.Name (Dict PlayerName Int) -> Bool
-enoughTicksGiven quest playerName questsProgress =
-    ticksGiven quest playerName questsProgress >= Quest.ticksNeededForPlayerReward quest

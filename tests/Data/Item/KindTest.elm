@@ -71,6 +71,7 @@ allObtainable =
                             (\quest ->
                                 quest
                                     |> Quest.playerRewards
+                                    |> .rewards
                                     |> List.filterMap
                                         (\reward ->
                                             case reward of

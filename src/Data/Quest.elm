@@ -22,7 +22,6 @@ module Data.Quest exposing
     , playerRewards
     , questRequirements
     , ticksNeeded
-    , ticksNeededForPlayerReward
     , title
     , xpPerTickGiven
     )
@@ -2015,324 +2014,465 @@ playerRewardTitle reward =
             "You travel to the Enclave. This is what you wanted, right?"
 
 
-playerRewards : Name -> List PlayerReward
+playerRewards : Name -> { rewards : List PlayerReward, ticksNeeded : Int }
 playerRewards name =
+    let
+        mk rs t =
+            { rewards = rs, ticksNeeded = t }
+    in
     case name of
         ArroyoKillEvilPlants ->
-            [ ItemReward { what = ItemKind.ScoutHandbook, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.ScoutHandbook, amount = 1 } ]
+                5
 
         ArroyoFixWellForFeargus ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
+                5
 
         ArroyoRescueNagorsDog ->
-            [ SkillUpgrade { skill = Skill.Unarmed, percentage = 10 } ]
+            mk
+                [ SkillUpgrade { skill = Skill.Unarmed, percentage = 10 } ]
+                5
 
         KlamathRefuelStill ->
-            [ ItemReward { what = ItemKind.Beer, amount = 10 } ]
+            mk
+                [ ItemReward { what = ItemKind.Beer, amount = 10 } ]
+                5
 
         KlamathGuardTheBrahmin ->
-            [ CapsReward 300 ]
+            mk
+                [ CapsReward 300 ]
+                5
 
         KlamathRustleTheBrahmin ->
-            [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 }
-            , CapsReward 200
-            ]
+            mk
+                [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 }
+                , CapsReward 200
+                ]
+                5
 
         KlamathKillRatGod ->
-            [ ItemReward { what = ItemKind.RedRyderLEBBGun, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.RedRyderLEBBGun, amount = 1 } ]
+                15
 
         KlamathRescueTorr ->
-            []
+            mk
+                []
+                0
 
         KlamathSearchForSmileyTrapper ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
+                5
 
         ToxicCavesRescueSmileyTrapper ->
-            [ PerkReward GeckoSkinning
-            , CapsReward 700
-            ]
+            mk
+                [ PerkReward GeckoSkinning
+                , CapsReward 700
+                ]
+                5
 
         ToxicCavesRepairTheGenerator ->
-            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 100 } ]
+            mk
+                [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 100 } ]
+                5
 
         ToxicCavesLootTheBunker ->
-            [ ItemReward { what = ItemKind.TeslaArmor, amount = 1 }
-            , ItemReward { what = ItemKind.Bozar, amount = 1 }
-            , ItemReward { what = ItemKind.Fmj223, amount = 50 }
-            , CapsReward 10000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.TeslaArmor, amount = 1 }
+                , ItemReward { what = ItemKind.Bozar, amount = 1 }
+                , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+                , CapsReward 10000
+                ]
+                15
 
         DenFreeVicByPayingMetzger ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 40 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 40 } ]
+                15
 
         DenFreeVicByKillingOffSlaversGuild ->
-            [ ItemReward { what = ItemKind.SawedOffShotgun, amount = 1 }
-            , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
-            , CapsReward 4000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.SawedOffShotgun, amount = 1 }
+                , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
+                , CapsReward 4000
+                ]
+                15
 
         DenDeliverMealToSmitty ->
-            [ ItemReward { what = ItemKind.Tool, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.Tool, amount = 1 } ]
+                10
 
         DenFindCarParts ->
-            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 60 } ]
+            mk
+                [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 60 } ]
+                15
 
         DenFixTheCar ->
-            [ CarReward ]
+            mk
+                [ CarReward ]
+                5
 
         ModocInvestigateGhostFarm ->
-            []
+            mk
+                []
+                0
 
         ModocRemoveInfestationInFarrelsGarden ->
-            [ ItemReward { what = ItemKind.LockPicks, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.LockPicks, amount = 1 } ]
+                15
 
         ModocMediateBetweenSlagsAndJo ->
-            [ CapsReward 5000 ]
+            mk
+                [ CapsReward 5000 ]
+                5
 
         ModocFindGoldWatchForCornelius ->
-            [ ItemReward { what = ItemKind.Smg10mm, amount = 1 }
-            , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
-            , CapsReward 3000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.Smg10mm, amount = 1 }
+                , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
+                , CapsReward 3000
+                ]
+                15
 
         ModocFindGoldWatchForFarrel ->
-            [ ItemReward { what = ItemKind.SuperSledge, amount = 1 }
-            , CapsReward 2000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.SuperSledge, amount = 1 }
+                , CapsReward 2000
+                ]
+                15
 
         VaultCityGetPlowForMrSmith ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 10 } ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 10 } ]
+                10
 
         VaultCityRescueAmandasHusband ->
-            [ CapsReward 2000 ]
+            mk
+                [ CapsReward 2000 ]
+                5
 
         GeckoOptimizePowerPlant ->
-            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 }
-            , CapsReward 8000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 }
+                , CapsReward 8000
+                ]
+                10
 
         ReddingClearWanamingoMine ->
-            [ ItemReward { what = ItemKind.ScopedHuntingRifle, amount = 1 }
-            , ItemReward { what = ItemKind.Fmj223, amount = 50 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.ScopedHuntingRifle, amount = 1 }
+                , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+                ]
+                15
 
         ReddingFindExcavatorChip ->
-            [ ItemReward { what = ItemKind.ScoutHandbook, amount = 5 }
-            , ItemReward { what = ItemKind.Mauser9mm, amount = 1 }
-            , ItemReward { what = ItemKind.Ball9mm, amount = 300 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.ScoutHandbook, amount = 5 }
+                , ItemReward { what = ItemKind.Mauser9mm, amount = 1 }
+                , ItemReward { what = ItemKind.Ball9mm, amount = 300 }
+                ]
+                10
 
         NewRenoTrackDownPrettyBoyLloyd ->
-            [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
-            , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
-            , ItemReward { what = ItemKind.Wakizashi, amount = 1 }
-            , CapsReward 4000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
+                , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
+                , ItemReward { what = ItemKind.Wakizashi, amount = 1 }
+                , CapsReward 4000
+                ]
+                15
 
         NewRenoHelpGuardSecretTransaction ->
-            [ ItemReward { what = ItemKind.SniperRifle, amount = 1 }
-            , ItemReward { what = ItemKind.Fmj223, amount = 50 }
-            , CapsReward 5000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.SniperRifle, amount = 1 }
+                , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+                , CapsReward 5000
+                ]
+                15
 
         NewRenoCollectTributeFromCorsicanBrothers ->
-            [ ItemReward { what = ItemKind.SuperCattleProd, amount = 1 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
-            , CapsReward 12000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.SuperCattleProd, amount = 1 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+                , CapsReward 12000
+                ]
+                10
 
         NewRenoWinBoxingTournament ->
-            [ ItemReward { what = ItemKind.PowerFist, amount = 1 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
-            , ItemReward { what = ItemKind.LittleJesus, amount = 1 }
-            , CapsReward 8000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.PowerFist, amount = 1 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+                , ItemReward { what = ItemKind.LittleJesus, amount = 1 }
+                , CapsReward 8000
+                ]
+                15
 
         NewRenoAcquireElectronicLockpick ->
-            [ ItemReward { what = ItemKind.ElectronicLockpick, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.ElectronicLockpick, amount = 1 } ]
+                10
 
         NCRGuardBrahminCaravan ->
-            [ ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 1 }
-            , ItemReward { what = ItemKind.Jhp5mm, amount = 50 }
-            , CapsReward 4000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 1 }
+                , ItemReward { what = ItemKind.Jhp5mm, amount = 50 }
+                , CapsReward 4000
+                ]
+                15
 
         NCRTestMutagenicSerum ->
-            [ ItemReward { what = ItemKind.BigBookOfScience, amount = 2 }
-            , CapsReward 2000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.BigBookOfScience, amount = 2 }
+                , CapsReward 2000
+                ]
+                10
 
         NCRRetrieveComputerParts ->
-            [ ItemReward { what = ItemKind.DeansElectronics, amount = 2 } ]
+            mk
+                [ ItemReward { what = ItemKind.DeansElectronics, amount = 2 } ]
+                15
 
         NCRFreeSlaves ->
-            [ ItemReward { what = ItemKind.PancorJackhammer, amount = 1 }
-            , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.PancorJackhammer, amount = 1 }
+                , ItemReward { what = ItemKind.ShotgunShell, amount = 40 }
+                ]
+                10
 
         NCRInvestigateBrahminRaids ->
-            [ CapsReward 3000 ]
+            mk
+                [ CapsReward 3000 ]
+                5
 
         V15RescueChrissy ->
-            [ ItemReward { what = ItemKind.HkP90c, amount = 3 }
-            , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
-            , CapsReward 3000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.HkP90c, amount = 3 }
+                , ItemReward { what = ItemKind.Jhp10mm, amount = 24 }
+                , CapsReward 3000
+                ]
+                15
 
         V15CompleteDealWithNCR ->
-            [ ItemReward { what = ItemKind.LaserPistol, amount = 2 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 80 }
-            , CapsReward 10000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.LaserPistol, amount = 2 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 80 }
+                , CapsReward 10000
+                ]
+                15
 
         V13FixVaultComputer ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 20 }
-            , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
-            , ItemReward { what = ItemKind.Fmj223, amount = 200 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 20 }
+                , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
+                , ItemReward { what = ItemKind.Fmj223, amount = 200 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 150 }
+                ]
+                15
 
         V13FindTheGeck ->
-            [ ItemReward { what = ItemKind.GECK, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.GECK, amount = 1 } ]
+                10
 
         BrokenHillsFixMineAirPurifier ->
-            [ ItemReward { what = ItemKind.CombatArmor, amount = 1 }
-            , CapsReward 9000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.CombatArmor, amount = 1 }
+                , CapsReward 9000
+                ]
+                10
 
         BrokenHillsBlowUpMineAirPurifier ->
-            [ ItemReward { what = ItemKind.PlasmaRifle, amount = 1 }
-            , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.PlasmaRifle, amount = 1 }
+                , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+                ]
+                10
 
         BrokenHillsFindMissingPeople ->
-            [ ItemReward { what = ItemKind.NeedlerPistol, amount = 1 }
-            , ItemReward { what = ItemKind.HnNeedlerCartridge, amount = 100 }
-            , CapsReward 3000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.NeedlerPistol, amount = 1 }
+                , ItemReward { what = ItemKind.HnNeedlerCartridge, amount = 100 }
+                , CapsReward 3000
+                ]
+                5
 
         BrokenHillsBeatFrancisAtArmwrestling ->
-            [ ItemReward { what = ItemKind.MegaPowerFist, amount = 1 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 40 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.MegaPowerFist, amount = 1 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 40 }
+                ]
+                10
 
         RaidersFindEvidenceOfBishopTampering ->
-            [ ItemReward { what = ItemKind.Stimpak, amount = 20 }
-            , CapsReward 8000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.Stimpak, amount = 20 }
+                , CapsReward 8000
+                ]
+                10
 
         RaidersKillEverybody ->
-            [ ItemReward { what = ItemKind.CombatArmorMk2, amount = 3 }
-            , ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 3 }
-            , ItemReward { what = ItemKind.Jhp5mm, amount = 300 }
-            , CapsReward 20000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.CombatArmorMk2, amount = 3 }
+                , ItemReward { what = ItemKind.ExpandedAssaultRifle, amount = 3 }
+                , ItemReward { what = ItemKind.Jhp5mm, amount = 300 }
+                , CapsReward 20000
+                ]
+                15
 
         SierraArmyDepotFindAbnormalBrainForSkynet ->
-            [ ItemReward { what = ItemKind.AbnormalBrain, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.AbnormalBrain, amount = 1 } ]
+                10
 
         SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-            [ ItemReward { what = ItemKind.ChimpanzeeBrain, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.ChimpanzeeBrain, amount = 1 } ]
+                10
 
         SierraArmyDepotFindHumanBrainForSkynet ->
-            [ ItemReward { what = ItemKind.HumanBrain, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.HumanBrain, amount = 1 } ]
+                10
 
         SierraArmyDepotFindCyberneticBrainForSkynet ->
-            [ ItemReward { what = ItemKind.CyberneticBrain, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.CyberneticBrain, amount = 1 } ]
+                10
 
         SierraArmyDepotAssembleBodyForSkynet ->
-            [ ItemReward { what = ItemKind.SkynetAim, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.SkynetAim, amount = 1 } ]
+                15
 
         MilitaryBaseExcavateTheEntrance ->
-            [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
-            , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
-            , ItemReward { what = ItemKind.PulsePistol, amount = 1 }
-            , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.FragGrenade, amount = 20 }
+                , ItemReward { what = ItemKind.SuperStimpak, amount = 10 }
+                , ItemReward { what = ItemKind.PulsePistol, amount = 1 }
+                , ItemReward { what = ItemKind.SmallEnergyCell, amount = 50 }
+                ]
+                15
 
         MilitaryBaseKillMelchior ->
-            [ ItemReward { what = ItemKind.GatlingLaser, amount = 1 }
-            , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
-            , ItemReward { what = ItemKind.RocketAp, amount = 20 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.GatlingLaser, amount = 1 }
+                , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+                , ItemReward { what = ItemKind.RocketAp, amount = 20 }
+                ]
+                15
 
         SanFranciscoFindFuelForTanker ->
-            [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 100 } ]
+            mk
+                [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 100 } ]
+                15
 
         SanFranciscoFindLocationOfFobForTanker ->
-            [ ItemReward { what = ItemKind.MotionSensor, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.MotionSensor, amount = 1 } ]
+                10
 
         SanFranciscoFindNavCompPartForTanker ->
-            [ ItemReward { what = ItemKind.LaserRifleExtCap, amount = 1 }
-            , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.LaserRifleExtCap, amount = 1 }
+                , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+                ]
+                5
 
         SanFranciscoFindVertibirdPlansForHubologists ->
-            [ ItemReward { what = ItemKind.TurboPlasmaRifle, amount = 1 }
-            , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
-            , CapsReward 20000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.TurboPlasmaRifle, amount = 1 }
+                , ItemReward { what = ItemKind.MicrofusionCell, amount = 50 }
+                , CapsReward 20000
+                ]
+                15
 
         SanFranciscoFindVertibirdPlansForShi ->
-            [ ItemReward { what = ItemKind.GaussRifle, amount = 1 }
-            , ItemReward { what = ItemKind.Ec2mm, amount = 100 }
-            , CapsReward 10000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.GaussRifle, amount = 1 }
+                , ItemReward { what = ItemKind.Ec2mm, amount = 100 }
+                , CapsReward 10000
+                ]
+                15
 
         SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-            [ ItemReward { what = ItemKind.PowerArmor, amount = 1 }
-            , CapsReward 5000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.PowerArmor, amount = 1 }
+                , CapsReward 5000
+                ]
+                15
 
         SanFranciscoFindBadgersGirlfriendInsideShip ->
-            [ ItemReward { what = ItemKind.GaussPistol, amount = 1 }
-            , ItemReward { what = ItemKind.Ec2mm, amount = 200 }
-            , CapsReward 5000
-            ]
+            mk
+                [ ItemReward { what = ItemKind.GaussPistol, amount = 1 }
+                , ItemReward { what = ItemKind.Ec2mm, amount = 200 }
+                , CapsReward 5000
+                ]
+                15
 
         SanFranciscoDefeatLoPanInRingForDragon ->
-            [ CapsReward 3000 ]
+            mk
+                [ CapsReward 3000 ]
+                5
 
         SanFranciscoDefeatDragonInRingForLoPan ->
-            [ CapsReward 3000 ]
+            mk
+                [ CapsReward 3000 ]
+                5
 
         SanFranciscoEmbarkForEnclave ->
-            [ TravelToEnclaveReward ]
+            mk
+                [ TravelToEnclaveReward ]
+                5
 
         NavarroFixK9 ->
-            [ ItemReward { what = ItemKind.K9, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.K9, amount = 1 } ]
+                15
 
         NavarroRetrieveFobForTanker ->
-            [ ItemReward { what = ItemKind.TankerFob, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.TankerFob, amount = 1 } ]
+                5
 
         EnclavePersuadeControlCompanySquadToDesert ->
-            [ ItemReward { what = ItemKind.PulseRifle, amount = 2 }
-            , ItemReward { what = ItemKind.MicrofusionCell, amount = 100 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.PulseRifle, amount = 2 }
+                , ItemReward { what = ItemKind.MicrofusionCell, amount = 100 }
+                ]
+                10
 
         EnclaveKillThePresidentStealthily ->
-            []
+            mk [] 0
 
         EnclaveKillThePresidentTheUsualWay ->
-            []
+            mk [] 0
 
         EnclaveFindTheGeck ->
-            [ ItemReward { what = ItemKind.GECK, amount = 1 } ]
+            mk
+                [ ItemReward { what = ItemKind.GECK, amount = 1 } ]
+                10
 
         EnclaveRigTurretsToTargetFrankHorrigan ->
-            [ ItemReward { what = ItemKind.GaussRifle, amount = 3 }
-            , ItemReward { what = ItemKind.Ec2mm, amount = 200 }
-            ]
+            mk
+                [ ItemReward { what = ItemKind.GaussRifle, amount = 3 }
+                , ItemReward { what = ItemKind.Ec2mm, amount = 200 }
+                ]
+                30
 
         EnclaveForceScientistToInitiateSelfDestruct ->
-            []
+            mk [] 0
 
         EnclaveKillFrankHorrigan ->
-            []
+            mk [] 0
 
         EnclaveReturnToMainland ->
-            []
+            mk [] 0
 
 
 type PlayerRequirement
@@ -2608,232 +2748,6 @@ playerRequirements name =
 
         EnclaveReturnToMainland ->
             []
-
-
-ticksNeededForPlayerReward : Name -> Int
-ticksNeededForPlayerReward name =
-    case name of
-        ArroyoKillEvilPlants ->
-            5
-
-        ArroyoFixWellForFeargus ->
-            4
-
-        ArroyoRescueNagorsDog ->
-            4
-
-        KlamathRefuelStill ->
-            5
-
-        KlamathGuardTheBrahmin ->
-            0
-
-        KlamathRustleTheBrahmin ->
-            4
-
-        KlamathKillRatGod ->
-            15
-
-        KlamathRescueTorr ->
-            0
-
-        KlamathSearchForSmileyTrapper ->
-            4
-
-        ToxicCavesRescueSmileyTrapper ->
-            5
-
-        ToxicCavesRepairTheGenerator ->
-            5
-
-        ToxicCavesLootTheBunker ->
-            20
-
-        DenFreeVicByPayingMetzger ->
-            20
-
-        DenFreeVicByKillingOffSlaversGuild ->
-            20
-
-        DenDeliverMealToSmitty ->
-            10
-
-        DenFindCarParts ->
-            20
-
-        DenFixTheCar ->
-            5
-
-        ModocInvestigateGhostFarm ->
-            0
-
-        ModocRemoveInfestationInFarrelsGarden ->
-            15
-
-        ModocMediateBetweenSlagsAndJo ->
-            0
-
-        ModocFindGoldWatchForCornelius ->
-            15
-
-        ModocFindGoldWatchForFarrel ->
-            15
-
-        VaultCityGetPlowForMrSmith ->
-            10
-
-        VaultCityRescueAmandasHusband ->
-            0
-
-        GeckoOptimizePowerPlant ->
-            10
-
-        ReddingClearWanamingoMine ->
-            20
-
-        ReddingFindExcavatorChip ->
-            10
-
-        NewRenoTrackDownPrettyBoyLloyd ->
-            20
-
-        NewRenoHelpGuardSecretTransaction ->
-            15
-
-        NewRenoCollectTributeFromCorsicanBrothers ->
-            0
-
-        NewRenoWinBoxingTournament ->
-            30
-
-        NewRenoAcquireElectronicLockpick ->
-            10
-
-        NCRGuardBrahminCaravan ->
-            15
-
-        NCRTestMutagenicSerum ->
-            10
-
-        NCRRetrieveComputerParts ->
-            15
-
-        NCRFreeSlaves ->
-            10
-
-        NCRInvestigateBrahminRaids ->
-            0
-
-        V15RescueChrissy ->
-            20
-
-        V15CompleteDealWithNCR ->
-            20
-
-        V13FixVaultComputer ->
-            15
-
-        V13FindTheGeck ->
-            10
-
-        BrokenHillsFixMineAirPurifier ->
-            10
-
-        BrokenHillsBlowUpMineAirPurifier ->
-            10
-
-        BrokenHillsFindMissingPeople ->
-            0
-
-        BrokenHillsBeatFrancisAtArmwrestling ->
-            10
-
-        RaidersFindEvidenceOfBishopTampering ->
-            10
-
-        RaidersKillEverybody ->
-            20
-
-        SierraArmyDepotFindAbnormalBrainForSkynet ->
-            10
-
-        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-            10
-
-        SierraArmyDepotFindHumanBrainForSkynet ->
-            10
-
-        SierraArmyDepotFindCyberneticBrainForSkynet ->
-            10
-
-        SierraArmyDepotAssembleBodyForSkynet ->
-            20
-
-        MilitaryBaseExcavateTheEntrance ->
-            20
-
-        MilitaryBaseKillMelchior ->
-            15
-
-        SanFranciscoFindFuelForTanker ->
-            20
-
-        SanFranciscoFindLocationOfFobForTanker ->
-            10
-
-        SanFranciscoFindNavCompPartForTanker ->
-            0
-
-        SanFranciscoFindVertibirdPlansForHubologists ->
-            30
-
-        SanFranciscoFindVertibirdPlansForShi ->
-            30
-
-        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-            30
-
-        SanFranciscoFindBadgersGirlfriendInsideShip ->
-            20
-
-        SanFranciscoDefeatLoPanInRingForDragon ->
-            0
-
-        SanFranciscoDefeatDragonInRingForLoPan ->
-            0
-
-        SanFranciscoEmbarkForEnclave ->
-            0
-
-        NavarroFixK9 ->
-            30
-
-        NavarroRetrieveFobForTanker ->
-            0
-
-        EnclavePersuadeControlCompanySquadToDesert ->
-            10
-
-        EnclaveKillThePresidentStealthily ->
-            0
-
-        EnclaveKillThePresidentTheUsualWay ->
-            0
-
-        EnclaveFindTheGeck ->
-            10
-
-        EnclaveRigTurretsToTargetFrankHorrigan ->
-            30
-
-        EnclaveForceScientistToInitiateSelfDestruct ->
-            0
-
-        EnclaveKillFrankHorrigan ->
-            0
-
-        EnclaveReturnToMainland ->
-            0
 
 
 codec : Codec Name
