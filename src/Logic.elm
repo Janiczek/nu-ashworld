@@ -284,6 +284,7 @@ naturalArmorClass r =
 armorClass :
     { naturalArmorClass : Int
     , equippedArmor : Maybe ItemKind.Kind
+    , equippedWeapon : Maybe ItemKind.Kind
     , hasHthEvadePerk : Bool
     , unarmedSkill : Int
     , apFromPreviousTurn : Int
@@ -291,13 +292,17 @@ armorClass :
     -> Int
 armorClass r =
     let
+        hthEvadeBonusesApply : Bool
+        hthEvadeBonusesApply =
+            r.hasHthEvadePerk && r.equippedWeapon == Nothing
+
         fromArmor =
             r.equippedArmor
                 |> Maybe.map ItemKind.armorClass
                 |> Maybe.withDefault 0
 
         unusedApMultiplier =
-            if r.hasHthEvadePerk then
+            if hthEvadeBonusesApply then
                 2
 
             else
@@ -307,7 +312,7 @@ armorClass r =
             r.apFromPreviousTurn * unusedApMultiplier
 
         fromUnarmedSkill =
-            if r.hasHthEvadePerk then
+            if hthEvadeBonusesApply then
                 r.unarmedSkill // 12
 
             else

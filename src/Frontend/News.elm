@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730730862
+    [ { date = 1730747519
       , title = "TODOs before release"
       , text =
             """
@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- HtH Evade perk to only work if hands are empty
+- perk - show max number of ranks
 
 Next up: 
 
@@ -51,7 +51,6 @@ Later:
 - new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
-- perk - show max number of ranks
 - perk - show all perks, some grayed out, show the requirements?
 - music in the bg (opt-in)
 

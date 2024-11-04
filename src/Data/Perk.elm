@@ -901,8 +901,7 @@ description perk =
             "With this Perk you immediately gain one experience level."
 
         HthEvade ->
-            -- TODO perhaps in future change to only work if hands are empty?
-            "Each unused action point gives you a +2 instead of +1 towards your Armor Class at the end of your turn, plus 1/12 of your unarmed skill."
+            "If your hands are empty (no equipped weapon), each unused action point gives you a +2 instead of +1 towards your Armor Class at the end of your turn, plus 1/12 of your unarmed skill."
 
         Lifegiver ->
             "With each level of this Perk, you gain an additional 4 Hit Points every time you advance a level. This is in addition to the Hit Points you already gain per level based off of your Endurance. This also applies retroactively to all the levels you already gained."

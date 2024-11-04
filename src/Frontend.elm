@@ -3908,6 +3908,7 @@ inventoryView _ player =
                         , hasDodgerPerk = Perk.rank Perk.Dodger player.perks > 0
                         }
                 , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                , equippedWeapon = player.equippedWeapon |> Maybe.map .kind
                 , apFromPreviousTurn = 0
                 , hasHthEvadePerk = Perk.rank Perk.HthEvade player.perks > 0
                 , unarmedSkill = Skill.get player.special player.addedSkillPercentages Skill.Unarmed

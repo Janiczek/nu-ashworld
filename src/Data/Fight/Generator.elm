@@ -1152,6 +1152,7 @@ chanceToHit who ongoing attackStyle =
             Logic.armorClass
                 { naturalArmorClass = otherOpponent.naturalArmorClass
                 , equippedArmor = otherOpponent.equippedArmor
+                , equippedWeapon = otherOpponent.equippedWeapon
                 , hasHthEvadePerk = Perk.rank Perk.HthEvade otherOpponent.perks > 0
                 , unarmedSkill = Skill.get otherOpponent.special otherOpponent.addedSkillPercentages Skill.Unarmed
                 , apFromPreviousTurn = apFromPreviousTurn other ongoing
@@ -1705,6 +1706,7 @@ evalValue who state value =
                     Logic.armorClass
                         { naturalArmorClass = state.them.naturalArmorClass
                         , equippedArmor = state.them.equippedArmor
+                        , equippedWeapon = state.them.equippedWeapon
                         , hasHthEvadePerk = Perk.rank Perk.HthEvade state.them.perks > 0
                         , unarmedSkill = Skill.get state.them.special state.them.addedSkillPercentages Skill.Unarmed
                         , apFromPreviousTurn = apFromPreviousTurn state.themWho state.ongoingFight

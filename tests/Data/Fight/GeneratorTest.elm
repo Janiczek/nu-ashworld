@@ -93,7 +93,7 @@ damageNeverNegative : Test
 damageNeverNegative =
     Test.fuzz randomFightFuzzer "Damage in fight should never be negative" <|
         \fight ->
-            fight.fightInfo.log
+            fight.fightInfoForAttacker.log
                 |> List.map (Tuple.second >> Fight.attackDamage)
                 |> List.filter (\damage -> damage < 0)
                 |> List.isEmpty
@@ -163,7 +163,7 @@ meleeUnaimedStrategyResultsInMeleeUnaimedAttacks =
                         (Random.initialSeed 3)
                         |> Tuple.first
             in
-            fight.fightInfo.log
+            fight.fightInfoForAttacker.log
                 |> List.all
                     (\( _, action ) ->
                         case action of
