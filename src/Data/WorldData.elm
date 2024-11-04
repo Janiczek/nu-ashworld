@@ -5,6 +5,8 @@ module Data.WorldData exposing
     , allPlayers
     , isAdmin
     , isPlayer
+    , isPlayerSigningUp
+    , mapPlayerData
     , setOtherPlayers
     )
 
@@ -32,6 +34,7 @@ import Time.Extra as Time
 type WorldData
     = IsAdmin AdminData
     | IsPlayer PlayerData
+    | IsPlayerSigningUp
     | NotLoggedIn
 
 
@@ -60,7 +63,7 @@ type alias PlayerData =
     , tickFrequency : Time.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
     , vendorRestockFrequency : Time.Interval
-    , player : Player CPlayer
+    , player : CPlayer
     , otherPlayers : List COtherPlayer
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
@@ -72,16 +75,11 @@ type alias PlayerData =
 
 allPlayers : PlayerData -> List COtherPlayer
 allPlayers world =
-    case world.player of
-        NeedsCharCreated _ ->
-            world.otherPlayers
-
-        Player cPlayer ->
-            Ladder.sortMixed
-                { player = cPlayer
-                , playerRank = world.playerRank
-                , otherPlayers = world.otherPlayers
-                }
+    Ladder.sortMixed
+        { player = world.player
+        , playerRank = world.playerRank
+        , otherPlayers = world.otherPlayers
+        }
 
 
 isPlayer : WorldData -> Bool
@@ -89,6 +87,25 @@ isPlayer data =
     case data of
         IsPlayer _ ->
             True
+
+        IsPlayerSigningUp ->
+            False
+
+        IsAdmin _ ->
+            False
+
+        NotLoggedIn ->
+            False
+
+
+isPlayerSigningUp : WorldData -> Bool
+isPlayerSigningUp data =
+    case data of
+        IsPlayerSigningUp ->
+            True
+
+        IsPlayer _ ->
+            False
 
         IsAdmin _ ->
             False
@@ -103,6 +120,9 @@ isAdmin data =
         IsAdmin _ ->
             True
 
+        IsPlayerSigningUp ->
+            False
+
         IsPlayer _ ->
             False
 
@@ -115,6 +135,9 @@ mapPlayerData fn data =
     case data of
         IsPlayer playerData ->
             IsPlayer (fn playerData)
+
+        IsPlayerSigningUp ->
+            data
 
         IsAdmin _ ->
             data

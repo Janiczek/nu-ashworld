@@ -184,6 +184,7 @@ getPlayerData worldName playerName model =
         |> Maybe.andThen
             (\world ->
                 Dict.get playerName world.players
+                    |> Maybe.andThen Player.getPlayerData
                     |> Maybe.map (getPlayerData_ worldName world)
             )
 
@@ -191,24 +192,19 @@ getPlayerData worldName playerName model =
 {-| A "child" helper of getPlayerData for when you already have
 the `Player SPlayer` value fetched.
 -}
-getPlayerData_ : World.Name -> World -> Player SPlayer -> PlayerData
+getPlayerData_ : World.Name -> World -> SPlayer -> PlayerData
 getPlayerData_ worldName world player =
     let
-        auth : Auth Verified
-        auth =
-            Player.getAuth player
+        hasAwarenessPerk : Bool
+        hasAwarenessPerk =
+            Perk.rank Perk.Awareness player.perks > 0
 
         perceptionLevel : PerceptionLevel
         perceptionLevel =
-            Player.getPlayerData player
-                |> Maybe.map
-                    (\player_ ->
-                        Perception.level
-                            { perception = player_.special.perception
-                            , hasAwarenessPerk = Perk.rank Perk.Awareness player_.perks > 0
-                            }
-                    )
-                |> Maybe.withDefault Perception.Atrocious
+            Perception.level
+                { perception = player.special.perception
+                , hasAwarenessPerk = hasAwarenessPerk
+                }
 
         players =
             world.players
@@ -219,7 +215,7 @@ getPlayerData_ worldName world player =
             Ladder.sort players
 
         isCurrentPlayer p =
-            p.name == auth.name
+            p.name == player.name
 
         playerRank =
             sortedPlayers
@@ -228,11 +224,6 @@ getPlayerData_ worldName world player =
                 |> Maybe.map (Tuple.first >> (+) 1)
                 -- TODO find this info in a non-Maybe way?
                 |> Maybe.withDefault 1
-
-        playerName =
-            player
-                |> Player.getPlayerData
-                |> Maybe.map .name
     in
     { worldName = worldName
     , description = world.description
@@ -240,7 +231,7 @@ getPlayerData_ worldName world player =
     , tickFrequency = world.tickFrequency
     , tickPerIntervalCurve = world.tickPerIntervalCurve
     , vendorRestockFrequency = world.vendorRestockFrequency
-    , player = Player.map Player.serverToClient player
+    , player = Player.serverToClient player
     , playerRank = playerRank
     , otherPlayers =
         sortedPlayers
@@ -252,7 +243,9 @@ getPlayerData_ worldName world player =
                     else
                         Just <|
                             Player.serverToClientOther
-                                perceptionLevel
+                                { perceptionLevel = perceptionLevel
+                                , hasAwarenessPerk = hasAwarenessPerk
+                                }
                                 otherPlayer
                 )
     , vendors = world.vendors
@@ -281,8 +274,7 @@ getPlayerData_ worldName world player =
 
                         ticksGivenByPlayer : Int
                         ticksGivenByPlayer =
-                            playerName
-                                |> Maybe.andThen (\name -> Dict.get name ticksGivenPerPlayer)
+                            Dict.get player.name ticksGivenPerPlayer
                                 |> Maybe.withDefault 0
                     in
                     { ticksGiven = ticksGiven
@@ -290,15 +282,10 @@ getPlayerData_ worldName world player =
                     , playersActive = engagedPlayersCount
                     , ticksGivenByPlayer = ticksGivenByPlayer
                     , alreadyPaidRequirements =
-                        playerName
-                            |> Maybe.map
-                                (\name ->
-                                    world.questRequirementsPaid
-                                        |> SeqDict.get quest
-                                        |> Maybe.withDefault Set.empty
-                                        |> Set.member name
-                                )
-                            |> Maybe.withDefault False
+                        world.questRequirementsPaid
+                            |> SeqDict.get quest
+                            |> Maybe.withDefault Set.empty
+                            |> Set.member player.name
                     }
                 )
     , questRewardShops = world.questRewardShops
@@ -931,41 +918,46 @@ updateFromFrontend sessionId clientId msg model =
                                         Player.getAuth player
                                 in
                                 if Auth.verify auth playerAuth then
-                                    getPlayerData auth.worldName auth.name model
-                                        |> Maybe.map
-                                            (\data ->
-                                                let
-                                                    names =
-                                                        ( auth.worldName, auth.name )
+                                    let
+                                        data =
+                                            getPlayerData auth.worldName auth.name model
 
-                                                    clientIdsToLogout : Set ClientId
-                                                    clientIdsToLogout =
-                                                        BiDict.getReverse names model.loggedInPlayers
+                                        names =
+                                            ( auth.worldName, auth.name )
 
-                                                    loggedOutData =
-                                                        getWorlds model
+                                        clientIdsToLogout : Set ClientId
+                                        clientIdsToLogout =
+                                            BiDict.getReverse names model.loggedInPlayers
 
-                                                    newModel =
-                                                        { model
-                                                            | loggedInPlayers =
-                                                                model.loggedInPlayers
-                                                                    |> -- TODO: BiDict.removeReverse would be nice
-                                                                       BiDict.filter (\_ names_ -> names_ /= names)
-                                                                    |> BiDict.insert clientId names
-                                                        }
-                                                in
-                                                ( newModel
-                                                , Cmd.batch <|
-                                                    (Lamdera.sendToFrontend clientId <| YoureLoggedIn data)
-                                                        :: refreshAdminLoggedInPlayers newModel
-                                                        :: (clientIdsToLogout
-                                                                |> Set.toList
-                                                                |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut loggedOutData)
-                                                           )
-                                                )
-                                            )
-                                        -- weird?
-                                        |> Maybe.withDefault ( model, Cmd.none )
+                                        loggedOutData =
+                                            getWorlds model
+
+                                        newModel =
+                                            { model
+                                                | loggedInPlayers =
+                                                    model.loggedInPlayers
+                                                        |> -- TODO: BiDict.removeReverse would be nice
+                                                           BiDict.filter (\_ names_ -> names_ /= names)
+                                                        |> BiDict.insert clientId names
+                                            }
+
+                                        msgToSend =
+                                            case data of
+                                                Nothing ->
+                                                    YoureLoggedInSigningUp
+
+                                                Just data_ ->
+                                                    YoureLoggedIn data_
+                                    in
+                                    ( newModel
+                                    , Cmd.batch <|
+                                        Lamdera.sendToFrontend clientId msgToSend
+                                            :: refreshAdminLoggedInPlayers newModel
+                                            :: (clientIdsToLogout
+                                                    |> Set.toList
+                                                    |> List.map (\cId -> Lamdera.sendToFrontend cId <| YoureLoggedOut loggedOutData)
+                                               )
+                                    )
 
                                 else
                                     ( model
@@ -1011,13 +1003,10 @@ updateFromFrontend sessionId clientId msg model =
                                                 | loggedInPlayers = BiDict.insert clientId ( auth.worldName, auth.name ) model.loggedInPlayers
                                                 , worlds = model.worlds |> Dict.insert auth.worldName newWorld
                                             }
-
-                                        data =
-                                            getPlayerData_ auth.worldName newWorld player
                                     in
                                     ( newModel
                                     , Cmd.batch
-                                        [ Lamdera.sendToFrontend clientId <| YoureSignedUp data
+                                        [ Lamdera.sendToFrontend clientId YoureSignedUp
                                         , refreshAdminLoggedInPlayers newModel
                                         ]
                                     )
@@ -1243,9 +1232,13 @@ updateAdmin clientId msg model =
                                 , nextWantedTick = Nothing
                                 , nextVendorRestockTick = Nothing
                             }
+
+                        newModel =
+                            { model | worlds = Dict.insert r.world newWorld model.worlds }
                     in
-                    { model | worlds = Dict.insert r.world newWorld model.worlds }
-                        |> refreshPlayersOnWorld r.world
+                    newModel
+                        |> Cmd.with (refreshAdminData newModel)
+                        |> Cmd.andThen (refreshPlayersOnWorld r.world)
 
 
 refreshPlayersOnWorld : World.Name -> Model -> ( Model, Cmd BackendMsg )
@@ -1581,15 +1574,10 @@ removeAllMessages clientId _ worldName player model =
             -- Shouldn't happen?
             ( newModel, Cmd.none )
 
-        Just newPlayer ->
-            case newPlayer.player of
-                Player.NeedsCharCreated _ ->
-                    ( newModel, Cmd.none )
-
-                Player.Player player_ ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourMessages player_.messages
-                    )
+        Just newWorld ->
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YourMessages newWorld.player.messages
+            )
 
 
 removeFightMessages : ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
@@ -1604,19 +1592,14 @@ removeFightMessages clientId _ worldName player model =
             -- Shouldn't happen?
             ( newModel, Cmd.none )
 
-        Just newPlayer ->
-            case newPlayer.player of
-                Player.NeedsCharCreated _ ->
-                    ( newModel, Cmd.none )
-
-                Player.Player player_ ->
-                    ( newModel
-                    , Lamdera.sendToFrontend clientId <| YourMessages player_.messages
-                    )
+        Just newWorld ->
+            ( newModel
+            , Lamdera.sendToFrontend clientId <| YourMessages newWorld.player.messages
+            )
 
 
 moveTo : TileCoords -> Set TileCoords -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
-moveTo newCoords pathTaken clientId world worldName player model =
+moveTo newCoords pathTaken clientId _ worldName player model =
     let
         { tickCost, carBatteryPromileCost } =
             Pathfinding.cost
@@ -1717,10 +1700,13 @@ refreshOtherPlayers worldName initiatorPlayerName model =
                                         -- Let's go through all the players in the world again, filter out `playerName`
                                         -- and collect the data.
                                         let
+                                            hasAwarenessPerk =
+                                                Perk.rank Perk.Awareness player.perks > 0
+
                                             perceptionLevel =
                                                 Perception.level
                                                     { perception = player.special.perception
-                                                    , hasAwarenessPerk = Perk.rank Perk.Awareness player.perks > 0
+                                                    , hasAwarenessPerk = hasAwarenessPerk
                                                     }
                                         in
                                         world.players
@@ -1735,7 +1721,11 @@ refreshOtherPlayers worldName initiatorPlayerName model =
                                                                     Nothing
 
                                                                 else
-                                                                    Player.serverToClientOther perceptionLevel otherPlayerData
+                                                                    Player.serverToClientOther
+                                                                        { perceptionLevel = perceptionLevel
+                                                                        , hasAwarenessPerk = hasAwarenessPerk
+                                                                        }
+                                                                        otherPlayerData
                                                                         |> Just
                                                             )
                                                 )
@@ -1791,7 +1781,7 @@ createNewCharWithTime newChar currentTime clientId world worldName player model 
 
                         data : PlayerData
                         data =
-                            getPlayerData_ worldName world newPlayer
+                            getPlayerData_ worldName world sPlayer
                     in
                     ( newModel
                     , Lamdera.sendToFrontend clientId <| YouHaveCreatedChar newCPlayer data

@@ -9,6 +9,7 @@ module Frontend.Route exposing
     , loggedOut
     , needsAdmin
     , needsPlayer
+    , needsPlayerSigningUp
     , toString
     )
 
@@ -26,6 +27,7 @@ type Route
     | Map
     | WorldsList
     | NotFound Url
+    | CharCreation
     | PlayerRoute PlayerRoute
     | AdminRoute AdminRoute
 
@@ -40,7 +42,6 @@ type PlayerRoute
     | Fight
     | Messages
     | Message Message.Id
-    | CharCreation
     | SettingsFightStrategy
     | SettingsFightStrategySyntaxHelp
 
@@ -49,6 +50,37 @@ type AdminRoute
     = AdminWorldsList
     | AdminWorldActivity World.Name
     | AdminWorldHiscores World.Name
+
+
+needsPlayerSigningUp : Route -> Bool
+needsPlayerSigningUp route =
+    case route of
+        CharCreation ->
+            True
+
+        PlayerRoute _ ->
+            False
+
+        AdminRoute _ ->
+            False
+
+        About ->
+            False
+
+        Guide _ ->
+            False
+
+        News ->
+            False
+
+        Map ->
+            False
+
+        WorldsList ->
+            False
+
+        NotFound _ ->
+            False
 
 
 needsPlayer : Route -> Bool
@@ -61,6 +93,9 @@ needsPlayer route =
             False
 
         About ->
+            False
+
+        CharCreation ->
             False
 
         Guide _ ->
@@ -89,6 +124,9 @@ needsAdmin route =
             False
 
         About ->
+            False
+
+        CharCreation ->
             False
 
         Guide _ ->
@@ -148,9 +186,6 @@ isMessagesRelatedRoute route =
                 Fight ->
                     False
 
-                CharCreation ->
-                    False
-
                 SettingsFightStrategy ->
                     False
 
@@ -177,6 +212,7 @@ parser =
         , P.map Map <| P.s "map"
         , P.map WorldsList <| P.s "worlds"
         , P.map AdminRoute <| P.s "admin" </> adminParser
+        , P.map CharCreation <| P.s "game" </> P.s "character-creation"
         , P.map PlayerRoute <| P.s "game" </> playerParser
         ]
 
@@ -202,7 +238,6 @@ playerParser =
         , P.map Fight <| P.s "fight"
         , P.map Messages <| P.s "messages"
         , P.map Message <| P.s "messages" </> P.int
-        , P.map CharCreation <| P.s "character-creation"
         , P.map SettingsFightStrategy <| P.s "settings" </> P.s "fight-strategy"
         , P.map SettingsFightStrategySyntaxHelp <| P.s "settings" </> P.s "fight-strategy" </> P.s "help"
         ]
@@ -309,6 +344,9 @@ toString route =
                         ++ (url.query |> Maybe.map (\q -> "?" ++ q) |> Maybe.withDefault "")
                         ++ (url.fragment |> Maybe.map (\f -> "#" ++ f) |> Maybe.withDefault "")
 
+                CharCreation ->
+                    "game/character-creation"
+
                 -- TODO is this OK?
                 PlayerRoute proute ->
                     "game/"
@@ -339,9 +377,6 @@ toString route =
 
                                 Message messageId ->
                                     "messages/" ++ String.fromInt messageId
-
-                                CharCreation ->
-                                    "character-creation"
 
                                 SettingsFightStrategy ->
                                     "settings/fight-strategy"
@@ -397,9 +432,6 @@ getShop route =
                 Message _ ->
                     Nothing
 
-                CharCreation ->
-                    Nothing
-
                 SettingsFightStrategy ->
                     Nothing
 
@@ -407,6 +439,9 @@ getShop route =
                     Nothing
 
         About ->
+            Nothing
+
+        CharCreation ->
             Nothing
 
         Guide _ ->
@@ -441,6 +476,9 @@ isGuideRelatedRoute route =
             False
 
         Map ->
+            False
+
+        CharCreation ->
             False
 
         WorldsList ->

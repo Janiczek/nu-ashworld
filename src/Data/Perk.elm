@@ -838,7 +838,7 @@ description perk =
             "With this Perk, you gain +1 to your Strength when you drop below 1/2 of your max hit points."
 
         Awareness ->
-            "With Awareness, you are given detailed information about any critter you examine. You see their exact hit points and information about any weapon they are equipped with."
+            "With Awareness, you are given detailed information about any critter you examine. You see their exact hit points and information about any weapon they are equipped with. This is shown in the Ladder and during fights."
 
         BetterCriticals ->
             "The critical hits you cause in combat are more devastating. You gain a 20% bonus on the critical hit table, almost ensuring that more damage will be done. This does not affect the chance to cause a critical hit."

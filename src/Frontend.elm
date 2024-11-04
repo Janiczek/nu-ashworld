@@ -203,6 +203,9 @@ sanitizeRoute worldData route =
     else if Route.needsPlayer route && not (WorldData.isPlayer worldData) then
         News
 
+    else if Route.needsPlayerSigningUp route && not (WorldData.isPlayerSigningUp worldData) then
+        News
+
     else
         route
 
@@ -215,6 +218,9 @@ update msg ({ loginForm } as model) =
             case model.worldData of
                 IsPlayer data ->
                     fn data
+
+                IsPlayerSigningUp ->
+                    ( model, Cmd.none )
 
                 IsAdmin _ ->
                     ( model, Cmd.none )
@@ -512,33 +518,28 @@ update msg ({ loginForm } as model) =
         MapMouseAtCoords mouseCoords ->
             withLoggedInPlayer <|
                 \data ->
-                    case data.player of
-                        Player cPlayer ->
-                            let
-                                perceptionLevel : PerceptionLevel
-                                perceptionLevel =
-                                    Perception.level
-                                        { perception = cPlayer.special.perception
-                                        , hasAwarenessPerk = Perk.rank Perk.Awareness cPlayer.perks > 0
+                    let
+                        perceptionLevel : PerceptionLevel
+                        perceptionLevel =
+                            Perception.level
+                                { perception = data.player.special.perception
+                                , hasAwarenessPerk = Perk.rank Perk.Awareness data.player.perks > 0
+                                }
+                    in
+                    ( { model
+                        | mapMouseCoords =
+                            Just
+                                { coords = mouseCoords
+                                , path =
+                                    Pathfinding.path
+                                        perceptionLevel
+                                        { from = data.player.location
+                                        , to = mouseCoords
                                         }
-                            in
-                            ( { model
-                                | mapMouseCoords =
-                                    Just
-                                        { coords = mouseCoords
-                                        , path =
-                                            Pathfinding.path
-                                                perceptionLevel
-                                                { from = cPlayer.location
-                                                , to = mouseCoords
-                                                }
-                                        }
-                              }
-                            , Cmd.none
-                            )
-
-                        NeedsCharCreated _ ->
-                            ( model, Cmd.none )
+                                }
+                      }
+                    , Cmd.none
+                    )
 
         MapMouseOut ->
             ( { model | mapMouseCoords = Nothing }
@@ -721,15 +722,7 @@ updateBarter msg model =
 
 mapLoggedInWorld : (PlayerData -> PlayerData) -> Model -> Model
 mapLoggedInWorld fn model =
-    case model.worldData of
-        IsPlayer data ->
-            { model | worldData = IsPlayer (fn data) }
-
-        IsAdmin _ ->
-            model
-
-        NotLoggedIn ->
-            model
+    { model | worldData = WorldData.mapPlayerData fn model.worldData }
 
 
 updateLoggedInWorld : PlayerData -> Model -> Model
@@ -748,28 +741,20 @@ resetBarterAfterTick model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
-        YoureLoggedIn data ->
-            let
-                newRoute =
-                    case data.player of
-                        NeedsCharCreated _ ->
-                            PlayerRoute Route.CharCreation
+        YoureLoggedInSigningUp ->
+            { model
+                | worldData = IsPlayerSigningUp
+                , alertMessage = Nothing
+            }
+                |> update (GoToRoute Route.CharCreation)
 
-                        Player _ ->
-                            PlayerRoute Route.Ladder
-            in
+        YoureLoggedIn data ->
             { model
                 | worldData = IsPlayer data
                 , alertMessage = Nothing
-                , fightStrategyText =
-                    case data.player of
-                        NeedsCharCreated _ ->
-                            ""
-
-                        Player playerData ->
-                            playerData.fightStrategyText
+                , fightStrategyText = data.player.fightStrategyText
             }
-                |> update (GoToRoute newRoute)
+                |> update (GoToRoute (PlayerRoute Route.Ladder))
 
         YoureLoggedInAsAdmin data ->
             { model
@@ -778,12 +763,12 @@ updateFromBackend msg model =
             }
                 |> update (GoToRoute (AdminRoute AdminWorldsList))
 
-        YoureSignedUp data ->
+        YoureSignedUp ->
             { model
-                | worldData = IsPlayer data
+                | worldData = IsPlayerSigningUp
                 , alertMessage = Nothing
             }
-                |> update (GoToRoute (PlayerRoute Route.CharCreation))
+                |> update (GoToRoute Route.CharCreation)
 
         CharCreationError error ->
             ( { model | newChar = NewChar.setError error model.newChar }
@@ -898,12 +883,8 @@ updateFromBackend msg model =
         YourMessages messages ->
             ( model
                 |> mapLoggedInWorld
-                    (\world ->
-                        { world
-                            | player =
-                                world.player
-                                    |> Player.map (\player -> { player | messages = messages })
-                        }
+                    (\({ player } as world) ->
+                        { world | player = { player | messages = messages } }
                     )
             , Cmd.none
             )
@@ -965,6 +946,14 @@ view model =
                     [ alertMessageView model.alertMessage
                     , H.div [ HA.class "flex flex-col gap-4" ]
                         [ adminLinksView model.route
+                        , commonLinksView model.route
+                        ]
+                    ]
+
+                IsPlayerSigningUp ->
+                    [ alertMessageView model.alertMessage
+                    , H.div [ HA.class "flex flex-col gap-4" ]
+                        [ loggedInSigningUpLinksView model.route
                         , commonLinksView model.route
                         ]
                     ]
@@ -1032,6 +1021,9 @@ leftNavView leftNav model =
                 IsAdmin _ ->
                     Nothing
 
+                IsPlayerSigningUp ->
+                    Nothing
+
                 IsPlayer data ->
                     Just data.tickFrequency
 
@@ -1070,21 +1062,15 @@ contentView model =
             -> (PlayerData -> CPlayer -> List (Html FrontendMsg))
             -> List (Html FrontendMsg)
         withCreatedPlayer data fn =
-            case data.player of
-                NeedsCharCreated _ ->
-                    contentUnavailableToNonCreatedView
-
-                Player cPlayer ->
-                    fn data cPlayer
+            fn data data.player
 
         withLocation :
             PlayerData
             -> (Location -> PlayerData -> CPlayer -> List (Html FrontendMsg))
             -> List (Html FrontendMsg)
         withLocation data fn =
-            data.player
-                |> Player.getPlayerData
-                |> Maybe.andThen (.location >> Location.location)
+            data.player.location
+                |> Location.location
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
     in
@@ -1124,6 +1110,12 @@ contentView model =
 
             ( Map, _ ) ->
                 mapLoggedOutView
+
+            ( Route.CharCreation, IsPlayerSigningUp ) ->
+                newCharView model.hoveredItem model.newChar
+
+            ( Route.CharCreation, _ ) ->
+                contentUnavailableToNonSigningUpView
 
             ( PlayerRoute worldRoute, IsPlayer data ) ->
                 let
@@ -1166,9 +1158,6 @@ contentView model =
 
                     Route.Message messageId ->
                         withCreatedPlayer_ (messageView model.zone messageId)
-
-                    Route.CharCreation ->
-                        newCharView model.hoveredItem model.newChar
 
                     Route.SettingsFightStrategy ->
                         withCreatedPlayer_ <|
@@ -3231,7 +3220,7 @@ newCharSpecialView newChar =
                 [ H.text <| String.fromInt newChar.availableSpecial ]
             , H.text " points left)"
             ]
-        , H.div [ HA.class "grid grid-cols-[3ch_13ch_3ch_3ch] auto-rows-auto" ]
+        , H.div [ HA.class "grid grid-cols-[3ch_14ch_3ch_3ch] auto-rows-auto" ]
             (List.map specialItemView Special.all)
         , H.p
             [ HA.class "text-green-300" ]
@@ -4780,30 +4769,44 @@ ladderView data loggedInPlayer =
 
 playerLadderTableView : List COtherPlayer -> CPlayer -> Html FrontendMsg
 playerLadderTableView players loggedInPlayer =
+    let
+        seesWeaponAndArmor =
+            List.any (\p -> p.equipment /= Nothing) players
+    in
     H.table
         []
         [ H.thead []
-            [ H.tr []
-                [ H.th
-                    [ HA.class "text-right"
-                    , HA.title "Rank"
+            [ H.tr [] <|
+                List.fastConcat
+                    [ [ H.th
+                            [ HA.class "text-right" ]
+                            [ H.text "#"
+                                |> UI.withTooltip "Rank"
+                            ]
+                      , H.th [] [ H.text "Fight" ]
+                      , H.th [] [ H.text "Name" ]
+                      , H.th [ HA.title "Health status" ] [ H.text "Status" ]
+                      , H.th [ HA.class "text-right" ] [ H.text "Lvl" ]
+                      , H.th
+                            [ HA.class "text-right" ]
+                            [ H.text "W"
+                                |> UI.withTooltip "Wins"
+                            ]
+                      , H.th
+                            [ HA.class "text-right"
+                            ]
+                            [ H.text "L"
+                                |> UI.withTooltip "Losses"
+                            ]
+                      ]
+                    , if seesWeaponAndArmor then
+                        [ H.th [] [ H.text "Weapon" ]
+                        , H.th [] [ H.text "Armor" ]
+                        ]
+
+                      else
+                        []
                     ]
-                    [ H.text "#" ]
-                , H.th [] [ H.text "Fight" ]
-                , H.th [] [ H.text "Name" ]
-                , H.th [ HA.title "Health status" ] [ H.text "Status" ]
-                , H.th [ HA.class "text-right" ] [ H.text "Lvl" ]
-                , H.th
-                    [ HA.class "text-right"
-                    , HA.title "Wins"
-                    ]
-                    [ H.text "W" ]
-                , H.th
-                    [ HA.class "text-right"
-                    , HA.title "Losses"
-                    ]
-                    [ H.text "L" ]
-                ]
             ]
         , H.tbody []
             (players
@@ -4818,73 +4821,112 @@ playerLadderTableView players loggedInPlayer =
                                 H.td
                                     [ HA.class "text-green-300 cursor-not-allowed"
                                     , HA.classList [ ( "bg-green-800", isYou ) ]
-                                    , HA.title message
                                     ]
-                                    [ H.text "-" ]
+                                    [ H.text "-"
+                                        |> UI.withTooltip message
+                                    ]
                         in
                         H.tr
                             [ HA.classList [ ( "text-green-100", isYou ) ]
                             ]
-                            [ H.td
-                                [ HA.class "text-right"
-                                , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title "Rank"
-                                ]
-                                [ H.text <| String.fromInt <| i + 1 ]
-                            , if loggedInPlayer.name == player.name then
-                                cantFight "Hey, that's you!"
+                        <|
+                            List.fastConcat
+                                [ [ H.td
+                                        [ HA.class "text-right"
+                                        , HA.classList [ ( "bg-green-800", isYou ) ]
+                                        , HA.title "Rank"
+                                        ]
+                                        [ H.text <| String.fromInt <| i + 1 ]
+                                  , if loggedInPlayer.name == player.name then
+                                        cantFight "Hey, that's you!"
 
-                              else if loggedInPlayer.hp == 0 then
-                                cantFight "Can't fight: you're dead!"
+                                    else if loggedInPlayer.hp == 0 then
+                                        cantFight "Can't fight: you're dead!"
 
-                              else if HealthStatus.isDead player.healthStatus then
-                                cantFight "Can't fight this person: they're dead!"
+                                    else if HealthStatus.isDead player.healthStatus then
+                                        cantFight "Can't fight this person: they're dead!"
 
-                              else if loggedInPlayer.ticks <= 0 then
-                                cantFight "Can't fight: you have no ticks!"
-
-                              else
-                                H.td
-                                    [ HE.onClick <| AskToFight player.name
-                                    , HA.class "cursor-pointer bg-green-800 text-green-100"
-                                    , HA.classList [ ( "bg-green-800", isYou ) ]
-                                    , TW.mod "hover" "text-yellow"
-                                    ]
-                                    [ H.text "Fight" ]
-                            , H.td
-                                [ HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title "Name"
-                                ]
-                                [ H.text player.name ]
-                            , H.td
-                                [ HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title <|
-                                    if loggedInPlayer.special.perception <= 1 then
-                                        "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
+                                    else if loggedInPlayer.ticks <= 0 then
+                                        cantFight "Can't fight: you have no ticks!"
 
                                     else
-                                        "Health status"
+                                        H.td
+                                            [ HE.onClick <| AskToFight player.name
+                                            , HA.class "cursor-pointer bg-green-800 text-green-100"
+                                            , HA.classList [ ( "bg-green-800", isYou ) ]
+                                            , TW.mod "hover" "text-yellow"
+                                            ]
+                                            [ H.text "Fight" ]
+                                  , H.td
+                                        [ HA.classList [ ( "bg-green-800", isYou ) ]
+                                        ]
+                                        [ player.name
+                                            |> H.text
+                                            |> UI.withTooltip "Name"
+                                        ]
+                                  , H.td
+                                        [ HA.classList [ ( "bg-green-800", isYou ) ]
+                                        ]
+                                        [ HealthStatus.label player.healthStatus
+                                            |> H.text
+                                            |> UI.withTooltip
+                                                (if loggedInPlayer.special.perception <= 1 then
+                                                    "Health status. Your perception is so low you genuinely can't say whether they're even alive or dead."
+
+                                                 else
+                                                    "Health status"
+                                                )
+                                        ]
+                                  , H.td
+                                        [ HA.class "text-right"
+                                        , HA.classList [ ( "bg-green-800", isYou ) ]
+                                        ]
+                                        [ String.fromInt player.level
+                                            |> H.text
+                                            |> UI.withTooltip "Level"
+                                        ]
+                                  , H.td
+                                        [ HA.class "text-right"
+                                        , HA.classList [ ( "bg-green-800", isYou ) ]
+                                        ]
+                                        [ String.fromInt player.wins
+                                            |> H.text
+                                            |> UI.withTooltip "Wins"
+                                        ]
+                                  , H.td
+                                        [ HA.class "text-right"
+                                        , HA.classList [ ( "bg-green-800", isYou ) ]
+                                        ]
+                                        [ String.fromInt player.losses
+                                            |> H.text
+                                            |> UI.withTooltip "Losses"
+                                        ]
+                                  ]
+                                , case player.equipment of
+                                    Nothing ->
+                                        [ H.td [] []
+                                        , H.td [] []
+                                        ]
+
+                                    Just equipment ->
+                                        [ H.td
+                                            [ HA.classList [ ( "bg-green-800", isYou ) ] ]
+                                            [ equipment.weapon
+                                                |> Maybe.map ItemKind.name
+                                                |> Maybe.withDefault "-"
+                                                |> H.text
+                                                |> UI.withTooltip "Weapon"
+                                            ]
+                                        , H.td
+                                            [ HA.classList [ ( "bg-green-800", isYou ) ] ]
+                                            [ equipment.armor
+                                                |> Maybe.map ItemKind.name
+                                                |> Maybe.withDefault "-"
+                                                |> H.text
+                                                |> UI.withTooltip "Armor"
+                                            ]
+                                        ]
                                 ]
-                                [ H.text <| HealthStatus.label player.healthStatus ]
-                            , H.td
-                                [ HA.class "text-right"
-                                , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title "Level"
-                                ]
-                                [ H.text <| String.fromInt player.level ]
-                            , H.td
-                                [ HA.class "text-right"
-                                , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title "Wins"
-                                ]
-                                [ H.text <| String.fromInt player.wins ]
-                            , H.td
-                                [ HA.class "text-right"
-                                , HA.classList [ ( "bg-green-800", isYou ) ]
-                                , HA.title "Losses"
-                                ]
-                                [ H.text <| String.fromInt player.losses ]
-                            ]
                     )
             )
         ]
@@ -4988,6 +5030,11 @@ contentUnavailableWhenNotInTownView =
 contentUnavailableToNonAdminView : List (Html FrontendMsg)
 contentUnavailableToNonAdminView =
     contentUnavailableView "you're not an admin"
+
+
+contentUnavailableToNonSigningUpView : List (Html FrontendMsg)
+contentUnavailableToNonSigningUpView =
+    contentUnavailableView "you have already created your character"
 
 
 contentUnavailableToNonCreatedView : List (Html FrontendMsg)
@@ -5179,104 +5226,105 @@ linkView currentRoute link =
         |> UI.withMaybeTooltip tooltip_
 
 
-loggedInLinksView : Player CPlayer -> Route -> Html FrontendMsg
-loggedInLinksView player currentRoute =
-    (case player of
-        NeedsCharCreated _ ->
-            [ LinkIn { label = "New Char", route = PlayerRoute Route.CharCreation, highlight = HNormal }
-            , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
-            ]
+loggedInSigningUpLinksView : Route -> Html FrontendMsg
+loggedInSigningUpLinksView currentRoute =
+    [ LinkIn { label = "New Char", route = Route.CharCreation, highlight = HNormal }
+    , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
+    ]
+        |> List.map (linkView currentRoute)
+        |> H.div []
 
-        Player p ->
-            let
-                tickHealPercentage =
-                    Logic.tickHealPercentage
-                        { special = p.special
-                        , addedSkillPercentages = p.addedSkillPercentages
-                        , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
-                        }
 
-                hpHealed =
-                    round <| toFloat tickHealPercentage / 100 * toFloat p.maxHp
-
-                ( healTooltip, healDisabled ) =
-                    if p.hp >= p.maxHp then
-                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
-                        , True
-                        )
-
-                    else if p.ticks < 1 then
-                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
-                        , True
-                        )
-
-                    else
-                        ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
-                        , False
-                        )
-
-                ( wanderTooltip, wanderDisabled ) =
-                    if p.hp <= 0 then
-                        ( Just "Find something to fight. Cost: 1 tick. You are dead!"
-                        , True
-                        )
-
-                    else if p.ticks < 1 then
-                        ( Just "Find something to fight. Cost: 1 tick. You have no ticks left!"
-                        , True
-                        )
-
-                    else
-                        ( Just "Find something to fight. Cost: 1 tick"
-                        , False
-                        )
-
-                isInTown : Bool
-                isInTown =
-                    Location.location p.location /= Nothing
-
-                unreadMessages : Int
-                unreadMessages =
-                    p.messages
-                        |> Dict.filter (always (not << .hasBeenRead))
-                        |> Dict.size
-            in
-            [ LinkMsg { label = "Heal", msg = AskToHeal, tooltip = healTooltip, disabled = healDisabled }
-            , LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
-            , LinkIn { label = "Character", route = PlayerRoute Route.Character, highlight = HNormal }
-            , LinkIn { label = "Inventory", route = PlayerRoute Route.Inventory, highlight = HNormal }
-            , LinkIn { label = "Map", route = Map, highlight = HNormal }
-            , LinkIn { label = "Ladder", route = PlayerRoute Route.Ladder, highlight = HNormal }
-            , if isInTown then
-                LinkIn { label = "Town", route = PlayerRoute Route.TownMainSquare, highlight = HNormal }
-
-              else
-                LinkMsg { label = "Wander", msg = AskToWander, tooltip = wanderTooltip, disabled = wanderDisabled }
-            , LinkIn { label = "Settings", route = PlayerRoute Route.SettingsFightStrategy, highlight = HNormal }
-            , LinkInFull
-                { label = "Messages"
-                , route = PlayerRoute Route.Messages
-                , hoverMsg = Nothing
-                , tooltip =
-                    if unreadMessages > 0 then
-                        Just "You have unread messages!"
-
-                    else
-                        Nothing
-                , disabled = False
-                , highlight =
-                    if unreadMessages == 0 then
-                        HDimmed
-
-                    else
-                        HHighlighted
-                , isActive = Route.isMessagesRelatedRoute
+loggedInLinksView : CPlayer -> Route -> Html FrontendMsg
+loggedInLinksView p currentRoute =
+    let
+        tickHealPercentage =
+            Logic.tickHealPercentage
+                { special = p.special
+                , addedSkillPercentages = p.addedSkillPercentages
+                , fasterHealingPerkRanks = Perk.rank Perk.FasterHealing p.perks
                 }
-            , LinkIn { label = "World", route = PlayerRoute Route.AboutWorld, highlight = HNormal }
-            , LinkMsg { label = "Worlds", msg = AskForWorldsAndGoToWorldsRoute, tooltip = Nothing, disabled = False }
-            , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
-            ]
-    )
+
+        hpHealed =
+            round <| toFloat tickHealPercentage / 100 * toFloat p.maxHp
+
+        ( healTooltip, healDisabled ) =
+            if p.hp >= p.maxHp then
+                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You are at full HP!"
+                , True
+                )
+
+            else if p.ticks < 1 then
+                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick. You have no ticks left!"
+                , True
+                )
+
+            else
+                ( Just <| "Heal your HP by " ++ String.fromInt tickHealPercentage ++ "% of your max HP (" ++ String.fromInt hpHealed ++ " HP). Cost: 1 tick"
+                , False
+                )
+
+        ( wanderTooltip, wanderDisabled ) =
+            if p.hp <= 0 then
+                ( Just "Find something to fight. Cost: 1 tick. You are dead!"
+                , True
+                )
+
+            else if p.ticks < 1 then
+                ( Just "Find something to fight. Cost: 1 tick. You have no ticks left!"
+                , True
+                )
+
+            else
+                ( Just "Find something to fight. Cost: 1 tick"
+                , False
+                )
+
+        isInTown : Bool
+        isInTown =
+            Location.location p.location /= Nothing
+
+        unreadMessages : Int
+        unreadMessages =
+            p.messages
+                |> Dict.filter (always (not << .hasBeenRead))
+                |> Dict.size
+    in
+    [ LinkMsg { label = "Heal", msg = AskToHeal, tooltip = healTooltip, disabled = healDisabled }
+    , LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
+    , LinkIn { label = "Character", route = PlayerRoute Route.Character, highlight = HNormal }
+    , LinkIn { label = "Inventory", route = PlayerRoute Route.Inventory, highlight = HNormal }
+    , LinkIn { label = "Map", route = Map, highlight = HNormal }
+    , LinkIn { label = "Ladder", route = PlayerRoute Route.Ladder, highlight = HNormal }
+    , if isInTown then
+        LinkIn { label = "Town", route = PlayerRoute Route.TownMainSquare, highlight = HNormal }
+
+      else
+        LinkMsg { label = "Wander", msg = AskToWander, tooltip = wanderTooltip, disabled = wanderDisabled }
+    , LinkIn { label = "Settings", route = PlayerRoute Route.SettingsFightStrategy, highlight = HNormal }
+    , LinkInFull
+        { label = "Messages"
+        , route = PlayerRoute Route.Messages
+        , hoverMsg = Nothing
+        , tooltip =
+            if unreadMessages > 0 then
+                Just "You have unread messages!"
+
+            else
+                Nothing
+        , disabled = False
+        , highlight =
+            if unreadMessages == 0 then
+                HDimmed
+
+            else
+                HHighlighted
+        , isActive = Route.isMessagesRelatedRoute
+        }
+    , LinkIn { label = "World", route = PlayerRoute Route.AboutWorld, highlight = HNormal }
+    , LinkMsg { label = "Worlds", msg = AskForWorldsAndGoToWorldsRoute, tooltip = Nothing, disabled = False }
+    , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
+    ]
         |> List.map (linkView currentRoute)
         |> H.div []
 
@@ -5519,15 +5567,8 @@ adminWorldHiscoresView worldName data =
             ]
 
 
-playerInfoView : Maybe Time.Interval -> String -> Time.Zone -> Time.Posix -> Player CPlayer -> Html FrontendMsg
+playerInfoView : Maybe Time.Interval -> String -> Time.Zone -> Time.Posix -> CPlayer -> Html FrontendMsg
 playerInfoView tickFrequency worldName zone time player =
-    player
-        |> Player.getPlayerData
-        |> H.viewMaybe (createdPlayerInfoView tickFrequency worldName zone time)
-
-
-createdPlayerInfoView : Maybe Time.Interval -> String -> Time.Zone -> Time.Posix -> CPlayer -> Html FrontendMsg
-createdPlayerInfoView tickFrequency worldName zone time player =
     H.div
         [ HA.class "grid grid-cols-[max-content_max-content] gap-x-[1ch]" ]
         [ H.div [ HA.class "text-right text-green-300" ] [ H.text "World:" ]

@@ -77,7 +77,7 @@ import SeqSet exposing (SeqSet)
 
 carBatteryPromileCostPerTile : Int
 carBatteryPromileCostPerTile =
-    1
+    5
 
 
 unarmedApCost : Int

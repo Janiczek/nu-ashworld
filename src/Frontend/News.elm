@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- show other players' weapons / armor with Awareness perk (update its description too)
+- show other players' weapons / armor with Awareness perk (fight)
 
 Next up: 
 
@@ -52,7 +52,6 @@ Later:
 - new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
-- awareness - info about players' weapon and armor?
 - perk - show max number of ranks
 - perk - show all perks, some grayed out, show the requirements?
 - music in the bg (opt-in)

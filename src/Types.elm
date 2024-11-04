@@ -232,8 +232,9 @@ type ToFrontend
     | CurrentAdminLastTenToBackendMsgs (List ( PlayerName, World.Name, ToBackend ))
     | YoureLoggedOut (List WorldInfo)
     | YourFightResult ( Fight.Info, PlayerData )
+    | YoureLoggedInSigningUp
     | YoureLoggedIn PlayerData
-    | YoureSignedUp PlayerData
+    | YoureSignedUp
     | CharCreationError NewChar.CreationError
     | YouHaveCreatedChar CPlayer PlayerData
     | AlertMessage String

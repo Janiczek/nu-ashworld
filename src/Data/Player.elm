@@ -123,6 +123,13 @@ type alias COtherPlayer =
     , losses : Int
     , healthStatus : HealthStatus
     , location : TileCoords
+    , equipment :
+        -- Maybe because the info might not be available due to player not having the Awareness perk
+        Maybe
+            -- Maybes because the player might not have the item equipped
+            { weapon : Maybe ItemKind.Kind
+            , armor : Maybe ItemKind.Kind
+            }
     }
 
 
@@ -205,14 +212,23 @@ serverToClient p =
     }
 
 
-serverToClientOther : PerceptionLevel -> SPlayer -> COtherPlayer
-serverToClientOther perceptionLevel p =
+serverToClientOther : { perceptionLevel : PerceptionLevel, hasAwarenessPerk : Bool } -> SPlayer -> COtherPlayer
+serverToClientOther { perceptionLevel, hasAwarenessPerk } p =
     { level = Xp.currentLevel p.xp
     , name = p.name
     , wins = p.wins
     , losses = p.losses
     , healthStatus = HealthStatus.check perceptionLevel p
     , location = p.location
+    , equipment =
+        if hasAwarenessPerk then
+            Just
+                { weapon = p.equippedWeapon |> Maybe.map .kind
+                , armor = p.equippedArmor |> Maybe.map .kind
+                }
+
+        else
+            Nothing
     }
 
 
@@ -228,6 +244,11 @@ clientToClientOther p =
             , max = p.maxHp
             }
     , location = p.location
+    , equipment =
+        Just
+            { weapon = p.equippedWeapon |> Maybe.map .kind
+            , armor = p.equippedArmor |> Maybe.map .kind
+            }
     }
 
 
