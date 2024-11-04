@@ -21,18 +21,19 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730653425
+    [ { date = 1730679654
       , title = "TODOs before release"
       , text =
             """
-Current:
+Hey all! The game is still in a pre-release state, so don't get attached to any characters you create! It's really close to release though, so keep an eye out for the announcement!
 
-- quest completion: add a Message to the player: you completed a quest!
+Current TODOs:
+
+- frontend: topologically sort the quests based on quest dependencies
 
 Next up: 
 
 - quests UX + test them end-to-end
-- frontend: topologically sort the quests based on quest dependencies
 - rework car quest - get fuel cell controller from Skeeter in Gecko (needs super tool kit)
 - rework car quest - get fuel cell regulator from abandoned Highwayman in Klamath
 - end of game

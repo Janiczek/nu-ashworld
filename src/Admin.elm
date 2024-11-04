@@ -182,7 +182,7 @@ toBackendMsgCodec =
 adminToBackendCodec : Codec AdminToBackend
 adminToBackendCodec =
     Codec.custom
-        (\exportJsonEncoder importJsonEncoder createNewWorldEncoder value ->
+        (\exportJsonEncoder importJsonEncoder createNewWorldEncoder changeWorldSpeedEncoder value ->
             case value of
                 ExportJson ->
                     exportJsonEncoder
@@ -192,8 +192,18 @@ adminToBackendCodec =
 
                 CreateNewWorld arg0 arg1 ->
                     createNewWorldEncoder arg0 arg1
+
+                ChangeWorldSpeed arg0 ->
+                    changeWorldSpeedEncoder arg0
         )
         |> Codec.variant0 "ExportJson" ExportJson
         |> Codec.variant1 "ImportJson" ImportJson Codec.string
         |> Codec.variant2 "CreateNewWorld" CreateNewWorld Codec.string Codec.bool
+        |> Codec.variant1 "ChangeWorldSpeed"
+            ChangeWorldSpeed
+            (Codec.object (\world fast -> { world = world, fast = fast })
+                |> Codec.field "world" .world Codec.string
+                |> Codec.field "fast" .fast Codec.bool
+                |> Codec.buildObject
+            )
         |> Codec.buildCustom

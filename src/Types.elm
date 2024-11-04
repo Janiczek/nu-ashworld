@@ -148,6 +148,7 @@ type FrontendMsg
     | ClickedGuideSection Int
     | HoveredGuideNavLink
     | AskToRefuelCar ItemKind.Kind
+    | AskToChangeWorldSpeed { world : World.Name, fast : Bool }
 
 
 type BarterMsg
@@ -203,6 +204,7 @@ type AdminToBackend
     = ExportJson
     | ImportJson String
     | CreateNewWorld String Bool
+    | ChangeWorldSpeed { world : World.Name, fast : Bool }
 
 
 type BackendMsg

@@ -406,41 +406,7 @@ update msg model =
                                                     (\nextTick world_ -> { world_ | nextVendorRestockTick = Just nextTick })
                                                     restockVendors
                                                 )
-                                            |> Cmd.andThen
-                                                (\m ->
-                                                    model.loggedInPlayers
-                                                        |> BiDict.toReverseList
-                                                        |> List.filter (\( ( wn, _ ), _ ) -> wn == worldName)
-                                                        |> List.foldl
-                                                            (\( ( wn, pn ), clientIds ) accOuter ->
-                                                                case getPlayerData wn pn m of
-                                                                    Nothing ->
-                                                                        accOuter
-
-                                                                    Just playerData_ ->
-                                                                        let
-                                                                            newHash : Int
-                                                                            newHash =
-                                                                                Lamdera.Hash.hash
-                                                                                    Types.w3_encode_PlayerData_
-                                                                                    playerData_
-                                                                        in
-                                                                        clientIds
-                                                                            |> Set.toList
-                                                                            |> List.foldl
-                                                                                (\clientId accInner ->
-                                                                                    if Lamdera.Hash.hasChanged newHash clientId model.playerDataCache then
-                                                                                        accInner
-                                                                                            |> Tuple.mapFirst (saveToPlayerDataCache clientId newHash)
-                                                                                            |> Cmd.add (Lamdera.sendToFrontend clientId (CurrentPlayer playerData_))
-
-                                                                                    else
-                                                                                        accInner
-                                                                                )
-                                                                                accOuter
-                                                            )
-                                                            ( m, Cmd.none )
-                                                )
+                                            |> Cmd.andThen (refreshPlayersOnWorld worldName)
                         in
                         ( newModel, Cmd.batch [ cmd, newCmd ] )
                     )
@@ -563,13 +529,37 @@ processGameTickForQuests worldName model =
                                                             Player.Player playerData ->
                                                                 if SeqSet.member completedQuest playerData.questsActive then
                                                                     let
+                                                                        ticksGiven =
+                                                                            World.ticksGiven completedQuest playerData.name world.questsProgress
+
+                                                                        xpReward =
+                                                                            Quest.xpPerTickGiven completedQuest * ticksGiven
+
+                                                                        enoughTicksGivenForReward =
+                                                                            World.enoughTicksGiven completedQuest playerData.name world.questsProgress
+
                                                                         ( newLastItemId_, newPlayerData ) =
                                                                             { playerData
                                                                                 | questsActive =
                                                                                     playerData.questsActive
                                                                                         |> SeqSet.remove completedQuest
                                                                             }
-                                                                                |> (if World.enoughTicksGiven completedQuest playerData.name world.questsProgress then
+                                                                                |> SPlayer.addMessage
+                                                                                    { read = False }
+                                                                                    model.time
+                                                                                    (Message.YouCompletedAQuest
+                                                                                        { quest = completedQuest
+                                                                                        , xpReward = xpReward
+                                                                                        , playerReward =
+                                                                                            if enoughTicksGivenForReward then
+                                                                                                Just (Quest.playerRewards completedQuest)
+
+                                                                                            else
+                                                                                                Nothing
+                                                                                        , globalRewards = Quest.globalRewards completedQuest
+                                                                                        }
+                                                                                    )
+                                                                                |> (if enoughTicksGivenForReward then
                                                                                         applyPlayerQuestRewards completedQuest lastItemId
 
                                                                                     else
@@ -1228,6 +1218,89 @@ updateAdmin clientId msg model =
                             , Lamdera.sendToFrontend clientId <| CurrentAdmin <| getAdminData modelAfterRestocking
                             )
                         )
+
+        ChangeWorldSpeed r ->
+            case Dict.get r.world model.worlds of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just world ->
+                    let
+                        frequency =
+                            if r.fast then
+                                Time.Second
+
+                            else
+                                Time.Hour
+
+                        newWorld : World
+                        newWorld =
+                            { world
+                                | tickFrequency = frequency
+                                , vendorRestockFrequency = frequency
+                                , nextWantedTick = Nothing
+                                , nextVendorRestockTick = Nothing
+                            }
+                    in
+                    { model | worlds = Dict.insert r.world newWorld model.worlds }
+                        |> refreshPlayersOnWorld r.world
+
+
+refreshPlayersOnWorld : World.Name -> Model -> ( Model, Cmd BackendMsg )
+refreshPlayersOnWorld worldName model =
+    playersOnWorld worldName model
+        |> List.foldl
+            (\( ( wn, pn ), clientIds ) ( accModel, accCmds ) ->
+                case getPlayerData wn pn model of
+                    Nothing ->
+                        ( accModel, accCmds )
+
+                    Just playerData_ ->
+                        let
+                            newHash : Int
+                            newHash =
+                                Lamdera.Hash.hash
+                                    Types.w3_encode_PlayerData_
+                                    playerData_
+
+                            newCmds : List (Cmd BackendMsg)
+                            newCmds =
+                                clientIds
+                                    |> Set.toList
+                                    |> List.filterMap
+                                        (\clientId ->
+                                            if Lamdera.Hash.hasChanged newHash clientId model.playerDataCache then
+                                                Just (Lamdera.sendToFrontend clientId (CurrentPlayer playerData_))
+
+                                            else
+                                                Nothing
+                                        )
+
+                            newModel : Model
+                            newModel =
+                                clientIds
+                                    |> Set.toList
+                                    |> List.filter
+                                        (\clientId ->
+                                            Lamdera.Hash.hasChanged newHash clientId model.playerDataCache
+                                        )
+                                    |> List.foldl
+                                        (\clientId m ->
+                                            saveToPlayerDataCache clientId newHash m
+                                        )
+                                        accModel
+                        in
+                        ( newModel, newCmds ++ accCmds )
+            )
+            ( model, [] )
+        |> Tuple.mapSecond Cmd.batch
+
+
+playersOnWorld : World.Name -> Model -> List ( ( World.Name, PlayerName ), Set ClientId )
+playersOnWorld worldName model =
+    model.loggedInPlayers
+        |> BiDict.toReverseList
+        |> List.filter (\( ( wn, _ ), _ ) -> wn == worldName)
 
 
 isAdmin : SessionId -> ClientId -> Model -> Bool

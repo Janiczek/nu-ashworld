@@ -650,6 +650,11 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| RefuelCar fuelKind
             )
 
+        AskToChangeWorldSpeed r ->
+            ( model
+            , Lamdera.sendToBackend <| AdminToBackend <| ChangeWorldSpeed r
+            )
+
 
 resetBarter : Model -> ( Model, Cmd FrontendMsg )
 resetBarter model =
@@ -1660,7 +1665,7 @@ locationView location =
         , TW.mod "before" <|
             "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
                 ++ borderWidth
-        , TW.mod "after" "content-[attr(data-location-name)] whitespace-pre block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute bg-black-transparent p-x-1"
+        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
         , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
         , cssVars <|
             List.fastConcat
@@ -5377,8 +5382,35 @@ adminWorldHiscoresView worldName data =
                         ]
             in
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Hiscores"
-            , H.div []
-                [ UI.ul []
+            , H.div [ HA.class "flex flex-col gap-4" ]
+                [ let
+                    isFast =
+                        world.tickFrequency == Time.Second
+
+                    isSlow =
+                        world.tickFrequency == Time.Hour
+                  in
+                  if isFast || isSlow then
+                    UI.button
+                        [ HE.onClick <|
+                            AskToChangeWorldSpeed
+                                { world = worldName
+                                , fast = isSlow -- it's slow now, we want to _make_ it fast
+                                }
+                        ]
+                        [ H.text <|
+                            "Toggle world to "
+                                ++ (if isFast then
+                                        "slow"
+
+                                    else
+                                        "fast"
+                                   )
+                        ]
+
+                  else
+                    H.nothing
+                , UI.ul []
                     (List.map viewMaxBy
                         [ ( "Most money", .caps )
                         , ( "Most items value"
