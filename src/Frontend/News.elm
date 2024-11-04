@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- perk - show max number of ranks
+- perk - show all perks, some grayed out, show the requirements?
 
 Next up: 
 
@@ -51,7 +51,6 @@ Later:
 - new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
-- perk - show all perks, some grayed out, show the requirements?
 - music in the bg (opt-in)
 
 ~janiczek

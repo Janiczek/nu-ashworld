@@ -22,7 +22,11 @@ text hoveredItem =
     case hoveredItem of
         HoveredPerk perk ->
             { title = Perk.name perk
-            , description = Perk.description perk
+            , description =
+                [ Perk.description perk
+                , "Max rank: " ++ String.fromInt (Perk.maxRank perk)
+                ]
+                    |> String.join "\n\n"
             }
 
         HoveredTrait trait ->

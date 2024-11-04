@@ -1301,7 +1301,7 @@ notFoundView url =
 Page `{URL}` not found.
 """
         |> String.replace "{URL}" (Url.toString url)
-        |> Markdown.toHtml [ HA.id "not-found-content" ]
+        |> Markdown.toHtml []
     ]
 
 
@@ -3365,10 +3365,14 @@ perkDescriptionView hoveredItem =
         { title, description } =
             HoveredItem.text hoveredItem
     in
-    H.div
-        [ HA.id "character-perk-description" ]
-        [ H.h3 [] [ H.text title ]
-        , H.text description
+    H.div [ HA.class "flex flex-col gap-4" ]
+        [ H.h3 [ HA.class "text-green-100" ] [ H.text title ]
+        , description
+            |> Markdown.Parser.parse
+            |> Result.mapError (\_ -> "")
+            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
+            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+            |> H.div [ HA.class "flex flex-col gap-4" ]
         ]
 
 
@@ -3469,7 +3473,7 @@ charHelpView maybeHoveredItem =
                             |> Result.mapError (\_ -> "")
                             |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
                             |> Result.withDefault [ H.text "Failed to parse Markdown" ]
-                            |> H.div [ HA.class "flex flex-col gap-2" ]
+                            |> H.div [ HA.class "flex flex-col gap-4" ]
                         ]
     in
     H.div
@@ -4176,7 +4180,7 @@ messagesView currentTime zone _ player =
             , HA.class "normal-case"
             ]
             [ H.text "[Remove fight messages]" ]
-        , H.table [ HA.id "messages-table" ]
+        , H.table []
             [ H.thead []
                 [ H.tr []
                     [ H.th [ HA.title "Unread" ] [ H.text "U" ]
