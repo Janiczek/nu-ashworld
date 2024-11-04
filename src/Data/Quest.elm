@@ -29,7 +29,7 @@ module Data.Quest exposing
 import Codec exposing (Codec)
 import Data.Item.Kind as ItemKind
 import Data.Map.Location as Location exposing (Location)
-import Data.Perk as Perk exposing (Perk(..))
+import Data.Perk as Perk exposing (Perk)
 import Data.Skill as Skill exposing (Skill)
 import Data.Vendor.Shop as Shop exposing (Shop)
 import SeqDict exposing (SeqDict)
@@ -52,13 +52,13 @@ type Name
     | KlamathKillRatGod
     | KlamathRescueTorr
     | KlamathSearchForSmileyTrapper
+    | KlamathGetFuelCellRegulator
     | ToxicCavesRescueSmileyTrapper
     | ToxicCavesRepairTheGenerator
     | ToxicCavesLootTheBunker
     | DenFreeVicByPayingMetzger
     | DenFreeVicByKillingOffSlaversGuild
     | DenDeliverMealToSmitty
-    | DenFindCarParts
     | DenFixTheCar
     | ModocInvestigateGhostFarm
     | ModocRemoveInfestationInFarrelsGarden
@@ -68,6 +68,7 @@ type Name
     | VaultCityGetPlowForMrSmith
     | VaultCityRescueAmandasHusband
     | GeckoOptimizePowerPlant
+    | GeckoGetFuelCellControllerFromSkeeter
     | ReddingClearWanamingoMine
     | ReddingFindExcavatorChip
     | NewRenoTrackDownPrettyBoyLloyd
@@ -130,13 +131,13 @@ all =
     , KlamathKillRatGod
     , KlamathRescueTorr
     , KlamathSearchForSmileyTrapper
+    , KlamathGetFuelCellRegulator
     , ToxicCavesRescueSmileyTrapper
     , ToxicCavesRepairTheGenerator
     , ToxicCavesLootTheBunker
     , DenFreeVicByPayingMetzger
     , DenFreeVicByKillingOffSlaversGuild
     , DenDeliverMealToSmitty
-    , DenFindCarParts
     , DenFixTheCar
     , ModocInvestigateGhostFarm
     , ModocRemoveInfestationInFarrelsGarden
@@ -146,6 +147,7 @@ all =
     , VaultCityGetPlowForMrSmith
     , VaultCityRescueAmandasHusband
     , GeckoOptimizePowerPlant
+    , GeckoGetFuelCellControllerFromSkeeter
     , ReddingClearWanamingoMine
     , ReddingFindExcavatorChip
     , NewRenoTrackDownPrettyBoyLloyd
@@ -237,6 +239,9 @@ title name =
         KlamathSearchForSmileyTrapper ->
             "Search for Smiley the Trapper"
 
+        KlamathGetFuelCellRegulator ->
+            "Get fuel cell regulator"
+
         ToxicCavesRescueSmileyTrapper ->
             "Rescue Smiley the Trapper"
 
@@ -254,9 +259,6 @@ title name =
 
         DenDeliverMealToSmitty ->
             "Deliver meal to Smitty for Mom"
-
-        DenFindCarParts ->
-            "Find replacement car parts for Smitty"
 
         DenFixTheCar ->
             "Fix the car"
@@ -284,6 +286,9 @@ title name =
 
         GeckoOptimizePowerPlant ->
             "Optimize the power plant"
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            "Get fuel cell controller from Skeeter"
 
         ReddingClearWanamingoMine ->
             "Clear the Wanamingo mine"
@@ -463,6 +468,9 @@ ticksNeeded name =
         KlamathSearchForSmileyTrapper ->
             40
 
+        KlamathGetFuelCellRegulator ->
+            200
+
         ToxicCavesRescueSmileyTrapper ->
             75
 
@@ -480,9 +488,6 @@ ticksNeeded name =
 
         DenDeliverMealToSmitty ->
             50
-
-        DenFindCarParts ->
-            300
 
         DenFixTheCar ->
             100
@@ -510,6 +515,9 @@ ticksNeeded name =
 
         GeckoOptimizePowerPlant ->
             100
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            200
 
         ReddingClearWanamingoMine ->
             200
@@ -689,6 +697,9 @@ xpPerTickGiven name =
         KlamathSearchForSmileyTrapper ->
             75
 
+        KlamathGetFuelCellRegulator ->
+            150
+
         ToxicCavesRescueSmileyTrapper ->
             150
 
@@ -706,9 +717,6 @@ xpPerTickGiven name =
 
         DenDeliverMealToSmitty ->
             100
-
-        DenFindCarParts ->
-            150
 
         DenFixTheCar ->
             200
@@ -736,6 +744,9 @@ xpPerTickGiven name =
 
         GeckoOptimizePowerPlant ->
             350
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            300
 
         ReddingClearWanamingoMine ->
             400
@@ -915,6 +926,9 @@ location name =
         KlamathSearchForSmileyTrapper ->
             Location.Klamath
 
+        KlamathGetFuelCellRegulator ->
+            Location.Klamath
+
         ToxicCavesRescueSmileyTrapper ->
             Location.ToxicCaves
 
@@ -931,9 +945,6 @@ location name =
             Location.Den
 
         DenDeliverMealToSmitty ->
-            Location.Den
-
-        DenFindCarParts ->
             Location.Den
 
         DenFixTheCar ->
@@ -961,6 +972,9 @@ location name =
             Location.VaultCity
 
         GeckoOptimizePowerPlant ->
+            Location.Gecko
+
+        GeckoGetFuelCellControllerFromSkeeter ->
             Location.Gecko
 
         ReddingClearWanamingoMine ->
@@ -1143,6 +1157,9 @@ exclusiveWith name =
         KlamathSearchForSmileyTrapper ->
             []
 
+        KlamathGetFuelCellRegulator ->
+            []
+
         ToxicCavesRescueSmileyTrapper ->
             []
 
@@ -1159,9 +1176,6 @@ exclusiveWith name =
             [ DenFreeVicByPayingMetzger ]
 
         DenDeliverMealToSmitty ->
-            []
-
-        DenFindCarParts ->
             []
 
         DenFixTheCar ->
@@ -1189,6 +1203,9 @@ exclusiveWith name =
             []
 
         GeckoOptimizePowerPlant ->
+            []
+
+        GeckoGetFuelCellControllerFromSkeeter ->
             []
 
         ReddingClearWanamingoMine ->
@@ -1388,6 +1405,9 @@ questRequirements name =
         KlamathSearchForSmileyTrapper ->
             []
 
+        KlamathGetFuelCellRegulator ->
+            [ DenDeliverMealToSmitty ]
+
         ToxicCavesRescueSmileyTrapper ->
             [ KlamathSearchForSmileyTrapper ]
 
@@ -1406,11 +1426,10 @@ questRequirements name =
         DenDeliverMealToSmitty ->
             []
 
-        DenFindCarParts ->
-            []
-
         DenFixTheCar ->
-            [ DenFindCarParts ]
+            [ KlamathGetFuelCellRegulator
+            , GeckoGetFuelCellControllerFromSkeeter
+            ]
 
         ModocInvestigateGhostFarm ->
             []
@@ -1435,6 +1454,9 @@ questRequirements name =
 
         GeckoOptimizePowerPlant ->
             []
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            [ DenDeliverMealToSmitty ]
 
         ReddingClearWanamingoMine ->
             []
@@ -1750,6 +1772,9 @@ globalRewards name =
         KlamathSearchForSmileyTrapper ->
             []
 
+        KlamathGetFuelCellRegulator ->
+            []
+
         ToxicCavesRescueSmileyTrapper ->
             []
 
@@ -1766,9 +1791,6 @@ globalRewards name =
             [ VendorAvailable Shop.KlamathVic ]
 
         DenDeliverMealToSmitty ->
-            []
-
-        DenFindCarParts ->
             []
 
         DenFixTheCar ->
@@ -1808,6 +1830,9 @@ globalRewards name =
 
         GeckoOptimizePowerPlant ->
             [ NewItemsInStock { who = Shop.GeckoSurvivalGearPercy, what = ItemKind.SmallEnergyCell, amount = 30 } ]
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            []
 
         ReddingClearWanamingoMine ->
             [ Discount { who = Shop.ReddingAscorti, percentage = 15 } ]
@@ -2068,9 +2093,14 @@ playerRewards name =
                 [ ItemReward { what = ItemKind.Stimpak, amount = 5 } ]
                 5
 
+        KlamathGetFuelCellRegulator ->
+            mk
+                [ ItemReward { what = ItemKind.FuelCellRegulator, amount = 1 } ]
+                5
+
         ToxicCavesRescueSmileyTrapper ->
             mk
-                [ PerkReward GeckoSkinning
+                [ PerkReward Perk.GeckoSkinning
                 , CapsReward 700
                 ]
                 5
@@ -2106,11 +2136,6 @@ playerRewards name =
             mk
                 [ ItemReward { what = ItemKind.Tool, amount = 1 } ]
                 10
-
-        DenFindCarParts ->
-            mk
-                [ ItemReward { what = ItemKind.SmallEnergyCell, amount = 60 } ]
-                15
 
         DenFixTheCar ->
             mk
@@ -2163,6 +2188,11 @@ playerRewards name =
                 , CapsReward 8000
                 ]
                 10
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            mk
+                [ ItemReward { what = ItemKind.FuelCellController, amount = 1 } ]
+                5
 
         ReddingClearWanamingoMine ->
             mk
@@ -2543,6 +2573,11 @@ playerRequirements name =
         KlamathSearchForSmileyTrapper ->
             [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 20 } ]
 
+        KlamathGetFuelCellRegulator ->
+            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 30 }
+            , SkillRequirement { skill = Specific Skill.Repair, percentage = 40 }
+            ]
+
         ToxicCavesRescueSmileyTrapper ->
             [ SkillRequirement { skill = Specific Skill.Sneak, percentage = 40 } ]
 
@@ -2562,9 +2597,6 @@ playerRequirements name =
 
         DenDeliverMealToSmitty ->
             []
-
-        DenFindCarParts ->
-            [ SkillRequirement { skill = Specific Skill.Outdoorsman, percentage = 50 } ]
 
         DenFixTheCar ->
             [ SkillRequirement { skill = Specific Skill.Repair, percentage = 70 } ]
@@ -2592,6 +2624,9 @@ playerRequirements name =
 
         GeckoOptimizePowerPlant ->
             [ SkillRequirement { skill = Specific Skill.Science, percentage = 100 } ]
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            [ ItemRequirementOneOf [ ItemKind.SuperToolKit ] ]
 
         ReddingClearWanamingoMine ->
             [ SkillRequirement { skill = Combat, percentage = 150 } ]
@@ -2753,7 +2788,7 @@ playerRequirements name =
 codec : Codec Name
 codec =
     Codec.custom
-        (\arroyoKillEvilPlantsEncoder arroyoFixWellForFeargusEncoder arroyoRescueNagorsDogEncoder klamathRefuelStillEncoder klamathGuardTheBrahminEncoder klamathRustleTheBrahminEncoder klamathKillRatGodEncoder klamathRescueTorrEncoder klamathSearchForSmileyTrapperEncoder toxicCavesRescueSmileyTrapperEncoder toxicCavesRepairTheGeneratorEncoder toxicCavesLootTheBunkerEncoder denFreeVicByPayingMetzgerEncoder denFreeVicByKillingOffSlaversGuildEncoder denDeliverMealToSmittyEncoder denFindCarPartsEncoder denFixTheCarEncoder modocInvestigateGhostFarmEncoder modocRemoveInfestationInFarrelsGardenEncoder modocMediateBetweenSlagsAndJoEncoder modocFindGoldWatchForCorneliusEncoder modocFindGoldWatchForFarrelEncoder vaultCityGetPlowForMrSmithEncoder vaultCityRescueAmandasHusbandEncoder geckoOptimizePowerPlantEncoder reddingClearWanamingoMineEncoder reddingFindExcavatorChipEncoder newRenoTrackDownPrettyBoyLloydEncoder newRenoHelpGuardSecretTransactionEncoder newRenoCollectTributeFromCorsicanBrothersEncoder newRenoWinBoxingTournamentEncoder newRenoAcquireElectronicLockpickEncoder nCRGuardBrahminCaravanEncoder nCRTestMutagenicSerumEncoder nCRRetrieveComputerPartsEncoder nCRFreeSlavesEncoder nCRInvestigateBrahminRaidsEncoder v15RescueChrissyEncoder v15CompleteDealWithNCREncoder v13FixVaultComputerEncoder v13FindTheGeckEncoder brokenHillsFixMineAirPurifierEncoder brokenHillsBlowUpMineAirPurifierEncoder brokenHillsFindMissingPeopleEncoder brokenHillsBeatFrancisAtArmwrestlingEncoder raidersFindEvidenceOfBishopTamperingEncoder raidersKillEverybodyEncoder sierraArmyDepotFindAbnormalBrainForSkynetEncoder sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder sierraArmyDepotFindHumanBrainForSkynetEncoder sierraArmyDepotFindCyberneticBrainForSkynetEncoder sierraArmyDepotAssembleBodyForSkynetEncoder militaryBaseExcavateTheEntranceEncoder militaryBaseKillMelchiorEncoder sanFranciscoFindFuelForTankerEncoder sanFranciscoFindLocationOfFobForTankerEncoder sanFranciscoFindNavCompPartForTankerEncoder sanFranciscoFindVertibirdPlansForHubologistsEncoder sanFranciscoFindVertibirdPlansForShiEncoder sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder sanFranciscoFindBadgersGirlfriendInsideShipEncoder sanFranciscoDefeatLoPanInRingForDragonEncoder sanFranciscoDefeatDragonInRingForLoPanEncoder sanFranciscoEmbarkForEnclaveEncoder navarroFixK9Encoder navarroRetrieveFobForTankerEncoder enclavePersuadeControlCompanySquadToDesertEncoder enclaveKillThePresidentStealthilyEncoder enclaveKillThePresidentTheUsualWayEncoder enclaveFindTheGeckEncoder enclaveRigTurretsToTargetFrankHorriganEncoder enclaveForceScientistToInitiateSelfDestructEncoder enclaveKillFrankHorriganEncoder enclaveReturnToMainlandEncoder value ->
+        (\arroyoKillEvilPlantsEncoder arroyoFixWellForFeargusEncoder arroyoRescueNagorsDogEncoder klamathRefuelStillEncoder klamathGuardTheBrahminEncoder klamathRustleTheBrahminEncoder klamathKillRatGodEncoder klamathRescueTorrEncoder klamathSearchForSmileyTrapperEncoder klamathGetFuelCellRegulatorEncoder toxicCavesRescueSmileyTrapperEncoder toxicCavesRepairTheGeneratorEncoder toxicCavesLootTheBunkerEncoder denFreeVicByPayingMetzgerEncoder denFreeVicByKillingOffSlaversGuildEncoder denDeliverMealToSmittyEncoder denFixTheCarEncoder modocInvestigateGhostFarmEncoder modocRemoveInfestationInFarrelsGardenEncoder modocMediateBetweenSlagsAndJoEncoder modocFindGoldWatchForCorneliusEncoder modocFindGoldWatchForFarrelEncoder vaultCityGetPlowForMrSmithEncoder vaultCityRescueAmandasHusbandEncoder geckoOptimizePowerPlantEncoder geckoGetFuelCellControllerFromSkeeterEncoder reddingClearWanamingoMineEncoder reddingFindExcavatorChipEncoder newRenoTrackDownPrettyBoyLloydEncoder newRenoHelpGuardSecretTransactionEncoder newRenoCollectTributeFromCorsicanBrothersEncoder newRenoWinBoxingTournamentEncoder newRenoAcquireElectronicLockpickEncoder nCRGuardBrahminCaravanEncoder nCRTestMutagenicSerumEncoder nCRRetrieveComputerPartsEncoder nCRFreeSlavesEncoder nCRInvestigateBrahminRaidsEncoder v15RescueChrissyEncoder v15CompleteDealWithNCREncoder v13FixVaultComputerEncoder v13FindTheGeckEncoder brokenHillsFixMineAirPurifierEncoder brokenHillsBlowUpMineAirPurifierEncoder brokenHillsFindMissingPeopleEncoder brokenHillsBeatFrancisAtArmwrestlingEncoder raidersFindEvidenceOfBishopTamperingEncoder raidersKillEverybodyEncoder sierraArmyDepotFindAbnormalBrainForSkynetEncoder sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder sierraArmyDepotFindHumanBrainForSkynetEncoder sierraArmyDepotFindCyberneticBrainForSkynetEncoder sierraArmyDepotAssembleBodyForSkynetEncoder militaryBaseExcavateTheEntranceEncoder militaryBaseKillMelchiorEncoder sanFranciscoFindFuelForTankerEncoder sanFranciscoFindLocationOfFobForTankerEncoder sanFranciscoFindNavCompPartForTankerEncoder sanFranciscoFindVertibirdPlansForHubologistsEncoder sanFranciscoFindVertibirdPlansForShiEncoder sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder sanFranciscoFindBadgersGirlfriendInsideShipEncoder sanFranciscoDefeatLoPanInRingForDragonEncoder sanFranciscoDefeatDragonInRingForLoPanEncoder sanFranciscoEmbarkForEnclaveEncoder navarroFixK9Encoder navarroRetrieveFobForTankerEncoder enclavePersuadeControlCompanySquadToDesertEncoder enclaveKillThePresidentStealthilyEncoder enclaveKillThePresidentTheUsualWayEncoder enclaveFindTheGeckEncoder enclaveRigTurretsToTargetFrankHorriganEncoder enclaveForceScientistToInitiateSelfDestructEncoder enclaveKillFrankHorriganEncoder enclaveReturnToMainlandEncoder value ->
             case value of
                 ArroyoKillEvilPlants ->
                     arroyoKillEvilPlantsEncoder
@@ -2782,6 +2817,9 @@ codec =
                 KlamathSearchForSmileyTrapper ->
                     klamathSearchForSmileyTrapperEncoder
 
+                KlamathGetFuelCellRegulator ->
+                    klamathGetFuelCellRegulatorEncoder
+
                 ToxicCavesRescueSmileyTrapper ->
                     toxicCavesRescueSmileyTrapperEncoder
 
@@ -2799,9 +2837,6 @@ codec =
 
                 DenDeliverMealToSmitty ->
                     denDeliverMealToSmittyEncoder
-
-                DenFindCarParts ->
-                    denFindCarPartsEncoder
 
                 DenFixTheCar ->
                     denFixTheCarEncoder
@@ -2829,6 +2864,9 @@ codec =
 
                 GeckoOptimizePowerPlant ->
                     geckoOptimizePowerPlantEncoder
+
+                GeckoGetFuelCellControllerFromSkeeter ->
+                    geckoGetFuelCellControllerFromSkeeterEncoder
 
                 ReddingClearWanamingoMine ->
                     reddingClearWanamingoMineEncoder
@@ -2986,13 +3024,13 @@ codec =
         |> Codec.variant0 "KlamathKillRatGod" KlamathKillRatGod
         |> Codec.variant0 "KlamathRescueTorr" KlamathRescueTorr
         |> Codec.variant0 "KlamathSearchForSmileyTrapper" KlamathSearchForSmileyTrapper
+        |> Codec.variant0 "KlamathGetFuelCellRegulator" KlamathGetFuelCellRegulator
         |> Codec.variant0 "ToxicCavesRescueSmileyTrapper" ToxicCavesRescueSmileyTrapper
         |> Codec.variant0 "ToxicCavesRepairTheGenerator" ToxicCavesRepairTheGenerator
         |> Codec.variant0 "ToxicCavesLootTheBunker" ToxicCavesLootTheBunker
         |> Codec.variant0 "DenFreeVicByPayingMetzger" DenFreeVicByPayingMetzger
         |> Codec.variant0 "DenFreeVicByKillingOffSlaversGuild" DenFreeVicByKillingOffSlaversGuild
         |> Codec.variant0 "DenDeliverMealToSmitty" DenDeliverMealToSmitty
-        |> Codec.variant0 "DenFindCarParts" DenFindCarParts
         |> Codec.variant0 "DenFixTheCar" DenFixTheCar
         |> Codec.variant0 "ModocInvestigateGhostFarm" ModocInvestigateGhostFarm
         |> Codec.variant0 "ModocRemoveInfestationInFarrelsGarden" ModocRemoveInfestationInFarrelsGarden
@@ -3002,6 +3040,7 @@ codec =
         |> Codec.variant0 "VaultCityGetPlowForMrSmith" VaultCityGetPlowForMrSmith
         |> Codec.variant0 "VaultCityRescueAmandasHusband" VaultCityRescueAmandasHusband
         |> Codec.variant0 "GeckoOptimizePowerPlant" GeckoOptimizePowerPlant
+        |> Codec.variant0 "GeckoGetFuelCellControllerFromSkeeter" GeckoGetFuelCellControllerFromSkeeter
         |> Codec.variant0 "ReddingClearWanamingoMine" ReddingClearWanamingoMine
         |> Codec.variant0 "ReddingFindExcavatorChip" ReddingFindExcavatorChip
         |> Codec.variant0 "NewRenoTrackDownPrettyBoyLloyd" NewRenoTrackDownPrettyBoyLloyd
@@ -3036,9 +3075,7 @@ codec =
         |> Codec.variant0 "SanFranciscoFindNavCompPartForTanker" SanFranciscoFindNavCompPartForTanker
         |> Codec.variant0 "SanFranciscoFindVertibirdPlansForHubologists" SanFranciscoFindVertibirdPlansForHubologists
         |> Codec.variant0 "SanFranciscoFindVertibirdPlansForShi" SanFranciscoFindVertibirdPlansForShi
-        |> Codec.variant0
-            "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
-            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
+        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel" SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
         |> Codec.variant0 "SanFranciscoFindBadgersGirlfriendInsideShip" SanFranciscoFindBadgersGirlfriendInsideShip
         |> Codec.variant0 "SanFranciscoDefeatLoPanInRingForDragon" SanFranciscoDefeatLoPanInRingForDragon
         |> Codec.variant0 "SanFranciscoDefeatDragonInRingForLoPan" SanFranciscoDefeatDragonInRingForLoPan

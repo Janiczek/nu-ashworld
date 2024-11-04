@@ -32,8 +32,7 @@ announcement!
 
 Current TODOs:
 
-- rework car quest - get fuel cell controller from Skeeter in Gecko (needs super tool kit)
-- rework car quest - get fuel cell regulator from abandoned Highwayman in Klamath
+- show other players on the map (purely cosmetic)
 
 Next up: 
 
@@ -42,7 +41,6 @@ Next up:
 
 Later: 
 
-- show other players on the map (purely cosmetic)
 - the first message to a player to list some goals, link to Guide, etc.
 - location descriptions
 - quest descriptions

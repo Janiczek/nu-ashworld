@@ -277,6 +277,9 @@ type Kind
       -- MISC --
       ----------
     | Tool
+    | SuperToolKit
+    | FuelCellRegulator
+    | FuelCellController
     | LockPicks
     | ElectronicLockpick
     | AbnormalBrain
@@ -365,6 +368,9 @@ all =
     , MicrofusionCell
     , Ec2mm
     , Tool
+    , SuperToolKit
+    , FuelCellRegulator
+    , FuelCellController
     , LockPicks
     , ElectronicLockpick
     , AbnormalBrain
@@ -429,7 +435,7 @@ isHealing kind =
 codec : Codec Kind
 codec =
     Codec.custom
-        (\beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder value ->
+        (\beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder superToolKitEncoder fuelCellRegulatorEncoder fuelCellControllerEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder value ->
             case value of
                 Beer ->
                     beerEncoder
@@ -665,6 +671,15 @@ codec =
                 Tool ->
                     toolEncoder
 
+                SuperToolKit ->
+                    superToolKitEncoder
+
+                FuelCellRegulator ->
+                    fuelCellRegulatorEncoder
+
+                FuelCellController ->
+                    fuelCellControllerEncoder
+
                 LockPicks ->
                     lockPicksEncoder
 
@@ -779,6 +794,9 @@ codec =
         |> Codec.variant0 "MicrofusionCell" MicrofusionCell
         |> Codec.variant0 "Ec2mm" Ec2mm
         |> Codec.variant0 "Tool" Tool
+        |> Codec.variant0 "SuperToolKit" SuperToolKit
+        |> Codec.variant0 "FuelCellRegulator" FuelCellRegulator
+        |> Codec.variant0 "FuelCellController" FuelCellController
         |> Codec.variant0 "LockPicks" LockPicks
         |> Codec.variant0 "ElectronicLockpick" ElectronicLockpick
         |> Codec.variant0 "AbnormalBrain" AbnormalBrain
@@ -989,6 +1007,15 @@ usageEffects kind =
             []
 
         Tool ->
+            []
+
+        SuperToolKit ->
+            []
+
+        FuelCellRegulator ->
+            []
+
+        FuelCellController ->
             []
 
         GECK ->
@@ -1269,6 +1296,15 @@ baseValue kind =
 
         Tool ->
             200
+
+        SuperToolKit ->
+            1000
+
+        FuelCellRegulator ->
+            5000
+
+        FuelCellController ->
+            5000
 
         GECK ->
             30000
@@ -1571,6 +1607,9 @@ ammoDamageResistanceModifier kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -1870,6 +1909,9 @@ ammoDamageModifier kind =
 
         Tool ->
             ( 1, 1 )
+        SuperToolKit -> (1,1)
+        FuelCellRegulator -> (1,1)
+        FuelCellController -> (1,1)
 
         LockPicks ->
             ( 1, 1 )
@@ -2103,6 +2145,9 @@ ammoArmorClassModifier kind =
         Tool ->
             0
 
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
         LockPicks ->
             0
 
@@ -2370,6 +2415,9 @@ armorClass kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -2697,6 +2745,9 @@ armorDamageThresholdNormal kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -2974,6 +3025,9 @@ armorDamageThresholdExplosion kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -3251,6 +3305,9 @@ armorDamageThresholdElectrical kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -3528,6 +3585,9 @@ armorDamageThresholdEMP kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -3805,6 +3865,9 @@ armorDamageThresholdLaser kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -4082,6 +4145,9 @@ armorDamageThresholdFire kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -4359,6 +4425,9 @@ armorDamageThresholdPlasma kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -4636,6 +4705,9 @@ armorDamageResistanceNormal kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -4913,6 +4985,9 @@ armorDamageResistanceExplosion kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -5190,6 +5265,9 @@ armorDamageResistanceElectrical kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -5467,6 +5545,9 @@ armorDamageResistanceEMP kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -5744,6 +5825,9 @@ armorDamageResistanceLaser kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -6021,6 +6105,9 @@ armorDamageResistanceFire kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -6298,6 +6385,9 @@ armorDamageResistancePlasma kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -6618,6 +6708,9 @@ usableAmmoForWeapon kind =
 
         Tool ->
             []
+        SuperToolKit -> []
+        FuelCellRegulator -> []
+        FuelCellController -> []
 
         LockPicks ->
             []
@@ -6920,6 +7013,9 @@ weaponDamageType kind =
 
         Tool ->
             Nothing
+        SuperToolKit -> Nothing
+        FuelCellRegulator -> Nothing
+        FuelCellController -> Nothing
 
         LockPicks ->
             Nothing
@@ -7146,6 +7242,9 @@ weaponStrengthRequirement kind =
 
         Tool ->
             1
+        SuperToolKit -> 1
+        FuelCellRegulator -> 1
+        FuelCellController -> 1
 
         LockPicks ->
             1
@@ -7426,6 +7525,9 @@ isLongRangeWeapon kind =
 
         Tool ->
             False
+        SuperToolKit -> False
+        FuelCellRegulator -> False
+        FuelCellController -> False
 
         LockPicks ->
             False
@@ -7731,6 +7833,9 @@ isWeaponArmorPenetrating kind =
 
         Tool ->
             False
+        SuperToolKit -> False
+        FuelCellRegulator -> False
+        FuelCellController -> False
 
         LockPicks ->
             False
@@ -7989,6 +8094,9 @@ burstRange kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         GECK ->
             0
@@ -8314,6 +8422,9 @@ isAccurateWeapon kind =
 
         Tool ->
             False
+        SuperToolKit -> False
+        FuelCellRegulator -> False
+        FuelCellController -> False
 
         LockPicks ->
             False
@@ -8571,6 +8682,9 @@ aimedRange kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         GECK ->
             0
@@ -8848,6 +8962,9 @@ unaimedRange kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         GECK ->
             0
@@ -9140,6 +9257,9 @@ name kind =
 
         Tool ->
             "Tool"
+        SuperToolKit ->"Super Tool Kit"
+        FuelCellRegulator -> "Fuel Cell Regulator"
+        FuelCellController -> "Fuel Cell Controller"
 
         GECK ->
             "GECK"
@@ -9420,6 +9540,9 @@ types kind =
 
         Tool ->
             [ Type.Misc ]
+        SuperToolKit -> [Type.Misc]
+        FuelCellRegulator -> [Type.Misc]
+        FuelCellController -> [Type.Misc]
 
         GECK ->
             [ Type.Misc ]
@@ -9755,6 +9878,10 @@ weaponDamage kind =
         Tool ->
             mk 0 0
 
+        SuperToolKit -> mk 0 0
+        FuelCellRegulator -> mk 0 0
+        FuelCellController -> mk 0 0
+
         LockPicks ->
             mk 0 0
 
@@ -10028,6 +10155,9 @@ shotsPerBurst kind =
 
         Tool ->
             0
+        SuperToolKit -> 0
+        FuelCellRegulator -> 0
+        FuelCellController -> 0
 
         LockPicks ->
             0
@@ -10303,6 +10433,9 @@ isTwoHandedWeapon kind =
 
         Tool ->
             False
+        SuperToolKit -> False
+        FuelCellRegulator -> False
+        FuelCellController -> False
 
         LockPicks ->
             False
@@ -10577,6 +10710,9 @@ carBatteryChargePromileAmount kind =
 
         Tool ->
             Nothing
+        SuperToolKit -> Nothing
+        FuelCellRegulator -> Nothing
+        FuelCellController -> Nothing
 
         LockPicks ->
             Nothing

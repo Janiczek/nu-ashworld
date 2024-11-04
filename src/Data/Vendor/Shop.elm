@@ -428,8 +428,8 @@ initialSpec shop =
                 SeqDict.fromList
                     [ -- item 1 PlasmaPistol
                       -- item 1 MetalArmorMk2
-                      -- item 1 SuperToolKit
-                      item 1 LaserPistol
+                      item 1 SuperToolKit
+                    , item 1 LaserPistol
                     , item 2 Pistol14mm
                     , item 1 CombatShotgun
                     , item 1 HkP90c
@@ -563,10 +563,10 @@ initialSpec shop =
                       -- item 1 Pistol10mm
                       -- item 2 Shovel
                       -- item 2 Rope
-                      -- item 1 SuperToolKit
                       -- item 3 BoxOfNoodles
                       -- item 1 Booze
-                      item 3 Stimpak
+                      item 1 SuperToolKit
+                    , item 3 Stimpak
                     , item 2 SuperStimpak
                     , item 10 FragGrenade
                     , item 3 Knife
@@ -802,7 +802,6 @@ initialSpec shop =
                       -- item 3 DoctorsBag
                       -- item 2 FieldMedicFirstAidKit
                       -- item 5 Shovel
-                      -- item 7 SuperToolKit
                       -- item 20 JimmyHat
                       -- item 5 BrocFlower
                       -- item 7 XanderRoot
@@ -815,7 +814,8 @@ initialSpec shop =
                       -- item 6 ExpandedLockpickSet
                       -- item 1 ElectronicLockpickMk2
                       -- item 7 BoxOfNoodles
-                      item 2 RocketLauncher
+                      item 7 SuperToolKit
+                    , item 2 RocketLauncher
                     , item 3 LaserPistol
                     , item 1 Pistol223
                     , item 2 HkP90c
@@ -949,7 +949,6 @@ initialSpec shop =
                       -- item 2 ElectronicLockpickMk2
                       -- item 6 ExpandedLockpickSet
                       -- item 4 Lockpick
-                      -- item 7 SuperToolKit
                       -- item 3 MultiTool
                       -- item 2 GeigerCounter
                       -- item 5 TechnicalManual
@@ -959,7 +958,8 @@ initialSpec shop =
                       -- item 5 Shovel
                       -- item 10 TvDinner
                       -- item 7 BoxOfNoodles
-                      item 7 SuperStimpak
+                      item 7 SuperToolKit
+                    , item 7 SuperStimpak
                     , item 20 Stimpak
                     , item 4 ScoutHandbook
                     , item 2 BigBookOfScience

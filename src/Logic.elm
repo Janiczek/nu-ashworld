@@ -2045,6 +2045,15 @@ attackStyleAndApCost kind =
         ItemKind.Tool ->
             []
 
+        ItemKind.SuperToolKit ->
+            []
+
+        ItemKind.FuelCellRegulator ->
+            []
+
+        ItemKind.FuelCellController ->
+            []
+
         ItemKind.LockPicks ->
             []
 
