@@ -29,8 +29,10 @@
 
 .link.active .link-label,
 .link:hover,
-.link:hover .link-label {
-    color: var(--yellow);
+.link:hover .link-label,
+.link:hover .link-left-bracket,
+.link:hover .link-right-bracket {
+    color: var(--yellow) !important;
 }
 
 .link.dimmed .link-left-bracket,

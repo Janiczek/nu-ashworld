@@ -32,7 +32,6 @@ announcement!
 
 Current TODOs:
 
-- Messages link in menu is dimmed even when hovered
 - HtH Evade perk to only work if hands are empty
 
 Next up: 
