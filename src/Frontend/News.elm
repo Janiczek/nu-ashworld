@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730679654
+    [ { date = 1730730862
       , title = "TODOs before release"
       , text =
             """
@@ -32,8 +32,8 @@ announcement!
 
 Current TODOs:
 
-- show other players' weapons / armor with Awareness perk (fight)
 - Messages link in menu is dimmed even when hovered
+- HtH Evade perk to only work if hands are empty
 
 Next up: 
 
@@ -49,7 +49,6 @@ Later:
 - item descriptions
 - weapons - show strength requirement somewhere (item description)
 - tooltips around edge of screen - floating-ui.js?
-- HtH Evade perk to only work if hands are empty
 - new char / char screen: show Sequence and other stats in derived stats
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
