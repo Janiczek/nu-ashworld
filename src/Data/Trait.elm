@@ -8,6 +8,7 @@ module Data.Trait exposing
     )
 
 import Codec exposing (Codec)
+import List.ExtraExtra as List
 import SeqSet exposing (SeqSet)
 
 
@@ -30,18 +31,17 @@ type Trait
     | SmallFrame
 
 
+{-| Ordered to resemble Fallout 2 char creation screen
+-}
 all : List Trait
 all =
-    [ Bruiser
-    , FastShot
-    , Finesse
-    , Gifted
-    , HeavyHanded
-    , Kamikaze
-    , OneHander
-    , Skilled
-    , SmallFrame
+    [ [ Bruiser, Skilled ]
+    , [ SmallFrame, Gifted ]
+    , [ OneHander, Finesse ]
+    , [ HeavyHanded, FastShot ]
+    , [ Kamikaze ]
     ]
+        |> List.fastConcat
 
 
 name : Trait -> String

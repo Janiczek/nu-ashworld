@@ -9,7 +9,7 @@ import Data.Auth as Auth exposing (Auth, Plaintext)
 import Data.Barter as Barter
 import Data.Fight as Fight
 import Data.Fight.AttackStyle as AttackStyle
-import Data.Fight.DamageType exposing (DamageType)
+import Data.Fight.DamageType as DamageType exposing (DamageType)
 import Data.Fight.OpponentType as OpponentType exposing (OpponentType)
 import Data.Fight.View
 import Data.FightStrategy as FightStrategy exposing (FightStrategy)
@@ -3002,7 +3002,7 @@ newCharHelpView maybeHoveredItem =
                     in
                     H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
                         [ H.h4
-                            [ HA.class "text-yellow" ]
+                            [ HA.class "text-yellow font-bold" ]
                             [ H.text title ]
                         , description
                             |> Markdown.Parser.parse
@@ -3039,6 +3039,7 @@ hoveredItemRenderer =
                     , HA.attributeMaybe HA.title title
                     ]
                     children
+        , strong = \children -> H.span [ HA.class "text-yellow" ] children
         , unorderedList =
             \list ->
                 list
@@ -3100,16 +3101,16 @@ newCharDerivedStatsView newChar =
             [ H.text "Derived stats" ]
         , UI.ul [] <|
             List.map itemView
-                [ ( "Hitpoints"
+                [ ( "Max HP"
                   , String.fromInt <|
                         Logic.hitpoints
                             { level = 1
                             , special = finalSpecial
                             , lifegiverPerkRanks = 0
                             }
-                  , Nothing
+                  , Just HoveredMaxHP
                   )
-                , ( "Heal when using tick"
+                , ( "Heal using tick"
                   , (String.fromInt <|
                         Logic.tickHealPercentage
                             { special = finalSpecial
@@ -3118,7 +3119,7 @@ newCharDerivedStatsView newChar =
                             }
                     )
                         ++ "% of max HP"
-                  , Nothing
+                  , Just HoveredHealUsingTick
                   )
                 , ( "Heal over time"
                   , (String.fromInt <|
@@ -3129,7 +3130,7 @@ newCharDerivedStatsView newChar =
                             }
                     )
                         ++ " HP every tick"
-                  , Nothing
+                  , Just HoveredHealOverTime
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
@@ -3142,7 +3143,39 @@ newCharDerivedStatsView newChar =
                             , actionBoyPerkRanks = 0
                             , special = finalSpecial
                             }
-                  , Nothing
+                  , Just HoveredActionPoints
+                  )
+                , ( "Armor Class"
+                  , String.fromInt <|
+                        Logic.naturalArmorClass
+                            { special = finalSpecial
+                            , hasKamikazeTrait = SeqSet.member Trait.Kamikaze newChar.traits
+                            , hasDodgerPerk = False
+                            }
+                  , Just HoveredArmorClass
+                  )
+                , ( "Sequence"
+                  , String.fromInt <|
+                        Logic.sequence
+                            { perception = Special.get Special.Perception finalSpecial
+                            , hasKamikazeTrait = SeqSet.member Trait.Kamikaze newChar.traits
+                            , earlierSequencePerkRank = 0
+                            }
+                  , Just HoveredSequence
+                  )
+                , ( "Critical chance"
+                  , String.fromInt
+                        (Logic.baseCriticalChance
+                            { special = finalSpecial
+                            , traits = newChar.traits
+                            , perks = SeqDict.empty
+                            , attackStyle = AttackStyle.UnarmedUnaimed
+                            , chanceToHit = 0
+                            , hitOrMissRoll = 100
+                            }
+                        )
+                        ++ "%"
+                  , Just HoveredCriticalChance
                   )
                 ]
         ]
@@ -3502,7 +3535,7 @@ charHelpView maybeHoveredItem =
                     in
                     H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
                         [ H.h4
-                            [ HA.class "text-yellow" ]
+                            [ HA.class "text-yellow font-bold" ]
                             [ H.text title ]
                         , description
                             |> Markdown.Parser.parse
@@ -3572,9 +3605,9 @@ charDerivedStatsView player =
                             , special = player.special
                             , lifegiverPerkRanks = Perk.rank Perk.Lifegiver player.perks
                             }
-                  , Nothing
+                  , Just HoveredMaxHP
                   )
-                , ( "Heal when using tick"
+                , ( "Heal using tick"
                   , (String.fromInt <|
                         Logic.tickHealPercentage
                             { special = player.special
@@ -3583,7 +3616,7 @@ charDerivedStatsView player =
                             }
                     )
                         ++ "% of max HP"
-                  , Nothing
+                  , Just HoveredHealUsingTick
                   )
                 , ( "Heal over time"
                   , (String.fromInt <|
@@ -3594,7 +3627,7 @@ charDerivedStatsView player =
                             }
                     )
                         ++ " HP every tick"
-                  , Nothing
+                  , Just HoveredHealOverTime
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
@@ -3607,7 +3640,72 @@ charDerivedStatsView player =
                             , actionBoyPerkRanks = Perk.rank Perk.ActionBoy player.perks
                             , special = player.special
                             }
-                  , Nothing
+                  , Just HoveredActionPoints
+                  )
+                , ( "Armor Class"
+                  , String.fromInt <|
+                        Logic.naturalArmorClass
+                            { special = player.special
+                            , hasKamikazeTrait = SeqSet.member Trait.Kamikaze player.traits
+                            , hasDodgerPerk = Perk.rank Perk.Dodger player.perks > 0
+                            }
+                  , Just HoveredArmorClass
+                  )
+                , ( "Sequence"
+                  , String.fromInt <|
+                        Logic.sequence
+                            { perception = Special.get Special.Perception player.special
+                            , hasKamikazeTrait = SeqSet.member Trait.Kamikaze player.traits
+                            , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
+                            }
+                  , Just HoveredSequence
+                  )
+                , ( "Critical chance"
+                  , String.fromInt
+                        (Logic.baseCriticalChance
+                            { special = player.special
+                            , traits = player.traits
+                            , perks =
+                                player.perks
+                                    |> SeqDict.remove Perk.Slayer
+                                    |> SeqDict.remove Perk.Sniper
+                            , attackStyle = AttackStyle.UnarmedUnaimed
+                            , chanceToHit = 0
+                            , hitOrMissRoll = 100
+                            }
+                        )
+                        ++ "%"
+                  , Just HoveredCriticalChance
+                  )
+                , ( "Damage Threshold"
+                  , String.fromInt
+                        (Logic.damageThreshold
+                            { damageType = DamageType.NormalDamage
+                            , opponentType =
+                                OpponentType.Player
+                                    { name = player.name
+                                    , xp = player.xp
+                                    }
+                            , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                            }
+                        )
+                  , Just HoveredDamageThreshold
+                  )
+                , ( "Damage Resistance"
+                  , String.fromInt
+                        (Logic.damageResistance
+                            { damageType = DamageType.NormalDamage
+                            , opponentType =
+                                OpponentType.Player
+                                    { name = player.name
+                                    , xp = player.xp
+                                    }
+                            , equippedArmor = player.equippedArmor |> Maybe.map .kind
+                            , toughnessPerkRanks = Perk.rank Perk.Toughness player.perks
+                            }
+                        )
+                        ++ "%"
+                  , Just HoveredDamageResistance
                   )
                 ]
         ]
@@ -3646,7 +3744,7 @@ charSpecialView player =
         [ H.h3
             [ HA.class "text-green-300" ]
             [ H.text "SPECIAL" ]
-        , H.div [ HA.class "grid grid-cols-[15ch_3ch]" ]
+        , H.div [ HA.class "grid grid-cols-[15ch_3ch] ml-[1ch]" ]
             (List.map specialItemView Special.all)
         ]
 
@@ -4151,7 +4249,7 @@ inventoryView _ player =
                     ]
             , [ H.h3
                     [ HA.class "text-green-300" ]
-                    [ H.text "Defence stats" ]
+                    [ H.text "Defence stats (with the equipped armor)" ]
               , UI.ul []
                     [ H.li []
                         [ H.text "Armor Class: "
@@ -4174,7 +4272,7 @@ inventoryView _ player =
                     ]
               , H.h3
                     [ HA.class "text-green-300" ]
-                    [ H.text "Attack stats" ]
+                    [ H.text "Attack stats (with the equipped weapon)" ]
               , UI.ul []
                     [ H.li []
                         [ H.text "Min Damage: "

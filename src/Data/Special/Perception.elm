@@ -1,9 +1,9 @@
 module Data.Special.Perception exposing
     ( PerceptionLevel(..)
     , atLeast
+    , hoveredItemDescription
     , label
     , level
-    , tooltip
     )
 
 
@@ -80,12 +80,22 @@ label level_ =
             "Atrocious"
 
 
-tooltip : PerceptionLevel -> String
-tooltip level_ =
+hoveredItemDescription : PerceptionLevel -> String
+hoveredItemDescription level_ =
     [ healthPerceptionTooltip level_
     , mapMovementTooltip level_
+    , affectedBy
     ]
-        |> String.join " "
+        |> String.join "\n\n"
+
+
+affectedBy : String
+affectedBy =
+    """Influenced by:
+
+- **Perception**
+- your **Awareness** perk
+"""
 
 
 healthPerceptionTooltip : PerceptionLevel -> String
@@ -114,23 +124,23 @@ mapMovementTooltip level_ =
     let
         terrainAwareOptimalMovement : String
         terrainAwareOptimalMovement =
-            """When planning longer route on the map you always go in the most
-efficient line, taking into consideration the terrain like mountains etc.
+            """When planning longer route on the map you always go in the **most
+efficient line**, taking into consideration the terrain like mountains etc.
 
-You also see the AP cost of your route and are able to see which areas are more
-dangerous than others."""
+You also **see the AP cost** of your route and are able to see which areas are more
+**dangerous** than others."""
 
         okayMovement : String
         okayMovement =
             """When planning longer route on the map you always go in a mostly
-efficient straight line but ignore terrain like mountains etc.
+efficient **straight line** but ignore terrain like mountains etc.
 
 You also see the AP cost of your route."""
 
         inefficientMovement : String
         inefficientMovement =
-            """When planning longer route on the map you always go in a (not
-very efficient) straight line but ignore terrain like mountains etc."""
+            """When planning longer route on the map you always go in a **(not
+very efficient) straight line** and ignore terrain like mountains etc."""
     in
     case level_ of
         Perfect ->

@@ -98,6 +98,12 @@ requirements perk =
             , RSpecial Special.Perception 6
             ]
 
+        Sharpshooter ->
+            [ RLevel 6
+            , RSpecial Special.Perception 7
+            , RSpecial Special.Intelligence 6
+            ]
+
         Tag ->
             [ RLevel 12
             ]

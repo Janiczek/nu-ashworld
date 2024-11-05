@@ -61,7 +61,7 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Item.Type as ItemType
-import Data.Perk as Perk exposing (Perk)
+import Data.Perk as Perk exposing (Perk(..))
 import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
@@ -389,6 +389,7 @@ distancePenalty :
     { distanceHexes : Int
     , equippedWeapon : Maybe ItemKind.Kind
     , perception : Int
+    , hasSharpshooterPerk : Bool
     }
     -> Int
 distancePenalty r =
@@ -402,11 +403,22 @@ distancePenalty r =
 
         Just equippedWeapon ->
             if ItemKind.isLongRangeWeapon equippedWeapon then
-                if r.perception >= 5 && r.distanceHexes < ((r.perception - 4) * 2) then
-                    r.perception * 8
+                let
+                    sharpshooterBonus =
+                        if r.hasSharpshooterPerk then
+                            2
+
+                        else
+                            0
+
+                    effectivePerception =
+                        r.perception + sharpshooterBonus
+                in
+                if effectivePerception >= 5 && r.distanceHexes < ((effectivePerception - 4) * 2) then
+                    effectivePerception * 8
 
                 else
-                    (r.perception - 2) * 16 - r.distanceHexes * 4
+                    (effectivePerception - 2) * 16 - r.distanceHexes * 4
 
             else
                 default ()
@@ -620,6 +632,7 @@ rangedChanceToHit r =
                                         { distanceHexes = r.distanceHexes
                                         , equippedWeapon = r.equippedWeapon
                                         , perception = r.attackerSpecial.perception
+                                        , hasSharpshooterPerk = Perk.rank Perk.Sharpshooter r.attackerPerks > 0
                                         }
 
                                 crippledArmPenalty : Int

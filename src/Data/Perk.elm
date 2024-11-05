@@ -9,8 +9,6 @@ module Data.Perk exposing
     )
 
 import Codec exposing (Codec)
-import Data.Skill as Skill exposing (Skill)
-import Data.Special exposing (Special)
 import SeqDict exposing (SeqDict)
 
 
@@ -69,7 +67,7 @@ type Perk
       -- TODO Mysterious Stranger -- would need combat to allow more than 2 opponents
       -- TODO Pyromaniac -- would need fire ranged combat
       -- TODO Scrounger -- would need ammo drops from combat
-      -- TODO Sharpshooter -- would need ranged combat
+    | Sharpshooter
     | Speaker
       -- lvl 12
     | ActionBoy
@@ -145,6 +143,7 @@ all =
     , Salesman
     , Sniper
     , Slayer
+    , Sharpshooter
     , Speaker
     , Survivalist
     , SwiftLearner
@@ -168,7 +167,7 @@ name perk =
             "Educated"
 
         BonusHthDamage ->
-            "Bonus HtH Damage"
+            "Bonus Hand-to-Hand Damage"
 
         MasterTrader ->
             "Master Trader"
@@ -211,6 +210,9 @@ name perk =
 
         GainLuck ->
             "Gain Luck"
+
+        Sharpshooter ->
+            "Sharpshooter"
 
         Sniper ->
             "Sniper"
@@ -264,7 +266,7 @@ name perk =
             "Action Boy"
 
         HthEvade ->
-            "HtH Evade"
+            "Hand-to-Hand Evade"
 
         Lifegiver ->
             "Lifegiver"
@@ -282,7 +284,7 @@ name perk =
             "Mr. Fixit"
 
         BonusHthAttacks ->
-            "Bonus HtH Attacks"
+            "Bonus Hand-to-Hand Attacks"
 
         BonusRateOfFire ->
             "Bonus Rate of Fire"
@@ -383,6 +385,9 @@ maxRank perk =
         Speaker ->
             1
 
+        Sharpshooter ->
+            2
+
         GainStrength ->
             1
 
@@ -450,8 +455,11 @@ maxRank perk =
 codec : Codec Perk
 codec =
     Codec.custom
-        (\bonusHthDamageEncoder awarenessEncoder cautiousNatureEncoder comprehensionEncoder earlierSequenceEncoder fasterHealingEncoder hereAndNowEncoder nightVisionEncoder survivalistEncoder swiftLearnerEncoder thiefEncoder toughnessEncoder adrenalineRushEncoder bonusRangedDamageEncoder educatedEncoder fortuneFinderEncoder gamblerEncoder moreCriticalsEncoder negotiatorEncoder pathfinderEncoder quickRecoveryEncoder rangerEncoder salesmanEncoder betterCriticalsEncoder dodgerEncoder speakerEncoder actionBoyEncoder gainStrengthEncoder gainPerceptionEncoder gainEnduranceEncoder gainCharismaEncoder gainIntelligenceEncoder gainAgilityEncoder gainLuckEncoder hthEvadeEncoder lifegiverEncoder livingAnatomyEncoder masterThiefEncoder masterTraderEncoder medicEncoder mrFixitEncoder tagEncoder bonusHthAttacksEncoder bonusRateOfFireEncoder sniperEncoder slayerEncoder geckoSkinningEncoder value ->
+        (\sharpshooterEncoder bonusHthDamageEncoder awarenessEncoder cautiousNatureEncoder comprehensionEncoder earlierSequenceEncoder fasterHealingEncoder hereAndNowEncoder nightVisionEncoder survivalistEncoder swiftLearnerEncoder thiefEncoder toughnessEncoder adrenalineRushEncoder bonusRangedDamageEncoder educatedEncoder fortuneFinderEncoder gamblerEncoder moreCriticalsEncoder negotiatorEncoder pathfinderEncoder quickRecoveryEncoder rangerEncoder salesmanEncoder betterCriticalsEncoder dodgerEncoder speakerEncoder actionBoyEncoder gainStrengthEncoder gainPerceptionEncoder gainEnduranceEncoder gainCharismaEncoder gainIntelligenceEncoder gainAgilityEncoder gainLuckEncoder hthEvadeEncoder lifegiverEncoder livingAnatomyEncoder masterThiefEncoder masterTraderEncoder medicEncoder mrFixitEncoder tagEncoder bonusHthAttacksEncoder bonusRateOfFireEncoder sniperEncoder slayerEncoder geckoSkinningEncoder value ->
             case value of
+                Sharpshooter ->
+                    sharpshooterEncoder
+
                 BonusHthDamage ->
                     bonusHthDamageEncoder
 
@@ -593,6 +601,7 @@ codec =
                 GeckoSkinning ->
                     geckoSkinningEncoder
         )
+        |> Codec.variant0 "Sharpshooter" Sharpshooter
         |> Codec.variant0 "BonusHthDamage" BonusHthDamage
         |> Codec.variant0 "Awareness" Awareness
         |> Codec.variant0 "CautiousNature" CautiousNature
@@ -654,6 +663,9 @@ description perk =
     case perk of
         ActionBoy ->
             "Each level of Action Boy gives you an additional AP to spend every combat turn. You can use these generic APs on any task."
+
+        Sharpshooter ->
+            "The talent of hitting things at longer distances. You get a +2 bonus, for each level of this Perk, to Perception for the purposes of determining range modifiers. It's easier than ever to kill at long range!"
 
         AdrenalineRush ->
             "With this Perk, you gain +1 to your Strength when you drop below 1/2 of your max hit points."

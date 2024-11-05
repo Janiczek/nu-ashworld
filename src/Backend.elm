@@ -2288,6 +2288,9 @@ oneTimePerkEffects currentTime =
                 Perk.Awareness ->
                     Nothing
 
+                Perk.Sharpshooter ->
+                    Nothing
+
                 Perk.CautiousNature ->
                     Nothing
 

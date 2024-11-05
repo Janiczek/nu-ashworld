@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- new char / char screen: show Sequence and other stats in derived stats
+- the first message to a player to list some goals, link to Guide, etc.
 
 Next up: 
 
@@ -41,7 +41,6 @@ Next up:
 
 Later: 
 
-- the first message to a player to list some goals, link to Guide, etc.
 - location descriptions
 - quest descriptions
 - skill descriptions
@@ -51,6 +50,9 @@ Later:
 - gecko skinning - is it doing anything?
 - skynet and k9 - doing anything?
 - music in the bg (opt-in)
+
+- Steam webview wrapper
+- guest mode - no login required, Ladder fights, quests and marketplace disabled, but you can wander (PvM fights) and use shops
 
 ~janiczek
 """
