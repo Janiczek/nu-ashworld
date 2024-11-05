@@ -1,5 +1,7 @@
 module Data.Enemy exposing
-    ( aimedShotName
+    ( Requirement
+    , aimedShotName
+    , areApplicable
     , criticalSpec
     , dropGenerator
     , dropSpec
@@ -15,6 +17,7 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Map.BigChunk as BigChunk exposing (BigChunk(..))
 import Data.Map.SmallChunk exposing (SmallChunk)
+import Data.Perk as Perk exposing (Perk)
 import Data.Special exposing (Type(..))
 import Maybe.Extra as Maybe
 import NonemptyList exposing (NonemptyList)
@@ -22,6 +25,7 @@ import Random exposing (Generator)
 import Random.Bool as Random
 import Random.Extra as Random
 import Random.FloatExtra as Random exposing (NormalIntSpec)
+import SeqDict exposing (SeqDict)
 
 
 
@@ -2700,7 +2704,12 @@ type alias DropSpec =
 type alias ItemDropSpec =
     { uniqueKey : Item.UniqueKey
     , count : NormalIntSpec
+    , requirements : List Requirement
     }
+
+
+type Requirement
+    = RPerk Perk
 
 
 dropSpec : EnemyType -> DropSpec
@@ -2717,8 +2726,22 @@ dropSpec type_ =
             ( probability
             , { uniqueKey = { kind = kind }
               , count = count
+              , requirements = []
               }
             )
+
+        itemWithReqs : List Requirement -> Float -> ItemKind.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
+        itemWithReqs reqs probability kind count =
+            ( probability
+            , { uniqueKey = { kind = kind }
+              , count = count
+              , requirements = reqs
+              }
+            )
+
+        geckoSkinning : List Requirement
+        geckoSkinning =
+            [ RPerk Perk.GeckoSkinning ]
     in
     case type_ of
         Brahmin ->
@@ -2810,6 +2833,7 @@ dropSpec type_ =
             , items =
                 [ item 0.2 ItemKind.Fruit { average = 1, maxDeviation = 2 }
                 , item 0.1 ItemKind.HealingPowder { average = 1, maxDeviation = 1 }
+                , itemWithReqs geckoSkinning 1 ItemKind.SilverGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2819,6 +2843,7 @@ dropSpec type_ =
                 [ item 0.25 ItemKind.Fruit { average = 2, maxDeviation = 2 }
                 , item 0.15 ItemKind.HealingPowder { average = 2, maxDeviation = 1 }
                 , item 0.1 ItemKind.Knife { average = 1, maxDeviation = 0 }
+                , itemWithReqs geckoSkinning 1 ItemKind.SilverGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2831,6 +2856,7 @@ dropSpec type_ =
                 , item 0.1 ItemKind.Ap10mm { average = 3, maxDeviation = 3 }
                 , item 0.1 ItemKind.Jhp10mm { average = 3, maxDeviation = 3 }
                 , item 0.1 ItemKind.ShotgunShell { average = 3, maxDeviation = 3 }
+                , itemWithReqs geckoSkinning 1 ItemKind.GoldenGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2843,6 +2869,7 @@ dropSpec type_ =
                 , item 0.1 ItemKind.Ap10mm { average = 5, maxDeviation = 3 }
                 , item 0.1 ItemKind.Jhp10mm { average = 5, maxDeviation = 3 }
                 , item 0.1 ItemKind.ShotgunShell { average = 5, maxDeviation = 3 }
+                , itemWithReqs geckoSkinning 1 ItemKind.GoldenGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2854,6 +2881,7 @@ dropSpec type_ =
                 , item 0.1 ItemKind.MicrofusionCell { average = 4, maxDeviation = 3 }
                 , item 0.1 ItemKind.ShotgunShell { average = 4, maxDeviation = 3 }
                 , item 0.1 ItemKind.Fmj223 { average = 4, maxDeviation = 3 }
+                , itemWithReqs geckoSkinning 1 ItemKind.FireGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2865,6 +2893,7 @@ dropSpec type_ =
                 , item 0.1 ItemKind.MicrofusionCell { average = 5, maxDeviation = 3 }
                 , item 0.1 ItemKind.ShotgunShell { average = 5, maxDeviation = 3 }
                 , item 0.1 ItemKind.Fmj223 { average = 5, maxDeviation = 3 }
+                , itemWithReqs geckoSkinning 1 ItemKind.FireGeckoPelt { average = 1, maxDeviation = 0 }
                 ]
             }
 
@@ -2872,7 +2901,13 @@ dropSpec type_ =
 dropGenerator :
     Int
     -> DropSpec
-    -> Generator ( { caps : Int, items : List Item }, Int )
+    ->
+        Generator
+            ( { caps : Int
+              , items : List ( Item, List Requirement )
+              }
+            , Int
+            )
 dropGenerator lastItemId dropSpec_ =
     Random.map2
         (\caps generatedItems ->
@@ -2880,7 +2915,7 @@ dropGenerator lastItemId dropSpec_ =
                 ( items, newLastId ) =
                     generatedItems
                         |> List.foldl
-                            (\{ uniqueKey, count } ( accItems, accItemId ) ->
+                            (\{ uniqueKey, count, requirements } ( accItems, accItemId ) ->
                                 let
                                     ( item, incrementedId ) =
                                         Item.create
@@ -2889,7 +2924,7 @@ dropGenerator lastItemId dropSpec_ =
                                             , count = count
                                             }
                                 in
-                                ( item :: accItems, incrementedId )
+                                ( ( item, requirements ) :: accItems, incrementedId )
                             )
                             ( [], lastItemId )
             in
@@ -2913,7 +2948,16 @@ capsGenerator { caps } =
         |> Random.andThen identity
 
 
-dropItemsGenerator : DropSpec -> Generator (List { uniqueKey : Item.UniqueKey, count : Int })
+dropItemsGenerator :
+    DropSpec
+    ->
+        Generator
+            (List
+                { uniqueKey : Item.UniqueKey
+                , count : Int
+                , requirements : List Requirement
+                }
+            )
 dropItemsGenerator { items } =
     items
         |> List.map
@@ -2933,6 +2977,7 @@ dropItemsGenerator { items } =
                                                 Just
                                                     { uniqueKey = itemSpec.uniqueKey
                                                     , count = count
+                                                    , requirements = itemSpec.requirements
                                                     }
                                         )
 
@@ -2942,3 +2987,15 @@ dropItemsGenerator { items } =
             )
         |> Random.sequence
         |> Random.map Maybe.values
+
+
+areApplicable : { perks : SeqDict Perk Int } -> List Requirement -> Bool
+areApplicable r reqs =
+    List.all (isApplicable r) reqs
+
+
+isApplicable : { perks : SeqDict Perk Int } -> Requirement -> Bool
+isApplicable r req =
+    case req of
+        RPerk perk ->
+            Perk.rank perk r.perks > 0

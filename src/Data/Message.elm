@@ -18,10 +18,17 @@ import Data.Player.PlayerName exposing (PlayerName)
 import Data.Quest as Quest
 import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
+import Frontend.Links as Links
 import Html as H exposing (Attribute, Html)
-import Markdown
+import Html.Attributes as HA
+import Html.Attributes.Extra as HA
+import Markdown.Block
+import Markdown.Parser
+import Markdown.Renderer exposing (defaultHtmlRenderer)
+import Tailwind as TW
 import Time exposing (Posix)
 import Time.ExtraExtra as Time
+import UI
 
 
 type alias Id =
@@ -227,11 +234,33 @@ content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
     case message.content of
         Welcome ->
-            Markdown.toHtml attributes
-                "Welcome to NuAshworld! You know, war... war never changes."
+
+                """Welcome to NuAshworld! You know, war... war never changes.
+                
+In lieu of a tutorial, here are some goals to get you started:
+
+- Open your `[CHARACTER]` sheet and use your **skill points** to improve your skills.
+- Pick a weak player on the `[LADDER]` and **fight them**.
+- `[HEAL]` yourself, using a tick.
+- Enter a `[TOWN]`, check out some of the **quests** and visit a **shop**.
+- If you've bought a weapon, open your `[INVENTORY]` and try equipping it.
+- Go out of the town on the `[MAP]` and then `[WANDER]` to find some monster to kill.
+- Open the `[SETTINGS]`, check out the **fight strategies** and try to write your own.
+- Join the [Discord]({DISCORD}) and say hi!
+
+
+Check out the [Guide](/guide) for more information!
+
+Most of all, have fun roaming the wasteland!
+
+~janiczek
+"""
+            |> String.replace "{DISCORD}" (Links.discord)
+            |> renderMarkdown attributes
+
 
         YouAdvancedLevel r ->
-            Markdown.toHtml attributes <|
+            renderMarkdown attributes <|
                 """Congratulations, you advanced a level! 
 
 Your current level is """
@@ -278,7 +307,17 @@ Your current level is """
             ]
                 |> List.filterMap identity
                 |> String.join "\n\n"
-                |> Markdown.toHtml attributes
+                |> renderMarkdown attributes
+
+
+renderMarkdown : List (Attribute msg) -> String -> Html msg
+renderMarkdown attrs markdown =
+    markdown
+        |> Markdown.Parser.parse
+        |> Result.mapError (\_ -> "")
+        |> Result.andThen (Markdown.Renderer.render markdownRenderer)
+        |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+        |> H.div (HA.class "flex flex-col gap-4" :: attrs)
 
 
 fullDate : Time.Zone -> Message -> String
@@ -298,3 +337,36 @@ fullDate zone message =
         ]
         zone
         message.date
+
+
+markdownRenderer : Markdown.Renderer.Renderer (Html a)
+markdownRenderer =
+    { defaultHtmlRenderer
+        | paragraph =
+            \children ->
+                H.span [] children
+        , link =
+            \{ title, destination } children ->
+                H.a
+                    [ HA.class "text-yellow relative no-underline"
+                    , TW.mod "after" "absolute content-[''] bg-yellow-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
+                    , TW.mod "hover:after" "bottom-0 h-full"
+                    , HA.href destination
+                    , HA.attributeMaybe HA.title title
+                    ]
+                    children
+        , strong = \children -> H.span [ HA.class "text-yellow" ] children
+        , unorderedList =
+            \list ->
+                list
+                    |> List.map
+                        (\(Markdown.Block.ListItem _ children) ->
+                            H.li [] children
+                        )
+                    |> UI.ul [ HA.class "flex flex-col gap-4" ]
+        , codeSpan =
+            \text ->
+                H.span
+                    [ HA.class "text-yellow font-bold" ]
+                    [ H.text text ]
+    }

@@ -2132,6 +2132,15 @@ attackStyleAndApCost kind =
         ItemKind.TankerFob ->
             []
 
+        ItemKind.SilverGeckoPelt ->
+            []
+
+        ItemKind.GoldenGeckoPelt ->
+            []
+
+        ItemKind.FireGeckoPelt ->
+            []
+
 
 unaimedAttackStyle : ItemKind.Kind -> AttackStyle
 unaimedAttackStyle kind =

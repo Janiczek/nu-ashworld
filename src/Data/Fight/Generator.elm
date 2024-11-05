@@ -28,6 +28,7 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
+import Data.Perk.Requirement exposing (requirements)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)
@@ -699,7 +700,16 @@ generator r =
                                                 }
                                         , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.target.perks
                                         }
-                                , itemsGained = ongoing.attacker.drops
+                                , itemsGained =
+                                    ongoing.attacker.drops
+                                        |> List.filterMap
+                                            (\( item, requirements ) ->
+                                                if Enemy.areApplicable { perks = ongoing.target.perks } requirements then
+                                                    Just item
+
+                                                else
+                                                    Nothing
+                                            )
                                 }
 
                         else
@@ -730,7 +740,16 @@ generator r =
                                                     }
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
-                                    , itemsGained = ongoing.target.drops
+                                    , itemsGained =
+                                        ongoing.target.drops
+                                            |> List.filterMap
+                                                (\( item, requirements ) ->
+                                                    if Enemy.areApplicable { perks = ongoing.attacker.perks } requirements then
+                                                        Just item
+
+                                                    else
+                                                        Nothing
+                                                )
                                     }
 
                             OpponentType.Npc enemyType ->
@@ -741,7 +760,16 @@ generator r =
                                             { baseXpGained = EnemyType.xpReward enemyType
                                             , swiftLearnerPerkRanks = Perk.rank Perk.SwiftLearner ongoing.attacker.perks
                                             }
-                                    , itemsGained = ongoing.target.drops
+                                    , itemsGained =
+                                        ongoing.target.drops
+                                            |> List.filterMap
+                                                (\( item, requirements ) ->
+                                                    if Enemy.areApplicable { perks = ongoing.attacker.perks } requirements then
+                                                        Just item
+
+                                                    else
+                                                        Nothing
+                                                )
                                     }
 
                     else

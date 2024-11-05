@@ -1767,9 +1767,9 @@ otherMapMarkersView otherPlayers you =
 otherMapMarkerView : TileCoords -> Html FrontendMsg
 otherMapMarkerView ( x, y ) =
     H.img
-        [ HA.class "absolute left-0 top-0 z-[2] opacity-60"
+        [ HA.class "absolute left-0 top-0 z-[2] opacity-50"
         , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
-        , HA.class "translate-y-[calc(var(--map-cell-size)*(0.5+var(--player-coord-y))-50%)]"
+        , HA.class "translate-y-[calc(var(--map-cell-size)*(0.54+var(--player-coord-y))-50%)]"
         , cssVars
             [ ( "--player-coord-x", String.fromInt x )
             , ( "--player-coord-y", String.fromInt y )

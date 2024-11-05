@@ -361,7 +361,7 @@ fromNewChar currentTime auth newChar =
                     , hasGiftedTrait = Trait.isSelected Trait.Gifted newChar.traits
                     }
             , taggedSkills = newChar.taggedSkills
-            , availableSkillPoints = 0
+            , availableSkillPoints = 20 -- the Welcome message tells players to try using these, so this shouldn't be 0
             , availablePerks = 0
             , equippedArmor = Nothing
             , equippedWeapon = Nothing

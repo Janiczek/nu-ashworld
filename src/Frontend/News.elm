@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730752535
+    [ { date = 1730837345
       , title = "TODOs before release"
       , text =
             """
@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- the first message to a player to list some goals, link to Guide, etc.
+- skynet and k9 - doing anything?
 
 Next up: 
 
@@ -47,8 +47,6 @@ Later:
 - item descriptions
 - weapons - show strength requirement somewhere (item description)
 - tooltips around edge of screen - floating-ui.js?
-- gecko skinning - is it doing anything?
-- skynet and k9 - doing anything?
 - music in the bg (opt-in)
 
 - Steam webview wrapper

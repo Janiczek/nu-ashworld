@@ -292,6 +292,9 @@ type Kind
     | K9
     | MeatJerky
     | TankerFob
+    | SilverGeckoPelt
+    | GoldenGeckoPelt
+    | FireGeckoPelt
 
 
 all : List Kind
@@ -397,6 +400,9 @@ all =
     -- HolyHandGrenade
     , HnNeedlerCartridge
     , HnApNeedlerCartridge
+    , SilverGeckoPelt
+    , GoldenGeckoPelt
+    , FireGeckoPelt
     ]
 
 
@@ -435,7 +441,7 @@ isHealing kind =
 codec : Codec Kind
 codec =
     Codec.custom
-        (\beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder superToolKitEncoder fuelCellRegulatorEncoder fuelCellControllerEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder value ->
+        (\silverGeckoPeltEncoder goldenGeckoPeltEncoder fireGeckoPeltEncoder beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder superToolKitEncoder fuelCellRegulatorEncoder fuelCellControllerEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder value ->
             case value of
                 Beer ->
                     beerEncoder
@@ -715,6 +721,15 @@ codec =
 
                 TankerFob ->
                     tankerFobEncoder
+
+                SilverGeckoPelt ->
+                    silverGeckoPeltEncoder
+
+                GoldenGeckoPelt ->
+                    goldenGeckoPeltEncoder
+
+                FireGeckoPelt ->
+                    fireGeckoPeltEncoder
         )
         |> Codec.variant0 "Beer" Beer
         |> Codec.variant0 "Fruit" Fruit
@@ -809,6 +824,9 @@ codec =
         |> Codec.variant0 "K9" K9
         |> Codec.variant0 "MeatJerky" MeatJerky
         |> Codec.variant0 "TankerFob" TankerFob
+        |> Codec.variant0 "SilverGeckoPelt" SilverGeckoPelt
+        |> Codec.variant0 "GoldenGeckoPelt" GoldenGeckoPelt
+        |> Codec.variant0 "FireGeckoPelt" FireGeckoPelt
         |> Codec.buildCustom
 
 
@@ -881,6 +899,15 @@ usageEffects kind =
             []
 
         LeatherArmor ->
+            []
+
+        SilverGeckoPelt ->
+            []
+
+        GoldenGeckoPelt ->
+            []
+
+        FireGeckoPelt ->
             []
 
         MetalArmor ->
@@ -1417,6 +1444,15 @@ baseValue kind =
         TankerFob ->
             5000
 
+        SilverGeckoPelt ->
+            150
+
+        GoldenGeckoPelt ->
+            750
+
+        FireGeckoPelt ->
+            3500
+
 
 {-| This can be both positive and negative, so you need to ADD it in calculations, not SUBTRACT.
 -}
@@ -1705,6 +1741,15 @@ ammoDamageResistanceModifier kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 ammoDamageModifier : Kind -> ( Float, Float )
 ammoDamageModifier kind =
@@ -1990,6 +2035,15 @@ ammoDamageModifier kind =
             ( 2, 1 )
 
         TankerFob ->
+            ( 0, 0 )
+
+        SilverGeckoPelt ->
+            ( 0, 0 )
+
+        GoldenGeckoPelt ->
+            ( 0, 0 )
+
+        FireGeckoPelt ->
             ( 0, 0 )
 
 
@@ -2280,6 +2334,15 @@ ammoArmorClassModifier kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorClass : Kind -> Int
 armorClass kind =
@@ -2564,6 +2627,15 @@ armorClass kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -2902,6 +2974,15 @@ armorDamageThresholdNormal kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageThresholdExplosion : Kind -> Int
 armorDamageThresholdExplosion kind =
@@ -3186,6 +3267,15 @@ armorDamageThresholdExplosion kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -3474,6 +3564,15 @@ armorDamageThresholdElectrical kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageThresholdEMP : Kind -> Int
 armorDamageThresholdEMP kind =
@@ -3758,6 +3857,15 @@ armorDamageThresholdEMP kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -4046,6 +4154,15 @@ armorDamageThresholdLaser kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageThresholdFire : Kind -> Int
 armorDamageThresholdFire kind =
@@ -4330,6 +4447,15 @@ armorDamageThresholdFire kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -4618,6 +4744,15 @@ armorDamageThresholdPlasma kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageResistanceNormal : Kind -> Int
 armorDamageResistanceNormal kind =
@@ -4902,6 +5037,15 @@ armorDamageResistanceNormal kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -5190,6 +5334,15 @@ armorDamageResistanceExplosion kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageResistanceElectrical : Kind -> Int
 armorDamageResistanceElectrical kind =
@@ -5474,6 +5627,15 @@ armorDamageResistanceElectrical kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -5762,6 +5924,15 @@ armorDamageResistanceEMP kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageResistanceLaser : Kind -> Int
 armorDamageResistanceLaser kind =
@@ -6046,6 +6217,15 @@ armorDamageResistanceLaser kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -6334,6 +6514,15 @@ armorDamageResistanceFire kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 armorDamageResistancePlasma : Kind -> Int
 armorDamageResistancePlasma kind =
@@ -6618,6 +6807,15 @@ armorDamageResistancePlasma kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -6914,6 +7112,15 @@ usableAmmoForWeapon kind =
         TankerFob ->
             []
 
+        SilverGeckoPelt ->
+            []
+
+        GoldenGeckoPelt ->
+            []
+
+        FireGeckoPelt ->
+            []
+
 
 weaponDamageType : Kind -> Maybe DamageType
 weaponDamageType kind =
@@ -7200,6 +7407,15 @@ weaponDamageType kind =
         TankerFob ->
             Nothing
 
+        SilverGeckoPelt ->
+            Nothing
+
+        GoldenGeckoPelt ->
+            Nothing
+
+        FireGeckoPelt ->
+            Nothing
+
 
 weaponStrengthRequirement : Kind -> Int
 weaponStrengthRequirement kind =
@@ -7484,6 +7700,15 @@ weaponStrengthRequirement kind =
             1
 
         TankerFob ->
+            1
+
+        SilverGeckoPelt ->
+            1
+
+        GoldenGeckoPelt ->
+            1
+
+        FireGeckoPelt ->
             1
 
 
@@ -7775,6 +8000,15 @@ isLongRangeWeapon kind =
         TankerFob ->
             False
 
+        SilverGeckoPelt ->
+            False
+
+        GoldenGeckoPelt ->
+            False
+
+        FireGeckoPelt ->
+            False
+
 
 {-| In other words, does the Weapon Penetrate perk apply?
 -}
@@ -8064,6 +8298,15 @@ isWeaponArmorPenetrating kind =
         TankerFob ->
             False
 
+        SilverGeckoPelt ->
+            False
+
+        GoldenGeckoPelt ->
+            False
+
+        FireGeckoPelt ->
+            False
+
 
 burstRange : Kind -> Int
 burstRange kind =
@@ -8348,6 +8591,15 @@ burstRange kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -8664,6 +8916,15 @@ isAccurateWeapon kind =
         TankerFob ->
             False
 
+        SilverGeckoPelt ->
+            False
+
+        GoldenGeckoPelt ->
+            False
+
+        FireGeckoPelt ->
+            False
+
 
 aimedRange : Kind -> Int
 aimedRange kind =
@@ -8950,6 +9211,15 @@ aimedRange kind =
         TankerFob ->
             0
 
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
+            0
+
 
 unaimedRange : Kind -> Int
 unaimedRange kind =
@@ -9234,6 +9504,15 @@ unaimedRange kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -9537,6 +9816,15 @@ name kind =
         TankerFob ->
             "Tanker Fob"
 
+        SilverGeckoPelt ->
+            "Silver Gecko Pelt"
+
+        GoldenGeckoPelt ->
+            "Golden Gecko Pelt"
+
+        FireGeckoPelt ->
+            "Fire Gecko Pelt"
+
 
 {-| Why the List: some weapons can be used in melee and be thrown, eg. Rock.
 Logic.neededSkill needs to take this + the chosen AttackStyle into account.
@@ -9824,6 +10112,15 @@ types kind =
             [ Type.Ammo ]
 
         TankerFob ->
+            [ Type.Misc ]
+
+        SilverGeckoPelt ->
+            [ Type.Misc ]
+
+        GoldenGeckoPelt ->
+            [ Type.Misc ]
+
+        FireGeckoPelt ->
             [ Type.Misc ]
 
 
@@ -10124,6 +10421,15 @@ weaponDamage kind =
         TankerFob ->
             mk 0 0
 
+        SilverGeckoPelt ->
+            mk 0 0
+
+        GoldenGeckoPelt ->
+            mk 0 0
+
+        FireGeckoPelt ->
+            mk 0 0
+
 
 shotsPerBurst : Kind -> Int
 shotsPerBurst kind =
@@ -10405,6 +10711,15 @@ shotsPerBurst kind =
             0
 
         TankerFob ->
+            0
+
+        SilverGeckoPelt ->
+            0
+
+        GoldenGeckoPelt ->
+            0
+
+        FireGeckoPelt ->
             0
 
 
@@ -10691,6 +11006,15 @@ isTwoHandedWeapon kind =
         TankerFob ->
             False
 
+        SilverGeckoPelt ->
+            False
+
+        GoldenGeckoPelt ->
+            False
+
+        FireGeckoPelt ->
+            False
+
 
 carBatteryChargePromileAmount : Kind -> Maybe Int
 carBatteryChargePromileAmount kind =
@@ -10972,4 +11296,13 @@ carBatteryChargePromileAmount kind =
             Nothing
 
         TankerFob ->
+            Nothing
+
+        SilverGeckoPelt ->
+            Nothing
+
+        GoldenGeckoPelt ->
+            Nothing
+
+        FireGeckoPelt ->
             Nothing
