@@ -3157,7 +3157,7 @@ newCharDerivedStatsView newChar =
                 , ( "Sequence"
                   , String.fromInt <|
                         Logic.sequence
-                            { perception = Special.get Special.Perception finalSpecial
+                            { perception = finalSpecial.perception
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze newChar.traits
                             , earlierSequencePerkRank = 0
                             }
@@ -3176,6 +3176,24 @@ newCharDerivedStatsView newChar =
                         )
                         ++ "%"
                   , Just HoveredCriticalChance
+                  )
+                , ( "Perk rate"
+                  , String.fromInt
+                        (Logic.perkRate
+                            { hasSkilledTrait = SeqSet.member Trait.Skilled newChar.traits }
+                        )
+                  , Just HoveredPerkRate
+                  )
+                , ( "Skill rate"
+                  , String.fromInt
+                        (Logic.skillPointsPerLevel
+                            { hasGiftedTrait = SeqSet.member Trait.Gifted newChar.traits
+                            , hasSkilledTrait = SeqSet.member Trait.Skilled newChar.traits
+                            , educatedPerkRanks = 0
+                            , intelligence = finalSpecial.intelligence
+                            }
+                        )
+                  , Just HoveredSkillRate
                   )
                 ]
         ]
@@ -3654,7 +3672,7 @@ charDerivedStatsView player =
                 , ( "Sequence"
                   , String.fromInt <|
                         Logic.sequence
-                            { perception = Special.get Special.Perception player.special
+                            { perception = player.special.perception
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze player.traits
                             , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
                             }
@@ -3676,6 +3694,24 @@ charDerivedStatsView player =
                         )
                         ++ "%"
                   , Just HoveredCriticalChance
+                  )
+                , ( "Perk rate"
+                  , String.fromInt
+                        (Logic.perkRate
+                            { hasSkilledTrait = SeqSet.member Trait.Skilled player.traits }
+                        )
+                  , Just HoveredPerkRate
+                  )
+                , ( "Skill rate"
+                  , String.fromInt
+                        (Logic.skillPointsPerLevel
+                            { hasGiftedTrait = SeqSet.member Trait.Gifted player.traits
+                            , hasSkilledTrait = SeqSet.member Trait.Skilled player.traits
+                            , educatedPerkRanks = Perk.rank Perk.Educated player.perks
+                            , intelligence = player.special.intelligence
+                            }
+                        )
+                  , Just HoveredSkillRate
                   )
                 , ( "Damage Threshold"
                   , String.fromInt

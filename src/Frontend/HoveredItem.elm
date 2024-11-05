@@ -26,6 +26,8 @@ type HoveredItem
     | HoveredDamageResistance
     | HoveredHealOverTime
     | HoveredHealUsingTick
+    | HoveredPerkRate
+    | HoveredSkillRate
 
 
 text : HoveredItem -> { title : String, description : String }
@@ -214,6 +216,27 @@ Influenced by:
 - the **Doctor** skill
 - the **Faster Healing** perk
 """
+            }
+
+        HoveredPerkRate ->
+            { title = "Perk Rate"
+            , description = """How often you get to choose a new perk. You get a perk every time you level up this many times.
+
+Influenced by:
+
+- the **Skilled** trait"""
+            }
+
+        HoveredSkillRate ->
+            { title = "Skill Rate"
+            , description = """How many skill points you get when leveling up.
+
+Influenced by:
+
+- **Intelligence**
+- the **Gifted** trait
+- the **Skilled** trait
+- the **Educated** perk"""
             }
 
 
