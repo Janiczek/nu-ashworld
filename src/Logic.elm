@@ -467,6 +467,7 @@ chanceToHit :
     , attackerPerks : SeqDict Perk Int
     , attackerTraits : SeqSet Trait
     , attackerSpecial : Special
+    , attackerItems : Dict Item.Id Item
     , crippledArms : Int
     , distanceHexes : Int
     , equippedWeapon : Maybe ItemKind.Kind
@@ -580,6 +581,7 @@ rangedChanceToHit :
         , attackerSpecial : Special
         , attackerPerks : SeqDict Perk Int
         , attackerTraits : SeqSet Trait
+        , attackerItems : Dict Item.Id Item
         , crippledArms : Int
         , targetArmorClass : Int
         , distanceHexes : Int
@@ -752,6 +754,14 @@ rangedChanceToHit r =
                                     else
                                         0
 
+                                skynetAimBonus : Int
+                                skynetAimBonus =
+                                    if r.attackerItems |> Dict.any (\_ { kind } -> kind == ItemKind.SkynetAim) then
+                                        50
+
+                                    else
+                                        0
+
                                 chanceToHitAtLeastOnce : Int
                                 chanceToHitAtLeastOnce =
                                     (weaponSkill_
@@ -759,6 +769,7 @@ rangedChanceToHit r =
                                         -- weapon long range perk is already factored into the distancePenalty
                                         + weaponAccuratePerk
                                         + oneHanderBonus
+                                        + skynetAimBonus
                                         - distancePenalty_
                                         - ((r.targetArmorClass * (100 + ammoArmorClassModifier)) // 100)
                                         - lightingPenalty_
@@ -878,6 +889,7 @@ meleeChanceToHit :
         | attackerAddedSkillPercentages : SeqDict Skill Int
         , attackerSpecial : Special
         , attackerTraits : SeqSet Trait
+        , attackerItems : Dict Item.Id Item
         , distanceHexes : Int
         , crippledArms : Int
         , equippedWeapon : Maybe ItemKind.Kind
@@ -993,6 +1005,14 @@ meleeChanceToHit r =
                         else
                             0
 
+                    k9Bonus : Int
+                    k9Bonus =
+                        if r.attackerItems |> Dict.any (\_ { kind } -> kind == ItemKind.K9) then
+                            50
+
+                        else
+                            0
+
                     crippledArmPenalty : Int
                     crippledArmPenalty =
                         if r.crippledArms >= 1 then
@@ -1017,6 +1037,7 @@ meleeChanceToHit r =
                 (skillPercentage
                     + weaponAccuratePerk
                     + oneHanderBonus
+                    + k9Bonus
                     - r.targetArmorClass
                     - shotPenalty
                     - crippledArmPenalty

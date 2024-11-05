@@ -1191,6 +1191,7 @@ chanceToHit who ongoing attackStyle =
         , attackerAddedSkillPercentages = opponent.addedSkillPercentages
         , attackerPerks = opponent.perks
         , attackerTraits = opponent.traits
+        , attackerItems = opponent.items
         , distanceHexes = ongoing.distanceHexes
         , targetArmorClass = armorClass
         , attackStyle = attackStyle
@@ -1729,6 +1730,7 @@ evalValue who state value =
                 , attackerSpecial = state.you.special
                 , attackerPerks = state.you.perks
                 , attackerTraits = state.you.traits
+                , attackerItems = state.you.items
                 , distanceHexes = state.distanceHexes
                 , targetArmorClass =
                     Logic.armorClass

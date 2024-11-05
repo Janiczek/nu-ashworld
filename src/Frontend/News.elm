@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- skynet and k9 - doing anything?
+- location descriptions
 
 Next up: 
 
@@ -41,11 +41,12 @@ Next up:
 
 Later: 
 
-- location descriptions
 - quest descriptions
 - skill descriptions
-- item descriptions
+- item descriptions 
+, quest completion flair text
 - weapons - show strength requirement somewhere (item description)
+- don't forget to say something about K9 and Skynet Aim
 - tooltips around edge of screen - floating-ui.js?
 - music in the bg (opt-in)
 
