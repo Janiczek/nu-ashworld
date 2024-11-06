@@ -2095,37 +2095,34 @@ expandedQuestView player progress questsProgress quest =
                     ]
                     [ H.text "[START]" ]
             ]
-        , H.div [ HA.class "bg-green-800 p-[2ch]" ] <|
-            List.fastConcat
-                [ [ questProgressbarView
-                        { ticksGiven = progress.ticksGiven
-                        , ticksNeeded = ticksNeeded
-                        , ticksGivenByPlayer = progress.ticksGivenByPlayer
-                        }
-                  , H.viewIf (not isDone) <|
-                        H.div []
-                            [ H.text <|
-                                "Players active: "
-                                    ++ String.fromInt progress.playersActive
-                                    ++ " ("
-                                    ++ String.fromInt progress.ticksPerHour
-                                    ++ " ticks/hour)"
-                            ]
-                  , H.viewIf (not isDone) <|
-                        H.div
-                            []
-                            [ H.text <|
-                                "XP per tick: "
-                                    ++ String.fromInt (Quest.xpPerTickGiven quest)
-                            ]
-                  ]
-                , if List.isEmpty questRequirements then
-                    []
-
-                  else
-                    [ H.div
-                        [ HA.class "mt-5" ]
-                        [ H.text "Quest Requirements" ]
+        , H.div [ HA.class "bg-green-800 p-[2ch] flex flex-col gap-4" ] <|
+            [ H.div []
+                [ questProgressbarView
+                    { ticksGiven = progress.ticksGiven
+                    , ticksNeeded = ticksNeeded
+                    , ticksGivenByPlayer = progress.ticksGivenByPlayer
+                    }
+                , H.viewIf (not isDone) <|
+                    H.div []
+                        [ H.text <|
+                            "Players active: "
+                                ++ String.fromInt progress.playersActive
+                                ++ " ("
+                                ++ String.fromInt progress.ticksPerHour
+                                ++ " ticks/hour)"
+                        ]
+                , H.viewIf (not isDone) <|
+                    H.div
+                        []
+                        [ H.text <|
+                            "XP per tick: "
+                                ++ String.fromInt (Quest.xpPerTickGiven quest)
+                        ]
+                ]
+            , H.div [ HA.class "max-w-[80ch]" ] [ H.text <| Quest.description quest ]
+            , H.viewIf (not (List.isEmpty questRequirements)) <|
+                H.div []
+                    [ H.div [] [ H.text "Quest Requirements" ]
                     , UI.ul []
                         (List.map
                             (\q ->
@@ -2140,13 +2137,9 @@ expandedQuestView player progress questsProgress quest =
                             questRequirements
                         )
                     ]
-                , if List.isEmpty playerRequirements then
-                    []
-
-                  else
-                    [ H.div
-                        [ HA.class "mt-5" ]
-                        [ H.text "Player Requirements" ]
+            , H.viewIf (not (List.isEmpty playerRequirements)) <|
+                H.div []
+                    [ H.div [] [ H.text "Player Requirements" ]
                     , UI.ul []
                         (List.map
                             (\req ->
@@ -2193,13 +2186,9 @@ expandedQuestView player progress questsProgress quest =
                             playerRequirements
                         )
                     ]
-                , if List.isEmpty globalRewards then
-                    []
-
-                  else
-                    [ H.div
-                        [ HA.class "mt-5" ]
-                        [ H.text "Global Rewards" ]
+            , H.viewIf (not (List.isEmpty globalRewards)) <|
+                H.div []
+                    [ H.div [] [ H.text "Global Rewards" ]
                     , UI.ul []
                         (List.map
                             (Quest.globalRewardTitle
@@ -2213,12 +2202,9 @@ expandedQuestView player progress questsProgress quest =
                             globalRewards
                         )
                     ]
-                , if List.isEmpty playerRewards.rewards then
-                    []
-
-                  else
-                    [ H.div
-                        [ HA.class "mt-5" ]
+            , H.viewIf (not (List.isEmpty playerRewards.rewards)) <|
+                H.div []
+                    [ H.div []
                         [ H.text "Player Rewards"
                         , H.text " (if you give "
                         , H.span
@@ -2246,19 +2232,15 @@ expandedQuestView player progress questsProgress quest =
                             playerRewards.rewards
                         )
                     ]
-                , if List.isEmpty exclusiveQuests then
-                    []
-
-                  else
-                    [ H.div
-                        [ HA.class "mt-5" ]
-                        [ H.text "Exclusive with:" ]
+            , H.viewIf (not (List.isEmpty exclusiveQuests)) <|
+                H.div []
+                    [ H.div [] [ H.text "Exclusive with:" ]
                     , UI.ul []
                         (exclusiveQuests
                             |> List.map (\q -> liText (Quest.title q))
                         )
                     ]
-                ]
+            ]
         ]
     ]
 

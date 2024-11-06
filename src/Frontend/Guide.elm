@@ -57,6 +57,11 @@ Depending on your **Perception Level** you'll be able to learn more about them b
 
 Clicking the **Fight** button will initiate the fight. Fights are fully automated; you can influence their outcome by equipping different weapons and armor and by writing your own **Fight Strategy** in the `[SETTINGS]` (more below).
 
+Winning PVP fights gives you:
+
+- **XP** based on the damage you dealt and the ratio of your vs their level (fighting a weaker player will give you less XP)
+- **Caps** - between 50% and 100% of their currently held caps, based on the ratio of the damage you dealt and their max HP (fighting a fully healed player will give you all their caps)
+
 ![PVP fight (part 1)](/images/guide/pvp_fight_1.webp)
 ![PVP fight (part 2)](/images/guide/pvp_fight_2.webp)
 

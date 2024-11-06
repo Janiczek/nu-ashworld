@@ -8,6 +8,7 @@ module Data.Quest exposing
     , all
     , allForLocation
     , codec
+    , description
     , exclusiveWith
     , globalRewardCodec
     , globalRewardTitle
@@ -381,7 +382,7 @@ title name =
             "Find fuel for the tanker"
 
         SanFranciscoFindLocationOfFobForTanker ->
-            "Find location of FOB for the tanker"
+            "Find location of fob for the tanker"
 
         SanFranciscoFindNavCompPartForTanker ->
             "Find NavComp part for the tanker"
@@ -411,7 +412,7 @@ title name =
             "Fix K9"
 
         NavarroRetrieveFobForTanker ->
-            "Retrieve the FOB for the tanker"
+            "Retrieve the fob for the tanker"
 
         EnclavePersuadeControlCompanySquadToDesert ->
             "Persuade the Control Company squad to desert"
@@ -2955,3 +2956,405 @@ globalRewardCodec =
         |> Codec.variant1 "VendorAvailable" VendorAvailable Shop.codec
         |> Codec.variant0 "EndTheGame" EndTheGame
         |> Codec.buildCustom
+
+
+description : Name -> String
+description quest =
+    case quest of
+        ArroyoKillEvilPlants ->
+            """Hakunin, the village shaman, needs help with his garden. Evil
+plants have taken root and are choking out his healing herbs. Clear out these
+dangerous plants so he can continue making medicine for the village."""
+
+        ArroyoFixWellForFeargus ->
+            """The village well has broken down, leaving Feargus and others
+without easy access to water. The rope mechanism needs repair, but the parts are
+hard to come by in the primitive village. Find a way to fix it before people get
+desperate."""
+
+        ArroyoRescueNagorsDog ->
+            """Young Nagor is distraught - his dog Smoke ran off into the
+wilderness surrounding Arroyo. The area is dangerous, filled with hostile
+wildlife. Find and rescue Smoke before something terrible happens to him."""
+
+        KlamathRefuelStill ->
+            """Whiskey Bob runs an illegal still outside of Klamath, but he's
+run out of fuel. He needs someone to gather more firewood from the dangerous
+gecko-infested woods nearby. The local bootlegging business depends on keeping
+his still running."""
+
+        KlamathGuardTheBrahmin ->
+            """The simple-minded Torr needs help protecting his brahmin herd
+from "bugmen" raiders. Stand guard over the brahmin and deal with any threats
+that appear. The brahmin are Klamath's livelihood and must be protected."""
+
+        KlamathRustleTheBrahmin ->
+            """The Dunton brothers want someone to help them steal brahmin from
+the dimwitted Torr. While morally questionable, it could be profitable. They
+promise a good cut of the proceeds if you help drive some brahmin their way at
+night."""
+
+        KlamathKillRatGod ->
+            """Deep in the rat caves beneath Trapper Town lives a massive,
+mutated rat known as Keeng Ra'at. The creature and its followers terrorize the
+locals and make the caves too dangerous to explore. Put an end to this "rat
+god" and its cult."""
+
+        KlamathRescueTorr ->
+            """Torr has gone missing in the dangerous Klamath Canyon while
+looking for "bugmen". His sister is worried sick about him. Search the canyon
+and bring him back before the raiders or wildlife get to him."""
+
+        KlamathSearchForSmileyTrapper ->
+            """Smiley, one of Klamath's best trappers, hasn't returned from his
+last expedition to the Toxic Caves. The other trappers are worried but too
+scared to look for him. Find out what happened to Smiley."""
+
+        KlamathGetFuelCellRegulator ->
+            """Smitty in the Den needs a fuel cell regulator to fix the broken
+Highwayman. Word is that the Toxic Caves near Klamath might have some old tech
+that could work. Brave the caves and retrieve a working regulator."""
+
+        ToxicCavesRescueSmileyTrapper ->
+            """Smiley is trapped deep in the Toxic Caves, surrounded by
+dangerous creatures and lethal radiation. He's managed to survive so far but
+can't escape on his own. Find a way to get him out safely before it's too
+late."""
+
+        ToxicCavesRepairTheGenerator ->
+            """The old military generator in the Toxic Caves could still be
+valuable if repaired. The radiation and hostile creatures make it a dangerous
+job, but the potential reward is significant. Find the parts needed and get it
+working again."""
+
+        ToxicCavesLootTheBunker ->
+            """A pre-war military bunker lies hidden in the Toxic Caves,
+possibly still containing valuable technology and supplies. The radiation and
+security systems make it extremely dangerous to explore. Find a way inside and
+salvage what you can."""
+
+        DenFreeVicByPayingMetzger ->
+            """Vic, a trader who might know about Vault 13, is being held by
+Metzger's Slavers Guild for an unpaid debt. Metzger is willing to release him if
+someone pays what he owes. Gather enough caps to buy Vic's freedom."""
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            """Vic, a trader who might know about Vault 13, is being held by
+Metzger's Slavers Guild in the Den. While you could pay his debt, taking down
+the slavers would free not just Vic but all their captives. It's more dangerous
+but could end their reign of terror permanently."""
+
+        DenDeliverMealToSmitty ->
+            """Mom, who runs the local diner, needs someone to deliver a meal to
+Smitty at his garage. While a simple task, the streets of the Den are dangerous,
+filled with addicts and thugs who might try to steal the food."""
+
+        DenFixTheCar ->
+            """A working Chrysalis Motors Highwayman has been discovered in the
+Den. Smitty thinks he can get it running with the parts you've found, which
+would make travel much easier. Help him repair this rare pre-war vehicle."""
+
+        ModocInvestigateGhostFarm ->
+            """Strange stories circulate about the "Ghost Farm" near Modoc,
+where people claim to see bodies hanging from poles and mysterious figures at
+night. The townspeople are terrified. Investigate the farm and uncover the truth
+behind these haunting tales."""
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            """Farrel's garden, vital to Modoc's food supply, has been overrun
+by unusual rodents. These pests are destroying his crops and seem resistant to
+normal pest control. Find a way to eliminate them before they ruin the
+harvest."""
+
+        ModocMediateBetweenSlagsAndJo ->
+            """A conflict has erupted between Jo, Modoc's trader, and the
+mysterious Slags living underground. Both sides are close to violence.
+Investigate both claims and find a peaceful resolution before things get out of
+hand."""
+
+        ModocFindGoldWatchForCornelius ->
+            """Cornelius, Modoc's tanner, has lost his prized gold pocket watch.
+He's devastated by its loss and suspects it was stolen. Find the watch and
+discover what really happened to it."""
+
+        ModocFindGoldWatchForFarrel ->
+            """Farrel claims that Cornelius stole his gold pocket watch and
+wants it returned. The situation has created tension in the small town.
+Investigate the conflicting claims and determine the watch's rightful owner."""
+
+        VaultCityGetPlowForMrSmith ->
+            """Mr. Smith, a Vault City farmer, desperately needs a new plow for
+his fields. The city's strict regulations make acquiring one difficult. Find a
+way to get him a plow while navigating Vault City's bureaucracy."""
+
+        VaultCityRescueAmandasHusband ->
+            """Amanda's husband, a Vault City citizen, has been captured by
+raiders while traveling. The city guards won't help due to bureaucratic
+restrictions. Track him down and bring him back before it's too late."""
+
+        GeckoOptimizePowerPlant ->
+            """The atomic power plant in Gecko is running inefficiently, causing
+radiation leaks that threaten both Gecko and Vault City. Find a way to optimize
+the plant's systems and prevent an environmental disaster."""
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            """Skeeter, Gecko's ghoul mechanic, has a fuel cell controller that
+could be useful for the Highwayman in Smitty's garage in Den. He's willing to
+part with it, but he needs something in return. Make a deal with him to acquire
+this valuable piece of technology."""
+
+        ReddingClearWanamingoMine ->
+            """The Wanamingo mine in Redding has been overrun by dangerous
+mutant creatures. The miners can't work, and the town's economy is suffering.
+Clear out the mine and make it safe for operations to resume."""
+
+        ReddingFindExcavatorChip ->
+            """The excavator in Redding's mine has broken down, and its control
+chip is missing. Without it, mining operations are at a standstill. Track down
+the missing chip and get the excavator working again."""
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            """Pretty Boy Lloyd has stolen money from the Wright family and fled
+New Reno. The Wrights want him found and dealt with. Track him down and recover
+the stolen money, but be careful - he won't give up easily."""
+
+        NewRenoHelpGuardSecretTransaction ->
+            """One of New Reno's crime families needs extra security for a
+sensitive transaction. The job pays well but could be dangerous. Guard the
+meeting and ensure everything goes smoothly."""
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            """The Corsican Brothers have fallen behind on their protection
+payments. Collect the overdue tribute, but be diplomatic - they're valuable
+assets to the family. Find a way to get the money without burning bridges."""
+
+        NewRenoWinBoxingTournament ->
+            """The boxing ring at the Jungle Gym is holding a tournament. The
+prize money is good, but the competition is fierce. Train hard and fight your
+way to the championship."""
+
+        NewRenoAcquireElectronicLockpick ->
+            """An advanced electronic lockpick would be invaluable for future
+missions. Word is that someone in New Reno has one. Track down this rare tool
+and acquire it, legally or otherwise."""
+
+        NCRGuardBrahminCaravan ->
+            """The New California Republic needs guards for a brahmin caravan.
+The route is dangerous, with raiders and hostile wildlife. Ensure the caravan
+reaches its destination safely."""
+
+        NCRTestMutagenicSerum ->
+            """A scientist in NCR has developed an experimental mutagenic serum.
+They need someone to test it, but the effects are unknown and potentially
+dangerous. Decide if the risk is worth the reward."""
+
+        NCRRetrieveComputerParts ->
+            """President Tandi needs specific computer parts to upgrade NCR's
+systems. These parts can only be found in dangerous pre-war ruins. Retrieve them
+to help modernize the republic."""
+
+        NCRFreeSlaves ->
+            """Despite NCR's anti-slavery laws, slavers still operate in the
+region. A group of slaves needs help gaining their freedom. Find them and escort
+them to safety while avoiding the slavers."""
+
+        NCRInvestigateBrahminRaids ->
+            """Brahmin ranchers near NCR have been hit by mysterious raids. The
+attacks seem too organized to be random raiders. Investigate the true source of
+these raids and put a stop to them."""
+
+        V15RescueChrissy ->
+            """Chrissy, a young woman from Vault 15, has been kidnapped by
+squatters. The situation is delicate as NCR wants to maintain peace with the
+squatter community. Find a way to rescue her without starting a war."""
+
+        V15CompleteDealWithNCR ->
+            """NCR and Vault 15 are negotiating a crucial deal that could
+benefit both parties. Help facilitate the negotiations and ensure both sides
+reach a satisfactory agreement."""
+
+        V13FixVaultComputer ->
+            """The main computer in Vault 13 has malfunctioned, locking down
+vital systems. The vault's survival depends on getting it working again. Find
+the problem and repair it before it's too late."""
+
+        V13FindTheGeck ->
+            """The GECK (Garden of Eden Creation Kit) is somewhere in Vault 13.
+This miraculous device could save your dying village. Search the vault and
+retrieve it, but beware of the automated security systems."""
+
+        BrokenHillsFixMineAirPurifier ->
+            """The air purifier in Broken Hills' uranium mine has broken down,
+endangering the miners. Without clean air, the mine will have to shut down.
+Repair the system before the miners start getting sick."""
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            """Some residents want to sabotage the mine's air purifier to drive
+out the mutants. While morally questionable, they're offering good pay. Plant
+explosives and destroy the purifier without getting caught."""
+
+        BrokenHillsFindMissingPeople ->
+            """Several people have mysteriously disappeared in Broken Hills. The
+sheriff suspects foul play but has no leads. Investigate the disappearances and
+uncover the dark truth behind them."""
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            """Francis, a super mutant in Broken Hills, is the undefeated arm
+wrestling champion. He's offering a substantial prize to anyone who can beat
+him. Train up your strength and try to dethrone the champion."""
+
+        RaidersFindEvidenceOfBishopTampering ->
+            """There are rumors that Bishop from New Reno is manipulating the
+raiders for his own benefit. Infiltrate the raiders' camp and find proof of his
+involvement. The evidence could shift the balance of power in New Reno."""
+
+        RaidersKillEverybody ->
+            """The raiders have become too dangerous to ignore, attacking
+travelers and settlements with increasing brutality. Put an end to their threat
+by eliminating their entire base. It won't be easy - they're well-armed and
+numerous."""
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            """Skynet, an AI in Sierra Army Depot, is in need of a brain for
+its new body. Any brain will do. Search the facility's medical storage for a
+suitable specimen. The security systems are still active, so be careful."""
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            """Skynet, an AI in Sierra Army Depot, is in need of a brain for
+its new body. Just pick something human-ish, please. Search the facility's
+medical storage for a suitable specimen. The security systems are still active,
+so be careful."""
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            """Skynet, an AI in Sierra Army Depot, is in need of a brain for
+its new body. A human brain should be able to hold most of its vast intellect.
+Search the facility's medical storage for a suitable specimen. The security
+systems are still active, so be careful."""
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            """Skynet, an AI in Sierra Army Depot, is in need of a brain for
+its new body. A cybernetic brain would be ideal for Skynet's consciousness
+transfer. Search the facility's medical storage for a suitable specimen. The
+security systems are still active, so be careful."""
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            """With a brain secured, Skynet needs a robotic body assembled.
+Gather the necessary parts from throughout the facility and construct a suitable
+vessel for the AI's consciousness."""
+
+        MilitaryBaseExcavateTheEntrance ->
+            """The entrance to the old military base is buried under rubble.
+Clear a path inside while avoiding detection by any surviving security systems.
+The base might hold vital pre-war technology."""
+
+        MilitaryBaseKillMelchior ->
+            """Melchior, a dangerous mutant with a penchant for magic tricks,
+controls the FEV vats deep in the military base. He must be eliminated to
+prevent the creation of more mutants. Fight your way through his guards and end
+his experiments."""
+
+        SanFranciscoFindFuelForTanker ->
+            """The old tanker in San Francisco harbor needs fuel before it can
+sail. Search the city for a suitable fuel source. The various factions might
+have what you need, but they'll want something in return."""
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            """The tanker requires a key fob to start. Someone in San Francisco
+knows where to find one. Track down this information while navigating the city's
+complex political landscape."""
+
+        SanFranciscoFindNavCompPartForTanker ->
+            """The tanker's navigation computer needs a crucial part to
+function. Find out which technical facility to find it in, and go fetch it. Be
+prepared to negotiate or fight for it."""
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            """The Hubologists want vertibird technical plans to further their
+'spiritual' goals. These plans are highly classified and heavily protected.
+Acquire them without being caught by the authorities."""
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            """The Shi scientists seek vertibird technical plans to advance
+their research. These advanced aircraft schematics are heavily guarded in a
+secure facility. Infiltrate the complex and acquire the plans while avoiding
+detection."""
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            """The Brotherhood of Steel wants vertibird plans to maintain their
+technological superiority. The plans are kept under heavy security in a military
+installation. Break in and steal the documents while dealing with automated
+defenses."""
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            """Badger's girlfriend has gone missing somewhere in the hold of the
+old tanker ship. The hold is massive and filled with hostile creatures. Find and
+rescue her before something terrible happens."""
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            """Dragon wants you to defeat his rival Lo Pan in the ring to prove
+Kung Fu superiority. Lo Pan is a legendary fighter with devastating techniques.
+Train hard and face him in honorable combat at the arena."""
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            """Lo Pan seeks to humiliate his rival by having you defeat Dragon
+in the ring. Dragon's mastery of martial arts makes him a fearsome opponent.
+Prepare yourself for an intense battle of skill and technique."""
+
+        SanFranciscoEmbarkForEnclave ->
+            """The time has come to infiltrate the Enclave's secret base using
+the restored tanker. The journey will be dangerous, crossing the irradiated
+waters to their offshore facility. Make your final preparations before this
+point of no return."""
+
+        NavarroFixK9 ->
+            """K9, an advanced cybernetic dog, lies damaged in the Navarro base.
+His systems are complex and require careful repair work. Fix this unique
+companion while avoiding detection by the base's Enclave personnel."""
+
+        NavarroRetrieveFobForTanker ->
+            """The tanker's key fob is stored somewhere in the heavily-guarded
+Navarro base. Enclave troops patrol every corner of the facility. Sneak in,
+locate the key, and escape without raising the alarm."""
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            """A squad of Enclave soldiers might be convinced to desert their
+post and help kill Frank Horrigan. Their loyalty to the Enclave isn't absolute,
+but persuading them will require careful diplomacy. Find the right arguments to
+sway them without arousing suspicion."""
+
+        EnclaveKillThePresidentStealthily ->
+            """The President must be eliminated, but a direct assault would be
+suicide. The presidential quarters are heavily guarded by elite troops. Find a
+way to assassinate him quietly without alerting the entire base."""
+
+        EnclaveKillThePresidentTheUsualWay ->
+            """The President needs to be eliminated, and subtlety isn't an
+option. Fight your way through waves of elite Enclave troops to reach him. A
+direct assault will be brutal - bring plenty of ammunition and medical
+supplies."""
+
+        EnclaveFindTheGeck ->
+            """The GECK, vital for saving your village, is somewhere in the
+Enclave base. The facility is a maze of high-security areas and deadly traps.
+Navigate the complex and retrieve this crucial device before it's too late."""
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            """Frank Horrigan seems unstoppable, but the base's defense turrets
+might help. The security control systems are heavily encrypted and complex. Hack
+in and reprogram the turrets to target this seemingly invincible foe."""
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            """Tom Murray has access to the base's self-destruct sequence. He's
+heavily guarded in the science wing and won't cooperate willingly. Find him and
+convince him to trigger the sequence, whether through persuasion or force."""
+
+        EnclaveKillFrankHorrigan ->
+            """Frank Horrigan, the Enclave's superhuman enforcer, stands between
+you and freedom. He's the most dangerous opponent you've ever faced, augmented
+with experimental technology. Survive this final confrontation and end his reign
+of terror."""
+
+        EnclaveReturnToMainland ->
+            """With the Enclave defeated, you must escape their exploding oil
+rig. Time is running out as the facility begins to collapse. Fight your way to
+the PMV Valdez and secure transport back to the mainland."""
