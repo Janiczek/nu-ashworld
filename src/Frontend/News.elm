@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730837345
+    [ { date = 1730886199
       , title = "TODOs before release"
       , text =
             """
@@ -32,7 +32,8 @@ announcement!
 
 Current TODOs:
 
-- location descriptions
+- skill descriptions
+- Fix bug with restocking vendors (Arroyo Hakunin having fuel cell controller?)
 
 Next up: 
 
@@ -42,7 +43,6 @@ Next up:
 Later: 
 
 - quest descriptions
-- skill descriptions
 - item descriptions 
 , quest completion flair text
 - weapons - show strength requirement somewhere (item description)

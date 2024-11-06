@@ -1899,7 +1899,8 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
     in
     [ pageTitleView <| "Town: " ++ Location.name location
     , H.div [ HA.class "flex flex-col gap-4" ]
-        [ H.h3 [] [ H.text "Shops" ]
+        [ H.div [ HA.class "max-w-[70ch]" ] [ H.text <| Location.description location ]
+        , H.h3 [] [ H.text "Shops" ]
         , if List.isEmpty availableShops then
             H.div [] [ H.text "No vendor in this town..." ]
 
@@ -1908,12 +1909,9 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
                 |> List.map
                     (\shop ->
                         H.li []
-                            [ H.div [ HA.class "flex flex-row gap-[1ch]" ]
-                                [ UI.button
-                                    [ HE.onClick <| GoToTownStore shop ]
-                                    [ H.text "[Visit store]" ]
-                                , H.text <| Shop.personName shop
-                                ]
+                            [ UI.button
+                                [ HE.onClick <| GoToTownStore shop ]
+                                [ H.text <| "[VISIT STORE] " ++ Shop.personName shop ]
                             ]
                     )
                 |> UI.ul []
@@ -5322,10 +5320,10 @@ loginFormView worlds auth =
             [ HA.class "mt-4 flex justify-between" ]
             [ UI.button
                 [ HE.onClickPreventDefault Login ]
-                [ H.text "[ Login ]" ]
+                [ H.text "[ LOGIN ]" ]
             , UI.button
                 [ HE.onClickPreventDefault SignUp ]
-                [ H.text "[ Sign Up ]" ]
+                [ H.text "[ SIGN UP ]" ]
             ]
         ]
 

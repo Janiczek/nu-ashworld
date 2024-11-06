@@ -9814,7 +9814,7 @@ name kind =
             "HN AP Needler Cartridge"
 
         TankerFob ->
-            "Tanker Fob"
+            "Tanker FOB"
 
         SilverGeckoPelt ->
             "Silver Gecko Pelt"
