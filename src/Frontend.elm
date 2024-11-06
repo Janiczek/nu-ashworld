@@ -1527,7 +1527,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } world player =
                     "yellow"
 
                 C3 ->
-                    "yellow"
+                    "orange"
 
                 C4 ->
                     "red"
