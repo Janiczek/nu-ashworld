@@ -50,6 +50,10 @@ Later:
 - Steam webview wrapper
 - guest mode - no login required, Ladder fights, quests and marketplace disabled, but you can wander (PvM fights) and use shops
 
+Bugs found:
+
+- admin view - last 10 ToBackend messages - show per world! not globally
+
 ~janiczek
 """
       }

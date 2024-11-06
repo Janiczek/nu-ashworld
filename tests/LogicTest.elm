@@ -230,7 +230,7 @@ chanceToHitSuite =
                         , attackerSpecial = args.attackerSpecial |> Special.set Special.Strength 10
                         , attackerAddedSkillPercentages =
                             args.attackerAddedSkillPercentages
-                                |> SeqDict.insert SmallGuns 40
+                                |> SeqDict.insert SmallGuns 60
                         , equippedWeapon = Just weapon
                         , distanceHexes = 1
                         , targetArmorClass = 0
