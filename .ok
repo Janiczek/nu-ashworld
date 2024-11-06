@@ -1,3 +1,5 @@
-test: elm-test --compiler lamdera
-watch: elm-test --compiler lamdera --watch
-max: elm-test --compiler lamdera --fuzz 100000
+test:   elm-test --compiler lamdera
+watch:  elm-test --compiler lamdera --watch
+max:    elm-test --compiler lamdera --fuzz 100000
+fix:    elm-review --fix --config review        --compiler /Users/martin/.bin/lamdera
+derive: elm-review --fix --config review-derive --compiler /Users/martin/.bin/lamdera
