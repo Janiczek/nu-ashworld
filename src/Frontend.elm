@@ -1031,7 +1031,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-hidden fixed z-[1] left-0 top-0 bottom-0" ]
+    H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-hidden fixed z-[2] left-0 top-0 bottom-0" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
             (leftNav tickFrequency)
@@ -1503,7 +1503,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } world player =
         mouseEventCatcherView : Html FrontendMsg
         mouseEventCatcherView =
             H.div
-                [ HA.class "absolute inset-0 z-[4]"
+                [ HA.class "absolute inset-0 z-[1]"
                 , HE.stopPropagationOn "mouseover"
                     (JD.map (\c -> ( MapMouseAtCoords c, True )) <|
                         changedCoordsDecoder mouseCoordsOnly
@@ -1677,7 +1677,7 @@ locationView location =
         , TW.mod "before" <|
             "absolute top-1/2 left-1/2 content-[''] block w-[var(--location-size)] h-[var(--location-size)] border-green-100 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle,var(--green-100-fully-transparent)_0%,var(--green-100-half-transparent)_100%)] "
                 ++ borderWidth
-        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-nowrap bg-black-transparent p-x-1 leading-[13px]"
+        , TW.mod "after" "content-[attr(data-location-name)] block top-[var(--location-name-top)] left-1/2 -translate-x-1/2 text-center absolute whitespace-pre bg-black-transparent p-x-1 leading-[13px]"
         , HA.style "text-shadow" "2px 0 2px #000, 0 2px 2px #000, -2px 0 2px #000, 0 -2px 2px #000"
         , cssVars <|
             List.fastConcat
