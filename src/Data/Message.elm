@@ -15,7 +15,7 @@ import Codec exposing (Codec)
 import Data.Fight as Fight
 import Data.Fight.View
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Special.Perception exposing (PerceptionLevel)
 import DateFormat
 import Frontend.Links as Links
@@ -59,7 +59,7 @@ type Content
         , fightInfo : Fight.Info
         }
     | YouCompletedAQuest
-        { quest : Quest.Name
+        { quest : Quest
         , xpReward : Int
         , playerReward : Maybe (List Quest.PlayerReward)
         , globalRewards : List Quest.GlobalReward
@@ -234,8 +234,7 @@ content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
     case message.content of
         Welcome ->
-
-                """Welcome to NuAshworld! You know, war... war never changes.
+            """Welcome to NuAshworld! You know, war... war never changes.
                 
 In lieu of a tutorial, here are some goals to get you started:
 
@@ -255,9 +254,8 @@ Most of all, have fun roaming the wasteland!
 
 ~janiczek
 """
-            |> String.replace "{DISCORD}" (Links.discord)
-            |> renderMarkdown attributes
-
+                |> String.replace "{DISCORD}" Links.discord
+                |> renderMarkdown attributes
 
         YouAdvancedLevel r ->
             renderMarkdown attributes <|

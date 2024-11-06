@@ -33,7 +33,7 @@ import Data.Message as Message exposing (Message)
 import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception exposing (PerceptionLevel)
@@ -81,7 +81,7 @@ type alias SPlayer =
     , preferredAmmo : Maybe ItemKind.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
-    , questsActive : SeqSet Quest.Name
+    , questsActive : SeqSet Quest
     , carBatteryPromile : Maybe Int
     }
 
@@ -111,7 +111,7 @@ type alias CPlayer =
     , preferredAmmo : Maybe ItemKind.Kind
     , fightStrategy : FightStrategy
     , fightStrategyText : String
-    , questsActive : SeqSet Quest.Name
+    , questsActive : SeqSet Quest
     , carBatteryPromile : Maybe Int
     }
 

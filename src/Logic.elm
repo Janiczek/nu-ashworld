@@ -62,7 +62,7 @@ import Data.Item.Effect as ItemEffect
 import Data.Item.Kind as ItemKind
 import Data.Item.Type as ItemType
 import Data.Perk as Perk exposing (Perk(..))
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)

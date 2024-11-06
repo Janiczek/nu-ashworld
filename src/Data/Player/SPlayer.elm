@@ -53,7 +53,7 @@ import Data.Map exposing (TileCoords)
 import Data.Message as Message exposing (Content(..), Message)
 import Data.Perk as Perk exposing (Perk)
 import Data.Player exposing (SPlayer)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Tick as Tick exposing (TickPerIntervalCurve)
@@ -325,7 +325,7 @@ tick currentTime worldTickCurve player =
 addTickQuestProgressXp : Posix -> SPlayer -> SPlayer
 addTickQuestProgressXp currentTime player =
     let
-        xpPerQuest : SeqDict Quest.Name Int
+        xpPerQuest : SeqDict Quest Int
         xpPerQuest =
             player.questsActive
                 |> SeqSet.toList
@@ -727,7 +727,7 @@ setPreferredAmmo preferredAmmo player =
     { player | preferredAmmo = preferredAmmo }
 
 
-stopProgressing : Quest.Name -> SPlayer -> SPlayer
+stopProgressing : Quest -> SPlayer -> SPlayer
 stopProgressing quest player =
     { player | questsActive = SeqSet.remove quest player.questsActive }
 
@@ -737,7 +737,7 @@ canStartProgressing worldTickCurve player =
     ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.questTicksPerHour
 
 
-startProgressing : Quest.Name -> TickPerIntervalCurve -> SPlayer -> SPlayer
+startProgressing : Quest -> TickPerIntervalCurve -> SPlayer -> SPlayer
 startProgressing quest worldTickCurve player =
     if canStartProgressing worldTickCurve player then
         { player | questsActive = SeqSet.insert quest player.questsActive }

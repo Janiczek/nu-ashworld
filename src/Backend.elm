@@ -38,7 +38,7 @@ import Data.Player as Player
         )
 import Data.Player.PlayerName exposing (PlayerName)
 import Data.Player.SPlayer as SPlayer
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -478,7 +478,7 @@ processGameTickForQuests worldName model =
                         }
                     )
 
-        completedQuests : SeqSet Quest.Name
+        completedQuests : SeqSet Quest
         completedQuests =
             Maybe.map2
                 (\oldWorld newWorld ->
@@ -2393,7 +2393,7 @@ choosePerk perk clientId world worldName player model =
         ( model, Cmd.none )
 
 
-questsReceivedRewardFor : PlayerName -> World -> SeqSet Quest.Name
+questsReceivedRewardFor : PlayerName -> World -> SeqSet Quest
 questsReceivedRewardFor playerName world =
     world.questsProgress
         |> SeqDict.toList
@@ -2522,7 +2522,7 @@ updateVendor shop worldName location fn model =
             )
 
 
-stopProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+stopProgressing : Quest -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 stopProgressing quest clientId _ worldName player model =
     let
         newModel =
@@ -2539,7 +2539,7 @@ stopProgressing quest clientId _ worldName player model =
         |> Maybe.withDefault ( model, Cmd.none )
 
 
-startProgressing : Quest.Name -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
+startProgressing : Quest -> ClientId -> World -> World.Name -> SPlayer -> Model -> ( Model, Cmd BackendMsg )
 startProgressing quest clientId world worldName player model =
     let
         locationQuestAllowed : Bool
@@ -2565,7 +2565,7 @@ startProgressing quest clientId world worldName player model =
             playerRequirements
                 |> List.all (\req -> Logic.passesPlayerRequirement req player)
 
-        completedQuests : SeqSet Quest.Name
+        completedQuests : SeqSet Quest
         completedQuests =
             world.questsProgress
                 |> SeqDict.toList
@@ -2661,7 +2661,7 @@ refuelCar fuelKind clientId _ worldName player model =
         |> Maybe.withDefault ( model, Cmd.none )
 
 
-notePlayerPaidRequirements : Quest.Name -> PlayerName -> World -> World
+notePlayerPaidRequirements : Quest -> PlayerName -> World -> World
 notePlayerPaidRequirements quest player world =
     { world
         | questRequirementsPaid =

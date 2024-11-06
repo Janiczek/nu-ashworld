@@ -1,5 +1,5 @@
 module Data.Enemy exposing
-    ( Requirement
+    ( DropRequirement(..)
     , aimedShotName
     , areApplicable
     , criticalSpec
@@ -2704,11 +2704,11 @@ type alias DropSpec =
 type alias ItemDropSpec =
     { uniqueKey : Item.UniqueKey
     , count : NormalIntSpec
-    , requirements : List Requirement
+    , dropRequirements : List DropRequirement
     }
 
 
-type Requirement
+type DropRequirement
     = RPerk Perk
 
 
@@ -2726,20 +2726,20 @@ dropSpec type_ =
             ( probability
             , { uniqueKey = { kind = kind }
               , count = count
-              , requirements = []
+              , dropRequirements = []
               }
             )
 
-        itemWithReqs : List Requirement -> Float -> ItemKind.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
+        itemWithReqs : List DropRequirement -> Float -> ItemKind.Kind -> NormalIntSpec -> ( Float, ItemDropSpec )
         itemWithReqs reqs probability kind count =
             ( probability
             , { uniqueKey = { kind = kind }
               , count = count
-              , requirements = reqs
+              , dropRequirements = reqs
               }
             )
 
-        geckoSkinning : List Requirement
+        geckoSkinning : List DropRequirement
         geckoSkinning =
             [ RPerk Perk.GeckoSkinning ]
     in
@@ -2904,7 +2904,7 @@ dropGenerator :
     ->
         Generator
             ( { caps : Int
-              , items : List ( Item, List Requirement )
+              , items : List ( Item, List DropRequirement )
               }
             , Int
             )
@@ -2915,7 +2915,7 @@ dropGenerator lastItemId dropSpec_ =
                 ( items, newLastId ) =
                     generatedItems
                         |> List.foldl
-                            (\{ uniqueKey, count, requirements } ( accItems, accItemId ) ->
+                            (\{ uniqueKey, count, dropRequirements } ( accItems, accItemId ) ->
                                 let
                                     ( item, incrementedId ) =
                                         Item.create
@@ -2924,7 +2924,7 @@ dropGenerator lastItemId dropSpec_ =
                                             , count = count
                                             }
                                 in
-                                ( ( item, requirements ) :: accItems, incrementedId )
+                                ( ( item, dropRequirements ) :: accItems, incrementedId )
                             )
                             ( [], lastItemId )
             in
@@ -2955,7 +2955,7 @@ dropItemsGenerator :
             (List
                 { uniqueKey : Item.UniqueKey
                 , count : Int
-                , requirements : List Requirement
+                , dropRequirements : List DropRequirement
                 }
             )
 dropItemsGenerator { items } =
@@ -2977,7 +2977,7 @@ dropItemsGenerator { items } =
                                                 Just
                                                     { uniqueKey = itemSpec.uniqueKey
                                                     , count = count
-                                                    , requirements = itemSpec.requirements
+                                                    , dropRequirements = itemSpec.dropRequirements
                                                     }
                                         )
 
@@ -2989,12 +2989,12 @@ dropItemsGenerator { items } =
         |> Random.map Maybe.values
 
 
-areApplicable : { perks : SeqDict Perk Int } -> List Requirement -> Bool
+areApplicable : { perks : SeqDict Perk Int } -> List DropRequirement -> Bool
 areApplicable r reqs =
     List.all (isApplicable r) reqs
 
 
-isApplicable : { perks : SeqDict Perk Int } -> Requirement -> Bool
+isApplicable : { perks : SeqDict Perk Int } -> DropRequirement -> Bool
 isApplicable r req =
     case req of
         RPerk perk ->

@@ -15,7 +15,7 @@ import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player exposing (COtherPlayer, CPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
@@ -58,7 +58,7 @@ type alias FrontendModel =
     , fightInfo : Maybe Fight.Info
     , barter : Barter.State
     , fightStrategyText : String
-    , expandedQuests : SeqSet Quest.Name
+    , expandedQuests : SeqSet Quest
     , userWantsToShowAreaDanger : Bool
     , lastGuideTocSectionClick : Int -- this is a timestamp where 0 is "page loaded", not 1970-01-01. Same with the intersection observer time.
     , hoveredGuideNavLink : Bool -- used to preload Guide images
@@ -140,10 +140,10 @@ type FrontendMsg
     | SetAdminNewWorldName String
     | SetAdminNewWorldFast Bool
     | AskToCreateNewWorld
-    | ExpandQuestItem Quest.Name
-    | CollapseQuestItem Quest.Name
-    | AskToStopProgressing Quest.Name
-    | AskToStartProgressing Quest.Name
+    | ExpandQuestItem Quest
+    | CollapseQuestItem Quest
+    | AskToStopProgressing Quest
+    | AskToStartProgressing Quest
     | ScrolledToGuideSection String
     | ClickedGuideSection Int
     | HoveredGuideNavLink
@@ -195,8 +195,8 @@ type ToBackend
     | RemoveAllMessages
     | Barter Barter.State Shop
     | AdminToBackend AdminToBackend
-    | StopProgressing Quest.Name
-    | StartProgressing Quest.Name
+    | StopProgressing Quest
+    | StartProgressing Quest
     | RefuelCar ItemKind.Kind
 
 

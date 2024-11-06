@@ -21,7 +21,7 @@ module Data.Fight exposing
     )
 
 import Codec exposing (Codec)
-import Data.Enemy as Enemy
+import Data.Enemy exposing (DropRequirement)
 import Data.Enemy.Type as EnemyType
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Critical as Critical
@@ -67,7 +67,7 @@ type alias Opponent =
     , perks : SeqDict Perk Int
     , caps : Int
     , items : Dict Item.Id Item
-    , drops : List ( Item, List Enemy.Requirement )
+    , drops : List ( Item, List DropRequirement )
     , level : Int
     , equippedArmor : Maybe ItemKind.Kind
     , equippedWeapon : Maybe ItemKind.Kind

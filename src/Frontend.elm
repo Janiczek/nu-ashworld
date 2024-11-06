@@ -38,7 +38,7 @@ import Data.Player as Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
@@ -1856,7 +1856,7 @@ questProgressbarView { ticksGiven, ticksNeeded, ticksGivenByPlayer } =
         ]
 
 
-townMainSquareView : SeqSet Quest.Name -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+townMainSquareView : SeqSet Quest -> Location -> PlayerData -> CPlayer -> List (Html FrontendMsg)
 townMainSquareView expandedQuests location { questsProgress, questRewardShops } player =
     let
         locationQuestAllowed : Bool
@@ -1869,7 +1869,7 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
                             |> Maybe.withDefault False
                     )
 
-        quests : List Quest.Name
+        quests : List Quest
         quests =
             if locationQuestAllowed then
                 Quest.allForLocation location
@@ -1890,7 +1890,7 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
         hasMaxTicks =
             player.ticks >= Tick.limit
 
-        isQuestDone : Quest.Name -> Bool
+        isQuestDone : Quest -> Bool
         isQuestDone quest =
             questsProgress
                 |> SeqDict.get quest
@@ -1939,7 +1939,7 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
     ]
 
 
-questView : CPlayer -> SeqDict Quest.Name Quest.Progress -> SeqSet Quest.Name -> Quest.Name -> Html FrontendMsg
+questView : CPlayer -> SeqDict Quest Quest.Progress -> SeqSet Quest -> Quest -> Html FrontendMsg
 questView player questsProgress expandedQuests quest =
     case SeqDict.get quest questsProgress of
         Nothing ->
@@ -1963,7 +1963,7 @@ questView player questsProgress expandedQuests quest =
                 )
 
 
-collapsedQuestView : Quest.Progress -> Quest.Name -> List (Html FrontendMsg)
+collapsedQuestView : Quest.Progress -> Quest -> List (Html FrontendMsg)
 collapsedQuestView progress quest =
     let
         isDone : Bool
@@ -1986,7 +1986,7 @@ collapsedQuestView progress quest =
     ]
 
 
-expandedQuestView : CPlayer -> Quest.Progress -> SeqDict Quest.Name Quest.Progress -> Quest.Name -> List (Html FrontendMsg)
+expandedQuestView : CPlayer -> Quest.Progress -> SeqDict Quest Quest.Progress -> Quest -> List (Html FrontendMsg)
 expandedQuestView player progress questsProgress quest =
     let
         liText : String -> Html FrontendMsg
@@ -2005,7 +2005,7 @@ expandedQuestView player progress questsProgress quest =
         yellowLiText text =
             H.li [ HA.class "text-yellow" ] [ H.text text ]
 
-        questRequirements : List Quest.Name
+        questRequirements : List Quest
         questRequirements =
             Quest.questRequirements quest
 
@@ -2032,13 +2032,13 @@ expandedQuestView player progress questsProgress quest =
         hasMaxedTicks =
             player.ticks >= Tick.limit
 
-        isQuestDone : Quest.Name -> Bool
+        isQuestDone : Quest -> Bool
         isQuestDone q =
             SeqDict.get q questsProgress
                 |> Maybe.map (\q_ -> q_.ticksGiven >= Quest.ticksNeeded q)
                 |> Maybe.withDefault False
 
-        exclusiveQuests : List Quest.Name
+        exclusiveQuests : List Quest
         exclusiveQuests =
             Quest.exclusiveWith quest
 

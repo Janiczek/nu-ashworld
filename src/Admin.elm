@@ -12,7 +12,7 @@ import Data.Item.Kind as ItemKind
 import Data.Map
 import Data.NewChar as NewChar
 import Data.Perk as Perk
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill
 import Data.Vendor.Shop as Shop
 import Data.World as World

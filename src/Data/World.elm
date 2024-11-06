@@ -11,7 +11,7 @@ module Data.World exposing
 import Codec exposing (Codec)
 import Data.Player as Player exposing (Player, SPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Tick as Tick exposing (TickPerIntervalCurve)
 import Data.Vendor as Vendor exposing (Vendor)
 import Data.Vendor.Shop as Shop exposing (Shop)
@@ -43,11 +43,11 @@ type alias World =
     , tickFrequency : Time.Interval
     , tickPerIntervalCurve : TickPerIntervalCurve
     , vendorRestockFrequency : Time.Interval
-    , questsProgress : SeqDict Quest.Name (Dict PlayerName Int)
+    , questsProgress : SeqDict Quest (Dict PlayerName Int)
     , questRewardShops : SeqSet Shop
     , -- Which players have paid the item / caps requirement for a quest?
       -- (They'll be able to pause/unpause their progress on the quest for free)
-      questRequirementsPaid : SeqDict Quest.Name (Set PlayerName)
+      questRequirementsPaid : SeqDict Quest (Set PlayerName)
     }
 
 
@@ -149,7 +149,7 @@ codec =
         |> Codec.buildObject
 
 
-isQuestDone : World -> Quest.Name -> Bool
+isQuestDone : World -> Quest -> Bool
 isQuestDone world quest =
     world.questsProgress
         |> SeqDict.get quest
@@ -157,14 +157,14 @@ isQuestDone world quest =
         |> (\perPlayer -> isQuestDone_ perPlayer quest)
 
 
-isQuestDone_ : Dict PlayerName Int -> Quest.Name -> Bool
+isQuestDone_ : Dict PlayerName Int -> Quest -> Bool
 isQuestDone_ perPlayer quest =
     Dict.values perPlayer
         |> List.sum
         |> (\sum -> sum >= Quest.ticksNeeded quest)
 
 
-ticksGiven : Quest.Name -> PlayerName -> SeqDict Quest.Name (Dict PlayerName Int) -> Int
+ticksGiven : Quest -> PlayerName -> SeqDict Quest (Dict PlayerName Int) -> Int
 ticksGiven quest playerName questsProgress =
     questsProgress
         |> SeqDict.get quest

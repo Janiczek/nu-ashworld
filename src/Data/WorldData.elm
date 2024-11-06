@@ -19,7 +19,7 @@ import Data.Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Tick exposing (TickPerIntervalCurve)
 import Data.Vendor exposing (Vendor)
 import Data.Vendor.Shop exposing (Shop)
@@ -68,7 +68,7 @@ type alias PlayerData =
     , -- 1-based rank. The player's position (index) in the ladder is `this - 1`
       playerRank : Int
     , vendors : SeqDict Shop Vendor
-    , questsProgress : SeqDict Quest.Name Quest.Progress
+    , questsProgress : SeqDict Quest Quest.Progress
     , questRewardShops : SeqSet Shop
     }
 

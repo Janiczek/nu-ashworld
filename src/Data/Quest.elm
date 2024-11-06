@@ -1,9 +1,9 @@
 module Data.Quest exposing
     ( GlobalReward(..)
-    , Name(..)
     , PlayerRequirement(..)
     , PlayerReward(..)
     , Progress
+    , Quest(..)
     , SkillRequirement(..)
     , all
     , allForLocation
@@ -43,7 +43,7 @@ import SeqDict exposing (SeqDict)
 -}
 
 
-type Name
+type Quest
     = ArroyoKillEvilPlants
     | ArroyoFixWellForFeargus
     | ArroyoRescueNagorsDog
@@ -121,7 +121,7 @@ type Name
     | EnclaveReturnToMainland
 
 
-all : List Name
+all : List Quest
 all =
     [ ArroyoKillEvilPlants
     , ArroyoFixWellForFeargus
@@ -210,9 +210,9 @@ type alias Progress =
     }
 
 
-title : Name -> String
-title name =
-    case name of
+title : Quest -> String
+title quest =
+    case quest of
         ArroyoKillEvilPlants ->
             "Kill the evil plants that infest Hakunin's garden"
 
@@ -439,9 +439,9 @@ title name =
             "Return to the mainland"
 
 
-ticksNeeded : Name -> Int
-ticksNeeded name =
-    case name of
+ticksNeeded : Quest -> Int
+ticksNeeded quest =
+    case quest of
         ArroyoKillEvilPlants ->
             40
 
@@ -668,9 +668,9 @@ ticksNeeded name =
             100
 
 
-xpPerTickGiven : Name -> Int
-xpPerTickGiven name =
-    case name of
+xpPerTickGiven : Quest -> Int
+xpPerTickGiven quest =
+    case quest of
         ArroyoKillEvilPlants ->
             50
 
@@ -897,9 +897,9 @@ xpPerTickGiven name =
             1000
 
 
-location : Name -> Location
-location name =
-    case name of
+location : Quest -> Location
+location quest =
+    case quest of
         ArroyoKillEvilPlants ->
             Location.Arroyo
 
@@ -1126,11 +1126,11 @@ location name =
             Location.EnclavePlatform
 
 
-exclusiveWith : Name -> List Name
-exclusiveWith name =
+exclusiveWith : Quest -> List Quest
+exclusiveWith quest =
     -- if one of these is finished, the rest cannot be done
     -- advancing one impedes the rest (moving along a n-gon?)
-    case name of
+    case quest of
         ArroyoKillEvilPlants ->
             []
 
@@ -1375,10 +1375,10 @@ exclusiveWith name =
             []
 
 
-questRequirements : Name -> List Name
-questRequirements name =
+questRequirements : Quest -> List Quest
+questRequirements quest =
     -- quests exclusive with each other all count as completed if one is completed
-    case name of
+    case quest of
         ArroyoKillEvilPlants ->
             []
 
@@ -1618,7 +1618,7 @@ questRequirements name =
             ]
 
 
-locationQuestRequirements : Location -> List Name
+locationQuestRequirements : Location -> List Quest
 locationQuestRequirements loc =
     -- Some locations' quests are locked until certain quests are done
     case loc of
@@ -1680,7 +1680,7 @@ locationQuestRequirements loc =
             [ NCRRetrieveComputerParts ]
 
 
-forLocation : SeqDict Location (List Name)
+forLocation : SeqDict Location (List Quest)
 forLocation =
     List.foldl
         (\quest acc ->
@@ -1700,7 +1700,7 @@ forLocation =
         all
 
 
-allForLocation : Location -> List Name
+allForLocation : Location -> List Quest
 allForLocation loc =
     SeqDict.get loc forLocation
         |> Maybe.withDefault []
@@ -1743,9 +1743,9 @@ globalRewardTitle reward =
             "The game ends! Leaderboards are frozen, the winners are declared and a new world begins."
 
 
-globalRewards : Name -> List GlobalReward
-globalRewards name =
-    case name of
+globalRewards : Quest -> List GlobalReward
+globalRewards quest =
+    case quest of
         ArroyoKillEvilPlants ->
             [ NewItemsInStock { who = Shop.ArroyoHakunin, what = ItemKind.HealingPowder, amount = 4 } ]
 
@@ -2040,13 +2040,13 @@ playerRewardTitle reward =
             "You travel to the Enclave. This is what you wanted, right?"
 
 
-playerRewards : Name -> { rewards : List PlayerReward, ticksNeeded : Int }
-playerRewards name =
+playerRewards : Quest -> { rewards : List PlayerReward, ticksNeeded : Int }
+playerRewards quest =
     let
         mk rs t =
             { rewards = rs, ticksNeeded = t }
     in
-    case name of
+    case quest of
         ArroyoKillEvilPlants ->
             mk
                 [ ItemReward { what = ItemKind.ScoutHandbook, amount = 1 } ]
@@ -2544,9 +2544,9 @@ playerRequirementTitle req =
             "Caps: $" ++ String.fromInt amount
 
 
-playerRequirements : Name -> List PlayerRequirement
-playerRequirements name =
-    case name of
+playerRequirements : Quest -> List PlayerRequirement
+playerRequirements quest =
+    case quest of
         ArroyoKillEvilPlants ->
             []
 
@@ -2786,7 +2786,7 @@ playerRequirements name =
             []
 
 
-codec : Codec Name
+codec : Codec Quest
 codec =
     Codec.enum Codec.string
         [ ( "ArroyoKillEvilPlants", ArroyoKillEvilPlants )
@@ -2867,7 +2867,7 @@ codec =
         ]
 
 
-isExclusiveWith : Name -> Name -> Bool
+isExclusiveWith : Quest -> Quest -> Bool
 isExclusiveWith quest1 quest2 =
     exclusiveWith quest1
         |> List.member quest2
@@ -2958,7 +2958,7 @@ globalRewardCodec =
         |> Codec.buildCustom
 
 
-description : Name -> String
+description : Quest -> String
 description quest =
     case quest of
         ArroyoKillEvilPlants ->

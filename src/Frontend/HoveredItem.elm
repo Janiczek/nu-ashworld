@@ -3,7 +3,7 @@ module Frontend.HoveredItem exposing (HoveredItem(..), text)
 import Data.FightStrategy.Help as FightStrategyHelp
 import Data.Perk as Perk exposing (Perk)
 import Data.Perk.Requirement as PerkRequirement
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)

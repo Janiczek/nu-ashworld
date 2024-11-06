@@ -24,6 +24,7 @@ module TestHelpers exposing
     , usedAmmoFuzzer
     )
 
+import Data.Enemy as Enemy exposing (DropRequirement)
 import Data.Enemy.Type as EnemyType exposing (EnemyType)
 import Data.Fight exposing (Opponent)
 import Data.Fight.AimedShot as AimedShot
@@ -378,9 +379,21 @@ capsFuzzer =
     Fuzz.intRange 0 99999
 
 
-dropsFuzzer : Fuzzer (List Item)
+dropsFuzzer : Fuzzer (List ( Item, List DropRequirement ))
 dropsFuzzer =
-    Fuzz.list itemFuzzer
+    Fuzz.list (Fuzz.pair itemFuzzer (Fuzz.list dropRequirementFuzzer))
+
+
+dropRequirementFuzzer : Fuzzer DropRequirement
+dropRequirementFuzzer =
+    Fuzz.oneOf
+        [ Fuzz.map Enemy.RPerk perkFuzzer
+        ]
+
+
+perkFuzzer : Fuzzer Perk
+perkFuzzer =
+    Fuzz.oneOfValues Perk.all
 
 
 equippedArmorKindFuzzer : Fuzzer (Maybe ItemKind.Kind)

@@ -268,6 +268,7 @@ chanceToHitSuite =
                         , strength = 10
                         }
                     , attackerTraits = SeqSet.fromList [ Trait.OneHander ]
+                    , attackerItems = Dict.empty
                     , crippledArms = 0
                     , distanceHexes = 1
                     , equippedWeapon = Just ItemKind.AssaultRifle
@@ -344,6 +345,7 @@ chanceToHitArgsFuzzer :
         , attackerPerks : SeqDict Perk Int
         , attackerSpecial : Special
         , attackerTraits : SeqSet Trait
+        , attackerItems : Dict Item.Id Item
         , distanceHexes : Int
         , equippedWeapon : Maybe ItemKind.Kind
         , usedAmmo : Logic.UsedAmmo
@@ -353,11 +355,12 @@ chanceToHitArgsFuzzer :
         }
 chanceToHitArgsFuzzer =
     Fuzz.constant
-        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits distanceHexes equippedWeapon usedAmmo targetArmorClass attackStyle crippledArms ->
+        (\attackerAddedSkillPercentages attackerPerks attackerSpecial attackerTraits attackerItems distanceHexes equippedWeapon usedAmmo targetArmorClass attackStyle crippledArms ->
             { attackerAddedSkillPercentages = attackerAddedSkillPercentages
             , attackerPerks = attackerPerks
             , attackerSpecial = attackerSpecial
             , attackerTraits = attackerTraits
+            , attackerItems = attackerItems
             , distanceHexes = distanceHexes
             , equippedWeapon = equippedWeapon
             , usedAmmo = usedAmmo
@@ -370,6 +373,7 @@ chanceToHitArgsFuzzer =
         |> Fuzz.andMap TestHelpers.perksFuzzer
         |> Fuzz.andMap TestHelpers.specialFuzzer
         |> Fuzz.andMap TestHelpers.traitsFuzzer
+        |> Fuzz.andMap TestHelpers.itemsFuzzer
         |> Fuzz.andMap TestHelpers.distanceFuzzer
         |> Fuzz.andMap TestHelpers.equippedWeaponKindFuzzer
         |> Fuzz.andMap TestHelpers.usedAmmoFuzzer

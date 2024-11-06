@@ -6,7 +6,7 @@ module Data.Perk.Requirement exposing
     )
 
 import Data.Perk as Perk exposing (Perk(..))
-import Data.Quest as Quest
+import Data.Quest as Quest exposing (Quest)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import SeqDict exposing (SeqDict)
@@ -19,7 +19,7 @@ type Requirement
     | RSpecial Special.Type Int
     | RSpecialLT Special.Type Int
     | RSkill Skill Int
-    | RQuest Quest.Name
+    | RQuest Quest
 
 
 allApplicable :
@@ -28,7 +28,7 @@ allApplicable :
         , special : Special
         , addedSkillPercentages : SeqDict Skill Int
         , perks : SeqDict Perk Int
-        , questsDone : SeqSet Quest.Name
+        , questsDone : SeqSet Quest
     }
     ->
         { applicablePerks : List Perk
@@ -51,7 +51,7 @@ isApplicable :
         | level : Int
         , special : Special
         , addedSkillPercentages : SeqDict Skill Int
-        , questsDone : SeqSet Quest.Name
+        , questsDone : SeqSet Quest
     }
     -> Perk
     -> Bool
@@ -66,7 +66,7 @@ meetsRequirement :
             | level : Int
             , special : Special
             , addedSkillPercentages : SeqDict Skill Int
-            , questsDone : SeqSet Quest.Name
+            , questsDone : SeqSet Quest
         }
     -> Bool
 meetsRequirement req r =
