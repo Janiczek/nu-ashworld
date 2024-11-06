@@ -32,7 +32,7 @@ announcement!
 
 Current TODOs:
 
-- quest descriptions
+- quest completion flair text
 
 Next up: 
 
@@ -42,7 +42,6 @@ Next up:
 Later: 
 
 - item descriptions 
-, quest completion flair text
 - weapons - show strength requirement somewhere (item description)
 - don't forget to say something about K9 and Skynet Aim
 - tooltips around edge of screen - floating-ui.js?
