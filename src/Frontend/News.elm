@@ -32,8 +32,7 @@ announcement!
 
 Current TODOs:
 
-- skill descriptions
-- Fix bug with restocking vendors (Arroyo Hakunin having fuel cell controller?)
+- quest descriptions
 
 Next up: 
 
@@ -42,7 +41,6 @@ Next up:
 
 Later: 
 
-- quest descriptions
 - item descriptions 
 , quest completion flair text
 - weapons - show strength requirement somewhere (item description)

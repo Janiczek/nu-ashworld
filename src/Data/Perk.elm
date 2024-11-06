@@ -455,11 +455,8 @@ maxRank perk =
 codec : Codec Perk
 codec =
     Codec.custom
-        (\sharpshooterEncoder bonusHthDamageEncoder awarenessEncoder cautiousNatureEncoder comprehensionEncoder earlierSequenceEncoder fasterHealingEncoder hereAndNowEncoder nightVisionEncoder survivalistEncoder swiftLearnerEncoder thiefEncoder toughnessEncoder adrenalineRushEncoder bonusRangedDamageEncoder educatedEncoder fortuneFinderEncoder gamblerEncoder moreCriticalsEncoder negotiatorEncoder pathfinderEncoder quickRecoveryEncoder rangerEncoder salesmanEncoder betterCriticalsEncoder dodgerEncoder speakerEncoder actionBoyEncoder gainStrengthEncoder gainPerceptionEncoder gainEnduranceEncoder gainCharismaEncoder gainIntelligenceEncoder gainAgilityEncoder gainLuckEncoder hthEvadeEncoder lifegiverEncoder livingAnatomyEncoder masterThiefEncoder masterTraderEncoder medicEncoder mrFixitEncoder tagEncoder bonusHthAttacksEncoder bonusRateOfFireEncoder sniperEncoder slayerEncoder geckoSkinningEncoder value ->
+        (\bonusHthDamageEncoder awarenessEncoder cautiousNatureEncoder comprehensionEncoder earlierSequenceEncoder fasterHealingEncoder hereAndNowEncoder nightVisionEncoder survivalistEncoder swiftLearnerEncoder thiefEncoder toughnessEncoder adrenalineRushEncoder bonusRangedDamageEncoder educatedEncoder fortuneFinderEncoder gamblerEncoder moreCriticalsEncoder negotiatorEncoder pathfinderEncoder quickRecoveryEncoder rangerEncoder salesmanEncoder betterCriticalsEncoder dodgerEncoder sharpshooterEncoder speakerEncoder actionBoyEncoder gainStrengthEncoder gainPerceptionEncoder gainEnduranceEncoder gainCharismaEncoder gainIntelligenceEncoder gainAgilityEncoder gainLuckEncoder hthEvadeEncoder lifegiverEncoder livingAnatomyEncoder masterThiefEncoder masterTraderEncoder medicEncoder mrFixitEncoder tagEncoder bonusHthAttacksEncoder bonusRateOfFireEncoder sniperEncoder slayerEncoder geckoSkinningEncoder value ->
             case value of
-                Sharpshooter ->
-                    sharpshooterEncoder
-
                 BonusHthDamage ->
                     bonusHthDamageEncoder
 
@@ -535,6 +532,9 @@ codec =
                 Dodger ->
                     dodgerEncoder
 
+                Sharpshooter ->
+                    sharpshooterEncoder
+
                 Speaker ->
                     speakerEncoder
 
@@ -601,7 +601,6 @@ codec =
                 GeckoSkinning ->
                     geckoSkinningEncoder
         )
-        |> Codec.variant0 "Sharpshooter" Sharpshooter
         |> Codec.variant0 "BonusHthDamage" BonusHthDamage
         |> Codec.variant0 "Awareness" Awareness
         |> Codec.variant0 "CautiousNature" CautiousNature
@@ -627,6 +626,7 @@ codec =
         |> Codec.variant0 "Salesman" Salesman
         |> Codec.variant0 "BetterCriticals" BetterCriticals
         |> Codec.variant0 "Dodger" Dodger
+        |> Codec.variant0 "Sharpshooter" Sharpshooter
         |> Codec.variant0 "Speaker" Speaker
         |> Codec.variant0 "ActionBoy" ActionBoy
         |> Codec.variant0 "GainStrength" GainStrength

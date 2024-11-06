@@ -9,13 +9,14 @@ import Data.Auth as Auth
 import Data.Barter as Barter
 import Data.FightStrategy as FightStrategy
 import Data.Item.Kind as ItemKind
+import Data.Map
 import Data.NewChar as NewChar
 import Data.Perk as Perk
 import Data.Quest as Quest
 import Data.Skill as Skill
 import Data.Vendor.Shop as Shop
 import Data.World as World
-import Dict
+import Dict.ExtraExtra
 import Queue.Extra as Queue
 import Random
 import Time.ExtraExtra as Time
@@ -23,12 +24,9 @@ import Types exposing (AdminToBackend(..), BackendModel, ToBackend(..))
 
 
 backendModelCodec : Random.Seed -> Codec BackendModel
-backendModelCodec seed =
+backendModelCodec randomSeed =
     Codec.object BackendModel
-        |> Codec.field
-            "worlds"
-            .worlds
-            (Codec.map Dict.fromList Dict.toList (Codec.list (Codec.tuple Codec.string World.codec)))
+        |> Codec.field "worlds" .worlds (Dict.ExtraExtra.codec Codec.string World.codec)
         |> Codec.field "time" .time Time.posixCodec
         |> Codec.field
             "loggedInPlayers"
@@ -39,11 +37,8 @@ backendModelCodec seed =
             "lastTenToBackendMsgs"
             .lastTenToBackendMsgs
             (Queue.codec (Codec.triple Codec.string Codec.string toBackendMsgCodec))
-        |> Codec.field "randomSeed" .randomSeed (Codec.succeed seed)
-        |> Codec.field
-            "playerDataCache"
-            .playerDataCache
-            (Codec.map Dict.fromList Dict.toList (Codec.list (Codec.tuple Codec.string Codec.int)))
+        |> Codec.field "randomSeed" .randomSeed (Codec.succeed randomSeed)
+        |> Codec.field "playerDataCache" .playerDataCache (Dict.ExtraExtra.codec Codec.string Codec.int)
         |> Codec.buildObject
 
 
@@ -162,11 +157,7 @@ toBackendMsgCodec =
         |> Codec.variant1 "TagSkill" TagSkill Skill.codec
         |> Codec.variant1 "UseSkillPoints" UseSkillPoints Skill.codec
         |> Codec.variant1 "ChoosePerk" ChoosePerk Perk.codec
-        |> Codec.variant2
-            "MoveTo"
-            MoveTo
-            (Codec.tuple Codec.int Codec.int)
-            (Codec.set (Codec.tuple Codec.int Codec.int))
+        |> Codec.variant2 "MoveTo" MoveTo Data.Map.tileCoordsCodec (Codec.set Data.Map.tileCoordsCodec)
         |> Codec.variant1 "MessageWasRead" MessageWasRead Codec.int
         |> Codec.variant1 "RemoveMessage" RemoveMessage Codec.int
         |> Codec.variant0 "RemoveFightMessages" RemoveFightMessages
@@ -199,7 +190,8 @@ adminToBackendCodec =
         |> Codec.variant0 "ExportJson" ExportJson
         |> Codec.variant1 "ImportJson" ImportJson Codec.string
         |> Codec.variant2 "CreateNewWorld" CreateNewWorld Codec.string Codec.bool
-        |> Codec.variant1 "ChangeWorldSpeed"
+        |> Codec.variant1
+            "ChangeWorldSpeed"
             ChangeWorldSpeed
             (Codec.object (\world fast -> { world = world, fast = fast })
                 |> Codec.field "world" .world Codec.string

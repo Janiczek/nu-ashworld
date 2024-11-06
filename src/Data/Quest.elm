@@ -3075,7 +3075,9 @@ codec =
         |> Codec.variant0 "SanFranciscoFindNavCompPartForTanker" SanFranciscoFindNavCompPartForTanker
         |> Codec.variant0 "SanFranciscoFindVertibirdPlansForHubologists" SanFranciscoFindVertibirdPlansForHubologists
         |> Codec.variant0 "SanFranciscoFindVertibirdPlansForShi" SanFranciscoFindVertibirdPlansForShi
-        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel" SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
+        |> Codec.variant0
+            "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
+            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
         |> Codec.variant0 "SanFranciscoFindBadgersGirlfriendInsideShip" SanFranciscoFindBadgersGirlfriendInsideShip
         |> Codec.variant0 "SanFranciscoDefeatLoPanInRingForDragon" SanFranciscoDefeatLoPanInRingForDragon
         |> Codec.variant0 "SanFranciscoDefeatDragonInRingForLoPan" SanFranciscoDefeatDragonInRingForLoPan

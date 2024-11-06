@@ -350,11 +350,9 @@ description skill =
             "The skill of muscle-propelled ranged weapons, such as throwing knives, spears and grenades."
 
         FirstAid ->
-            -- Original: "General healing skill. Used to heal small cuts, abrasions and other minor ills. In game terms, the use of first aid can heal more hit points over time than just rest."
             "General healing skill. Used to heal small cuts, abrasions and other minor ills. Increases the percentage of HP healed over time (when you receive a new tick)."
 
         Doctor ->
-            -- Original: "The healing of major wounds and crippled limbs. Without this skill, it will take a much longer period of time to restore crippled limbs to use."
             "The healing of major wounds and crippled limbs. Increases the percentage of HP healed when you use ticks to heal."
 
         Sneak ->
