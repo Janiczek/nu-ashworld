@@ -207,34 +207,14 @@ valueCodec =
 
 operatorCodec : Codec Operator
 operatorCodec =
-    Codec.custom
-        (\lT_Encoder lTEEncoder eQ_Encoder nEEncoder gTEEncoder gT_Encoder value ->
-            case value of
-                LT_ ->
-                    lT_Encoder
-
-                LTE ->
-                    lTEEncoder
-
-                EQ_ ->
-                    eQ_Encoder
-
-                NE ->
-                    nEEncoder
-
-                GTE ->
-                    gTEEncoder
-
-                GT_ ->
-                    gT_Encoder
-        )
-        |> Codec.variant0 "LT_" LT_
-        |> Codec.variant0 "LTE" LTE
-        |> Codec.variant0 "EQ_" EQ_
-        |> Codec.variant0 "NE" NE
-        |> Codec.variant0 "GTE" GTE
-        |> Codec.variant0 "GT_" GT_
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "LT_", LT_ )
+        , ( "LTE", LTE )
+        , ( "EQ_", EQ_ )
+        , ( "NE", NE )
+        , ( "GTE", GTE )
+        , ( "GT_", GT_ )
+        ]
 
 
 commandCodec : Codec Command

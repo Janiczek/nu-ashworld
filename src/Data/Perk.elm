@@ -454,202 +454,56 @@ maxRank perk =
 
 codec : Codec Perk
 codec =
-    Codec.custom
-        (\bonusHthDamageEncoder awarenessEncoder cautiousNatureEncoder comprehensionEncoder earlierSequenceEncoder fasterHealingEncoder hereAndNowEncoder nightVisionEncoder survivalistEncoder swiftLearnerEncoder thiefEncoder toughnessEncoder adrenalineRushEncoder bonusRangedDamageEncoder educatedEncoder fortuneFinderEncoder gamblerEncoder moreCriticalsEncoder negotiatorEncoder pathfinderEncoder quickRecoveryEncoder rangerEncoder salesmanEncoder betterCriticalsEncoder dodgerEncoder sharpshooterEncoder speakerEncoder actionBoyEncoder gainStrengthEncoder gainPerceptionEncoder gainEnduranceEncoder gainCharismaEncoder gainIntelligenceEncoder gainAgilityEncoder gainLuckEncoder hthEvadeEncoder lifegiverEncoder livingAnatomyEncoder masterThiefEncoder masterTraderEncoder medicEncoder mrFixitEncoder tagEncoder bonusHthAttacksEncoder bonusRateOfFireEncoder sniperEncoder slayerEncoder geckoSkinningEncoder value ->
-            case value of
-                BonusHthDamage ->
-                    bonusHthDamageEncoder
-
-                Awareness ->
-                    awarenessEncoder
-
-                CautiousNature ->
-                    cautiousNatureEncoder
-
-                Comprehension ->
-                    comprehensionEncoder
-
-                EarlierSequence ->
-                    earlierSequenceEncoder
-
-                FasterHealing ->
-                    fasterHealingEncoder
-
-                HereAndNow ->
-                    hereAndNowEncoder
-
-                NightVision ->
-                    nightVisionEncoder
-
-                Survivalist ->
-                    survivalistEncoder
-
-                SwiftLearner ->
-                    swiftLearnerEncoder
-
-                Thief ->
-                    thiefEncoder
-
-                Toughness ->
-                    toughnessEncoder
-
-                AdrenalineRush ->
-                    adrenalineRushEncoder
-
-                BonusRangedDamage ->
-                    bonusRangedDamageEncoder
-
-                Educated ->
-                    educatedEncoder
-
-                FortuneFinder ->
-                    fortuneFinderEncoder
-
-                Gambler ->
-                    gamblerEncoder
-
-                MoreCriticals ->
-                    moreCriticalsEncoder
-
-                Negotiator ->
-                    negotiatorEncoder
-
-                Pathfinder ->
-                    pathfinderEncoder
-
-                QuickRecovery ->
-                    quickRecoveryEncoder
-
-                Ranger ->
-                    rangerEncoder
-
-                Salesman ->
-                    salesmanEncoder
-
-                BetterCriticals ->
-                    betterCriticalsEncoder
-
-                Dodger ->
-                    dodgerEncoder
-
-                Sharpshooter ->
-                    sharpshooterEncoder
-
-                Speaker ->
-                    speakerEncoder
-
-                ActionBoy ->
-                    actionBoyEncoder
-
-                GainStrength ->
-                    gainStrengthEncoder
-
-                GainPerception ->
-                    gainPerceptionEncoder
-
-                GainEndurance ->
-                    gainEnduranceEncoder
-
-                GainCharisma ->
-                    gainCharismaEncoder
-
-                GainIntelligence ->
-                    gainIntelligenceEncoder
-
-                GainAgility ->
-                    gainAgilityEncoder
-
-                GainLuck ->
-                    gainLuckEncoder
-
-                HthEvade ->
-                    hthEvadeEncoder
-
-                Lifegiver ->
-                    lifegiverEncoder
-
-                LivingAnatomy ->
-                    livingAnatomyEncoder
-
-                MasterThief ->
-                    masterThiefEncoder
-
-                MasterTrader ->
-                    masterTraderEncoder
-
-                Medic ->
-                    medicEncoder
-
-                MrFixit ->
-                    mrFixitEncoder
-
-                Tag ->
-                    tagEncoder
-
-                BonusHthAttacks ->
-                    bonusHthAttacksEncoder
-
-                BonusRateOfFire ->
-                    bonusRateOfFireEncoder
-
-                Sniper ->
-                    sniperEncoder
-
-                Slayer ->
-                    slayerEncoder
-
-                GeckoSkinning ->
-                    geckoSkinningEncoder
-        )
-        |> Codec.variant0 "BonusHthDamage" BonusHthDamage
-        |> Codec.variant0 "Awareness" Awareness
-        |> Codec.variant0 "CautiousNature" CautiousNature
-        |> Codec.variant0 "Comprehension" Comprehension
-        |> Codec.variant0 "EarlierSequence" EarlierSequence
-        |> Codec.variant0 "FasterHealing" FasterHealing
-        |> Codec.variant0 "HereAndNow" HereAndNow
-        |> Codec.variant0 "NightVision" NightVision
-        |> Codec.variant0 "Survivalist" Survivalist
-        |> Codec.variant0 "SwiftLearner" SwiftLearner
-        |> Codec.variant0 "Thief" Thief
-        |> Codec.variant0 "Toughness" Toughness
-        |> Codec.variant0 "AdrenalineRush" AdrenalineRush
-        |> Codec.variant0 "BonusRangedDamage" BonusRangedDamage
-        |> Codec.variant0 "Educated" Educated
-        |> Codec.variant0 "FortuneFinder" FortuneFinder
-        |> Codec.variant0 "Gambler" Gambler
-        |> Codec.variant0 "MoreCriticals" MoreCriticals
-        |> Codec.variant0 "Negotiator" Negotiator
-        |> Codec.variant0 "Pathfinder" Pathfinder
-        |> Codec.variant0 "QuickRecovery" QuickRecovery
-        |> Codec.variant0 "Ranger" Ranger
-        |> Codec.variant0 "Salesman" Salesman
-        |> Codec.variant0 "BetterCriticals" BetterCriticals
-        |> Codec.variant0 "Dodger" Dodger
-        |> Codec.variant0 "Sharpshooter" Sharpshooter
-        |> Codec.variant0 "Speaker" Speaker
-        |> Codec.variant0 "ActionBoy" ActionBoy
-        |> Codec.variant0 "GainStrength" GainStrength
-        |> Codec.variant0 "GainPerception" GainPerception
-        |> Codec.variant0 "GainEndurance" GainEndurance
-        |> Codec.variant0 "GainCharisma" GainCharisma
-        |> Codec.variant0 "GainIntelligence" GainIntelligence
-        |> Codec.variant0 "GainAgility" GainAgility
-        |> Codec.variant0 "GainLuck" GainLuck
-        |> Codec.variant0 "HthEvade" HthEvade
-        |> Codec.variant0 "Lifegiver" Lifegiver
-        |> Codec.variant0 "LivingAnatomy" LivingAnatomy
-        |> Codec.variant0 "MasterThief" MasterThief
-        |> Codec.variant0 "MasterTrader" MasterTrader
-        |> Codec.variant0 "Medic" Medic
-        |> Codec.variant0 "MrFixit" MrFixit
-        |> Codec.variant0 "Tag" Tag
-        |> Codec.variant0 "BonusHthAttacks" BonusHthAttacks
-        |> Codec.variant0 "BonusRateOfFire" BonusRateOfFire
-        |> Codec.variant0 "Sniper" Sniper
-        |> Codec.variant0 "Slayer" Slayer
-        |> Codec.variant0 "GeckoSkinning" GeckoSkinning
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "BonusHthDamage", BonusHthDamage )
+        , ( "Awareness", Awareness )
+        , ( "CautiousNature", CautiousNature )
+        , ( "Comprehension", Comprehension )
+        , ( "EarlierSequence", EarlierSequence )
+        , ( "FasterHealing", FasterHealing )
+        , ( "HereAndNow", HereAndNow )
+        , ( "NightVision", NightVision )
+        , ( "Survivalist", Survivalist )
+        , ( "SwiftLearner", SwiftLearner )
+        , ( "Thief", Thief )
+        , ( "Toughness", Toughness )
+        , ( "AdrenalineRush", AdrenalineRush )
+        , ( "BonusRangedDamage", BonusRangedDamage )
+        , ( "Educated", Educated )
+        , ( "FortuneFinder", FortuneFinder )
+        , ( "Gambler", Gambler )
+        , ( "MoreCriticals", MoreCriticals )
+        , ( "Negotiator", Negotiator )
+        , ( "Pathfinder", Pathfinder )
+        , ( "QuickRecovery", QuickRecovery )
+        , ( "Ranger", Ranger )
+        , ( "Salesman", Salesman )
+        , ( "BetterCriticals", BetterCriticals )
+        , ( "Dodger", Dodger )
+        , ( "Sharpshooter", Sharpshooter )
+        , ( "Speaker", Speaker )
+        , ( "ActionBoy", ActionBoy )
+        , ( "GainStrength", GainStrength )
+        , ( "GainPerception", GainPerception )
+        , ( "GainEndurance", GainEndurance )
+        , ( "GainCharisma", GainCharisma )
+        , ( "GainIntelligence", GainIntelligence )
+        , ( "GainAgility", GainAgility )
+        , ( "GainLuck", GainLuck )
+        , ( "HthEvade", HthEvade )
+        , ( "Lifegiver", Lifegiver )
+        , ( "LivingAnatomy", LivingAnatomy )
+        , ( "MasterThief", MasterThief )
+        , ( "MasterTrader", MasterTrader )
+        , ( "Medic", Medic )
+        , ( "MrFixit", MrFixit )
+        , ( "Tag", Tag )
+        , ( "BonusHthAttacks", BonusHthAttacks )
+        , ( "BonusRateOfFire", BonusRateOfFire )
+        , ( "Sniper", Sniper )
+        , ( "Slayer", Slayer )
+        , ( "GeckoSkinning", GeckoSkinning )
+        ]
 
 
 rank : Perk -> SeqDict Perk Int -> Int

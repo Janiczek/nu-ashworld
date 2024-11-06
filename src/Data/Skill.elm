@@ -60,82 +60,26 @@ all =
 
 codec : Codec Skill
 codec =
-    Codec.custom
-        (\smallGunsEncoder bigGunsEncoder energyWeaponsEncoder unarmedEncoder meleeWeaponsEncoder throwingEncoder firstAidEncoder doctorEncoder sneakEncoder lockpickEncoder stealEncoder trapsEncoder scienceEncoder repairEncoder speechEncoder barterEncoder gamblingEncoder outdoorsmanEncoder value ->
-            case value of
-                SmallGuns ->
-                    smallGunsEncoder
-
-                BigGuns ->
-                    bigGunsEncoder
-
-                EnergyWeapons ->
-                    energyWeaponsEncoder
-
-                Unarmed ->
-                    unarmedEncoder
-
-                MeleeWeapons ->
-                    meleeWeaponsEncoder
-
-                Throwing ->
-                    throwingEncoder
-
-                FirstAid ->
-                    firstAidEncoder
-
-                Doctor ->
-                    doctorEncoder
-
-                Sneak ->
-                    sneakEncoder
-
-                Lockpick ->
-                    lockpickEncoder
-
-                Steal ->
-                    stealEncoder
-
-                Traps ->
-                    trapsEncoder
-
-                Science ->
-                    scienceEncoder
-
-                Repair ->
-                    repairEncoder
-
-                Speech ->
-                    speechEncoder
-
-                Barter ->
-                    barterEncoder
-
-                Gambling ->
-                    gamblingEncoder
-
-                Outdoorsman ->
-                    outdoorsmanEncoder
-        )
-        |> Codec.variant0 "SmallGuns" SmallGuns
-        |> Codec.variant0 "BigGuns" BigGuns
-        |> Codec.variant0 "EnergyWeapons" EnergyWeapons
-        |> Codec.variant0 "Unarmed" Unarmed
-        |> Codec.variant0 "MeleeWeapons" MeleeWeapons
-        |> Codec.variant0 "Throwing" Throwing
-        |> Codec.variant0 "FirstAid" FirstAid
-        |> Codec.variant0 "Doctor" Doctor
-        |> Codec.variant0 "Sneak" Sneak
-        |> Codec.variant0 "Lockpick" Lockpick
-        |> Codec.variant0 "Steal" Steal
-        |> Codec.variant0 "Traps" Traps
-        |> Codec.variant0 "Science" Science
-        |> Codec.variant0 "Repair" Repair
-        |> Codec.variant0 "Speech" Speech
-        |> Codec.variant0 "Barter" Barter
-        |> Codec.variant0 "Gambling" Gambling
-        |> Codec.variant0 "Outdoorsman" Outdoorsman
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "SmallGuns", SmallGuns )
+        , ( "BigGuns", BigGuns )
+        , ( "EnergyWeapons", EnergyWeapons )
+        , ( "Unarmed", Unarmed )
+        , ( "MeleeWeapons", MeleeWeapons )
+        , ( "Throwing", Throwing )
+        , ( "FirstAid", FirstAid )
+        , ( "Doctor", Doctor )
+        , ( "Sneak", Sneak )
+        , ( "Lockpick", Lockpick )
+        , ( "Steal", Steal )
+        , ( "Traps", Traps )
+        , ( "Science", Science )
+        , ( "Repair", Repair )
+        , ( "Speech", Speech )
+        , ( "Barter", Barter )
+        , ( "Gambling", Gambling )
+        , ( "Outdoorsman", Outdoorsman )
+        ]
 
 
 name : Skill -> String

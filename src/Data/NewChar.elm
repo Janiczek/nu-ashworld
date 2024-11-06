@@ -161,27 +161,10 @@ codec =
 
 creationErrorCodec : Codec CreationError
 creationErrorCodec =
-    Codec.custom
-        (\doesNotHaveThreeTaggedSkillsEncoder hasSpecialPointsLeftEncoder usedMoreSpecialPointsThanAvailableEncoder hasSpecialOutOfRangeEncoder hasMoreThanTwoTraitsEncoder value ->
-            case value of
-                DoesNotHaveThreeTaggedSkills ->
-                    doesNotHaveThreeTaggedSkillsEncoder
-
-                HasSpecialPointsLeft ->
-                    hasSpecialPointsLeftEncoder
-
-                UsedMoreSpecialPointsThanAvailable ->
-                    usedMoreSpecialPointsThanAvailableEncoder
-
-                HasSpecialOutOfRange ->
-                    hasSpecialOutOfRangeEncoder
-
-                HasMoreThanTwoTraits ->
-                    hasMoreThanTwoTraitsEncoder
-        )
-        |> Codec.variant0 "DoesNotHaveThreeTaggedSkills" DoesNotHaveThreeTaggedSkills
-        |> Codec.variant0 "HasSpecialPointsLeft" HasSpecialPointsLeft
-        |> Codec.variant0 "UsedMoreSpecialPointsThanAvailable" UsedMoreSpecialPointsThanAvailable
-        |> Codec.variant0 "HasSpecialOutOfRange" HasSpecialOutOfRange
-        |> Codec.variant0 "HasMoreThanTwoTraits" HasMoreThanTwoTraits
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "DoesNotHaveThreeTaggedSkills", DoesNotHaveThreeTaggedSkills )
+        , ( "HasSpecialPointsLeft", HasSpecialPointsLeft )
+        , ( "UsedMoreSpecialPointsThanAvailable", UsedMoreSpecialPointsThanAvailable )
+        , ( "HasSpecialOutOfRange", HasSpecialOutOfRange )
+        , ( "HasMoreThanTwoTraits", HasMoreThanTwoTraits )
+        ]

@@ -440,394 +440,104 @@ isHealing kind =
 
 codec : Codec Kind
 codec =
-    Codec.custom
-        (\beerEncoder fruitEncoder healingPowderEncoder stimpakEncoder superStimpakEncoder bigBookOfScienceEncoder deansElectronicsEncoder firstAidBookEncoder gunsAndBulletsEncoder scoutHandbookEncoder robesEncoder leatherJacketEncoder leatherArmorEncoder metalArmorEncoder teslaArmorEncoder combatArmorEncoder combatArmorMk2Encoder powerArmorEncoder powerFistEncoder megaPowerFistEncoder cattleProdEncoder superCattleProdEncoder knifeEncoder wakizashiEncoder littleJesusEncoder ripperEncoder superSledgeEncoder pistol223Encoder mauser9mmEncoder pistol14mmEncoder needlerPistolEncoder gaussPistolEncoder smg10mmEncoder hkP90cEncoder assaultRifleEncoder expandedAssaultRifleEncoder huntingRifleEncoder scopedHuntingRifleEncoder redRyderLEBBGunEncoder sniperRifleEncoder gaussRifleEncoder combatShotgunEncoder hkCawsEncoder pancorJackhammerEncoder shotgunEncoder sawedOffShotgunEncoder minigunEncoder bozarEncoder rocketLauncherEncoder laserPistolEncoder magnetoLaserPistolEncoder pulsePistolEncoder gatlingLaserEncoder laserRifleEncoder laserRifleExtCapEncoder plasmaRifleEncoder turboPlasmaRifleEncoder pulseRifleEncoder flareEncoder fragGrenadeEncoder bBAmmoEncoder smallEnergyCellEncoder fmj223Encoder ap5mmEncoder mm9Encoder ball9mmEncoder ap10mmEncoder ap14mmEncoder explosiveRocketEncoder rocketApEncoder hnNeedlerCartridgeEncoder hnApNeedlerCartridgeEncoder shotgunShellEncoder jhp10mmEncoder jhp5mmEncoder microfusionCellEncoder ec2mmEncoder toolEncoder superToolKitEncoder fuelCellRegulatorEncoder fuelCellControllerEncoder lockPicksEncoder electronicLockpickEncoder abnormalBrainEncoder chimpanzeeBrainEncoder humanBrainEncoder cyberneticBrainEncoder gECKEncoder skynetAimEncoder motionSensorEncoder k9Encoder meatJerkyEncoder tankerFobEncoder silverGeckoPeltEncoder goldenGeckoPeltEncoder fireGeckoPeltEncoder value ->
-            case value of
-                Beer ->
-                    beerEncoder
-
-                Fruit ->
-                    fruitEncoder
-
-                HealingPowder ->
-                    healingPowderEncoder
-
-                Stimpak ->
-                    stimpakEncoder
-
-                SuperStimpak ->
-                    superStimpakEncoder
-
-                BigBookOfScience ->
-                    bigBookOfScienceEncoder
-
-                DeansElectronics ->
-                    deansElectronicsEncoder
-
-                FirstAidBook ->
-                    firstAidBookEncoder
-
-                GunsAndBullets ->
-                    gunsAndBulletsEncoder
-
-                ScoutHandbook ->
-                    scoutHandbookEncoder
-
-                Robes ->
-                    robesEncoder
-
-                LeatherJacket ->
-                    leatherJacketEncoder
-
-                LeatherArmor ->
-                    leatherArmorEncoder
-
-                MetalArmor ->
-                    metalArmorEncoder
-
-                TeslaArmor ->
-                    teslaArmorEncoder
-
-                CombatArmor ->
-                    combatArmorEncoder
-
-                CombatArmorMk2 ->
-                    combatArmorMk2Encoder
-
-                PowerArmor ->
-                    powerArmorEncoder
-
-                PowerFist ->
-                    powerFistEncoder
-
-                MegaPowerFist ->
-                    megaPowerFistEncoder
-
-                CattleProd ->
-                    cattleProdEncoder
-
-                SuperCattleProd ->
-                    superCattleProdEncoder
-
-                Knife ->
-                    knifeEncoder
-
-                Wakizashi ->
-                    wakizashiEncoder
-
-                LittleJesus ->
-                    littleJesusEncoder
-
-                Ripper ->
-                    ripperEncoder
-
-                SuperSledge ->
-                    superSledgeEncoder
-
-                Pistol223 ->
-                    pistol223Encoder
-
-                Mauser9mm ->
-                    mauser9mmEncoder
-
-                Pistol14mm ->
-                    pistol14mmEncoder
-
-                NeedlerPistol ->
-                    needlerPistolEncoder
-
-                GaussPistol ->
-                    gaussPistolEncoder
-
-                Smg10mm ->
-                    smg10mmEncoder
-
-                HkP90c ->
-                    hkP90cEncoder
-
-                AssaultRifle ->
-                    assaultRifleEncoder
-
-                ExpandedAssaultRifle ->
-                    expandedAssaultRifleEncoder
-
-                HuntingRifle ->
-                    huntingRifleEncoder
-
-                ScopedHuntingRifle ->
-                    scopedHuntingRifleEncoder
-
-                RedRyderLEBBGun ->
-                    redRyderLEBBGunEncoder
-
-                SniperRifle ->
-                    sniperRifleEncoder
-
-                GaussRifle ->
-                    gaussRifleEncoder
-
-                CombatShotgun ->
-                    combatShotgunEncoder
-
-                HkCaws ->
-                    hkCawsEncoder
-
-                PancorJackhammer ->
-                    pancorJackhammerEncoder
-
-                Shotgun ->
-                    shotgunEncoder
-
-                SawedOffShotgun ->
-                    sawedOffShotgunEncoder
-
-                Minigun ->
-                    minigunEncoder
-
-                Bozar ->
-                    bozarEncoder
-
-                RocketLauncher ->
-                    rocketLauncherEncoder
-
-                LaserPistol ->
-                    laserPistolEncoder
-
-                MagnetoLaserPistol ->
-                    magnetoLaserPistolEncoder
-
-                PulsePistol ->
-                    pulsePistolEncoder
-
-                GatlingLaser ->
-                    gatlingLaserEncoder
-
-                LaserRifle ->
-                    laserRifleEncoder
-
-                LaserRifleExtCap ->
-                    laserRifleExtCapEncoder
-
-                PlasmaRifle ->
-                    plasmaRifleEncoder
-
-                TurboPlasmaRifle ->
-                    turboPlasmaRifleEncoder
-
-                PulseRifle ->
-                    pulseRifleEncoder
-
-                Flare ->
-                    flareEncoder
-
-                FragGrenade ->
-                    fragGrenadeEncoder
-
-                BBAmmo ->
-                    bBAmmoEncoder
-
-                SmallEnergyCell ->
-                    smallEnergyCellEncoder
-
-                Fmj223 ->
-                    fmj223Encoder
-
-                Ap5mm ->
-                    ap5mmEncoder
-
-                Mm9 ->
-                    mm9Encoder
-
-                Ball9mm ->
-                    ball9mmEncoder
-
-                Ap10mm ->
-                    ap10mmEncoder
-
-                Ap14mm ->
-                    ap14mmEncoder
-
-                ExplosiveRocket ->
-                    explosiveRocketEncoder
-
-                RocketAp ->
-                    rocketApEncoder
-
-                HnNeedlerCartridge ->
-                    hnNeedlerCartridgeEncoder
-
-                HnApNeedlerCartridge ->
-                    hnApNeedlerCartridgeEncoder
-
-                ShotgunShell ->
-                    shotgunShellEncoder
-
-                Jhp10mm ->
-                    jhp10mmEncoder
-
-                Jhp5mm ->
-                    jhp5mmEncoder
-
-                MicrofusionCell ->
-                    microfusionCellEncoder
-
-                Ec2mm ->
-                    ec2mmEncoder
-
-                Tool ->
-                    toolEncoder
-
-                SuperToolKit ->
-                    superToolKitEncoder
-
-                FuelCellRegulator ->
-                    fuelCellRegulatorEncoder
-
-                FuelCellController ->
-                    fuelCellControllerEncoder
-
-                LockPicks ->
-                    lockPicksEncoder
-
-                ElectronicLockpick ->
-                    electronicLockpickEncoder
-
-                AbnormalBrain ->
-                    abnormalBrainEncoder
-
-                ChimpanzeeBrain ->
-                    chimpanzeeBrainEncoder
-
-                HumanBrain ->
-                    humanBrainEncoder
-
-                CyberneticBrain ->
-                    cyberneticBrainEncoder
-
-                GECK ->
-                    gECKEncoder
-
-                SkynetAim ->
-                    skynetAimEncoder
-
-                MotionSensor ->
-                    motionSensorEncoder
-
-                K9 ->
-                    k9Encoder
-
-                MeatJerky ->
-                    meatJerkyEncoder
-
-                TankerFob ->
-                    tankerFobEncoder
-
-                SilverGeckoPelt ->
-                    silverGeckoPeltEncoder
-
-                GoldenGeckoPelt ->
-                    goldenGeckoPeltEncoder
-
-                FireGeckoPelt ->
-                    fireGeckoPeltEncoder
-        )
-        |> Codec.variant0 "Beer" Beer
-        |> Codec.variant0 "Fruit" Fruit
-        |> Codec.variant0 "HealingPowder" HealingPowder
-        |> Codec.variant0 "Stimpak" Stimpak
-        |> Codec.variant0 "SuperStimpak" SuperStimpak
-        |> Codec.variant0 "BigBookOfScience" BigBookOfScience
-        |> Codec.variant0 "DeansElectronics" DeansElectronics
-        |> Codec.variant0 "FirstAidBook" FirstAidBook
-        |> Codec.variant0 "GunsAndBullets" GunsAndBullets
-        |> Codec.variant0 "ScoutHandbook" ScoutHandbook
-        |> Codec.variant0 "Robes" Robes
-        |> Codec.variant0 "LeatherJacket" LeatherJacket
-        |> Codec.variant0 "LeatherArmor" LeatherArmor
-        |> Codec.variant0 "MetalArmor" MetalArmor
-        |> Codec.variant0 "TeslaArmor" TeslaArmor
-        |> Codec.variant0 "CombatArmor" CombatArmor
-        |> Codec.variant0 "CombatArmorMk2" CombatArmorMk2
-        |> Codec.variant0 "PowerArmor" PowerArmor
-        |> Codec.variant0 "PowerFist" PowerFist
-        |> Codec.variant0 "MegaPowerFist" MegaPowerFist
-        |> Codec.variant0 "CattleProd" CattleProd
-        |> Codec.variant0 "SuperCattleProd" SuperCattleProd
-        |> Codec.variant0 "Knife" Knife
-        |> Codec.variant0 "Wakizashi" Wakizashi
-        |> Codec.variant0 "LittleJesus" LittleJesus
-        |> Codec.variant0 "Ripper" Ripper
-        |> Codec.variant0 "SuperSledge" SuperSledge
-        |> Codec.variant0 "Pistol223" Pistol223
-        |> Codec.variant0 "Mauser9mm" Mauser9mm
-        |> Codec.variant0 "Pistol14mm" Pistol14mm
-        |> Codec.variant0 "NeedlerPistol" NeedlerPistol
-        |> Codec.variant0 "GaussPistol" GaussPistol
-        |> Codec.variant0 "Smg10mm" Smg10mm
-        |> Codec.variant0 "HkP90c" HkP90c
-        |> Codec.variant0 "AssaultRifle" AssaultRifle
-        |> Codec.variant0 "ExpandedAssaultRifle" ExpandedAssaultRifle
-        |> Codec.variant0 "HuntingRifle" HuntingRifle
-        |> Codec.variant0 "ScopedHuntingRifle" ScopedHuntingRifle
-        |> Codec.variant0 "RedRyderLEBBGun" RedRyderLEBBGun
-        |> Codec.variant0 "SniperRifle" SniperRifle
-        |> Codec.variant0 "GaussRifle" GaussRifle
-        |> Codec.variant0 "CombatShotgun" CombatShotgun
-        |> Codec.variant0 "HkCaws" HkCaws
-        |> Codec.variant0 "PancorJackhammer" PancorJackhammer
-        |> Codec.variant0 "Shotgun" Shotgun
-        |> Codec.variant0 "SawedOffShotgun" SawedOffShotgun
-        |> Codec.variant0 "Minigun" Minigun
-        |> Codec.variant0 "Bozar" Bozar
-        |> Codec.variant0 "RocketLauncher" RocketLauncher
-        |> Codec.variant0 "LaserPistol" LaserPistol
-        |> Codec.variant0 "MagnetoLaserPistol" MagnetoLaserPistol
-        |> Codec.variant0 "PulsePistol" PulsePistol
-        |> Codec.variant0 "GatlingLaser" GatlingLaser
-        |> Codec.variant0 "LaserRifle" LaserRifle
-        |> Codec.variant0 "LaserRifleExtCap" LaserRifleExtCap
-        |> Codec.variant0 "PlasmaRifle" PlasmaRifle
-        |> Codec.variant0 "TurboPlasmaRifle" TurboPlasmaRifle
-        |> Codec.variant0 "PulseRifle" PulseRifle
-        |> Codec.variant0 "Flare" Flare
-        |> Codec.variant0 "FragGrenade" FragGrenade
-        |> Codec.variant0 "BBAmmo" BBAmmo
-        |> Codec.variant0 "SmallEnergyCell" SmallEnergyCell
-        |> Codec.variant0 "Fmj223" Fmj223
-        |> Codec.variant0 "Ap5mm" Ap5mm
-        |> Codec.variant0 "Mm9" Mm9
-        |> Codec.variant0 "Ball9mm" Ball9mm
-        |> Codec.variant0 "Ap10mm" Ap10mm
-        |> Codec.variant0 "Ap14mm" Ap14mm
-        |> Codec.variant0 "ExplosiveRocket" ExplosiveRocket
-        |> Codec.variant0 "RocketAp" RocketAp
-        |> Codec.variant0 "HnNeedlerCartridge" HnNeedlerCartridge
-        |> Codec.variant0 "HnApNeedlerCartridge" HnApNeedlerCartridge
-        |> Codec.variant0 "ShotgunShell" ShotgunShell
-        |> Codec.variant0 "Jhp10mm" Jhp10mm
-        |> Codec.variant0 "Jhp5mm" Jhp5mm
-        |> Codec.variant0 "MicrofusionCell" MicrofusionCell
-        |> Codec.variant0 "Ec2mm" Ec2mm
-        |> Codec.variant0 "Tool" Tool
-        |> Codec.variant0 "SuperToolKit" SuperToolKit
-        |> Codec.variant0 "FuelCellRegulator" FuelCellRegulator
-        |> Codec.variant0 "FuelCellController" FuelCellController
-        |> Codec.variant0 "LockPicks" LockPicks
-        |> Codec.variant0 "ElectronicLockpick" ElectronicLockpick
-        |> Codec.variant0 "AbnormalBrain" AbnormalBrain
-        |> Codec.variant0 "ChimpanzeeBrain" ChimpanzeeBrain
-        |> Codec.variant0 "HumanBrain" HumanBrain
-        |> Codec.variant0 "CyberneticBrain" CyberneticBrain
-        |> Codec.variant0 "GECK" GECK
-        |> Codec.variant0 "SkynetAim" SkynetAim
-        |> Codec.variant0 "MotionSensor" MotionSensor
-        |> Codec.variant0 "K9" K9
-        |> Codec.variant0 "MeatJerky" MeatJerky
-        |> Codec.variant0 "TankerFob" TankerFob
-        |> Codec.variant0 "SilverGeckoPelt" SilverGeckoPelt
-        |> Codec.variant0 "GoldenGeckoPelt" GoldenGeckoPelt
-        |> Codec.variant0 "FireGeckoPelt" FireGeckoPelt
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Beer", Beer )
+        , ( "Fruit", Fruit )
+        , ( "HealingPowder", HealingPowder )
+        , ( "Stimpak", Stimpak )
+        , ( "SuperStimpak", SuperStimpak )
+        , ( "BigBookOfScience", BigBookOfScience )
+        , ( "DeansElectronics", DeansElectronics )
+        , ( "FirstAidBook", FirstAidBook )
+        , ( "GunsAndBullets", GunsAndBullets )
+        , ( "ScoutHandbook", ScoutHandbook )
+        , ( "Robes", Robes )
+        , ( "LeatherJacket", LeatherJacket )
+        , ( "LeatherArmor", LeatherArmor )
+        , ( "MetalArmor", MetalArmor )
+        , ( "TeslaArmor", TeslaArmor )
+        , ( "CombatArmor", CombatArmor )
+        , ( "CombatArmorMk2", CombatArmorMk2 )
+        , ( "PowerArmor", PowerArmor )
+        , ( "PowerFist", PowerFist )
+        , ( "MegaPowerFist", MegaPowerFist )
+        , ( "CattleProd", CattleProd )
+        , ( "SuperCattleProd", SuperCattleProd )
+        , ( "Knife", Knife )
+        , ( "Wakizashi", Wakizashi )
+        , ( "LittleJesus", LittleJesus )
+        , ( "Ripper", Ripper )
+        , ( "SuperSledge", SuperSledge )
+        , ( "Pistol223", Pistol223 )
+        , ( "Mauser9mm", Mauser9mm )
+        , ( "Pistol14mm", Pistol14mm )
+        , ( "NeedlerPistol", NeedlerPistol )
+        , ( "GaussPistol", GaussPistol )
+        , ( "Smg10mm", Smg10mm )
+        , ( "HkP90c", HkP90c )
+        , ( "AssaultRifle", AssaultRifle )
+        , ( "ExpandedAssaultRifle", ExpandedAssaultRifle )
+        , ( "HuntingRifle", HuntingRifle )
+        , ( "ScopedHuntingRifle", ScopedHuntingRifle )
+        , ( "RedRyderLEBBGun", RedRyderLEBBGun )
+        , ( "SniperRifle", SniperRifle )
+        , ( "GaussRifle", GaussRifle )
+        , ( "CombatShotgun", CombatShotgun )
+        , ( "HkCaws", HkCaws )
+        , ( "PancorJackhammer", PancorJackhammer )
+        , ( "Shotgun", Shotgun )
+        , ( "SawedOffShotgun", SawedOffShotgun )
+        , ( "Minigun", Minigun )
+        , ( "Bozar", Bozar )
+        , ( "RocketLauncher", RocketLauncher )
+        , ( "LaserPistol", LaserPistol )
+        , ( "MagnetoLaserPistol", MagnetoLaserPistol )
+        , ( "PulsePistol", PulsePistol )
+        , ( "GatlingLaser", GatlingLaser )
+        , ( "LaserRifle", LaserRifle )
+        , ( "LaserRifleExtCap", LaserRifleExtCap )
+        , ( "PlasmaRifle", PlasmaRifle )
+        , ( "TurboPlasmaRifle", TurboPlasmaRifle )
+        , ( "PulseRifle", PulseRifle )
+        , ( "Flare", Flare )
+        , ( "FragGrenade", FragGrenade )
+        , ( "BBAmmo", BBAmmo )
+        , ( "SmallEnergyCell", SmallEnergyCell )
+        , ( "Fmj223", Fmj223 )
+        , ( "Ap5mm", Ap5mm )
+        , ( "Mm9", Mm9 )
+        , ( "Ball9mm", Ball9mm )
+        , ( "Ap10mm", Ap10mm )
+        , ( "Ap14mm", Ap14mm )
+        , ( "ExplosiveRocket", ExplosiveRocket )
+        , ( "RocketAp", RocketAp )
+        , ( "HnNeedlerCartridge", HnNeedlerCartridge )
+        , ( "HnApNeedlerCartridge", HnApNeedlerCartridge )
+        , ( "ShotgunShell", ShotgunShell )
+        , ( "Jhp10mm", Jhp10mm )
+        , ( "Jhp5mm", Jhp5mm )
+        , ( "MicrofusionCell", MicrofusionCell )
+        , ( "Ec2mm", Ec2mm )
+        , ( "Tool", Tool )
+        , ( "SuperToolKit", SuperToolKit )
+        , ( "FuelCellRegulator", FuelCellRegulator )
+        , ( "FuelCellController", FuelCellController )
+        , ( "LockPicks", LockPicks )
+        , ( "ElectronicLockpick", ElectronicLockpick )
+        , ( "AbnormalBrain", AbnormalBrain )
+        , ( "ChimpanzeeBrain", ChimpanzeeBrain )
+        , ( "HumanBrain", HumanBrain )
+        , ( "CyberneticBrain", CyberneticBrain )
+        , ( "GECK", GECK )
+        , ( "SkynetAim", SkynetAim )
+        , ( "MotionSensor", MotionSensor )
+        , ( "K9", K9 )
+        , ( "MeatJerky", MeatJerky )
+        , ( "TankerFob", TankerFob )
+        , ( "SilverGeckoPelt", SilverGeckoPelt )
+        , ( "GoldenGeckoPelt", GoldenGeckoPelt )
+        , ( "FireGeckoPelt", FireGeckoPelt )
+        ]
 
 
 usageEffects : Kind -> List Effect

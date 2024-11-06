@@ -298,22 +298,11 @@ codec =
 
 messageCodec : Codec Message
 messageCodec =
-    Codec.custom
-        (\barterIsEmptyEncoder playerOfferNotValuableEnoughEncoder youGaveStuffForFreeEncoder value ->
-            case value of
-                BarterIsEmpty ->
-                    barterIsEmptyEncoder
-
-                PlayerOfferNotValuableEnough ->
-                    playerOfferNotValuableEnoughEncoder
-
-                YouGaveStuffForFree ->
-                    youGaveStuffForFreeEncoder
-        )
-        |> Codec.variant0 "BarterIsEmpty" BarterIsEmpty
-        |> Codec.variant0 "PlayerOfferNotValuableEnough" PlayerOfferNotValuableEnough
-        |> Codec.variant0 "YouGaveStuffForFree" YouGaveStuffForFree
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "BarterIsEmpty", BarterIsEmpty )
+        , ( "PlayerOfferNotValuableEnough", PlayerOfferNotValuableEnough )
+        , ( "YouGaveStuffForFree", YouGaveStuffForFree )
+        ]
 
 
 transferNPositionCodec : Codec TransferNPosition

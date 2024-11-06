@@ -64,39 +64,13 @@ toString aimedShot =
 
 codec : Codec AimedShot
 codec =
-    Codec.custom
-        (\headEncoder torsoEncoder eyesEncoder groinEncoder leftArmEncoder rightArmEncoder leftLegEncoder rightLegEncoder value ->
-            case value of
-                Head ->
-                    headEncoder
-
-                Torso ->
-                    torsoEncoder
-
-                Eyes ->
-                    eyesEncoder
-
-                Groin ->
-                    groinEncoder
-
-                LeftArm ->
-                    leftArmEncoder
-
-                RightArm ->
-                    rightArmEncoder
-
-                LeftLeg ->
-                    leftLegEncoder
-
-                RightLeg ->
-                    rightLegEncoder
-        )
-        |> Codec.variant0 "Head" Head
-        |> Codec.variant0 "Torso" Torso
-        |> Codec.variant0 "Eyes" Eyes
-        |> Codec.variant0 "Groin" Groin
-        |> Codec.variant0 "LeftArm" LeftArm
-        |> Codec.variant0 "RightArm" RightArm
-        |> Codec.variant0 "LeftLeg" LeftLeg
-        |> Codec.variant0 "RightLeg" RightLeg
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Head", Head )
+        , ( "Torso", Torso )
+        , ( "Eyes", Eyes )
+        , ( "Groin", Groin )
+        , ( "LeftArm", LeftArm )
+        , ( "RightArm", RightArm )
+        , ( "LeftLeg", LeftLeg )
+        , ( "RightLeg", RightLeg )
+        ]

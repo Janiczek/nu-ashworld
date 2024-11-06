@@ -976,86 +976,27 @@ initialSpec shop =
 
 codec : Codec Shop
 codec =
-    Codec.custom
-        (\arroyoHakuninEncoder klamathMaidaEncoder klamathVicEncoder denFlickEncoder modocJoEncoder vaultCityRandalEncoder vaultCityHappyHarryEncoder geckoSurvivalGearPercyEncoder reddingAscortiEncoder brokenHillsGeneralStoreLizEncoder brokenHillsChemistJacobEncoder newRenoArmsEldridgeEncoder newRenoRenescoPharmacyEncoder nCRBusterEncoder nCRDuppoEncoder sanFranciscoFlyingDragon8LaoChouEncoder sanFranciscoRed888GunsMaiDaChiangEncoder sanFranciscoPunksCalEncoder sanFranciscoPunksJennaEncoder value ->
-            case value of
-                ArroyoHakunin ->
-                    arroyoHakuninEncoder
-
-                KlamathMaida ->
-                    klamathMaidaEncoder
-
-                KlamathVic ->
-                    klamathVicEncoder
-
-                DenFlick ->
-                    denFlickEncoder
-
-                ModocJo ->
-                    modocJoEncoder
-
-                VaultCityRandal ->
-                    vaultCityRandalEncoder
-
-                VaultCityHappyHarry ->
-                    vaultCityHappyHarryEncoder
-
-                GeckoSurvivalGearPercy ->
-                    geckoSurvivalGearPercyEncoder
-
-                ReddingAscorti ->
-                    reddingAscortiEncoder
-
-                BrokenHillsGeneralStoreLiz ->
-                    brokenHillsGeneralStoreLizEncoder
-
-                BrokenHillsChemistJacob ->
-                    brokenHillsChemistJacobEncoder
-
-                NewRenoArmsEldridge ->
-                    newRenoArmsEldridgeEncoder
-
-                NewRenoRenescoPharmacy ->
-                    newRenoRenescoPharmacyEncoder
-
-                NCRBuster ->
-                    nCRBusterEncoder
-
-                NCRDuppo ->
-                    nCRDuppoEncoder
-
-                SanFranciscoFlyingDragon8LaoChou ->
-                    sanFranciscoFlyingDragon8LaoChouEncoder
-
-                SanFranciscoRed888GunsMaiDaChiang ->
-                    sanFranciscoRed888GunsMaiDaChiangEncoder
-
-                SanFranciscoPunksCal ->
-                    sanFranciscoPunksCalEncoder
-
-                SanFranciscoPunksJenna ->
-                    sanFranciscoPunksJennaEncoder
-        )
-        |> Codec.variant0 "ArroyoHakunin" ArroyoHakunin
-        |> Codec.variant0 "KlamathMaida" KlamathMaida
-        |> Codec.variant0 "KlamathVic" KlamathVic
-        |> Codec.variant0 "DenFlick" DenFlick
-        |> Codec.variant0 "ModocJo" ModocJo
-        |> Codec.variant0 "VaultCityRandal" VaultCityRandal
-        |> Codec.variant0 "VaultCityHappyHarry" VaultCityHappyHarry
-        |> Codec.variant0 "GeckoSurvivalGearPercy" GeckoSurvivalGearPercy
-        |> Codec.variant0 "ReddingAscorti" ReddingAscorti
-        |> Codec.variant0 "BrokenHillsGeneralStoreLiz" BrokenHillsGeneralStoreLiz
-        |> Codec.variant0 "BrokenHillsChemistJacob" BrokenHillsChemistJacob
-        |> Codec.variant0 "NewRenoArmsEldridge" NewRenoArmsEldridge
-        |> Codec.variant0 "NewRenoRenescoPharmacy" NewRenoRenescoPharmacy
-        |> Codec.variant0 "NCRBuster" NCRBuster
-        |> Codec.variant0 "NCRDuppo" NCRDuppo
-        |> Codec.variant0 "SanFranciscoFlyingDragon8LaoChou" SanFranciscoFlyingDragon8LaoChou
-        |> Codec.variant0 "SanFranciscoRed888GunsMaiDaChiang" SanFranciscoRed888GunsMaiDaChiang
-        |> Codec.variant0 "SanFranciscoPunksCal" SanFranciscoPunksCal
-        |> Codec.variant0 "SanFranciscoPunksJenna" SanFranciscoPunksJenna
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "ArroyoHakunin", ArroyoHakunin )
+        , ( "KlamathMaida", KlamathMaida )
+        , ( "KlamathVic", KlamathVic )
+        , ( "DenFlick", DenFlick )
+        , ( "ModocJo", ModocJo )
+        , ( "VaultCityRandal", VaultCityRandal )
+        , ( "VaultCityHappyHarry", VaultCityHappyHarry )
+        , ( "GeckoSurvivalGearPercy", GeckoSurvivalGearPercy )
+        , ( "ReddingAscorti", ReddingAscorti )
+        , ( "BrokenHillsGeneralStoreLiz", BrokenHillsGeneralStoreLiz )
+        , ( "BrokenHillsChemistJacob", BrokenHillsChemistJacob )
+        , ( "NewRenoArmsEldridge", NewRenoArmsEldridge )
+        , ( "NewRenoRenescoPharmacy", NewRenoRenescoPharmacy )
+        , ( "NCRBuster", NCRBuster )
+        , ( "NCRDuppo", NCRDuppo )
+        , ( "SanFranciscoFlyingDragon8LaoChou", SanFranciscoFlyingDragon8LaoChou )
+        , ( "SanFranciscoRed888GunsMaiDaChiang", SanFranciscoRed888GunsMaiDaChiang )
+        , ( "SanFranciscoPunksCal", SanFranciscoPunksCal )
+        , ( "SanFranciscoPunksJenna", SanFranciscoPunksJenna )
+        ]
 
 
 specCodec : Codec ShopSpec

@@ -1608,71 +1608,21 @@ damageThresholdPlasma type_ =
 
 codec : Codec EnemyType
 codec =
-    Codec.custom
-        (\silverGeckoEncoder toughSilverGeckoEncoder goldenGeckoEncoder toughGoldenGeckoEncoder fireGeckoEncoder toughFireGeckoEncoder brahminEncoder angryBrahminEncoder weakBrahminEncoder wildBrahminEncoder giantAntEncoder toughGiantAntEncoder blackRadscorpionEncoder lesserBlackRadscorpionEncoder lesserRadscorpionEncoder radscorpionEncoder value ->
-            case value of
-                SilverGecko ->
-                    silverGeckoEncoder
-
-                ToughSilverGecko ->
-                    toughSilverGeckoEncoder
-
-                GoldenGecko ->
-                    goldenGeckoEncoder
-
-                ToughGoldenGecko ->
-                    toughGoldenGeckoEncoder
-
-                FireGecko ->
-                    fireGeckoEncoder
-
-                ToughFireGecko ->
-                    toughFireGeckoEncoder
-
-                Brahmin ->
-                    brahminEncoder
-
-                AngryBrahmin ->
-                    angryBrahminEncoder
-
-                WeakBrahmin ->
-                    weakBrahminEncoder
-
-                WildBrahmin ->
-                    wildBrahminEncoder
-
-                GiantAnt ->
-                    giantAntEncoder
-
-                ToughGiantAnt ->
-                    toughGiantAntEncoder
-
-                BlackRadscorpion ->
-                    blackRadscorpionEncoder
-
-                LesserBlackRadscorpion ->
-                    lesserBlackRadscorpionEncoder
-
-                LesserRadscorpion ->
-                    lesserRadscorpionEncoder
-
-                Radscorpion ->
-                    radscorpionEncoder
-        )
-        |> Codec.variant0 "SilverGecko" SilverGecko
-        |> Codec.variant0 "ToughSilverGecko" ToughSilverGecko
-        |> Codec.variant0 "GoldenGecko" GoldenGecko
-        |> Codec.variant0 "ToughGoldenGecko" ToughGoldenGecko
-        |> Codec.variant0 "FireGecko" FireGecko
-        |> Codec.variant0 "ToughFireGecko" ToughFireGecko
-        |> Codec.variant0 "Brahmin" Brahmin
-        |> Codec.variant0 "AngryBrahmin" AngryBrahmin
-        |> Codec.variant0 "WeakBrahmin" WeakBrahmin
-        |> Codec.variant0 "WildBrahmin" WildBrahmin
-        |> Codec.variant0 "GiantAnt" GiantAnt
-        |> Codec.variant0 "ToughGiantAnt" ToughGiantAnt
-        |> Codec.variant0 "BlackRadscorpion" BlackRadscorpion
-        |> Codec.variant0 "LesserBlackRadscorpion" LesserBlackRadscorpion
-        |> Codec.variant0 "LesserRadscorpion" LesserRadscorpion
-        |> Codec.variant0 "Radscorpion" Radscorpion
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "SilverGecko", SilverGecko )
+        , ( "ToughSilverGecko", ToughSilverGecko )
+        , ( "GoldenGecko", GoldenGecko )
+        , ( "ToughGoldenGecko", ToughGoldenGecko )
+        , ( "FireGecko", FireGecko )
+        , ( "ToughFireGecko", ToughFireGecko )
+        , ( "Brahmin", Brahmin )
+        , ( "AngryBrahmin", AngryBrahmin )
+        , ( "WeakBrahmin", WeakBrahmin )
+        , ( "WildBrahmin", WildBrahmin )
+        , ( "GiantAnt", GiantAnt )
+        , ( "ToughGiantAnt", ToughGiantAnt )
+        , ( "BlackRadscorpion", BlackRadscorpion )
+        , ( "LesserBlackRadscorpion", LesserBlackRadscorpion )
+        , ( "LesserRadscorpion", LesserRadscorpion )
+        , ( "Radscorpion", Radscorpion )
+        ]

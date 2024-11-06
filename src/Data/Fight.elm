@@ -178,18 +178,10 @@ equipmentCodec =
 
 whoCodec : Codec Who
 whoCodec =
-    Codec.custom
-        (\attackerEncoder targetEncoder value ->
-            case value of
-                Attacker ->
-                    attackerEncoder
-
-                Target ->
-                    targetEncoder
-        )
-        |> Codec.variant0 "Attacker" Attacker
-        |> Codec.variant0 "Target" Target
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Attacker", Attacker )
+        , ( "Target", Target )
+        ]
 
 
 actionCodec : Codec Action
@@ -296,42 +288,16 @@ actionCodec =
 
 commandRejectionReasonCodec : Codec CommandRejectionReason
 commandRejectionReasonCodec =
-    Codec.custom
-        (\heal_ItemNotPresentEncoder heal_ItemDoesNotHealEncoder heal_AlreadyFullyHealedEncoder healWithAnything_NoHealingItemEncoder healWithAnything_AlreadyFullyHealedEncoder moveForward_AlreadyNextToEachOtherEncoder attack_NotCloseEnoughEncoder attack_NotEnoughAPEncoder value ->
-            case value of
-                Heal_ItemNotPresent ->
-                    heal_ItemNotPresentEncoder
-
-                Heal_ItemDoesNotHeal ->
-                    heal_ItemDoesNotHealEncoder
-
-                Heal_AlreadyFullyHealed ->
-                    heal_AlreadyFullyHealedEncoder
-
-                HealWithAnything_NoHealingItem ->
-                    healWithAnything_NoHealingItemEncoder
-
-                HealWithAnything_AlreadyFullyHealed ->
-                    healWithAnything_AlreadyFullyHealedEncoder
-
-                MoveForward_AlreadyNextToEachOther ->
-                    moveForward_AlreadyNextToEachOtherEncoder
-
-                Attack_NotCloseEnough ->
-                    attack_NotCloseEnoughEncoder
-
-                Attack_NotEnoughAP ->
-                    attack_NotEnoughAPEncoder
-        )
-        |> Codec.variant0 "Heal_ItemNotPresent" Heal_ItemNotPresent
-        |> Codec.variant0 "Heal_ItemDoesNotHeal" Heal_ItemDoesNotHeal
-        |> Codec.variant0 "Heal_AlreadyFullyHealed" Heal_AlreadyFullyHealed
-        |> Codec.variant0 "HealWithAnything_NoHealingItem" HealWithAnything_NoHealingItem
-        |> Codec.variant0 "HealWithAnything_AlreadyFullyHealed" HealWithAnything_AlreadyFullyHealed
-        |> Codec.variant0 "MoveForward_AlreadyNextToEachOther" MoveForward_AlreadyNextToEachOther
-        |> Codec.variant0 "Attack_NotCloseEnough" Attack_NotCloseEnough
-        |> Codec.variant0 "Attack_NotEnoughAP" Attack_NotEnoughAP
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Heal_ItemNotPresent", Heal_ItemNotPresent )
+        , ( "Heal_ItemDoesNotHeal", Heal_ItemDoesNotHeal )
+        , ( "Heal_AlreadyFullyHealed", Heal_AlreadyFullyHealed )
+        , ( "HealWithAnything_NoHealingItem", HealWithAnything_NoHealingItem )
+        , ( "HealWithAnything_AlreadyFullyHealed", HealWithAnything_AlreadyFullyHealed )
+        , ( "MoveForward_AlreadyNextToEachOther", MoveForward_AlreadyNextToEachOther )
+        , ( "Attack_NotCloseEnough", Attack_NotCloseEnough )
+        , ( "Attack_NotEnoughAP", Attack_NotEnoughAP )
+        ]
 
 
 resultCodec : Codec Result

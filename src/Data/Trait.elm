@@ -77,46 +77,17 @@ name trait =
 
 codec : Codec Trait
 codec =
-    Codec.custom
-        (\bruiserEncoder fastShotEncoder finesseEncoder giftedEncoder heavyHandedEncoder kamikazeEncoder oneHanderEncoder skilledEncoder smallFrameEncoder value ->
-            case value of
-                Bruiser ->
-                    bruiserEncoder
-
-                FastShot ->
-                    fastShotEncoder
-
-                Finesse ->
-                    finesseEncoder
-
-                Gifted ->
-                    giftedEncoder
-
-                HeavyHanded ->
-                    heavyHandedEncoder
-
-                Kamikaze ->
-                    kamikazeEncoder
-
-                OneHander ->
-                    oneHanderEncoder
-
-                Skilled ->
-                    skilledEncoder
-
-                SmallFrame ->
-                    smallFrameEncoder
-        )
-        |> Codec.variant0 "Bruiser" Bruiser
-        |> Codec.variant0 "FastShot" FastShot
-        |> Codec.variant0 "Finesse" Finesse
-        |> Codec.variant0 "Gifted" Gifted
-        |> Codec.variant0 "HeavyHanded" HeavyHanded
-        |> Codec.variant0 "Kamikaze" Kamikaze
-        |> Codec.variant0 "OneHander" OneHander
-        |> Codec.variant0 "Skilled" Skilled
-        |> Codec.variant0 "SmallFrame" SmallFrame
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Bruiser", Bruiser )
+        , ( "FastShot", FastShot )
+        , ( "Finesse", Finesse )
+        , ( "Gifted", Gifted )
+        , ( "HeavyHanded", HeavyHanded )
+        , ( "Kamikaze", Kamikaze )
+        , ( "OneHander", OneHander )
+        , ( "Skilled", Skilled )
+        , ( "SmallFrame", SmallFrame )
+        ]
 
 
 isSelected : Trait -> SeqSet Trait -> Bool

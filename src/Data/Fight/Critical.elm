@@ -111,47 +111,15 @@ messageCodec =
 
 effectCodec : Codec Effect
 effectCodec =
-    Codec.custom
-        (\knockoutEncoder knockdownEncoder crippledLeftLegEncoder crippledRightLegEncoder crippledLeftArmEncoder crippledRightArmEncoder blindedEncoder deathEncoder bypassArmorEncoder loseNextTurnEncoder value ->
-            case value of
-                Knockout ->
-                    knockoutEncoder
-
-                Knockdown ->
-                    knockdownEncoder
-
-                CrippledLeftLeg ->
-                    crippledLeftLegEncoder
-
-                CrippledRightLeg ->
-                    crippledRightLegEncoder
-
-                CrippledLeftArm ->
-                    crippledLeftArmEncoder
-
-                CrippledRightArm ->
-                    crippledRightArmEncoder
-
-                Blinded ->
-                    blindedEncoder
-
-                Death ->
-                    deathEncoder
-
-                BypassArmor ->
-                    bypassArmorEncoder
-
-                LoseNextTurn ->
-                    loseNextTurnEncoder
-        )
-        |> Codec.variant0 "Knockout" Knockout
-        |> Codec.variant0 "Knockdown" Knockdown
-        |> Codec.variant0 "CrippledLeftLeg" CrippledLeftLeg
-        |> Codec.variant0 "CrippledRightLeg" CrippledRightLeg
-        |> Codec.variant0 "CrippledLeftArm" CrippledLeftArm
-        |> Codec.variant0 "CrippledRightArm" CrippledRightArm
-        |> Codec.variant0 "Blinded" Blinded
-        |> Codec.variant0 "Death" Death
-        |> Codec.variant0 "BypassArmor" BypassArmor
-        |> Codec.variant0 "LoseNextTurn" LoseNextTurn
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "Knockout", Knockout )
+        , ( "Knockdown", Knockdown )
+        , ( "CrippledLeftLeg", CrippledLeftLeg )
+        , ( "CrippledRightLeg", CrippledRightLeg )
+        , ( "CrippledLeftArm", CrippledLeftArm )
+        , ( "CrippledRightArm", CrippledRightArm )
+        , ( "Blinded", Blinded )
+        , ( "Death", Death )
+        , ( "BypassArmor", BypassArmor )
+        , ( "LoseNextTurn", LoseNextTurn )
+        ]

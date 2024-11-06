@@ -2787,312 +2787,83 @@ playerRequirements name =
 
 codec : Codec Name
 codec =
-    Codec.custom
-        (\arroyoKillEvilPlantsEncoder arroyoFixWellForFeargusEncoder arroyoRescueNagorsDogEncoder klamathRefuelStillEncoder klamathGuardTheBrahminEncoder klamathRustleTheBrahminEncoder klamathKillRatGodEncoder klamathRescueTorrEncoder klamathSearchForSmileyTrapperEncoder klamathGetFuelCellRegulatorEncoder toxicCavesRescueSmileyTrapperEncoder toxicCavesRepairTheGeneratorEncoder toxicCavesLootTheBunkerEncoder denFreeVicByPayingMetzgerEncoder denFreeVicByKillingOffSlaversGuildEncoder denDeliverMealToSmittyEncoder denFixTheCarEncoder modocInvestigateGhostFarmEncoder modocRemoveInfestationInFarrelsGardenEncoder modocMediateBetweenSlagsAndJoEncoder modocFindGoldWatchForCorneliusEncoder modocFindGoldWatchForFarrelEncoder vaultCityGetPlowForMrSmithEncoder vaultCityRescueAmandasHusbandEncoder geckoOptimizePowerPlantEncoder geckoGetFuelCellControllerFromSkeeterEncoder reddingClearWanamingoMineEncoder reddingFindExcavatorChipEncoder newRenoTrackDownPrettyBoyLloydEncoder newRenoHelpGuardSecretTransactionEncoder newRenoCollectTributeFromCorsicanBrothersEncoder newRenoWinBoxingTournamentEncoder newRenoAcquireElectronicLockpickEncoder nCRGuardBrahminCaravanEncoder nCRTestMutagenicSerumEncoder nCRRetrieveComputerPartsEncoder nCRFreeSlavesEncoder nCRInvestigateBrahminRaidsEncoder v15RescueChrissyEncoder v15CompleteDealWithNCREncoder v13FixVaultComputerEncoder v13FindTheGeckEncoder brokenHillsFixMineAirPurifierEncoder brokenHillsBlowUpMineAirPurifierEncoder brokenHillsFindMissingPeopleEncoder brokenHillsBeatFrancisAtArmwrestlingEncoder raidersFindEvidenceOfBishopTamperingEncoder raidersKillEverybodyEncoder sierraArmyDepotFindAbnormalBrainForSkynetEncoder sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder sierraArmyDepotFindHumanBrainForSkynetEncoder sierraArmyDepotFindCyberneticBrainForSkynetEncoder sierraArmyDepotAssembleBodyForSkynetEncoder militaryBaseExcavateTheEntranceEncoder militaryBaseKillMelchiorEncoder sanFranciscoFindFuelForTankerEncoder sanFranciscoFindLocationOfFobForTankerEncoder sanFranciscoFindNavCompPartForTankerEncoder sanFranciscoFindVertibirdPlansForHubologistsEncoder sanFranciscoFindVertibirdPlansForShiEncoder sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder sanFranciscoFindBadgersGirlfriendInsideShipEncoder sanFranciscoDefeatLoPanInRingForDragonEncoder sanFranciscoDefeatDragonInRingForLoPanEncoder sanFranciscoEmbarkForEnclaveEncoder navarroFixK9Encoder navarroRetrieveFobForTankerEncoder enclavePersuadeControlCompanySquadToDesertEncoder enclaveKillThePresidentStealthilyEncoder enclaveKillThePresidentTheUsualWayEncoder enclaveFindTheGeckEncoder enclaveRigTurretsToTargetFrankHorriganEncoder enclaveForceScientistToInitiateSelfDestructEncoder enclaveKillFrankHorriganEncoder enclaveReturnToMainlandEncoder value ->
-            case value of
-                ArroyoKillEvilPlants ->
-                    arroyoKillEvilPlantsEncoder
-
-                ArroyoFixWellForFeargus ->
-                    arroyoFixWellForFeargusEncoder
-
-                ArroyoRescueNagorsDog ->
-                    arroyoRescueNagorsDogEncoder
-
-                KlamathRefuelStill ->
-                    klamathRefuelStillEncoder
-
-                KlamathGuardTheBrahmin ->
-                    klamathGuardTheBrahminEncoder
-
-                KlamathRustleTheBrahmin ->
-                    klamathRustleTheBrahminEncoder
-
-                KlamathKillRatGod ->
-                    klamathKillRatGodEncoder
-
-                KlamathRescueTorr ->
-                    klamathRescueTorrEncoder
-
-                KlamathSearchForSmileyTrapper ->
-                    klamathSearchForSmileyTrapperEncoder
-
-                KlamathGetFuelCellRegulator ->
-                    klamathGetFuelCellRegulatorEncoder
-
-                ToxicCavesRescueSmileyTrapper ->
-                    toxicCavesRescueSmileyTrapperEncoder
-
-                ToxicCavesRepairTheGenerator ->
-                    toxicCavesRepairTheGeneratorEncoder
-
-                ToxicCavesLootTheBunker ->
-                    toxicCavesLootTheBunkerEncoder
-
-                DenFreeVicByPayingMetzger ->
-                    denFreeVicByPayingMetzgerEncoder
-
-                DenFreeVicByKillingOffSlaversGuild ->
-                    denFreeVicByKillingOffSlaversGuildEncoder
-
-                DenDeliverMealToSmitty ->
-                    denDeliverMealToSmittyEncoder
-
-                DenFixTheCar ->
-                    denFixTheCarEncoder
-
-                ModocInvestigateGhostFarm ->
-                    modocInvestigateGhostFarmEncoder
-
-                ModocRemoveInfestationInFarrelsGarden ->
-                    modocRemoveInfestationInFarrelsGardenEncoder
-
-                ModocMediateBetweenSlagsAndJo ->
-                    modocMediateBetweenSlagsAndJoEncoder
-
-                ModocFindGoldWatchForCornelius ->
-                    modocFindGoldWatchForCorneliusEncoder
-
-                ModocFindGoldWatchForFarrel ->
-                    modocFindGoldWatchForFarrelEncoder
-
-                VaultCityGetPlowForMrSmith ->
-                    vaultCityGetPlowForMrSmithEncoder
-
-                VaultCityRescueAmandasHusband ->
-                    vaultCityRescueAmandasHusbandEncoder
-
-                GeckoOptimizePowerPlant ->
-                    geckoOptimizePowerPlantEncoder
-
-                GeckoGetFuelCellControllerFromSkeeter ->
-                    geckoGetFuelCellControllerFromSkeeterEncoder
-
-                ReddingClearWanamingoMine ->
-                    reddingClearWanamingoMineEncoder
-
-                ReddingFindExcavatorChip ->
-                    reddingFindExcavatorChipEncoder
-
-                NewRenoTrackDownPrettyBoyLloyd ->
-                    newRenoTrackDownPrettyBoyLloydEncoder
-
-                NewRenoHelpGuardSecretTransaction ->
-                    newRenoHelpGuardSecretTransactionEncoder
-
-                NewRenoCollectTributeFromCorsicanBrothers ->
-                    newRenoCollectTributeFromCorsicanBrothersEncoder
-
-                NewRenoWinBoxingTournament ->
-                    newRenoWinBoxingTournamentEncoder
-
-                NewRenoAcquireElectronicLockpick ->
-                    newRenoAcquireElectronicLockpickEncoder
-
-                NCRGuardBrahminCaravan ->
-                    nCRGuardBrahminCaravanEncoder
-
-                NCRTestMutagenicSerum ->
-                    nCRTestMutagenicSerumEncoder
-
-                NCRRetrieveComputerParts ->
-                    nCRRetrieveComputerPartsEncoder
-
-                NCRFreeSlaves ->
-                    nCRFreeSlavesEncoder
-
-                NCRInvestigateBrahminRaids ->
-                    nCRInvestigateBrahminRaidsEncoder
-
-                V15RescueChrissy ->
-                    v15RescueChrissyEncoder
-
-                V15CompleteDealWithNCR ->
-                    v15CompleteDealWithNCREncoder
-
-                V13FixVaultComputer ->
-                    v13FixVaultComputerEncoder
-
-                V13FindTheGeck ->
-                    v13FindTheGeckEncoder
-
-                BrokenHillsFixMineAirPurifier ->
-                    brokenHillsFixMineAirPurifierEncoder
-
-                BrokenHillsBlowUpMineAirPurifier ->
-                    brokenHillsBlowUpMineAirPurifierEncoder
-
-                BrokenHillsFindMissingPeople ->
-                    brokenHillsFindMissingPeopleEncoder
-
-                BrokenHillsBeatFrancisAtArmwrestling ->
-                    brokenHillsBeatFrancisAtArmwrestlingEncoder
-
-                RaidersFindEvidenceOfBishopTampering ->
-                    raidersFindEvidenceOfBishopTamperingEncoder
-
-                RaidersKillEverybody ->
-                    raidersKillEverybodyEncoder
-
-                SierraArmyDepotFindAbnormalBrainForSkynet ->
-                    sierraArmyDepotFindAbnormalBrainForSkynetEncoder
-
-                SierraArmyDepotFindChimpanzeeBrainForSkynet ->
-                    sierraArmyDepotFindChimpanzeeBrainForSkynetEncoder
-
-                SierraArmyDepotFindHumanBrainForSkynet ->
-                    sierraArmyDepotFindHumanBrainForSkynetEncoder
-
-                SierraArmyDepotFindCyberneticBrainForSkynet ->
-                    sierraArmyDepotFindCyberneticBrainForSkynetEncoder
-
-                SierraArmyDepotAssembleBodyForSkynet ->
-                    sierraArmyDepotAssembleBodyForSkynetEncoder
-
-                MilitaryBaseExcavateTheEntrance ->
-                    militaryBaseExcavateTheEntranceEncoder
-
-                MilitaryBaseKillMelchior ->
-                    militaryBaseKillMelchiorEncoder
-
-                SanFranciscoFindFuelForTanker ->
-                    sanFranciscoFindFuelForTankerEncoder
-
-                SanFranciscoFindLocationOfFobForTanker ->
-                    sanFranciscoFindLocationOfFobForTankerEncoder
-
-                SanFranciscoFindNavCompPartForTanker ->
-                    sanFranciscoFindNavCompPartForTankerEncoder
-
-                SanFranciscoFindVertibirdPlansForHubologists ->
-                    sanFranciscoFindVertibirdPlansForHubologistsEncoder
-
-                SanFranciscoFindVertibirdPlansForShi ->
-                    sanFranciscoFindVertibirdPlansForShiEncoder
-
-                SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
-                    sanFranciscoFindVertibirdPlansForBrotherhoodOfSteelEncoder
-
-                SanFranciscoFindBadgersGirlfriendInsideShip ->
-                    sanFranciscoFindBadgersGirlfriendInsideShipEncoder
-
-                SanFranciscoDefeatLoPanInRingForDragon ->
-                    sanFranciscoDefeatLoPanInRingForDragonEncoder
-
-                SanFranciscoDefeatDragonInRingForLoPan ->
-                    sanFranciscoDefeatDragonInRingForLoPanEncoder
-
-                SanFranciscoEmbarkForEnclave ->
-                    sanFranciscoEmbarkForEnclaveEncoder
-
-                NavarroFixK9 ->
-                    navarroFixK9Encoder
-
-                NavarroRetrieveFobForTanker ->
-                    navarroRetrieveFobForTankerEncoder
-
-                EnclavePersuadeControlCompanySquadToDesert ->
-                    enclavePersuadeControlCompanySquadToDesertEncoder
-
-                EnclaveKillThePresidentStealthily ->
-                    enclaveKillThePresidentStealthilyEncoder
-
-                EnclaveKillThePresidentTheUsualWay ->
-                    enclaveKillThePresidentTheUsualWayEncoder
-
-                EnclaveFindTheGeck ->
-                    enclaveFindTheGeckEncoder
-
-                EnclaveRigTurretsToTargetFrankHorrigan ->
-                    enclaveRigTurretsToTargetFrankHorriganEncoder
-
-                EnclaveForceScientistToInitiateSelfDestruct ->
-                    enclaveForceScientistToInitiateSelfDestructEncoder
-
-                EnclaveKillFrankHorrigan ->
-                    enclaveKillFrankHorriganEncoder
-
-                EnclaveReturnToMainland ->
-                    enclaveReturnToMainlandEncoder
-        )
-        |> Codec.variant0 "ArroyoKillEvilPlants" ArroyoKillEvilPlants
-        |> Codec.variant0 "ArroyoFixWellForFeargus" ArroyoFixWellForFeargus
-        |> Codec.variant0 "ArroyoRescueNagorsDog" ArroyoRescueNagorsDog
-        |> Codec.variant0 "KlamathRefuelStill" KlamathRefuelStill
-        |> Codec.variant0 "KlamathGuardTheBrahmin" KlamathGuardTheBrahmin
-        |> Codec.variant0 "KlamathRustleTheBrahmin" KlamathRustleTheBrahmin
-        |> Codec.variant0 "KlamathKillRatGod" KlamathKillRatGod
-        |> Codec.variant0 "KlamathRescueTorr" KlamathRescueTorr
-        |> Codec.variant0 "KlamathSearchForSmileyTrapper" KlamathSearchForSmileyTrapper
-        |> Codec.variant0 "KlamathGetFuelCellRegulator" KlamathGetFuelCellRegulator
-        |> Codec.variant0 "ToxicCavesRescueSmileyTrapper" ToxicCavesRescueSmileyTrapper
-        |> Codec.variant0 "ToxicCavesRepairTheGenerator" ToxicCavesRepairTheGenerator
-        |> Codec.variant0 "ToxicCavesLootTheBunker" ToxicCavesLootTheBunker
-        |> Codec.variant0 "DenFreeVicByPayingMetzger" DenFreeVicByPayingMetzger
-        |> Codec.variant0 "DenFreeVicByKillingOffSlaversGuild" DenFreeVicByKillingOffSlaversGuild
-        |> Codec.variant0 "DenDeliverMealToSmitty" DenDeliverMealToSmitty
-        |> Codec.variant0 "DenFixTheCar" DenFixTheCar
-        |> Codec.variant0 "ModocInvestigateGhostFarm" ModocInvestigateGhostFarm
-        |> Codec.variant0 "ModocRemoveInfestationInFarrelsGarden" ModocRemoveInfestationInFarrelsGarden
-        |> Codec.variant0 "ModocMediateBetweenSlagsAndJo" ModocMediateBetweenSlagsAndJo
-        |> Codec.variant0 "ModocFindGoldWatchForCornelius" ModocFindGoldWatchForCornelius
-        |> Codec.variant0 "ModocFindGoldWatchForFarrel" ModocFindGoldWatchForFarrel
-        |> Codec.variant0 "VaultCityGetPlowForMrSmith" VaultCityGetPlowForMrSmith
-        |> Codec.variant0 "VaultCityRescueAmandasHusband" VaultCityRescueAmandasHusband
-        |> Codec.variant0 "GeckoOptimizePowerPlant" GeckoOptimizePowerPlant
-        |> Codec.variant0 "GeckoGetFuelCellControllerFromSkeeter" GeckoGetFuelCellControllerFromSkeeter
-        |> Codec.variant0 "ReddingClearWanamingoMine" ReddingClearWanamingoMine
-        |> Codec.variant0 "ReddingFindExcavatorChip" ReddingFindExcavatorChip
-        |> Codec.variant0 "NewRenoTrackDownPrettyBoyLloyd" NewRenoTrackDownPrettyBoyLloyd
-        |> Codec.variant0 "NewRenoHelpGuardSecretTransaction" NewRenoHelpGuardSecretTransaction
-        |> Codec.variant0 "NewRenoCollectTributeFromCorsicanBrothers" NewRenoCollectTributeFromCorsicanBrothers
-        |> Codec.variant0 "NewRenoWinBoxingTournament" NewRenoWinBoxingTournament
-        |> Codec.variant0 "NewRenoAcquireElectronicLockpick" NewRenoAcquireElectronicLockpick
-        |> Codec.variant0 "NCRGuardBrahminCaravan" NCRGuardBrahminCaravan
-        |> Codec.variant0 "NCRTestMutagenicSerum" NCRTestMutagenicSerum
-        |> Codec.variant0 "NCRRetrieveComputerParts" NCRRetrieveComputerParts
-        |> Codec.variant0 "NCRFreeSlaves" NCRFreeSlaves
-        |> Codec.variant0 "NCRInvestigateBrahminRaids" NCRInvestigateBrahminRaids
-        |> Codec.variant0 "V15RescueChrissy" V15RescueChrissy
-        |> Codec.variant0 "V15CompleteDealWithNCR" V15CompleteDealWithNCR
-        |> Codec.variant0 "V13FixVaultComputer" V13FixVaultComputer
-        |> Codec.variant0 "V13FindTheGeck" V13FindTheGeck
-        |> Codec.variant0 "BrokenHillsFixMineAirPurifier" BrokenHillsFixMineAirPurifier
-        |> Codec.variant0 "BrokenHillsBlowUpMineAirPurifier" BrokenHillsBlowUpMineAirPurifier
-        |> Codec.variant0 "BrokenHillsFindMissingPeople" BrokenHillsFindMissingPeople
-        |> Codec.variant0 "BrokenHillsBeatFrancisAtArmwrestling" BrokenHillsBeatFrancisAtArmwrestling
-        |> Codec.variant0 "RaidersFindEvidenceOfBishopTampering" RaidersFindEvidenceOfBishopTampering
-        |> Codec.variant0 "RaidersKillEverybody" RaidersKillEverybody
-        |> Codec.variant0 "SierraArmyDepotFindAbnormalBrainForSkynet" SierraArmyDepotFindAbnormalBrainForSkynet
-        |> Codec.variant0 "SierraArmyDepotFindChimpanzeeBrainForSkynet" SierraArmyDepotFindChimpanzeeBrainForSkynet
-        |> Codec.variant0 "SierraArmyDepotFindHumanBrainForSkynet" SierraArmyDepotFindHumanBrainForSkynet
-        |> Codec.variant0 "SierraArmyDepotFindCyberneticBrainForSkynet" SierraArmyDepotFindCyberneticBrainForSkynet
-        |> Codec.variant0 "SierraArmyDepotAssembleBodyForSkynet" SierraArmyDepotAssembleBodyForSkynet
-        |> Codec.variant0 "MilitaryBaseExcavateTheEntrance" MilitaryBaseExcavateTheEntrance
-        |> Codec.variant0 "MilitaryBaseKillMelchior" MilitaryBaseKillMelchior
-        |> Codec.variant0 "SanFranciscoFindFuelForTanker" SanFranciscoFindFuelForTanker
-        |> Codec.variant0 "SanFranciscoFindLocationOfFobForTanker" SanFranciscoFindLocationOfFobForTanker
-        |> Codec.variant0 "SanFranciscoFindNavCompPartForTanker" SanFranciscoFindNavCompPartForTanker
-        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForHubologists" SanFranciscoFindVertibirdPlansForHubologists
-        |> Codec.variant0 "SanFranciscoFindVertibirdPlansForShi" SanFranciscoFindVertibirdPlansForShi
-        |> Codec.variant0
-            "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel"
-            SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel
-        |> Codec.variant0 "SanFranciscoFindBadgersGirlfriendInsideShip" SanFranciscoFindBadgersGirlfriendInsideShip
-        |> Codec.variant0 "SanFranciscoDefeatLoPanInRingForDragon" SanFranciscoDefeatLoPanInRingForDragon
-        |> Codec.variant0 "SanFranciscoDefeatDragonInRingForLoPan" SanFranciscoDefeatDragonInRingForLoPan
-        |> Codec.variant0 "SanFranciscoEmbarkForEnclave" SanFranciscoEmbarkForEnclave
-        |> Codec.variant0 "NavarroFixK9" NavarroFixK9
-        |> Codec.variant0 "NavarroRetrieveFobForTanker" NavarroRetrieveFobForTanker
-        |> Codec.variant0 "EnclavePersuadeControlCompanySquadToDesert" EnclavePersuadeControlCompanySquadToDesert
-        |> Codec.variant0 "EnclaveKillThePresidentStealthily" EnclaveKillThePresidentStealthily
-        |> Codec.variant0 "EnclaveKillThePresidentTheUsualWay" EnclaveKillThePresidentTheUsualWay
-        |> Codec.variant0 "EnclaveFindTheGeck" EnclaveFindTheGeck
-        |> Codec.variant0 "EnclaveRigTurretsToTargetFrankHorrigan" EnclaveRigTurretsToTargetFrankHorrigan
-        |> Codec.variant0 "EnclaveForceScientistToInitiateSelfDestruct" EnclaveForceScientistToInitiateSelfDestruct
-        |> Codec.variant0 "EnclaveKillFrankHorrigan" EnclaveKillFrankHorrigan
-        |> Codec.variant0 "EnclaveReturnToMainland" EnclaveReturnToMainland
-        |> Codec.buildCustom
+    Codec.enum Codec.string
+        [ ( "ArroyoKillEvilPlants", ArroyoKillEvilPlants )
+        , ( "ArroyoFixWellForFeargus", ArroyoFixWellForFeargus )
+        , ( "ArroyoRescueNagorsDog", ArroyoRescueNagorsDog )
+        , ( "KlamathRefuelStill", KlamathRefuelStill )
+        , ( "KlamathGuardTheBrahmin", KlamathGuardTheBrahmin )
+        , ( "KlamathRustleTheBrahmin", KlamathRustleTheBrahmin )
+        , ( "KlamathKillRatGod", KlamathKillRatGod )
+        , ( "KlamathRescueTorr", KlamathRescueTorr )
+        , ( "KlamathSearchForSmileyTrapper", KlamathSearchForSmileyTrapper )
+        , ( "KlamathGetFuelCellRegulator", KlamathGetFuelCellRegulator )
+        , ( "ToxicCavesRescueSmileyTrapper", ToxicCavesRescueSmileyTrapper )
+        , ( "ToxicCavesRepairTheGenerator", ToxicCavesRepairTheGenerator )
+        , ( "ToxicCavesLootTheBunker", ToxicCavesLootTheBunker )
+        , ( "DenFreeVicByPayingMetzger", DenFreeVicByPayingMetzger )
+        , ( "DenFreeVicByKillingOffSlaversGuild", DenFreeVicByKillingOffSlaversGuild )
+        , ( "DenDeliverMealToSmitty", DenDeliverMealToSmitty )
+        , ( "DenFixTheCar", DenFixTheCar )
+        , ( "ModocInvestigateGhostFarm", ModocInvestigateGhostFarm )
+        , ( "ModocRemoveInfestationInFarrelsGarden", ModocRemoveInfestationInFarrelsGarden )
+        , ( "ModocMediateBetweenSlagsAndJo", ModocMediateBetweenSlagsAndJo )
+        , ( "ModocFindGoldWatchForCornelius", ModocFindGoldWatchForCornelius )
+        , ( "ModocFindGoldWatchForFarrel", ModocFindGoldWatchForFarrel )
+        , ( "VaultCityGetPlowForMrSmith", VaultCityGetPlowForMrSmith )
+        , ( "VaultCityRescueAmandasHusband", VaultCityRescueAmandasHusband )
+        , ( "GeckoOptimizePowerPlant", GeckoOptimizePowerPlant )
+        , ( "GeckoGetFuelCellControllerFromSkeeter", GeckoGetFuelCellControllerFromSkeeter )
+        , ( "ReddingClearWanamingoMine", ReddingClearWanamingoMine )
+        , ( "ReddingFindExcavatorChip", ReddingFindExcavatorChip )
+        , ( "NewRenoTrackDownPrettyBoyLloyd", NewRenoTrackDownPrettyBoyLloyd )
+        , ( "NewRenoHelpGuardSecretTransaction", NewRenoHelpGuardSecretTransaction )
+        , ( "NewRenoCollectTributeFromCorsicanBrothers", NewRenoCollectTributeFromCorsicanBrothers )
+        , ( "NewRenoWinBoxingTournament", NewRenoWinBoxingTournament )
+        , ( "NewRenoAcquireElectronicLockpick", NewRenoAcquireElectronicLockpick )
+        , ( "NCRGuardBrahminCaravan", NCRGuardBrahminCaravan )
+        , ( "NCRTestMutagenicSerum", NCRTestMutagenicSerum )
+        , ( "NCRRetrieveComputerParts", NCRRetrieveComputerParts )
+        , ( "NCRFreeSlaves", NCRFreeSlaves )
+        , ( "NCRInvestigateBrahminRaids", NCRInvestigateBrahminRaids )
+        , ( "V15RescueChrissy", V15RescueChrissy )
+        , ( "V15CompleteDealWithNCR", V15CompleteDealWithNCR )
+        , ( "V13FixVaultComputer", V13FixVaultComputer )
+        , ( "V13FindTheGeck", V13FindTheGeck )
+        , ( "BrokenHillsFixMineAirPurifier", BrokenHillsFixMineAirPurifier )
+        , ( "BrokenHillsBlowUpMineAirPurifier", BrokenHillsBlowUpMineAirPurifier )
+        , ( "BrokenHillsFindMissingPeople", BrokenHillsFindMissingPeople )
+        , ( "BrokenHillsBeatFrancisAtArmwrestling", BrokenHillsBeatFrancisAtArmwrestling )
+        , ( "RaidersFindEvidenceOfBishopTampering", RaidersFindEvidenceOfBishopTampering )
+        , ( "RaidersKillEverybody", RaidersKillEverybody )
+        , ( "SierraArmyDepotFindAbnormalBrainForSkynet", SierraArmyDepotFindAbnormalBrainForSkynet )
+        , ( "SierraArmyDepotFindChimpanzeeBrainForSkynet", SierraArmyDepotFindChimpanzeeBrainForSkynet )
+        , ( "SierraArmyDepotFindHumanBrainForSkynet", SierraArmyDepotFindHumanBrainForSkynet )
+        , ( "SierraArmyDepotFindCyberneticBrainForSkynet", SierraArmyDepotFindCyberneticBrainForSkynet )
+        , ( "SierraArmyDepotAssembleBodyForSkynet", SierraArmyDepotAssembleBodyForSkynet )
+        , ( "MilitaryBaseExcavateTheEntrance", MilitaryBaseExcavateTheEntrance )
+        , ( "MilitaryBaseKillMelchior", MilitaryBaseKillMelchior )
+        , ( "SanFranciscoFindFuelForTanker", SanFranciscoFindFuelForTanker )
+        , ( "SanFranciscoFindLocationOfFobForTanker", SanFranciscoFindLocationOfFobForTanker )
+        , ( "SanFranciscoFindNavCompPartForTanker", SanFranciscoFindNavCompPartForTanker )
+        , ( "SanFranciscoFindVertibirdPlansForHubologists", SanFranciscoFindVertibirdPlansForHubologists )
+        , ( "SanFranciscoFindVertibirdPlansForShi", SanFranciscoFindVertibirdPlansForShi )
+        , ( "SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel", SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel )
+        , ( "SanFranciscoFindBadgersGirlfriendInsideShip", SanFranciscoFindBadgersGirlfriendInsideShip )
+        , ( "SanFranciscoDefeatLoPanInRingForDragon", SanFranciscoDefeatLoPanInRingForDragon )
+        , ( "SanFranciscoDefeatDragonInRingForLoPan", SanFranciscoDefeatDragonInRingForLoPan )
+        , ( "SanFranciscoEmbarkForEnclave", SanFranciscoEmbarkForEnclave )
+        , ( "NavarroFixK9", NavarroFixK9 )
+        , ( "NavarroRetrieveFobForTanker", NavarroRetrieveFobForTanker )
+        , ( "EnclavePersuadeControlCompanySquadToDesert", EnclavePersuadeControlCompanySquadToDesert )
+        , ( "EnclaveKillThePresidentStealthily", EnclaveKillThePresidentStealthily )
+        , ( "EnclaveKillThePresidentTheUsualWay", EnclaveKillThePresidentTheUsualWay )
+        , ( "EnclaveFindTheGeck", EnclaveFindTheGeck )
+        , ( "EnclaveRigTurretsToTargetFrankHorrigan", EnclaveRigTurretsToTargetFrankHorrigan )
+        , ( "EnclaveForceScientistToInitiateSelfDestruct", EnclaveForceScientistToInitiateSelfDestruct )
+        , ( "EnclaveKillFrankHorrigan", EnclaveKillFrankHorrigan )
+        , ( "EnclaveReturnToMainland", EnclaveReturnToMainland )
+        ]
 
 
 isExclusiveWith : Name -> Name -> Bool
