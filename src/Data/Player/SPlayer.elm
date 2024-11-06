@@ -1,6 +1,5 @@
 module Data.Player.SPlayer exposing
     ( addCaps
-    , addCarBattery
     , addHp
     , addItem
     , addItems

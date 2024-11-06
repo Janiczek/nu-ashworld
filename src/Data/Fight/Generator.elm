@@ -28,7 +28,6 @@ import Data.Item as Item exposing (Item)
 import Data.Item.Kind as ItemKind
 import Data.Message as Message exposing (Content(..))
 import Data.Perk as Perk exposing (Perk)
-import Data.Perk.Requirement exposing (requirements)
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special exposing (Special)
 import Data.Trait as Trait exposing (Trait)

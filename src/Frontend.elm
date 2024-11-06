@@ -34,7 +34,6 @@ import Data.Player as Player
     exposing
         ( COtherPlayer
         , CPlayer
-        , Player(..)
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)
@@ -2095,7 +2094,7 @@ expandedQuestView player progress questsProgress quest =
                     ]
                     [ H.text "[START]" ]
             ]
-        , H.div [ HA.class "bg-green-800 p-[2ch] flex flex-col gap-4" ] <|
+        , H.div [ HA.class "bg-green-800 p-[2ch] flex flex-col gap-4" ]
             [ H.div []
                 [ questProgressbarView
                     { ticksGiven = progress.ticksGiven
@@ -4134,7 +4133,7 @@ inventoryView _ player =
     in
     [ pageTitleView "Inventory"
     , H.div [ HA.class "flex flex-col gap-4" ] <|
-        List.concat
+        List.fastConcat
             [ [ H.p []
                     [ H.text "Total value: "
                     , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
@@ -5205,11 +5204,6 @@ contentUnavailableToNonAdminView =
 contentUnavailableToNonSigningUpView : List (Html FrontendMsg)
 contentUnavailableToNonSigningUpView =
     contentUnavailableView "you have already created your character"
-
-
-contentUnavailableToNonCreatedView : List (Html FrontendMsg)
-contentUnavailableToNonCreatedView =
-    contentUnavailableView "you haven't created your character yet"
 
 
 contentUnavailableView : String -> List (Html FrontendMsg)

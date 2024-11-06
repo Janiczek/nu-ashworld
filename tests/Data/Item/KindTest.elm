@@ -5,7 +5,7 @@ import Data.Enemy.Type exposing (EnemyType)
 import Data.Item.Kind as ItemKind
 import Data.Map as Map
 import Data.Map.SmallChunk as SmallChunk
-import Data.Quest as Quest exposing (Quest)
+import Data.Quest as Quest
 import Data.Vendor.Shop as Shop
 import Expect
 import List.ExtraExtra as List

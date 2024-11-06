@@ -15,7 +15,7 @@ import Data.Player
     exposing
         ( COtherPlayer
         , CPlayer
-        , Player(..)
+        , Player
         , SPlayer
         )
 import Data.Player.PlayerName exposing (PlayerName)

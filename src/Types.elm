@@ -15,7 +15,7 @@ import Data.NewChar as NewChar exposing (NewChar)
 import Data.Perk exposing (Perk)
 import Data.Player exposing (COtherPlayer, CPlayer)
 import Data.Player.PlayerName exposing (PlayerName)
-import Data.Quest as Quest exposing (Quest)
+import Data.Quest exposing (Quest)
 import Data.Skill exposing (Skill)
 import Data.Special as Special
 import Data.Trait exposing (Trait)
