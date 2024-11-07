@@ -54,10 +54,12 @@ type alias World =
 init : { fast : Bool } -> World
 init { fast } =
     let
+        -- TODO: for now make sure these numbers don't get below 2, otherwise fast worlds couldn't use quests.
+        -- But in the future try to rework the quest tick/h cost system somehow.
         ( tickFrequency, tickPerIntervalCurve, vendorRestockFrequency ) =
             if fast then
                 ( Time.Second
-                , Tick.QuarterAndRest { quarter = 2, rest = 1 }
+                , Tick.QuarterAndRest { quarter = 4, rest = 2 }
                 , Time.Minute
                 )
 

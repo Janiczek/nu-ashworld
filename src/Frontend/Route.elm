@@ -6,6 +6,7 @@ module Frontend.Route exposing
     , getShop
     , isGuideRelatedRoute
     , isMessagesRelatedRoute
+    , isStandalone
     , loggedOut
     , needsAdmin
     , needsPlayer
@@ -28,6 +29,7 @@ type Route
     | WorldsList
     | NotFound Url
     | CharCreation
+    | FightStrategySyntaxHelp
     | PlayerRoute PlayerRoute
     | AdminRoute AdminRoute
 
@@ -43,7 +45,6 @@ type PlayerRoute
     | Messages
     | Message Message.Id
     | SettingsFightStrategy
-    | SettingsFightStrategySyntaxHelp
 
 
 type AdminRoute
@@ -82,6 +83,9 @@ needsPlayerSigningUp route =
         NotFound _ ->
             False
 
+        FightStrategySyntaxHelp ->
+            False
+
 
 needsPlayer : Route -> Bool
 needsPlayer route =
@@ -113,6 +117,9 @@ needsPlayer route =
         NotFound _ ->
             False
 
+        FightStrategySyntaxHelp ->
+            False
+
 
 needsAdmin : Route -> Bool
 needsAdmin route =
@@ -142,6 +149,9 @@ needsAdmin route =
             False
 
         NotFound _ ->
+            False
+
+        FightStrategySyntaxHelp ->
             False
 
 
@@ -189,9 +199,6 @@ isMessagesRelatedRoute route =
                 SettingsFightStrategy ->
                     False
 
-                SettingsFightStrategySyntaxHelp ->
-                    False
-
         _ ->
             False
 
@@ -209,6 +216,7 @@ parser =
         , P.map News <| P.s "news"
         , P.map About <| P.s "about"
         , P.map Guide <| P.s "guide" </> P.fragment identity
+        , P.map FightStrategySyntaxHelp <| P.s "fight-strategy-help"
         , P.map Map <| P.s "map"
         , P.map WorldsList <| P.s "worlds"
         , P.map AdminRoute <| P.s "admin" </> adminParser
@@ -239,7 +247,6 @@ playerParser =
         , P.map Messages <| P.s "messages"
         , P.map Message <| P.s "messages" </> P.int
         , P.map SettingsFightStrategy <| P.s "settings" </> P.s "fight-strategy"
-        , P.map SettingsFightStrategySyntaxHelp <| P.s "settings" </> P.s "fight-strategy" </> P.s "help"
         ]
 
 
@@ -347,6 +354,9 @@ toString route =
                 CharCreation ->
                     "game/character-creation"
 
+                FightStrategySyntaxHelp ->
+                    "fight-strategy-help"
+
                 -- TODO is this OK?
                 PlayerRoute proute ->
                     "game/"
@@ -380,9 +390,6 @@ toString route =
 
                                 SettingsFightStrategy ->
                                     "settings/fight-strategy"
-
-                                SettingsFightStrategySyntaxHelp ->
-                                    "settings/fight-strategy/help"
                            )
 
                 AdminRoute aroute ->
@@ -435,13 +442,13 @@ getShop route =
                 SettingsFightStrategy ->
                     Nothing
 
-                SettingsFightStrategySyntaxHelp ->
-                    Nothing
-
         About ->
             Nothing
 
         CharCreation ->
+            Nothing
+
+        FightStrategySyntaxHelp ->
             Nothing
 
         Guide _ ->
@@ -467,6 +474,46 @@ isGuideRelatedRoute : Route -> Bool
 isGuideRelatedRoute route =
     case route of
         Guide _ ->
+            True
+
+        About ->
+            False
+
+        News ->
+            False
+
+        Map ->
+            False
+
+        CharCreation ->
+            False
+
+        FightStrategySyntaxHelp ->
+            False
+
+        WorldsList ->
+            False
+
+        NotFound _ ->
+            False
+
+        AdminRoute _ ->
+            False
+
+        PlayerRoute _ ->
+            False
+
+
+{-| Hides the left navigation if False.
+Right now only used for the Fight Strategy and the Guide..
+-}
+isStandalone : Route -> Bool
+isStandalone route =
+    case route of
+        Guide _ ->
+            True
+
+        FightStrategySyntaxHelp ->
             True
 
         About ->

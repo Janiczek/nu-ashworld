@@ -563,7 +563,22 @@ processGameTickForQuests worldName model =
                                                                     )
 
                                                                 else
-                                                                    ( lastItemId, players )
+                                                                    let
+                                                                        newPlayerData =
+                                                                            playerData
+                                                                                |> SPlayer.addMessage
+                                                                                    { read = False }
+                                                                                    model.time
+                                                                                    (Message.OthersCompletedAQuest
+                                                                                        { quest = completedQuest
+                                                                                        , globalRewards = Quest.globalRewards completedQuest
+                                                                                        }
+                                                                                    )
+                                                                    in
+                                                                    ( lastItemId
+                                                                    , players
+                                                                        |> Dict.insert playerName (Player.Player newPlayerData)
+                                                                    )
                                                     )
                                                     ( world.lastItemId, world.players )
                                                     world.players

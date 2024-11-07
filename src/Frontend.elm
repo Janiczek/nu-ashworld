@@ -978,8 +978,13 @@ view model =
     in
     { title = "NuAshworld " ++ Version.version
     , body =
-        appView { leftNav = leftNav } model
-            :: preload model
+        if Route.isStandalone model.route then
+            contentView model
+                :: preload model
+
+        else
+            appView { leftNav = leftNav } model
+                :: preload model
     }
 
 
@@ -1073,8 +1078,14 @@ contentView model =
                 |> Location.location
                 |> Maybe.map (\loc -> withCreatedPlayer data (fn loc))
                 |> Maybe.withDefault contentUnavailableWhenNotInTownView
+
+        isStandaloneRoute =
+            Route.isStandalone model.route
     in
-    H.div [ HA.class "ml-[28ch] pt-8 px-10 pb-10 flex flex-col items-start min-h-vh" ]
+    H.div
+        [ HA.class "pt-8 px-10 pb-10 flex flex-col items-start min-h-vh"
+        , HA.classList [ ( "ml-[28ch]", not isStandaloneRoute ) ]
+        ]
         (case ( model.route, model.worldData ) of
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
@@ -1095,6 +1106,9 @@ contentView model =
 
             ( Guide heading, _ ) ->
                 guideView heading model.lastGuideTocSectionClick
+
+            ( FightStrategySyntaxHelp, _ ) ->
+                fightStrategySyntaxHelpView model.hoveredItem
 
             ( News, _ ) ->
                 newsView model.zone
@@ -1163,9 +1177,6 @@ contentView model =
                         withCreatedPlayer_ <|
                             settingsFightStrategyView
                                 model.fightStrategyText
-
-                    Route.SettingsFightStrategySyntaxHelp ->
-                        settingsFightStrategySyntaxHelpView model.hoveredItem
 
             ( PlayerRoute _, _ ) ->
                 contentUnavailableToLoggedOutView
@@ -4447,8 +4458,8 @@ messageView zone messageId _ player =
             ]
 
 
-settingsFightStrategySyntaxHelpView : Maybe HoveredItem -> List (Html FrontendMsg)
-settingsFightStrategySyntaxHelpView maybeHoveredItem =
+fightStrategySyntaxHelpView : Maybe HoveredItem -> List (Html FrontendMsg)
+fightStrategySyntaxHelpView maybeHoveredItem =
     let
         viewMarkup : FightStrategyHelp.Markup -> Html FrontendMsg
         viewMarkup markup =
@@ -4630,9 +4641,10 @@ settingsFightStrategyView fightStrategyText _ player =
             )
 
         helpBtn =
-            UI.button
+            H.a
                 [ HA.class "ml-[1ch]"
-                , HE.onClick (GoToRoute (PlayerRoute Route.SettingsFightStrategySyntaxHelp))
+                , HA.target "_blank"
+                , HA.href (Route.toString FightStrategySyntaxHelp)
                 ]
                 [ H.text "[Syntax cheatsheet]" ]
 
@@ -5306,8 +5318,9 @@ loginFormView worlds auth =
 
 type Link
     = LinkOut { label : String, url : String }
+    | LinkOutFull { label : String, url : String, hoverMsg : Maybe FrontendMsg }
     | LinkIn { label : String, route : Route, highlight : LinkHighlight }
-    | LinkInFull { label : String, route : Route, hoverMsg : Maybe FrontendMsg, disabled : Bool, tooltip : Maybe String, highlight : LinkHighlight, isActive : Route -> Bool }
+    | LinkInFull { label : String, route : Route, disabled : Bool, tooltip : Maybe String, highlight : LinkHighlight, isActive : Route -> Bool }
     | LinkMsg { label : String, msg : FrontendMsg, disabled : Bool, tooltip : Maybe String }
 
 
@@ -5334,6 +5347,19 @@ linkView currentRoute link =
                       )
                     )
 
+                LinkOutFull { label, url, hoverMsg } ->
+                    ( ( H.a
+                      , [ HA.href url
+                        , HA.target "_blank"
+                        , HA.attributeMaybe HE.onMouseOver hoverMsg
+                        ]
+                      , label
+                      )
+                    , ( Nothing
+                      , False
+                      )
+                    )
+
                 LinkIn { label, route, highlight } ->
                     ( ( UI.button
                       , [ HE.onClick <| GoToRoute route
@@ -5346,10 +5372,9 @@ linkView currentRoute link =
                       )
                     )
 
-                LinkInFull { label, route, hoverMsg, disabled, tooltip, highlight, isActive } ->
+                LinkInFull { label, route, disabled, tooltip, highlight, isActive } ->
                     ( ( UI.button
                       , [ HE.onClick <| GoToRoute route
-                        , HA.attributeMaybe HE.onMouseOver hoverMsg
                         , HA.classList [ ( "active", isActive currentRoute || highlight == HHighlighted ) ]
                         , HA.disabled disabled
                         ]
@@ -5469,7 +5494,6 @@ loggedInLinksView p currentRoute =
     , LinkInFull
         { label = "Messages"
         , route = PlayerRoute Route.Messages
-        , hoverMsg = Nothing
         , tooltip =
             if unreadMessages > 0 then
                 Just "You have unread messages!"
@@ -5519,7 +5543,7 @@ commonLinksView : Route -> Html FrontendMsg
 commonLinksView currentRoute =
     [ LinkIn { label = "News", route = News, highlight = HNormal }
     , LinkIn { label = "About", route = About, highlight = HNormal }
-    , LinkInFull { label = "Guide", route = Guide Nothing, hoverMsg = Just HoveredGuideNavLink, highlight = HNormal, disabled = False, tooltip = Nothing, isActive = Route.isGuideRelatedRoute }
+    , LinkOutFull { label = "Guide", url = Route.toString (Guide Nothing), hoverMsg = Just HoveredGuideNavLink }
     , LinkOut { label = "Discord", url = Links.discord }
     , LinkOut { label = "Twitter", url = Links.twitter }
     , LinkOut { label = "GitHub", url = Links.github }

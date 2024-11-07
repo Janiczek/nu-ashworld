@@ -64,6 +64,10 @@ type Content
         , playerReward : Maybe (List Quest.PlayerReward)
         , globalRewards : List Quest.GlobalReward
         }
+    | OthersCompletedAQuest
+        { quest : Quest
+        , globalRewards : List Quest.GlobalReward
+        }
 
 
 isFightMessage : Content -> Bool
@@ -84,6 +88,9 @@ isFightMessage content_ =
         YouCompletedAQuest _ ->
             False
 
+        OthersCompletedAQuest _ ->
+            False
+
 
 codec : Codec Message
 codec =
@@ -98,7 +105,7 @@ codec =
 contentCodec : Codec Content
 contentCodec =
     Codec.custom
-        (\welcomeEncoder youAdvancedLevelEncoder youWereAttackedEncoder youAttackedEncoder youCompletedAQuestEncoder value ->
+        (\welcomeEncoder youAdvancedLevelEncoder youWereAttackedEncoder youAttackedEncoder youCompletedAQuestEncoder othersCompletedAQuestEncoder value ->
             case value of
                 Welcome ->
                     welcomeEncoder
@@ -114,6 +121,9 @@ contentCodec =
 
                 YouCompletedAQuest arg0 ->
                     youCompletedAQuestEncoder arg0
+
+                OthersCompletedAQuest arg0 ->
+                    othersCompletedAQuestEncoder arg0
         )
         |> Codec.variant0 "Welcome" Welcome
         |> Codec.variant1
@@ -153,6 +163,19 @@ contentCodec =
                 |> Codec.field "quest" .quest Quest.codec
                 |> Codec.field "xpReward" .xpReward Codec.int
                 |> Codec.field "playerReward" .playerReward (Codec.nullable (Codec.list Quest.playerRewardCodec))
+                |> Codec.field "globalRewards" .globalRewards (Codec.list Quest.globalRewardCodec)
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "OthersCompletedAQuest"
+            OthersCompletedAQuest
+            (Codec.object
+                (\quest globalRewards ->
+                    { quest = quest
+                    , globalRewards = globalRewards
+                    }
+                )
+                |> Codec.field "quest" .quest Quest.codec
                 |> Codec.field "globalRewards" .globalRewards (Codec.list Quest.globalRewardCodec)
                 |> Codec.buildObject
             )
@@ -229,6 +252,9 @@ summary message =
         YouCompletedAQuest r ->
             "You completed the quest: " ++ Quest.title r.quest
 
+        OthersCompletedAQuest r ->
+            "Others completed the quest: " ++ Quest.title r.quest
+
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
 content attributes perceptionLevel message =
@@ -282,7 +308,10 @@ Your current level is """
                 ]
 
         YouCompletedAQuest r ->
-            [ Just ("You completed the quest: " ++ Quest.title r.quest)
+            [ "You completed the quest **{QUEST}**!"
+                |> String.replace "{QUEST}" (Quest.title r.quest)
+                |> Just
+            , Just (Quest.completionText r.quest)
             , Just ("You earned " ++ String.fromInt r.xpReward ++ " XP.")
             , Maybe.map
                 (\rewards ->
@@ -298,7 +327,27 @@ Your current level is """
               else
                 Just
                     (String.join "\n"
-                        [ "Global effects:"
+                        [ "Global rewards:"
+                        , String.join "\n" (List.map Quest.globalRewardTitle r.globalRewards)
+                        ]
+                    )
+            ]
+                |> List.filterMap identity
+                |> String.join "\n\n"
+                |> renderMarkdown attributes
+
+        OthersCompletedAQuest r ->
+            [ "Others completed the quest **{QUEST}** without your participation."
+                |> String.replace "{QUEST}" (Quest.title r.quest)
+                |> Just
+            , Just (Quest.completionText r.quest)
+            , if List.isEmpty r.globalRewards then
+                Nothing
+
+              else
+                Just
+                    (String.join "\n"
+                        [ "Global rewards:"
                         , String.join "\n" (List.map Quest.globalRewardTitle r.globalRewards)
                         ]
                     )

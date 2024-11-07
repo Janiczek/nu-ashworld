@@ -3,3 +3,4 @@ watch:  elm-test --compiler lamdera --watch
 max:    elm-test --compiler lamdera --fuzz 100000
 fix:    elm-review --fix --config review        --compiler /Users/martin/.bin/lamdera
 derive: elm-review --fix --config review-derive --compiler /Users/martin/.bin/lamdera
+dl-logs: curl -H "x-api-key: $NU_ASHWORLD_DL_LOGS_API_KEY" -X POST  https://janiczek-nuashworld.builtwithdark.com/log-backend-export -o logs.json

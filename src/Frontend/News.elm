@@ -32,7 +32,10 @@ announcement!
 
 Current TODOs:
 
-- quest completion flair text
+- make fight strategy guide visible without logging in
+- fight strategy: AP cost of action
+- fight strategy: "run away"
+- item descriptions
 
 Next up: 
 
@@ -41,7 +44,6 @@ Next up:
 
 Later: 
 
-- item descriptions 
 - weapons - show strength requirement somewhere (item description)
 - don't forget to say something about K9 and Skynet Aim
 - tooltips around edge of screen - floating-ui.js?
@@ -49,6 +51,7 @@ Later:
 
 - Steam webview wrapper
 - guest mode - no login required, Ladder fights, quests and marketplace disabled, but you can wander (PvM fights) and use shops
+- Car part quests - always get the part if progressing/if paid reqs, even if not enough ticks given for a player reward?
 
 Bugs found:
 
