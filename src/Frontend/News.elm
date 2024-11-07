@@ -32,7 +32,6 @@ announcement!
 
 Current TODOs:
 
-- make fight strategy guide visible without logging in
 - fight strategy: AP cost of action
 - fight strategy: "run away"
 - item descriptions
