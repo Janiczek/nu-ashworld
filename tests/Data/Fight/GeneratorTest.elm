@@ -24,6 +24,9 @@ suite =
         [ Test.describe "generator"
             [ damageNeverNegative
             , meleeUnaimedStrategyResultsInMeleeUnaimedAttacks
+            , fightEndsIfOnlyRunningAway
+            , fightEndsIfOnlyMovingForward
+            , fightEndsIfOnlyMovingForwardAndRunningAway
             ]
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
@@ -99,6 +102,54 @@ damageNeverNegative =
                 |> List.isEmpty
                 |> Expect.equal True
                 |> Expect.onFail "Expected the list of negative damage actions in a fight to be empty"
+
+
+fightEndsIfOnlyRunningAway : Test
+fightEndsIfOnlyRunningAway =
+    Test.fuzz
+        (fightFuzzer
+            { attacker = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command RunAway })
+            , target = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command RunAway })
+            }
+        )
+        "Fight ends if only running away (no infinite loops)"
+    <|
+        \fight ->
+            fight.fightInfoForAttacker.result
+                |> Expect.equal Fight.NobodyDeadGivenUp
+                |> Expect.onFail "Expected damage-less run-only fight to end (NobodyDeadGivenUp)"
+
+
+fightEndsIfOnlyMovingForward : Test
+fightEndsIfOnlyMovingForward =
+    Test.fuzz
+        (fightFuzzer
+            { attacker = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command MoveForward })
+            , target = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command MoveForward })
+            }
+        )
+        "Fight ends if only moving forward (no infinite loops)"
+    <|
+        \fight ->
+            fight.fightInfoForAttacker.result
+                |> Expect.equal Fight.NobodyDeadGivenUp
+                |> Expect.onFail "Expected damage-less run-only fight to end (NobodyDeadGivenUp)"
+
+
+fightEndsIfOnlyMovingForwardAndRunningAway : Test
+fightEndsIfOnlyMovingForwardAndRunningAway =
+    Test.fuzz
+        (fightFuzzer
+            { attacker = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command RunAway })
+            , target = opponentFuzzer |> Fuzz.map (\opp -> { opp | fightStrategy = Command MoveForward })
+            }
+        )
+        "Fight ends if only moving forward and running away (no infinite loops)"
+    <|
+        \fight ->
+            fight.fightInfoForAttacker.result
+                |> Expect.equal Fight.NobodyDeadGivenUp
+                |> Expect.onFail "Expected damage-less run-only fight to end (NobodyDeadGivenUp)"
 
 
 meleeAttackSucceedsAtDistance2WithRange2 : Test

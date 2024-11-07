@@ -126,6 +126,9 @@ apCost action =
         Fight.ComeCloser { hexes } ->
             hexes
 
+        Fight.RunAway { hexes } ->
+            hexes
+
         Fight.Attack r_ ->
             r_.apCost
 
@@ -160,6 +163,11 @@ subtractAp who action ongoing =
 
         Target ->
             { ongoing | targetAp = max 0 <| ongoing.targetAp - apToSubtract }
+
+
+addDistance : Int -> OngoingFight -> OngoingFight
+addDistance n ongoing =
+    { ongoing | distanceHexes = ongoing.distanceHexes + n }
 
 
 subtractDistance : Int -> OngoingFight -> OngoingFight
@@ -942,6 +950,9 @@ runCommand who ongoing state command =
         MoveForward ->
             moveForward who ongoing
 
+        RunAway ->
+            runAway who ongoing
+
         DoWhatever ->
             FightStrategy.doWhatever
                 |> evalStrategy who state
@@ -1153,6 +1164,34 @@ moveForward who ongoing =
             |> subtractAp who action
             |> finalizeCommand
             |> Random.constant
+
+
+runAway : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
+runAway who ongoing =
+    let
+        opponent =
+            opponent_ who ongoing
+
+        maxPossibleMove : Int
+        maxPossibleMove =
+            Logic.maxPossibleMove
+                { actionPoints = opponentAp who ongoing
+                , crippledLegs = crippledLegs opponent
+                }
+
+        action : Fight.Action
+        action =
+            Fight.RunAway
+                { hexes = maxPossibleMove
+                , remainingDistanceHexes = ongoing.distanceHexes + maxPossibleMove
+                }
+    in
+    ongoing
+        |> addLog who action
+        |> addDistance maxPossibleMove
+        |> subtractAp who action
+        |> finalizeCommand
+        |> Random.constant
 
 
 skipTurn : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }

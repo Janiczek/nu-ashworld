@@ -69,6 +69,7 @@ command =
         , P.map (\_ -> HealWithAnything) (P.keyword "heal with anything")
         , heal
         , P.map (\_ -> MoveForward) (P.keyword "move forward")
+        , P.map (\_ -> RunAway) (P.keyword "run away")
         , P.map (\_ -> DoWhatever) (P.keyword "do whatever")
         , P.map (\_ -> SkipTurn) (P.keyword "skip turn")
         ]

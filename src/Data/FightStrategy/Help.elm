@@ -24,26 +24,26 @@ help =
   - heal ([ITEM])                     - my AP
   - heal with anything                - number of available [ITEM]
   - move forward                      - number of available healing items
-  - do whatever                       - number of available ammo
-  - skip turn                         - number of used [ITEM]
-                                      - number of used healing items
+  - run away                          - number of available ammo
+  - do whatever                       - number of used [ITEM]
+  - skip turn                         - number of used healing items
                                       - number of used ammo
- [CONDITION]                          - opponent's level
-   - opponent is player               - chance to hit ([ATTACK])
-   - opponent is NPC                  - range needed ([ATTACK])
-   - [VALUE] [OPERATOR] [VALUE]       - distance
-   - ([CONDITION] or [CONDITION])     - [NUMBER]
+                                      - opponent's level
+ [CONDITION]                          - chance to hit ([ATTACK])
+   - opponent is player               - range needed ([ATTACK])
+   - opponent is NPC                  - distance
+   - [VALUE] [OPERATOR] [VALUE]       - [NUMBER]
+   - ([CONDITION] or [CONDITION]) 
    - ([CONDITION] and [CONDITION])
-
                                     [ATTACK]             [AIM]
- [OPERATOR]                           - unarmed            - head
-   - <   (less than)                  - unarmed, [AIM]     - eyes
-   - <=  (less than or equal)         - melee              - torso
-   - ==  (equals)                     - melee, [AIM]       - groin
-   - !=  (doesn't equal)              - throw              - left arm
-   - >=  (greater than or equal)      - shoot              - right arm
-   - >   (greater than)               - shoot, [AIM]       - left leg
-                                      - burst              - right leg
+                                      - unarmed            - head
+ [OPERATOR]                           - unarmed, [AIM]     - eyes
+   - <   (less than)                  - melee              - torso
+   - <=  (less than or equal)         - melee, [AIM]       - groin
+   - ==  (equals)                     - throw              - left arm
+   - !=  (doesn't equal)              - shoot              - right arm
+   - >=  (greater than or equal)      - shoot, [AIM]       - left leg
+   - >   (greater than)               - burst              - right leg
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -175,7 +175,9 @@ Examples:
 - heal with anything
 - attack (head)
 - attack randomly
-- move forward"""
+- move forward
+- run away
+"""
 
         Condition ->
             """Examples:

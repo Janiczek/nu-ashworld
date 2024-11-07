@@ -116,6 +116,7 @@ command =
         (List.fastConcat
             [ [ ( "attack randomly", "attack randomly", Just AttackRandomly )
               , ( "move forward", "move forward", Just MoveForward )
+              , ( "run away", "run away", Just RunAway )
               , ( "do whatever", "do whatever", Just DoWhatever )
               , ( "heal Stimpak", "heal (Stimpak)", Just (Heal ItemKind.Stimpak) )
               , ( "heal Healing Powder", "heal (Healing Powder)", Just (Heal ItemKind.HealingPowder) )

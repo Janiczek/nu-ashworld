@@ -105,9 +105,13 @@ type Who
 
 
 type Action
-    = -- TODO later Reload, WalkAway, uncousciousness and other debuffs...
+    = -- TODO later Reload, uncousciousness and other debuffs...
       Start { distanceHexes : Int }
     | ComeCloser
+        { hexes : Int
+        , remainingDistanceHexes : Int
+        }
+    | RunAway
         { hexes : Int
         , remainingDistanceHexes : Int
         }
@@ -187,13 +191,16 @@ whoCodec =
 actionCodec : Codec Action
 actionCodec =
     Codec.custom
-        (\startEncoder comeCloserEncoder attackEncoder missEncoder healEncoder skipTurnEncoder knockedOutEncoder standUpEncoder failToDoAnythingEncoder value ->
+        (\startEncoder comeCloserEncoder runAwayEncoder attackEncoder missEncoder healEncoder skipTurnEncoder knockedOutEncoder standUpEncoder failToDoAnythingEncoder value ->
             case value of
                 Start arg0 ->
                     startEncoder arg0
 
                 ComeCloser arg0 ->
                     comeCloserEncoder arg0
+
+                RunAway arg0 ->
+                    runAwayEncoder arg0
 
                 Attack arg0 ->
                     attackEncoder arg0
@@ -226,6 +233,15 @@ actionCodec =
         |> Codec.variant1
             "ComeCloser"
             ComeCloser
+            (Codec.object
+                (\hexes remainingDistanceHexes -> { hexes = hexes, remainingDistanceHexes = remainingDistanceHexes })
+                |> Codec.field "hexes" .hexes Codec.int
+                |> Codec.field "remainingDistanceHexes" .remainingDistanceHexes Codec.int
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "RunAway"
+            RunAway
             (Codec.object
                 (\hexes remainingDistanceHexes -> { hexes = hexes, remainingDistanceHexes = remainingDistanceHexes })
                 |> Codec.field "hexes" .hexes Codec.int
@@ -410,6 +426,9 @@ attackDamage action =
         ComeCloser _ ->
             0
 
+        RunAway _ ->
+            0
+
         KnockedOut ->
             0
 
@@ -439,6 +458,9 @@ attackStyle action =
             Nothing
 
         ComeCloser _ ->
+            Nothing
+
+        RunAway _ ->
             Nothing
 
         KnockedOut ->

@@ -33,8 +33,8 @@ announcement!
 Current TODOs:
 
 - fight strategy: AP cost of action
-- fight strategy: "run away"
 - item descriptions
+- fight view: say how much AP it cost and how much you have left.
 
 Next up: 
 

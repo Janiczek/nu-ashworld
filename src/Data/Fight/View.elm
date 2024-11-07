@@ -281,6 +281,23 @@ view perceptionLevel fight yourName =
                                                             names_.subject.verbPresent "come"
                                                                 ++ " closer."
 
+                                                Fight.RunAway { hexes, remainingDistanceHexes } ->
+                                                    if Perception.atLeast Perception.Great perceptionLevel then
+                                                        H.span []
+                                                            [ H.text <|
+                                                                names_.subject.verbPresent "run"
+                                                                    ++ " away "
+                                                            , highlight <| String.fromInt hexes
+                                                            , H.text " hexes. Remaining distance: "
+                                                            , highlight <| String.fromInt remainingDistanceHexes
+                                                            , H.text " hexes."
+                                                            ]
+
+                                                    else
+                                                        H.text <|
+                                                            names_.subject.verbPresent "run"
+                                                                ++ " away."
+
                                                 Fight.Attack { damage, remainingHp, attackStyle, critical } ->
                                                     let
                                                         critically =

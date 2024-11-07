@@ -203,6 +203,7 @@ commandFuzzer =
         , Fuzz.map Heal healingItemKindFuzzer
         , Fuzz.constant HealWithAnything
         , Fuzz.constant MoveForward
+        , Fuzz.constant RunAway
         , Fuzz.constant DoWhatever
         , Fuzz.constant SkipTurn
         ]

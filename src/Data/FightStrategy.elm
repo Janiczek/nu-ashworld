@@ -79,6 +79,7 @@ type Command
     | Heal ItemKind.Kind
     | HealWithAnything
     | MoveForward
+    | RunAway
     | DoWhatever
     | SkipTurn
 
@@ -220,7 +221,7 @@ operatorCodec =
 commandCodec : Codec Command
 commandCodec =
     Codec.custom
-        (\attackEncoder attackRandomlyEncoder healEncoder healWithAnythingEncoder moveForwardEncoder doWhateverEncoder skipTurnEncoder value ->
+        (\attackEncoder attackRandomlyEncoder healEncoder healWithAnythingEncoder moveForwardEncoder runAwayEncoder doWhateverEncoder skipTurnEncoder value ->
             case value of
                 Attack arg0 ->
                     attackEncoder arg0
@@ -237,6 +238,9 @@ commandCodec =
                 MoveForward ->
                     moveForwardEncoder
 
+                RunAway ->
+                    runAwayEncoder
+
                 DoWhatever ->
                     doWhateverEncoder
 
@@ -248,6 +252,7 @@ commandCodec =
         |> Codec.variant1 "Heal" Heal ItemKind.codec
         |> Codec.variant0 "HealWithAnything" HealWithAnything
         |> Codec.variant0 "MoveForward" MoveForward
+        |> Codec.variant0 "RunAway" RunAway
         |> Codec.variant0 "DoWhatever" DoWhatever
         |> Codec.variant0 "SkipTurn" SkipTurn
         |> Codec.buildCustom
@@ -288,6 +293,9 @@ toString strategy =
 
                 MoveForward ->
                     "move forward"
+
+                RunAway ->
+                    "run away"
 
                 DoWhatever ->
                     "do whatever"
@@ -574,6 +582,9 @@ isAimedCommand command =
         MoveForward ->
             False
 
+        RunAway ->
+            False
+
         DoWhatever ->
             False
 
@@ -600,6 +611,9 @@ extractItemsUsedForHealing strategy =
                     []
 
                 MoveForward ->
+                    []
+
+                RunAway ->
                     []
 
                 DoWhatever ->
