@@ -8,6 +8,7 @@ module Data.Quest exposing
     , all
     , allForLocation
     , codec
+    , completionText
     , description
     , exclusiveWith
     , globalRewardCodec
@@ -2102,6 +2103,7 @@ playerRewards quest =
         ToxicCavesRescueSmileyTrapper ->
             mk
                 [ PerkReward Perk.GeckoSkinning
+                , SkillUpgrade { skill = Skill.Outdoorsman, percentage = 10 }
                 , CapsReward 700
                 ]
                 5
@@ -2115,7 +2117,7 @@ playerRewards quest =
             mk
                 [ ItemReward { what = ItemKind.TeslaArmor, amount = 1 }
                 , ItemReward { what = ItemKind.Bozar, amount = 1 }
-                , ItemReward { what = ItemKind.Fmj223, amount = 50 }
+                , ItemReward { what = ItemKind.Fmj223, amount = 100 }
                 , CapsReward 10000
                 ]
                 15
@@ -3007,8 +3009,9 @@ and bring him back before the raiders or wildlife get to him."""
 
         KlamathSearchForSmileyTrapper ->
             """Smiley, one of Klamath's best trappers, hasn't returned from his
-last expedition to the Toxic Caves. The other trappers are worried but too
-scared to look for him. Find out what happened to Smiley."""
+last expedition to the Toxic Caves. His fiancée Ardin Buckler is worried sick,
+but the other trappers are too scared to look for him. Find out what happened
+to Smiley."""
 
         KlamathGetFuelCellRegulator ->
             """Smitty in the Den needs a fuel cell regulator to fix the broken
@@ -3073,14 +3076,16 @@ Investigate both claims and find a peaceful resolution before things get out of
 hand."""
 
         ModocFindGoldWatchForCornelius ->
-            """Cornelius, Modoc's tanner, has lost his prized gold pocket watch.
-He's devastated by its loss and suspects it was stolen. Find the watch and
-discover what really happened to it."""
+            """Cornelius, Modoc's tanner, has lost his prized gold pocket watch
+and suspects his friend Farrel of stealing it. He's devastated by both the loss
+of the cherished family heirloom and the strain it's put on their decades-long
+friendship. Find the watch and discover what really happened to it."""
 
         ModocFindGoldWatchForFarrel ->
-            """Farrel claims that Cornelius stole his gold pocket watch and
-wants it returned. The situation has created tension in the small town.
-Investigate the conflicting claims and determine the watch's rightful owner."""
+            """Farrel has been accused by his old friend Cornelius of stealing a
+precious gold watch. Though innocent, the accusation has damaged his standing in
+the community and a friendship of over thirty years. Help Farrel clear his name
+and restore his relationship with Cornelius by finding the missing watch."""
 
         VaultCityGetPlowForMrSmith ->
             """Mr. Smith, a Vault City farmer, desperately needs a new plow for
@@ -3145,8 +3150,8 @@ reaches its destination safely."""
 
         NCRTestMutagenicSerum ->
             """A scientist in NCR has developed an experimental mutagenic serum.
-They need someone to test it, but the effects are unknown and potentially
-dangerous. Decide if the risk is worth the reward."""
+They need to test it on a super-mutant, but the effects are unknown and
+potentially dangerous. Decide if the risk is worth the reward."""
 
         NCRRetrieveComputerParts ->
             """President Tandi needs specific computer parts to upgrade NCR's
@@ -3174,9 +3179,10 @@ benefit both parties. Help facilitate the negotiations and ensure both sides
 reach a satisfactory agreement."""
 
         V13FixVaultComputer ->
-            """The main computer in Vault 13 has malfunctioned, locking down
-vital systems. The vault's survival depends on getting it working again. Find
-the problem and repair it before it's too late."""
+            """The main computer in Vault 13 has stopped responding to voice
+commands, preventing Gruthar and the other deathclaw inhabitants from accessing
+vital systems. A Vault-Tec voice recognition module is needed to restore
+functionality."""
 
         V13FindTheGeck ->
             """The GECK (Garden of Eden Creation Kit) is somewhere in Vault 13.
@@ -3358,3 +3364,446 @@ of terror."""
             """With the Enclave defeated, you must escape their exploding oil
 rig. Time is running out as the facility begins to collapse. Fight your way to
 the PMV Valdez and secure transport back to the mainland."""
+
+
+completionText : Quest -> String
+completionText quest =
+    case quest of
+        ArroyoKillEvilPlants ->
+            """You cleared out the toxic plants that were choking Hakunin's
+healing garden. The village shaman can now grow his medicinal herbs again,
+ensuring the tribe's health. Your quick action prevented the infestation from
+spreading to other gardens."""
+
+        ArroyoFixWellForFeargus ->
+            """The village well is working again thanks to your repairs. Clean
+water now flows freely for all of Arroyo. Feargus is especially grateful, as his
+crops will survive the dry season."""
+
+        ArroyoRescueNagorsDog ->
+            """You found Smoke trapped in a cave and brought him safely back to
+Nagor. The boy was overjoyed to be reunited with his faithful companion. The
+village elders noted your compassion in helping even the smallest members of the
+tribe."""
+
+        KlamathRefuelStill ->
+            """With fresh firewood, Whiskey Bob's still is up and running again.
+The local watering holes will have a steady supply of moonshine. Bob even gave
+you a few bottles of his special reserve as thanks."""
+
+        KlamathGuardTheBrahmin ->
+            """You successfully protected Torr's brahmin herd through the night.
+During your watch, you discovered the "bugmen" were actually the Dunton brothers
+in disguise trying to rustle cattle. Not a single brahmin was lost, and your
+vigilance earned you Torr's gratitude while exposing the brothers' scheme."""
+
+        KlamathRustleTheBrahmin ->
+            """You helped the Dunton brothers steal Torr's brahmin under cover
+of darkness. The simple-minded herder never knew what happened. The brothers
+were pleased with your duplicity."""
+
+        KlamathKillRatGod ->
+            """The fearsome Keeng Ra'at lies dead in its lair beneath Trapper
+Town. The rat population has dispersed without their leader. The grateful
+trappers can now work safely again."""
+
+        KlamathRescueTorr ->
+            """You found Torr trapped in the canyon and escorted him safely back
+to town. Though rattled by his encounter with the "bugmen", he survived
+unharmed. His mother rewarded you generously for saving her simple-minded
+son."""
+
+        KlamathSearchForSmileyTrapper ->
+            """After asking around town, you learned that Smiley was last seen
+heading toward the Toxic Caves. The trail is still fresh enough to follow. His
+fiancée Ardin Buckler is distraught with worry but grateful for any lead on his
+whereabouts."""
+
+        KlamathGetFuelCellRegulator ->
+            """You acquired a working fuel cell regulator from an abandoned
+Highwayman in Trapper Town. The part appears to be in good condition despite
+its age. This crucial component will help get the car running again."""
+
+        ToxicCavesRescueSmileyTrapper ->
+            """You found Smiley trapped deep in the Toxic Caves and got him back
+to Klamath safely. Though injured by a gecko bite to his leg, he'll make a full
+recovery thanks to your timely rescue. Ardin Buckler was particularly grateful
+to have her fiancée back."""
+
+        ToxicCavesRepairTheGenerator ->
+            """The old generator is humming smoothly again after your repairs.
+Power has been restored to the ancient facility's systems, with lights
+flickering back to life throughout the complex. The caves are now much safer
+to navigate with the ventilation and lighting working."""
+
+        ToxicCavesLootTheBunker ->
+            """After dispatching the ancient sentry bot guarding the bunker, you
+cracked open the sealed military facility and claimed its pre-war treasures.
+The advanced technology and supplies will fetch a good price. Some items might
+be useful to keep for yourself."""
+
+        DenFreeVicByPayingMetzger ->
+            """You paid off Vic's substantial debt to Metzger, earning the
+trader his freedom. Though your wallet is much lighter, you gained a grateful
+ally. Vic immediately packed his things and left the Den behind, returning to
+Klamath where he reopened his trading shop."""
+
+        DenFreeVicByKillingOffSlaversGuild ->
+            """The Slaver's Guild lies in ruins, its members dead or scattered.
+Vic and the other slaves have been freed from their chains. The Den is forever
+changed, with a dangerous power vacuum left in the wake of the Guild's
+destruction. Vic immediately packed his things and left the Den behind,
+returning to Klamath where he reopened his trading shop."""
+
+        DenDeliverMealToSmitty ->
+            """You brought Mom's home-cooked meal to the grateful mechanic.
+Smitty wolfed down the food, having forgotten to eat while working. Mom was
+pleased to hear how much he enjoyed it. While talking, Smitty mentioned an old
+Highwayman car rusting away in his junkyard - with some replacement parts, he
+thinks he could get it running again for you."""
+
+        DenFixTheCar ->
+            """The Highwayman roars to life, its engine purring like new. This
+working vehicle will make wasteland travel much easier. Smitty's mechanical
+expertise proved invaluable in the restoration."""
+
+        ModocInvestigateGhostFarm ->
+            """You uncovered the truth about the Ghost Farm and its inhabitants.
+The Slags were just trying to protect their underground home with clever tricks.
+Peace was established between the surface dwellers and the Slags."""
+
+        ModocRemoveInfestationInFarrelsGarden ->
+            """The rats infesting Farrel's garden have been exterminated. His
+crops are safe and can grow without being devoured. The additional food will
+help Modoc's food stores last through the coming winter."""
+
+        ModocMediateBetweenSlagsAndJo ->
+            """Through careful diplomacy, you negotiated a peaceful resolution
+between Jo and the Slags. Both sides agreed to trade and cooperate rather than
+fight. The Ghost Farm will now help feed Modoc during hard times."""
+
+        ModocFindGoldWatchForCornelius ->
+            """You found Cornelius's cherished gold watch in the sewers behind
+the Modoc outhouse toilet, guarded by a vicious mole rat. The old man was
+overjoyed to have this family heirloom back and deeply regretted suspecting his
+friend of theft. Their decades-long friendship was restored along with
+Cornelius's faith in humanity."""
+
+        ModocFindGoldWatchForFarrel ->
+            """You found Cornelius's missing watch in the sewers behind the
+Modoc outhouse toilet after defeating a nasty mole rat guard. The struggling
+farmer was relieved to clear his name in front of the whole community. He
+personally returned the watch to Cornelius, rekindling their friendship of over
+thirty years."""
+
+        VaultCityGetPlowForMrSmith ->
+            """You obtained a working plow for Smith's farming operations. The
+new equipment will greatly improve food production for people living in the slum
+of Vault City courtyard. Smith was impressed by your resourcefulness in finding
+such a rare item."""
+
+        VaultCityRescueAmandasHusband ->
+            """You freed Amanda's husband from his unjust imprisonment in the
+Servant Allocation Center. The couple was tearfully reunited after their long
+separation. They quickly left Vault City to start a new life elsewhere."""
+
+        GeckoOptimizePowerPlant ->
+            """The atomic power plant is now running at peak efficiency. Gecko
+has a stable power supply, and Vault City is no longer threatened by radiation.
+While both communities benefit from your technical expertise, some Vault City
+citizens still grumble about having to live near a city of ghouls."""
+
+        GeckoGetFuelCellControllerFromSkeeter ->
+            """You acquired the fuel cell controller from Skeeter after finding
+him a rare Super Tool Kit. The device is in perfect working condition, but the
+shrewd ghoul mechanic would only trade it for this specific tool. Tracking down
+the kit was challenging, but at least you got what you needed."""
+
+        ReddingClearWanamingoMine ->
+            """The Wanamingo Mine has been cleared of its monstrous inhabitants,
+including the fearsome wanamingo queen and all her eggs. You made sure none
+survived to threaten Redding again. The miners can now safely work the tunnels,
+and the town's economy will recover now that its primary mine is operational."""
+
+        ReddingFindExcavatorChip ->
+            """You recovered the excavator control chip from the dangerous mine
+tunnels. The mining machinery is operational again with the chip installed.
+Redding's mining operations are back at full capacity."""
+
+        NewRenoTrackDownPrettyBoyLloyd ->
+            """You hunted down Pretty Boy Lloyd and brought him to justice. The
+stolen money was recovered for the Wright family. Lloyd won't be troubling New
+Reno again."""
+
+        NewRenoHelpGuardSecretTransaction ->
+            """You stood guard while the Salvatore family traded chemical
+components to Enclave soldiers in exchange for advanced laser weapons. The
+Salvatore guards were visibly intimidated by the power-armored troops. By
+staying back and remaining silent during the tense exchange, you helped ensure
+the transaction proceeded smoothly. The crime family was pleased with your
+discretion."""
+
+        NewRenoCollectTributeFromCorsicanBrothers ->
+            """You successfully collected the overdue tribute from the Corsican
+Brothers. They won't be late with their payments again after your visit. The
+family is pleased with your persuasive methods."""
+
+        NewRenoWinBoxingTournament ->
+            """You emerged victorious from the brutal boxing tournament at the
+Jungle Gym, despite one opponent fighting dirty with plated gloves and narrowly
+avoiding having your ear bitten off by the Masticator. Your name is now
+legendary in New Reno's fighting circuit, and the prize money and glory were
+worth every bruise."""
+
+        NewRenoAcquireElectronicLockpick ->
+            """You got your hands on a sophisticated electronic lockpick. The
+device will make breaking into secure areas much easier. Now to remember which
+lock did you need this tool for..."""
+
+        NCRGuardBrahminCaravan ->
+            """The brahmin caravan reached its destination safely under your
+protection, despite encountering remnants of the Master's Army who were
+targeting a different caravan nearby. Not a single head of cattle was lost,
+though you witnessed the other caravan's fierce battle with the mutant forces
+from a distance. The merchants were impressed by your vigilance and relieved
+that you chose a route avoiding that conflict."""
+
+        NCRTestMutagenicSerum ->
+            """The experimental serum was tested, with devastating results. The
+mutant test subject died in agony from the injection, their body rejecting
+the serum violently. The data gathered will advance NCR's research in an
+unexpected direction. Your grim contribution to science has been noted."""
+
+        NCRRetrieveComputerParts ->
+            """You successfully retrieved the computer parts from Vault 15,
+navigating the tense political situation between the squatters and NCR. Despite
+the vault dwellers' initial reluctance to aid NCR, you secured the vital
+components Tandi needed. NCR's systems can now be upgraded and expanded. The
+president was pleased with your diplomatic approach and efficient handling of
+the delicate matter."""
+
+        NCRFreeSlaves ->
+            """Through careful manipulation of the slave pen terminals, requiring
+both technical knowledge and lockpicking expertise, you managed to override the
+security systems and free all the captives. The Rangers were impressed by your
+methodical approach to liberating the slaves without bloodshed. For your
+service to their cause, the Rangers awarded you their prestigious pin and
+welcomed you as one of their own. The freed slaves are now under NCR
+protection, and word of your deeds has spread - NCR Rangers greet you as a
+comrade, while slavers now mark you as a dangerous enemy."""
+
+        NCRInvestigateBrahminRaids ->
+            """You discovered that a pack of deathclaws was responsible for the
+brahmin raids. Using your wilderness tracking skills, you followed their trail
+back to their hidden lair. Westin was grateful for the intelligence about these
+dangerous predators, allowing ranchers to better protect their herds and avoid
+the deathclaws' hunting grounds."""
+
+        V15RescueChrissy ->
+            """You tracked Chrissy to a guarded shack in the rocky wilderness.
+You dealt with the guards and navigated past traps to free her. Upon returning
+her safely to Vault 15, her grateful mother arranged a meeting with the
+squatters' leader, who provided access to the vault as a reward."""
+
+        V15CompleteDealWithNCR ->
+            """You delivered the good news to President Tandi - the squatters of
+Vault 15 have agreed to cooperate with NCR and accept their presence. In
+exchange, Zeke and his people received new housing, guaranteed access to food
+and water, and protection. This historic agreement paved the way for NCR's
+ambitious expansion campaign across Northern California. Both sides emerged
+stronger from the deal, marking a new chapter in the region's development."""
+
+        V13FixVaultComputer ->
+            """You successfully installed the Vault-Tec voice recognition module,
+restoring voice command functionality to Vault 13's main computer. Gruthar and
+the other deathclaw inhabitants can once again access vital systems. Your
+technical expertise has made life much easier for the vault's unusual residents.
+The computer's databases are now fully accessible."""
+
+        V13FindTheGeck ->
+            """You discovered that the GECK is no longer in Vault 13. However,
+you learned its current location in the Enclave's possession. The search must
+continue elsewhere."""
+
+        BrokenHillsFixMineAirPurifier ->
+            """The mine's air purification system is working perfectly again.
+The miners can work safely without fear of toxic fumes. Both humans and mutants
+benefit from the improved air quality."""
+
+        BrokenHillsBlowUpMineAirPurifier ->
+            """The air purifier erupted in flames and shrapnel, permanently
+disabled. The mine has become too dangerous for anybody to work in. Human
+supremacists were pleased with your sabotage."""
+
+        BrokenHillsFindMissingPeople ->
+            """Deep in the tunnels beneath Broken Hills, you discovered the grim
+truth about the missing townspeople. A trail of bodies led to a woman's corpse
+and an incriminating note that revealed Francis and Zaius as the killers. You
+brought this dark conspiracy to light, giving closure to grieving families.
+Though the revelation shook the town's foundations, Broken Hills can finally
+begin to heal from this tragedy."""
+
+        BrokenHillsBeatFrancisAtArmwrestling ->
+            """You defeated the super-mutant Francis in an epic battle of
+strength and technique. He took his loss with surprising grace. Your victory
+earned you respect from both humans and mutants."""
+
+        RaidersFindEvidenceOfBishopTampering ->
+            """You uncovered solid evidence of Bishop's manipulation of the
+raiders. The proof of his duplicity could be politically devastating. This
+information is now a powerful weapon."""
+
+        RaidersKillEverybody ->
+            """The raider base has been completely cleared of its violent
+inhabitants. Their reign of terror over the region is finally over. Travelers
+can now use the roads safely, and Vault City will no longer suffer from the
+raiders' attacks."""
+
+        SierraArmyDepotFindAbnormalBrainForSkynet ->
+            """You acquired an abnormal brain that meets Skynet's
+specifications. Though you worry what will happen to the AI if it tries to
+transfer its consciousness to it, you've fulfilled this part of its request. You
+can only hope this doesn't lead to any dangerous behavioral changes."""
+
+        SierraArmyDepotFindChimpanzeeBrainForSkynet ->
+            """A preserved chimpanzee brain was recovered for Skynet's use. The
+primate neural structure might be compatible with its systems. The AI seems
+pleased with this specimen, though the effects of using a simian brain for its
+consciousness remain to be seen."""
+
+        SierraArmyDepotFindHumanBrainForSkynet ->
+            """You obtained a human brain suitable for Skynet's needs. The
+ethical implications are troubling, but the AI is satisfied. The donor's
+identity remains unknown."""
+
+        SierraArmyDepotFindCyberneticBrainForSkynet ->
+            """A sophisticated cybernetic brain was recovered from the military
+facility. This advanced technology is exactly what Skynet wanted. The AI can
+now proceed with its plans."""
+
+        SierraArmyDepotAssembleBodyForSkynet ->
+            """Skynet's new robotic body proved unstable, its systems overloading
+catastrophically. However, the AI managed to transfer its consciousness into a
+nearby weapon targeting system at the last moment. Though not the mobility it
+hoped for, Skynet can now assist you in combat while providing witty commentary.
+The ancient intelligence seems content with this compromise."""
+
+        MilitaryBaseExcavateTheEntrance ->
+            """With a few well-placed explosives, you blasted through the debris
+blocking the military base entrance. The dynamite made short work of what would
+have taken weeks to dig through manually. The pre-war facility now lies open,
+its secrets waiting to be uncovered."""
+
+        MilitaryBaseKillMelchior ->
+            """The mysterious Melchior lies dead in the ruins of the Vats. His
+dangerous experiments have been permanently ended. The surroundings of the
+military base are now a bit safer with this threat eliminated."""
+
+        SanFranciscoFindFuelForTanker ->
+            """You acquired the fuel needed for the tanker's massive engines.
+The ship can now theoretically make the journey to the Enclave oil rig. One step
+closer to confronting the Enclave."""
+
+        SanFranciscoFindLocationOfFobForTanker ->
+            """From A. Ron Meyers, the self-styled captain of the PMV Valdez who
+deserted from Enclave ranks, you learned that the tanker's key fob is being kept
+at the Navarro base. The Enclave facility won't be easy to infiltrate. At least you
+know where to look now."""
+
+        SanFranciscoFindNavCompPartForTanker ->
+            """The PMV Valdez navigation computer part has been recovered and
+installed. The tanker can now plot a course to the Enclave oil rig. The ancient
+vessel is almost ready to sail."""
+
+        SanFranciscoFindVertibirdPlansForHubologists ->
+            """You delivered the vertibird plans to the eager Hubologists. They
+believe this technology will help them reach the stars. Their gratitude is
+accompanied by promises of spiritual enlightenment."""
+
+        SanFranciscoFindVertibirdPlansForShi ->
+            """The Shi scientists received the vertibird technical documents.
+They immediately began analyzing the advanced technology. Their research will
+advance significantly with this data."""
+
+        SanFranciscoFindVertibirdPlansForBrotherhoodOfSteel ->
+            """The Brotherhood now has the vertibird technical specifications.
+Their scribes are excited to study this advanced technology. The Brotherhood's
+air power may soon rival the Enclave's."""
+
+        SanFranciscoFindBadgersGirlfriendInsideShip ->
+            """You found Badger's girlfriend Suze hiding aboard the tanker. The
+couple was happily reunited after their separation. Badger is now fully
+committed to help you get this tanker running again."""
+
+        SanFranciscoDefeatLoPanInRingForDragon ->
+            """Lo Pan fell before your superior fighting skills in the ring.
+Dragon's honor has been defended through your victory. The Shi martial arts
+community respects your prowess."""
+
+        SanFranciscoDefeatDragonInRingForLoPan ->
+            """You defeated the legendary Dragon in honorable combat. Lo Pan's
+reputation is restored by your victory. The balance of power has shifted in the
+martial arts community."""
+
+        SanFranciscoEmbarkForEnclave ->
+            """The PMV Valdez successfully navigated the treacherous waters to
+reach the Enclave oil rig. Your team endured the dangerous voyage across the
+irradiated ocean. Now the real mission begins as you prepare to infiltrate the
+Enclave's headquarters."""
+
+        NavarroFixK9 ->
+            """K9's systems are fully repaired and operational again. The
+cyber-dog is grateful for your help restoring him. His enhanced capabilities
+will be a valuable asset in hand-to-hand combat."""
+
+        NavarroRetrieveFobForTanker ->
+            """You successfully stole the tanker's key fob from the Navarro
+base. The Enclave never discovered your infiltration. The tanker can now be
+activated for the journey ahead and will pass the Enclave oil rig's automated
+defense systems."""
+
+        EnclavePersuadeControlCompanySquadToDesert ->
+            """Through careful persuasion, you convinced the Control Company to
+abandon their posts and help bring down Frank Horrigan. Their squad tactics will
+be crucial in the coming battle, along with strength in numbers."""
+
+        EnclaveKillThePresidentStealthily ->
+            """The President was eliminated quietly in his quarters. No alarm
+was raised by your covert operation. The Enclave leadership is in chaos
+following his unexpected death."""
+
+        EnclaveKillThePresidentTheUsualWay ->
+            """You dispatched the President in a violent fashion, raising the
+Enclave base alarm. The guards are now searching for you, beware."""
+
+        EnclaveFindTheGeck ->
+            """The GECK has been recovered from the Enclave's high-security
+technology vault. Your village's salvation is finally within reach. The device
+appears undamaged despite its age and the long journey it's had to go
+through."""
+
+        EnclaveRigTurretsToTargetFrankHorrigan ->
+            """The base's defense turrets have been reprogrammed to target Frank
+Horrigan. Your hacking skills proved sufficient to bypass the complex security.
+The automated defenses will help even the odds against this formidable foe."""
+
+        EnclaveForceScientistToInitiateSelfDestruct ->
+            """Tom Murray activated the base's self-destruct sequence after you
+revealed the President's true plans to exterminate all 'impure' humans. His
+conscience couldn't bear the weight of enabling genocide. Despite the guards,
+he bravely chose to help destroy the facility. The countdown has begun and
+cannot be stopped - the Enclave's oil rig headquarters is doomed to
+destruction."""
+
+        EnclaveKillFrankHorrigan ->
+            """The mighty Frank Horrigan has fallen in epic combat. His
+cybernetically enhanced body lies split cleanly in half, the two pieces of his
+massive frame scattered across the floor. The Enclave's most dangerous enforcer
+will never threaten the wasteland again. Your ride's over, mutie."""
+
+        EnclaveReturnToMainland ->
+            """You escaped the exploding oil rig aboard the PMV Valdez with your
+rescued people. The Enclave's headquarters vanished beneath the waves behind
+you as your tribe, finally freed from their cruel experiments, celebrated their
+liberation. Your mission complete, you can return together to rebuild your
+home."""
