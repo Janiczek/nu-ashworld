@@ -305,7 +305,7 @@ addPerksOnLevelup newLevel player =
 tick : Posix -> TickPerIntervalCurve -> SPlayer -> SPlayer
 tick currentTime worldTickCurve player =
     player
-        |> addTicks (ticksPerHourAvailableAfterQuests worldTickCurve player)
+        |> addTicks (ticksToAdd worldTickCurve player)
         |> addTickQuestProgressXp currentTime
         |> (if player.hp < player.maxHp then
                 addHp
@@ -733,7 +733,8 @@ stopProgressing quest player =
 
 canStartProgressing : TickPerIntervalCurve -> SPlayer -> Bool
 canStartProgressing worldTickCurve player =
-    ticksPerHourAvailableAfterQuests worldTickCurve player >= Logic.questTicksPerHour
+    (Tick.worstCaseScenarioTicksForQuests worldTickCurve - ticksPerHourUsedOnQuests player)
+        >= Logic.questTicksPerHour
 
 
 startProgressing : Quest -> TickPerIntervalCurve -> SPlayer -> SPlayer
@@ -752,9 +753,9 @@ ticksPerHourUsedOnQuests player =
         |> (*) Logic.questTicksPerHour
 
 
-ticksPerHourAvailableAfterQuests : TickPerIntervalCurve -> SPlayer -> Int
-ticksPerHourAvailableAfterQuests worldTickCurve player =
-    Tick.worstCaseScenarioTicksForQuests worldTickCurve - ticksPerHourUsedOnQuests player
+ticksToAdd : TickPerIntervalCurve -> SPlayer -> Int
+ticksToAdd worldTickCurve player =
+    Tick.ticksAddedPerInterval worldTickCurve player.ticks - ticksPerHourUsedOnQuests player
 
 
 payQuestRequirements : List Quest.PlayerRequirement -> SPlayer -> SPlayer

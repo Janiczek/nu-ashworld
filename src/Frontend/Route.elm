@@ -4,7 +4,6 @@ module Frontend.Route exposing
     , Route(..)
     , fromUrl
     , getShop
-    , isGuideRelatedRoute
     , isMessagesRelatedRoute
     , isStandalone
     , loggedOut
@@ -468,40 +467,6 @@ getShop route =
 
         AdminRoute _ ->
             Nothing
-
-
-isGuideRelatedRoute : Route -> Bool
-isGuideRelatedRoute route =
-    case route of
-        Guide _ ->
-            True
-
-        About ->
-            False
-
-        News ->
-            False
-
-        Map ->
-            False
-
-        CharCreation ->
-            False
-
-        FightStrategySyntaxHelp ->
-            False
-
-        WorldsList ->
-            False
-
-        NotFound _ ->
-            False
-
-        AdminRoute _ ->
-            False
-
-        PlayerRoute _ ->
-            False
 
 
 {-| Hides the left navigation if False.
