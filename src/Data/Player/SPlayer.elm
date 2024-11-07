@@ -754,7 +754,7 @@ ticksPerHourUsedOnQuests player =
 
 ticksPerHourAvailableAfterQuests : TickPerIntervalCurve -> SPlayer -> Int
 ticksPerHourAvailableAfterQuests worldTickCurve player =
-    Tick.ticksAddedPerInterval worldTickCurve player.ticks - ticksPerHourUsedOnQuests player
+    Tick.worstCaseScenarioTicksForQuests worldTickCurve - ticksPerHourUsedOnQuests player
 
 
 payQuestRequirements : List Quest.PlayerRequirement -> SPlayer -> SPlayer

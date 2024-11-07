@@ -1896,10 +1896,6 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
             Shop.forLocation location
                 |> List.filter (Shop.isAvailable questRewardShops)
 
-        hasMaxTicks : Bool
-        hasMaxTicks =
-            player.ticks >= Tick.limit
-
         isQuestDone : Quest -> Bool
         isQuestDone quest =
             questsProgress
@@ -1933,8 +1929,6 @@ townMainSquareView expandedQuests location { questsProgress, questRewardShops } 
 
           else
             H.text "No quests in this town... (yet!)"
-        , H.viewIf hasMaxTicks <|
-            H.div [ HA.class "text-yellow" ] [ H.text "NOTE: You can't participate in quests - you have max ticks! Use your ticks to be able to participate in quests again." ]
         , H.viewIf hasQuests <|
             UI.ul []
                 (quests
@@ -2038,10 +2032,6 @@ expandedQuestView player progress questsProgress quest =
         isDone =
             progress.ticksGiven >= ticksNeeded
 
-        hasMaxedTicks : Bool
-        hasMaxedTicks =
-            player.ticks >= Tick.limit
-
         isQuestDone : Quest -> Bool
         isQuestDone q =
             SeqDict.get q questsProgress
@@ -2056,7 +2046,6 @@ expandedQuestView player progress questsProgress quest =
         canStart =
             List.all isQuestDone questRequirements
                 && List.all (\req -> Logic.passesPlayerRequirement req player) playerRequirements
-                && not hasMaxedTicks
 
         gaveEnough : Bool
         gaveEnough =

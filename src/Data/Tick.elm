@@ -4,6 +4,7 @@ module Data.Tick exposing
     , limit
     , nextTick
     , ticksAddedPerInterval
+    , worstCaseScenarioTicksForQuests
     )
 
 import Codec exposing (Codec)
@@ -71,3 +72,13 @@ curveCodec =
             )
         |> Codec.variant1 "Linear" Linear Codec.int
         |> Codec.buildCustom
+
+
+worstCaseScenarioTicksForQuests : TickPerIntervalCurve -> Int
+worstCaseScenarioTicksForQuests curve =
+    case curve of
+        Linear n ->
+            n
+
+        QuarterAndRest { quarter, rest } ->
+            min quarter rest
