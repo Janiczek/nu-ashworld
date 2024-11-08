@@ -854,23 +854,27 @@ P(X >= x) = 0.94997 (because we rounded p to 0.181)
 -}
 adjustChanceToHitForBurst :
     { chanceToHitAtLeastOnce : Int
-    , ammoUsedInBurst : Int
+    , ammoUsedInBurst : Maybe Int
     }
     -> { chanceToHitEach : Int }
 adjustChanceToHitForBurst { ammoUsedInBurst, chanceToHitAtLeastOnce } =
-    let
-        chanceToHitAtLeastOnce_ =
-            toFloat chanceToHitAtLeastOnce / 100
+    case ammoUsedInBurst of
+        Nothing -> { chanceToHitEach = 0 }
+        Just ammoUsed ->
 
-        chanceToHitEach_ =
-            -- The meat of the calculation
-            1 - (1 - chanceToHitAtLeastOnce_) ^ (1.0 / toFloat ammoUsedInBurst)
+            let
+                chanceToHitAtLeastOnce_ =
+                    toFloat chanceToHitAtLeastOnce / 100
 
-        chanceToHitEach =
-            round (chanceToHitEach_ * 100)
-                |> clamp 0 95
-    in
-    { chanceToHitEach = chanceToHitEach }
+                chanceToHitEach_ =
+                    -- The meat of the calculation
+                    1 - (1 - chanceToHitAtLeastOnce_) ^ (1.0 / toFloat ammoUsed)
+
+                chanceToHitEach =
+                    round (chanceToHitEach_ * 100)
+                        |> clamp 0 95
+            in
+            { chanceToHitEach = chanceToHitEach }
 
 
 weaponRange : Maybe ItemKind.Kind -> AttackStyle -> Int
@@ -2127,9 +2131,6 @@ attackStyleAndApCost kind =
             []
 
         ItemKind.Mm9 ->
-            []
-
-        ItemKind.Ball9mm ->
             []
 
         ItemKind.Ap10mm ->

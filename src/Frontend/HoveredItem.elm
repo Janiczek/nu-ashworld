@@ -1,13 +1,31 @@
-module Frontend.HoveredItem exposing (HoveredItem(..), text)
+module Frontend.HoveredItem exposing (HoveredItem(..), render, text)
 
+import Data.Fight.AimedShot as AimedShot
+import Data.Fight.AttackStyle as AttackStyle
+import Data.Fight.DamageType as DamageType
 import Data.FightStrategy.Help as FightStrategyHelp
+import Data.Item.Effect as ItemEffect
+import Data.Item.Kind as ItemKind
+import Data.Item.Type as ItemType exposing (Type(..))
 import Data.Perk as Perk exposing (Perk)
 import Data.Perk.Requirement as PerkRequirement
+import Data.Player exposing (CPlayer)
 import Data.Quest as Quest
 import Data.Skill as Skill exposing (Skill)
 import Data.Special as Special
 import Data.Special.Perception as Perception exposing (PerceptionLevel)
 import Data.Trait as Trait exposing (Trait)
+import Frontend.CarCharge as CarCharge
+import Html as H exposing (Html)
+import Html.Attributes as HA
+import Html.Attributes.Extra as HA
+import List.ExtraExtra as List
+import Logic
+import Markdown.Block
+import Markdown.Parser
+import Markdown.Renderer exposing (defaultHtmlRenderer)
+import Tailwind as TW
+import UI
 
 
 type HoveredItem
@@ -28,10 +46,11 @@ type HoveredItem
     | HoveredHealUsingTick
     | HoveredPerkRate
     | HoveredSkillRate
+    | HoveredItem ItemKind.Kind
 
 
-text : HoveredItem -> { title : String, description : String }
-text hoveredItem =
+text : { player : Maybe CPlayer } -> HoveredItem -> { title : String, description : String }
+text { player } hoveredItem =
     case hoveredItem of
         HoveredPerk perk ->
             { title = Perk.name perk
@@ -186,7 +205,7 @@ Influenced by:
 
         HoveredDamageResistance ->
             { title = "Damage Resistance"
-            , description = """Any damage taken is reduced by this amount. Damage Resistance can be increased by wearing armor.
+            , description = """Any damage taken is reduced by this percentage. Damage Resistance can be increased by wearing armor.
 
 Influenced by:
 
@@ -239,6 +258,235 @@ Influenced by:
 - the **Educated** perk"""
             }
 
+        HoveredItem kind ->
+            { title = ItemKind.name kind
+            , description =
+                [ [ Just <| "~~" ++ ItemKind.description kind ++ "~~"
+                  , Just <| "Value: **$" ++ String.fromInt (ItemKind.baseValue kind) ++ "**"
+                  , ItemKind.carBatteryChargePromileAmount kind
+                        |> Maybe.map (\charge -> "Charges the car by: **" ++ CarCharge.formatShort charge ++ "%**")
+                  , player
+                        |> Maybe.andThen
+                            (\player_ ->
+                                ItemKind.usageEffects kind
+                                    |> List.map (effectDescription player_ >> (\s -> " - " ++ s))
+                                    |> (\effs ->
+                                            if List.isEmpty effs then
+                                                Nothing
+
+                                            else
+                                                ("Usage effects:" :: effs)
+                                                    |> String.join "\n"
+                                                    |> Just
+                                       )
+                            )
+                  ]
+                , ItemKind.types kind
+                    |> List.concatMap
+                        (\type_ ->
+                            case type_ of
+                                ItemType.Ammo ->
+                                    [ "Armor Class modifier: **" ++ String.fromInt (ItemKind.ammoArmorClassModifier kind) ++ "**"
+                                    , ItemKind.ammoDamageModifier kind
+                                        |> (\( n, d ) ->
+                                                "Damage modifier: **{N}/{D}**"
+                                                    |> String.replace "{N}" (String.fromFloat n)
+                                                    |> String.replace "{D}" (String.fromFloat d)
+                                           )
+                                    , "Target Damage Resistance modifier: **{MOD}%**"
+                                        |> String.replace "{MOD}" (ensureSign (String.fromInt (ItemKind.ammoDamageResistanceModifier kind)))
+                                    ]
+                                        |> List.map Just
+
+                                ItemType.Armor ->
+                                    [ "Armor class: **" ++ String.fromInt (ItemKind.armorClass kind) ++ "**"
+                                    , ("Damage resistance:"
+                                        :: (DamageType.all
+                                                |> List.map
+                                                    (\dt ->
+                                                        " - {LABEL}: **{DR}%**"
+                                                            |> String.replace "{LABEL}" (DamageType.label dt)
+                                                            |> String.replace "{DR}" (String.fromInt (ItemKind.armorDamageResistance dt kind))
+                                                    )
+                                           )
+                                      )
+                                        |> String.join "\n"
+                                    , ("Damage threshold:"
+                                        :: (DamageType.all
+                                                |> List.map
+                                                    (\dt ->
+                                                        " - {LABEL}: **{DT}**"
+                                                            |> String.replace "{LABEL}" (DamageType.label dt)
+                                                            |> String.replace "{DT}" (String.fromInt (ItemKind.armorDamageThreshold dt kind))
+                                                    )
+                                           )
+                                      )
+                                        |> String.join "\n"
+                                    ]
+                                        |> List.map Just
+
+                                ItemType.Consumable ->
+                                    -- heal already handled in effects
+                                    []
+
+                                ItemType.Book ->
+                                    -- book tick use and skill increase already handled in effects
+                                    []
+
+                                ItemType.Misc ->
+                                    []
+
+                                ItemType.UnarmedWeapon ->
+                                    weaponDescription "Unarmed weapon" kind
+
+                                ItemType.MeleeWeapon ->
+                                    weaponDescription "Melee weapon" kind
+
+                                ItemType.ThrownWeapon ->
+                                    weaponDescription "Thrown weapon" kind
+
+                                ItemType.SmallGun ->
+                                    weaponDescription "Small gun" kind
+
+                                ItemType.BigGun ->
+                                    weaponDescription "Big gun" kind
+
+                                ItemType.EnergyWeapon ->
+                                    weaponDescription "Energy weapon" kind
+                        )
+                ]
+                    |> List.fastConcat
+                    |> List.filterMap identity
+                    |> String.join "\n\n"
+            }
+
+
+weaponDescription : String -> ItemKind.Kind -> List (Maybe String)
+weaponDescription weaponType kind =
+    [ Just weaponType
+    , if ItemKind.isLongRangeWeapon kind then
+        [ "Is long-range:"
+        , " - lowers **chance to hit distance penalty** when far enough"
+        , " - increases **chance to hit distance penalty** when too close"
+        ]
+            |> String.join "\n"
+            |> Just
+
+      else
+        Nothing
+    , if ItemKind.isWeaponArmorPenetrating kind then
+        [ "Is armor penetrating:"
+        , " - divides target armor **damage threshold** by **5**"
+        ]
+            |> String.join "\n"
+            |> Just
+
+      else
+        Nothing
+    , if ItemKind.isAccurateWeapon kind then
+        [ "Is accurate:"
+        , " - adds **20%** to **chance to hit**"
+        ]
+            |> String.join "\n"
+            |> Just
+
+      else
+        Nothing
+    , if ItemKind.isTwoHandedWeapon kind then
+        [ "Is two-handed:"
+        , " - **needs both hands** to be used"
+        , " - receives **-40% chance to hit penalty** if you have the **One Hander** trait"
+        ]
+            |> String.join "\n"
+            |> Just
+
+      else
+        Nothing
+    , "Strength requirement: **{STR}**"
+        |> String.replace "{STR}" (String.fromInt (ItemKind.weaponStrengthRequirement kind))
+        |> Just
+    , ItemKind.weaponDamageType kind
+        |> Maybe.map (\damageType -> "Damage type: *" ++ DamageType.label damageType ++ "*")
+    , let
+        { min, max } =
+            ItemKind.weaponDamage kind
+      in
+      "Damage: **{MIN}-{MAX}**"
+        |> String.replace "{MIN}" (String.fromInt min)
+        |> String.replace "{MAX}" (String.fromInt max)
+        |> Just
+    , ItemKind.shotsPerBurst kind
+        |> Maybe.map (\shots -> "Shots per burst: " ++ String.fromInt shots)
+    , case ItemKind.usableAmmoForWeapon kind of
+        [] ->
+            Nothing
+
+        ammoTypes ->
+            ("Uses ammo:"
+                :: List.map (\ammo -> " - *" ++ ItemKind.name ammo ++ "*") ammoTypes
+            )
+                |> String.join "\n"
+                |> Just
+    , Logic.attackStyleAndApCost kind
+        |> List.filter
+            (\( style, _ ) ->
+                case AttackStyle.toAimed style of
+                    Nothing ->
+                        True
+
+                    Just AimedShot.Torso ->
+                        True
+
+                    Just _ ->
+                        False
+            )
+        |> List.map
+            (\( style, ap ) ->
+                " - *{STYLE}*: costs **{AP} AP**, range **{RANGE}** hexes"
+                    |> String.replace "{STYLE}" (AttackStyle.label style)
+                    |> String.replace "{AP}" (String.fromInt ap)
+                    |> String.replace "{RANGE}" (String.fromInt (ItemKind.range style kind))
+            )
+        |> (\lines ->
+                if List.isEmpty lines then
+                    Nothing
+
+                else
+                    lines
+                        |> String.join "\n"
+                        |> (\str -> "Attack styles:\n" ++ str)
+                        |> Just
+           )
+    ]
+
+
+effectDescription : CPlayer -> ItemEffect.Effect -> String
+effectDescription player effect =
+    case effect of
+        ItemEffect.Heal { min, max } ->
+            "Heals **{MIN}-{MAX}** HP"
+                |> String.replace "{MIN}" (String.fromInt min)
+                |> String.replace "{MAX}" (String.fromInt max)
+
+        ItemEffect.RemoveAfterUse ->
+            "Removed after use"
+
+        ItemEffect.BookRemoveTicks ->
+            "Removes **{TICKS}** ticks"
+                |> String.replace "{TICKS}" (String.fromInt (Logic.bookUseTickCost { intelligence = player.special.intelligence }))
+
+        ItemEffect.BookAddSkillPercent skill ->
+            "Adds **{PCT}%** to **{SKILL}**"
+                |> String.replace "{PCT}"
+                    (String.fromInt
+                        (Logic.bookAddedSkillPercentage
+                            { currentPercentage = Skill.get player.special player.addedSkillPercentages skill
+                            , hasComprehensionPerk = Perk.rank Perk.Comprehension player.perks > 0
+                            }
+                        )
+                    )
+                |> String.replace "{SKILL}" (Skill.name skill)
+
 
 requirementText : PerkRequirement.Requirement -> String
 requirementText req =
@@ -264,3 +512,61 @@ requirementText req =
 
         PerkRequirement.RQuest quest ->
             "Quest: " ++ Quest.title quest
+
+
+render : { player : Maybe CPlayer } -> HoveredItem -> Html msg
+render r hoveredItem =
+    let
+        { title, description } =
+            text r hoveredItem
+    in
+    H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
+        [ H.h4
+            [ HA.class "text-yellow font-bold" ]
+            [ H.text title ]
+        , description
+            |> Markdown.Parser.parse
+            |> Result.mapError (\_ -> "")
+            |> Result.andThen (Markdown.Renderer.render renderer)
+            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
+            |> H.div [ HA.class "flex flex-col gap-4" ]
+        ]
+
+
+renderer : Markdown.Renderer.Renderer (Html a)
+renderer =
+    { defaultHtmlRenderer
+        | paragraph =
+            \children ->
+                H.span [] children
+        , link =
+            \{ title, destination } children ->
+                H.a
+                    [ HA.class "text-yellow relative no-underline"
+                    , TW.mod "after" "absolute content-[''] bg-yellow-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
+                    , TW.mod "hover:after" "bottom-0 h-full"
+                    , HA.href destination
+                    , HA.attributeMaybe HA.title title
+                    ]
+                    children
+        , strong = \children -> H.span [ HA.class "text-yellow" ] children
+        , emphasis = \children -> H.span [ HA.class "text-green-100" ] children
+        , strikethrough = \children -> H.span [ HA.class "text-green-300" ] children
+        , unorderedList =
+            \list ->
+                list
+                    |> List.map
+                        (\(Markdown.Block.ListItem _ children) ->
+                            H.li [] children
+                        )
+                    |> UI.ul [ HA.class "flex flex-col" ]
+    }
+
+
+ensureSign : String -> String
+ensureSign str =
+    if String.startsWith "-" str then
+        str
+
+    else
+        "+" ++ str

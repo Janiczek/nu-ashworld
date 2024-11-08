@@ -2208,7 +2208,7 @@ playerRewards quest =
             mk
                 [ ItemReward { what = ItemKind.ScoutHandbook, amount = 5 }
                 , ItemReward { what = ItemKind.Mauser9mm, amount = 1 }
-                , ItemReward { what = ItemKind.Ball9mm, amount = 300 }
+                , ItemReward { what = ItemKind.Mm9, amount = 300 }
                 ]
                 10
 

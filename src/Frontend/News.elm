@@ -21,7 +21,7 @@ type alias Item =
 
 items : List Item
 items =
-    [ { date = 1730886199
+    [ { date = 1731086018
       , title = "TODOs before release"
       , text =
             """
@@ -33,7 +33,6 @@ announcement!
 Current TODOs:
 
 - fight strategy: AP cost of action
-- item descriptions
 - fight view: say how much AP it cost and how much you have left.
 
 Next up: 
@@ -43,11 +42,8 @@ Next up:
 
 Later: 
 
-- weapons - show strength requirement somewhere (item description)
-- don't forget to say something about K9 and Skynet Aim
 - tooltips around edge of screen - floating-ui.js?
 - music in the bg (opt-in)
-
 - Steam webview wrapper
 - guest mode - no login required, Ladder fights, quests and marketplace disabled, but you can wander (PvM fights) and use shops
 - Car part quests - always get the part if progressing/if paid reqs, even if not enough ticks given for a player reward?

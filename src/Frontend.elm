@@ -62,8 +62,9 @@ import Dict.Extra as Dict
 import File
 import File.Download
 import File.Select
+import Frontend.CarCharge as CarCharge
 import Frontend.Guide as Guide
-import Frontend.HoveredItem as HoveredItem exposing (HoveredItem(..))
+import Frontend.HoveredItem as HoveredItem exposing (HoveredItem)
 import Frontend.Links as Links
 import Frontend.News as News
 import Frontend.Route as Route
@@ -83,9 +84,6 @@ import Lamdera
 import List.ExtraExtra as List
 import Logic exposing (AttackStats, ItemNotUsableReason(..))
 import Markdown
-import Markdown.Block
-import Markdown.Parser
-import Markdown.Renderer exposing (defaultHtmlRenderer)
 import Parser
 import Result.Extra as Result
 import SeqDict exposing (SeqDict)
@@ -1012,7 +1010,7 @@ appView :
     -> Model
     -> Html FrontendMsg
 appView { leftNav } model =
-    H.div [ HA.class "bg-green-900 min-w-vw max-w-vw min-h-vh max-h-vh" ]
+    H.div [ HA.class "bg-green-900 min-w-screen max-w-screen min-h-screen max-h-screen" ]
         [ leftNavView leftNav model
         , contentView model
         ]
@@ -1035,7 +1033,7 @@ leftNavView leftNav model =
                 NotLoggedIn ->
                     Nothing
     in
-    H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-vh overflow-hidden fixed z-[2] left-0 top-0 bottom-0" ]
+    H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-screen overflow-hidden fixed z-[2] left-0 top-0 bottom-0" ]
         [ logoView model
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
             (leftNav tickFrequency)
@@ -1083,7 +1081,8 @@ contentView model =
             Route.isStandalone model.route
     in
     H.div
-        [ HA.class "pt-8 px-10 pb-10 flex flex-col items-start min-h-vh"
+        [ HA.class "pt-8 px-10 pb-10 flex flex-col items-start min-h-screen"
+        , HA.class "min-w-[calc(100vw_-_28ch)]"
         , HA.classList [ ( "ml-[28ch]", not isStandaloneRoute ) ]
         ]
         (case ( model.route, model.worldData ) of
@@ -1153,7 +1152,7 @@ contentView model =
                         withCreatedPlayer_ (characterView model.hoveredItem)
 
                     Route.Inventory ->
-                        withCreatedPlayer_ inventoryView
+                        withCreatedPlayer_ (inventoryView model.hoveredItem)
 
                     Route.Ladder ->
                         withCreatedPlayer_ ladderView
@@ -1585,7 +1584,7 @@ mapView { mapMouseCoords, userWantsToShowAreaDanger } world player =
             Just promile ->
                 H.div []
                     [ H.span [ HA.class "text-green-300" ] [ H.text "Car battery: " ]
-                    , H.span [ HA.class "text-green-100" ] [ H.text (carBatteryChargeString promile) ]
+                    , H.span [ HA.class "text-green-100" ] [ H.text (CarCharge.format promile) ]
                     ]
         , H.div
             [ cssVars
@@ -2975,21 +2974,7 @@ newCharHelpView maybeHoveredItem =
                         [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
-                    let
-                        { title, description } =
-                            HoveredItem.text hoveredItem
-                    in
-                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
-                        [ H.h4
-                            [ HA.class "text-yellow font-bold" ]
-                            [ H.text title ]
-                        , description
-                            |> Markdown.Parser.parse
-                            |> Result.mapError (\_ -> "")
-                            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
-                            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
-                            |> H.div [ HA.class "flex flex-col gap-4" ]
-                        ]
+                    HoveredItem.render { player = Nothing } hoveredItem
     in
     H.div
         [ HA.class "flex flex-col gap-4"
@@ -3000,34 +2985,6 @@ newCharHelpView maybeHoveredItem =
             [ H.text "Help" ]
         , helpContent
         ]
-
-
-hoveredItemRenderer : Markdown.Renderer.Renderer (Html a)
-hoveredItemRenderer =
-    { defaultHtmlRenderer
-        | paragraph =
-            \children ->
-                H.span [] children
-        , link =
-            \{ title, destination } children ->
-                H.a
-                    [ HA.class "text-yellow relative no-underline"
-                    , TW.mod "after" "absolute content-[''] bg-yellow-transparent inset-x-[-3px] bottom-[-2px] h-1 transition-all duration-[250ms]"
-                    , TW.mod "hover:after" "bottom-0 h-full"
-                    , HA.href destination
-                    , HA.attributeMaybe HA.title title
-                    ]
-                    children
-        , strong = \children -> H.span [ HA.class "text-yellow" ] children
-        , unorderedList =
-            \list ->
-                list
-                    |> List.map
-                        (\(Markdown.Block.ListItem _ children) ->
-                            H.li [] children
-                        )
-                    |> UI.ul [ HA.class "flex flex-col" ]
-    }
 
 
 newCharDerivedStatsView : NewChar -> Html FrontendMsg
@@ -3087,7 +3044,7 @@ newCharDerivedStatsView newChar =
                             , special = finalSpecial
                             , lifegiverPerkRanks = 0
                             }
-                  , Just HoveredMaxHP
+                  , Just HoveredItem.HoveredMaxHP
                   )
                 , ( "Heal using tick"
                   , (String.fromInt <|
@@ -3098,7 +3055,7 @@ newCharDerivedStatsView newChar =
                             }
                     )
                         ++ "% of max HP"
-                  , Just HoveredHealUsingTick
+                  , Just HoveredItem.HoveredHealUsingTick
                   )
                 , ( "Heal over time"
                   , (String.fromInt <|
@@ -3109,11 +3066,11 @@ newCharDerivedStatsView newChar =
                             }
                     )
                         ++ " HP every tick"
-                  , Just HoveredHealOverTime
+                  , Just HoveredItem.HoveredHealOverTime
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| HoveredPerceptionLevel perceptionLevel
+                  , Just <| HoveredItem.HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -3122,7 +3079,7 @@ newCharDerivedStatsView newChar =
                             , actionBoyPerkRanks = 0
                             , special = finalSpecial
                             }
-                  , Just HoveredActionPoints
+                  , Just HoveredItem.HoveredActionPoints
                   )
                 , ( "Armor Class"
                   , String.fromInt <|
@@ -3131,7 +3088,7 @@ newCharDerivedStatsView newChar =
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze newChar.traits
                             , hasDodgerPerk = False
                             }
-                  , Just HoveredArmorClass
+                  , Just HoveredItem.HoveredArmorClass
                   )
                 , ( "Sequence"
                   , String.fromInt <|
@@ -3140,7 +3097,7 @@ newCharDerivedStatsView newChar =
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze newChar.traits
                             , earlierSequencePerkRank = 0
                             }
-                  , Just HoveredSequence
+                  , Just HoveredItem.HoveredSequence
                   )
                 , ( "Critical chance"
                   , String.fromInt
@@ -3154,14 +3111,14 @@ newCharDerivedStatsView newChar =
                             }
                         )
                         ++ "%"
-                  , Just HoveredCriticalChance
+                  , Just HoveredItem.HoveredCriticalChance
                   )
                 , ( "Perk rate"
                   , String.fromInt
                         (Logic.perkRate
                             { hasSkilledTrait = SeqSet.member Trait.Skilled newChar.traits }
                         )
-                  , Just HoveredPerkRate
+                  , Just HoveredItem.HoveredPerkRate
                   )
                 , ( "Skill rate"
                   , String.fromInt
@@ -3172,7 +3129,7 @@ newCharDerivedStatsView newChar =
                             , intelligence = finalSpecial.intelligence
                             }
                         )
-                  , Just HoveredSkillRate
+                  , Just HoveredItem.HoveredSkillRate
                   )
                 ]
         ]
@@ -3198,7 +3155,7 @@ newCharSpecialView newChar =
                     Special.isValueInRange value
             in
             H.div
-                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+                [ HE.onMouseOver <| HoverItem <| HoveredItem.HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
                 , HA.class "contents group"
                 ]
@@ -3287,7 +3244,7 @@ newCharTraitsView traits =
                 , TW.mod "hover" "text-yellow bg-green-800"
                 , HA.classList [ ( "text-yellow", isToggled ) ]
                 , HE.onClick <| NewCharToggleTrait trait
-                , HE.onMouseOver <| HoverItem <| HoveredTrait trait
+                , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ UI.button
@@ -3375,7 +3332,7 @@ characterView maybeHoveredItem world player =
     in
     [ pageTitleView "Character"
     , if player.availablePerks > 0 && not (List.isEmpty partitioned.applicablePerks) then
-        choosePerkView maybeHoveredItem partitioned
+        choosePerkView player maybeHoveredItem partitioned
 
       else
         normalCharacterView maybeHoveredItem player
@@ -3383,13 +3340,14 @@ characterView maybeHoveredItem world player =
 
 
 choosePerkView :
-    Maybe HoveredItem
+    CPlayer
+    -> Maybe HoveredItem
     ->
         { applicablePerks : List Perk
         , nonapplicablePerks : List Perk
         }
     -> Html FrontendMsg
-choosePerkView maybeHoveredItem { applicablePerks, nonapplicablePerks } =
+choosePerkView player maybeHoveredItem { applicablePerks, nonapplicablePerks } =
     let
         perkView : String -> Perk -> Html FrontendMsg
         perkView textColor perk =
@@ -3397,7 +3355,7 @@ choosePerkView maybeHoveredItem { applicablePerks, nonapplicablePerks } =
                 [ HE.onClick <| AskToChoosePerk perk
                 , HA.class "cursor-pointer group"
                 , HA.class textColor
-                , HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.span
@@ -3420,26 +3378,14 @@ choosePerkView maybeHoveredItem { applicablePerks, nonapplicablePerks } =
                     [ H.text "Inaccessible perks:" ]
                 , UI.ul [] (List.map (perkView "text-green-300") nonapplicablePerks)
                 ]
-            , H.viewMaybe perkDescriptionView maybeHoveredItem
+            , H.viewMaybe (perkDescriptionView player) maybeHoveredItem
             ]
         ]
 
 
-perkDescriptionView : HoveredItem -> Html FrontendMsg
-perkDescriptionView hoveredItem =
-    let
-        { title, description } =
-            HoveredItem.text hoveredItem
-    in
-    H.div [ HA.class "flex flex-col gap-4" ]
-        [ H.h3 [ HA.class "text-green-100" ] [ H.text title ]
-        , description
-            |> Markdown.Parser.parse
-            |> Result.mapError (\_ -> "")
-            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
-            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
-            |> H.div [ HA.class "flex flex-col gap-4" ]
-        ]
+perkDescriptionView : CPlayer -> HoveredItem -> Html FrontendMsg
+perkDescriptionView player hoveredItem =
+    HoveredItem.render { player = Just player } hoveredItem
 
 
 normalCharacterView : Maybe HoveredItem -> CPlayer -> Html FrontendMsg
@@ -3453,7 +3399,7 @@ normalCharacterView maybeHoveredItem player =
         , charPerksView player.perks
         , charSkillsView player
         , charDerivedStatsView player
-        , charHelpView maybeHoveredItem
+        , charHelpView player maybeHoveredItem
         , charActiveQuestsView player
         ]
 
@@ -3490,7 +3436,7 @@ charTraitsView traits =
             H.li
                 [ HA.class "pr-[2ch]"
                 , TW.mod "hover" "text-green-100 bg-green-800"
-                , HE.onMouseOver <| HoverItem <| HoveredTrait trait
+                , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredTrait trait
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.text <| Trait.name trait
@@ -3514,8 +3460,8 @@ charTraitsView traits =
         ]
 
 
-charHelpView : Maybe HoveredItem -> Html FrontendMsg
-charHelpView maybeHoveredItem =
+charHelpView : CPlayer -> Maybe HoveredItem -> Html FrontendMsg
+charHelpView player maybeHoveredItem =
     let
         helpContent : Html FrontendMsg
         helpContent =
@@ -3526,21 +3472,7 @@ charHelpView maybeHoveredItem =
                         [ H.text "Hover over an item to show more information about it here!" ]
 
                 Just hoveredItem ->
-                    let
-                        { title, description } =
-                            HoveredItem.text hoveredItem
-                    in
-                    H.div [ HA.class "max-w-[50ch] flex flex-col gap-4" ]
-                        [ H.h4
-                            [ HA.class "text-yellow font-bold" ]
-                            [ H.text title ]
-                        , description
-                            |> Markdown.Parser.parse
-                            |> Result.mapError (\_ -> "")
-                            |> Result.andThen (Markdown.Renderer.render hoveredItemRenderer)
-                            |> Result.withDefault [ H.text "Failed to parse Markdown" ]
-                            |> H.div [ HA.class "flex flex-col gap-4" ]
-                        ]
+                    HoveredItem.render { player = Just player } hoveredItem
     in
     H.div
         [ HA.class "flex flex-col gap-4"
@@ -3602,7 +3534,7 @@ charDerivedStatsView player =
                             , special = player.special
                             , lifegiverPerkRanks = Perk.rank Perk.Lifegiver player.perks
                             }
-                  , Just HoveredMaxHP
+                  , Just HoveredItem.HoveredMaxHP
                   )
                 , ( "Heal using tick"
                   , (String.fromInt <|
@@ -3613,7 +3545,7 @@ charDerivedStatsView player =
                             }
                     )
                         ++ "% of max HP"
-                  , Just HoveredHealUsingTick
+                  , Just HoveredItem.HoveredHealUsingTick
                   )
                 , ( "Heal over time"
                   , (String.fromInt <|
@@ -3624,11 +3556,11 @@ charDerivedStatsView player =
                             }
                     )
                         ++ " HP every tick"
-                  , Just HoveredHealOverTime
+                  , Just HoveredItem.HoveredHealOverTime
                   )
                 , ( "Perception Level"
                   , Perception.label perceptionLevel
-                  , Just <| HoveredPerceptionLevel perceptionLevel
+                  , Just <| HoveredItem.HoveredPerceptionLevel perceptionLevel
                   )
                 , ( "Action Points"
                   , String.fromInt <|
@@ -3637,7 +3569,7 @@ charDerivedStatsView player =
                             , actionBoyPerkRanks = Perk.rank Perk.ActionBoy player.perks
                             , special = player.special
                             }
-                  , Just HoveredActionPoints
+                  , Just HoveredItem.HoveredActionPoints
                   )
                 , ( "Armor Class"
                   , String.fromInt <|
@@ -3646,7 +3578,7 @@ charDerivedStatsView player =
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze player.traits
                             , hasDodgerPerk = Perk.rank Perk.Dodger player.perks > 0
                             }
-                  , Just HoveredArmorClass
+                  , Just HoveredItem.HoveredArmorClass
                   )
                 , ( "Sequence"
                   , String.fromInt <|
@@ -3655,7 +3587,7 @@ charDerivedStatsView player =
                             , hasKamikazeTrait = SeqSet.member Trait.Kamikaze player.traits
                             , earlierSequencePerkRank = Perk.rank Perk.EarlierSequence player.perks
                             }
-                  , Just HoveredSequence
+                  , Just HoveredItem.HoveredSequence
                   )
                 , ( "Critical chance"
                   , String.fromInt
@@ -3672,14 +3604,14 @@ charDerivedStatsView player =
                             }
                         )
                         ++ "%"
-                  , Just HoveredCriticalChance
+                  , Just HoveredItem.HoveredCriticalChance
                   )
                 , ( "Perk rate"
                   , String.fromInt
                         (Logic.perkRate
                             { hasSkilledTrait = SeqSet.member Trait.Skilled player.traits }
                         )
-                  , Just HoveredPerkRate
+                  , Just HoveredItem.HoveredPerkRate
                   )
                 , ( "Skill rate"
                   , String.fromInt
@@ -3690,7 +3622,7 @@ charDerivedStatsView player =
                             , intelligence = player.special.intelligence
                             }
                         )
-                  , Just HoveredSkillRate
+                  , Just HoveredItem.HoveredSkillRate
                   )
                 , ( "Damage Threshold"
                   , String.fromInt
@@ -3704,7 +3636,7 @@ charDerivedStatsView player =
                             , equippedArmor = player.equippedArmor |> Maybe.map .kind
                             }
                         )
-                  , Just HoveredDamageThreshold
+                  , Just HoveredItem.HoveredDamageThreshold
                   )
                 , ( "Damage Resistance"
                   , String.fromInt
@@ -3720,7 +3652,7 @@ charDerivedStatsView player =
                             }
                         )
                         ++ "%"
-                  , Just HoveredDamageResistance
+                  , Just HoveredItem.HoveredDamageResistance
                   )
                 ]
         ]
@@ -3735,7 +3667,7 @@ charSpecialView player =
                     Special.get type_ player.special
             in
             H.div
-                [ HE.onMouseOver <| HoverItem <| HoveredSpecial type_
+                [ HE.onMouseOver <| HoverItem <| HoveredItem.HoveredSpecial type_
                 , HE.onMouseOut StopHoveringItem
                 , HA.class "contents group"
                 ]
@@ -3845,7 +3777,7 @@ skillsView_ r =
                     , ( "cursor-pointer", isTaggable )
                     ]
                 , HA.attributeIf (not isTaggingDisabled) <| HE.onClick <| onTag skill
-                , HE.onMouseOver <| HoverItem <| HoveredSkill skill
+                , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredSkill skill
                 , HE.onMouseOut StopHoveringItem
                 ]
                 [ H.viewIf showTagButton <|
@@ -3948,7 +3880,7 @@ charPerksView perks =
                     Perk.maxRank perk
             in
             H.li
-                [ HE.onMouseOver <| HoverItem <| HoveredPerk perk
+                [ HE.onMouseOver <| HoverItem <| HoveredItem.HoveredPerk perk
                 , HE.onMouseOut StopHoveringItem
                 , HA.class "pr-[2ch]"
                 , TW.mod "hover" "text-green-100 bg-green-800"
@@ -3977,8 +3909,8 @@ charPerksView perks =
         ]
 
 
-inventoryView : PlayerData -> CPlayer -> List (Html FrontendMsg)
-inventoryView _ player =
+inventoryView : Maybe HoveredItem.HoveredItem -> PlayerData -> CPlayer -> List (Html FrontendMsg)
+inventoryView maybeHoveredItem _ player =
     let
         inventoryTotalValue : Int
         inventoryTotalValue =
@@ -4030,7 +3962,11 @@ inventoryView _ player =
                             Just "You're at full HP."
             in
             H.li
-                [ HA.class "flex flex-row gap-[1ch] group" ]
+                [ HA.class "flex flex-row gap-[1ch] group"
+                , TW.mod "hover" "bg-green-800"
+                , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredItem item.kind
+                , HE.onMouseOut StopHoveringItem
+                ]
                 [ H.span
                     [ HA.class "flex flex-row" ]
                     [ UI.button
@@ -4130,208 +4066,218 @@ inventoryView _ player =
                         |> Maybe.withDefault AttackStyle.UnarmedUnaimed
                 , crippledArms = 0
                 }
-    in
-    [ pageTitleView "Inventory"
-    , H.div [ HA.class "flex flex-col gap-4" ] <|
-        List.fastConcat
-            [ [ H.p []
-                    [ H.text "Total value: "
-                    , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
-                    ]
-              , H.h3
-                    [ HA.class "text-green-300" ]
-                    [ H.text "Items" ]
-              , if Dict.isEmpty player.items then
-                    UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
 
-                else
-                    UI.ul []
-                        (player.items
-                            |> Dict.values
-                            |> List.sortBy
-                                (\{ kind } ->
-                                    ( List.map ItemType.name (ItemKind.types kind)
-                                    , ItemKind.baseValue kind
-                                    , ItemKind.name kind
-                                    )
-                                )
-                            |> List.map itemView
-                        )
-              , H.h3
-                    [ HA.class "text-green-300" ]
-                    [ H.text "Equipment" ]
-              , [ [ ( player.equippedArmor, "Armor", ( AskToUnequipArmor, "[Unequip]" ) )
-                  , ( player.equippedWeapon, "Weapon", ( AskToUnequipWeapon, "[Unequip]" ) )
-                  ]
-                    |> List.map
-                        (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
-                            H.li []
-                                [ H.text <| label ++ ": "
-                                , H.span [ HA.class "text-green-100" ] <|
-                                    case maybeItem of
-                                        Nothing ->
-                                            [ H.text "None" ]
+        helpView : Html FrontendMsg
+        helpView =
+            H.div [ HA.class "flex flex-col gap-4 fixed left-[82ch] right-[4ch] top-12" ]
+                [ case maybeHoveredItem of
+                    Just hoveredItem ->
+                        HoveredItem.render { player = Just player } hoveredItem
 
-                                        Just item ->
-                                            [ H.text <| ItemKind.name item.kind
-                                            , UI.button
-                                                [ HE.onClick unequipMsg
-                                                , HA.class "ml-[1ch]"
-                                                ]
-                                                [ H.text unequipLabel ]
-                                            ]
+                    Nothing ->
+                        H.div [ HA.class "flex flex-col gap-4" ]
+                            [ H.span [] [ H.text "Help" ]
+                            , H.div [ HA.class "max-w-[50ch]" ]
+                                [ H.p
+                                    [ HA.class "text-green-300" ]
+                                    [ H.text "Hover over an item to show more information about it here!" ]
                                 ]
-                        )
-                , [ H.li []
-                        [ H.text "Preferred ammo: "
-                        , H.span [ HA.class "text-green-100" ] <|
-                            case player.preferredAmmo of
-                                Nothing ->
-                                    [ H.text "None" ]
+                            ]
+                ]
+    in
+    [ H.div [ HA.class "flex flex-col relative self-stretch" ]
+        [ pageTitleView "Inventory"
+        , H.div [ HA.class "flex flex-col gap-4 w-[48ch]" ] <|
+            List.fastConcat
+                [ [ H.p []
+                        [ H.text "Total value: "
+                        , H.span [ HA.class "text-green-100" ] [ H.text <| "$" ++ String.fromInt totalValue ]
+                        ]
+                  , H.h3
+                        [ HA.class "text-green-300" ]
+                        [ H.text "Items" ]
+                  , if Dict.isEmpty player.items then
+                        UI.ul [] [ H.li [ HA.class "text-green-300" ] [ H.text "None" ] ]
 
-                                Just ammo ->
-                                    [ H.text <| ItemKind.name ammo
-                                    , UI.button
-                                        [ HE.onClick AskToClearPreferredAmmo
-                                        , HA.class "ml-[1ch]"
-                                        ]
-                                        [ H.text "[Clear]" ]
+                    else
+                        UI.ul []
+                            (player.items
+                                |> Dict.values
+                                |> List.sortBy
+                                    (\{ kind } ->
+                                        ( List.map ItemType.name (ItemKind.types kind)
+                                        , ItemKind.baseValue kind
+                                        , ItemKind.name kind
+                                        )
+                                    )
+                                |> List.map itemView
+                            )
+                  , H.h3
+                        [ HA.class "text-green-300" ]
+                        [ H.text "Equipment" ]
+                  , [ [ ( player.equippedArmor, "Armor", ( AskToUnequipArmor, "[Unequip]" ) )
+                      , ( player.equippedWeapon, "Weapon", ( AskToUnequipWeapon, "[Unequip]" ) )
+                      ]
+                        |> List.map
+                            (\( maybeItem, label, ( unequipMsg, unequipLabel ) ) ->
+                                H.li
+                                    [ maybeItem
+                                        |> HA.attributeMaybe (HE.onMouseOver << HoverItem << HoveredItem.HoveredItem << .kind)
+                                    , HE.onMouseOut StopHoveringItem
+                                    , TW.mod "hover" "bg-green-800"
                                     ]
+                                    [ H.text <| label ++ ": "
+                                    , H.span [ HA.class "text-green-100" ] <|
+                                        case maybeItem of
+                                            Nothing ->
+                                                [ H.text "None" ]
+
+                                            Just item ->
+                                                [ H.text <| ItemKind.name item.kind
+                                                , UI.button
+                                                    [ HE.onClick unequipMsg
+                                                    , HA.class "ml-[1ch]"
+                                                    ]
+                                                    [ H.text unequipLabel ]
+                                                ]
+                                    ]
+                            )
+                    , [ H.li
+                            [ TW.mod "hover" "bg-green-800" ]
+                            [ H.text "Preferred ammo: "
+                            , H.span [ HA.class "text-green-100" ] <|
+                                case player.preferredAmmo of
+                                    Nothing ->
+                                        [ H.text "None" ]
+
+                                    Just ammo ->
+                                        [ H.text <| ItemKind.name ammo
+                                        , UI.button
+                                            [ HE.onClick AskToClearPreferredAmmo
+                                            , HA.class "ml-[1ch]"
+                                            ]
+                                            [ H.text "[Clear]" ]
+                                        ]
+                            ]
+                      ]
+                    ]
+                        |> List.fastConcat
+                        |> UI.ul []
+                  ]
+                , case player.carBatteryPromile of
+                    Nothing ->
+                        []
+
+                    Just promile ->
+                        [ H.h3
+                            [ HA.class "text-green-300" ]
+                            [ H.text "Car" ]
+                        , H.div [ HA.class "flex flex-col gap-4" ]
+                            [ H.span [ HA.class "ml-[2ch]" ]
+                                [ H.text "Current charge: "
+                                , H.span [ HA.class "text-green-100" ]
+                                    [ H.text (CarCharge.format promile)
+                                    ]
+                                ]
+                            , H.span [ HA.class "ml-[2ch] text-green-300" ] [ H.text "Refuel:" ]
+                            , UI.ul []
+                                (ItemKind.all
+                                    |> List.filterMap
+                                        (\kind ->
+                                            ItemKind.carBatteryChargePromileAmount kind
+                                                |> Maybe.map (Tuple.pair kind)
+                                        )
+                                    |> List.map
+                                        (\( fuelKind, chargeAmount ) ->
+                                            let
+                                                count =
+                                                    player.items
+                                                        |> Dict.find (\_ item -> item.kind == fuelKind)
+                                                        |> Maybe.map (Tuple.second >> .count)
+                                                        |> Maybe.withDefault 0
+                                            in
+                                            H.li []
+                                                [ H.text <| ItemKind.name fuelKind ++ " (+" ++ CarCharge.formatShort chargeAmount ++ "): "
+                                                , H.span
+                                                    [ HA.class
+                                                        (if count > 0 then
+                                                            "text-green-100"
+
+                                                         else
+                                                            "text-green-300"
+                                                        )
+                                                    ]
+                                                    [ H.text <| String.fromInt count ++ "x available"
+                                                    , if count > 0 then
+                                                        UI.button
+                                                            [ HE.onClick <| AskToRefuelCar fuelKind
+                                                            , HA.class "ml-[1ch]"
+                                                            ]
+                                                            [ H.text "[REFUEL]" ]
+
+                                                      else
+                                                        H.nothing
+                                                    ]
+                                                ]
+                                        )
+                                )
+                            ]
+                        ]
+                , [ H.h3
+                        [ HA.class "text-green-300" ]
+                        [ H.text "Defence stats (with the equipped armor)" ]
+                  , UI.ul []
+                        [ H.li
+                            [ HE.onMouseOver <| HoverItem HoveredItem.HoveredArmorClass
+                            , HE.onMouseOut StopHoveringItem
+                            , TW.mod "hover" "bg-green-800"
+                            ]
+                            [ H.text "Armor Class: "
+                            , H.span
+                                [ HA.class "text-green-100" ]
+                                [ H.text <| String.fromInt armorClass ]
+                            ]
+                        , H.li
+                            [ HE.onMouseOver <| HoverItem HoveredItem.HoveredDamageThreshold
+                            , HE.onMouseOut StopHoveringItem
+                            , TW.mod "hover" "bg-green-800"
+                            ]
+                            [ H.text "Damage Threshold: "
+                            , H.span
+                                [ HA.class "text-green-100" ]
+                                [ H.text <| String.fromInt damageThreshold ]
+                            ]
+                        , H.li
+                            [ HE.onMouseOver <| HoverItem HoveredItem.HoveredDamageResistance
+                            , HE.onMouseOut StopHoveringItem
+                            , TW.mod "hover" "bg-green-800"
+                            ]
+                            [ H.text "Damage Resistance: "
+                            , H.span
+                                [ HA.class "text-green-100" ]
+                                [ H.text <| String.fromInt damageResistance ]
+                            ]
+                        ]
+                  , H.h3
+                        [ HA.class "text-green-300" ]
+                        [ H.text "Attack stats (with the equipped weapon)" ]
+                  , UI.ul []
+                        [ H.li [ TW.mod "hover" "bg-green-800" ]
+                            [ H.text "Damage: "
+                            , H.span
+                                [ HA.class "text-green-100" ]
+                                [ "{MIN}-{MAX}"
+                                    |> String.replace "{MIN}" (String.fromInt attackStats.minDamage)
+                                    |> String.replace "{MAX}" (String.fromInt attackStats.maxDamage)
+                                    |> H.text
+                                ]
+                            ]
                         ]
                   ]
                 ]
-                    |> List.fastConcat
-                    |> UI.ul []
-              ]
-            , case player.carBatteryPromile of
-                Nothing ->
-                    []
-
-                Just promile ->
-                    [ H.h3
-                        [ HA.class "text-green-300" ]
-                        [ H.text "Car" ]
-                    , H.div [ HA.class "flex flex-col gap-4" ]
-                        [ H.span [ HA.class "ml-[2ch]" ]
-                            [ H.text "Current charge: "
-                            , H.span [ HA.class "text-green-100" ]
-                                [ H.text (carBatteryChargeString promile)
-                                ]
-                            ]
-                        , H.span [ HA.class "ml-[2ch] text-green-300" ] [ H.text "Refuel:" ]
-                        , UI.ul []
-                            (ItemKind.all
-                                |> List.filterMap
-                                    (\kind ->
-                                        ItemKind.carBatteryChargePromileAmount kind
-                                            |> Maybe.map (Tuple.pair kind)
-                                    )
-                                |> List.map
-                                    (\( fuelKind, chargeAmount ) ->
-                                        let
-                                            count =
-                                                player.items
-                                                    |> Dict.find (\_ item -> item.kind == fuelKind)
-                                                    |> Maybe.map (Tuple.second >> .count)
-                                                    |> Maybe.withDefault 0
-                                        in
-                                        H.li []
-                                            [ H.text <| ItemKind.name fuelKind ++ " (+" ++ carBatteryChargeStringShort chargeAmount ++ "): "
-                                            , H.span
-                                                [ HA.class
-                                                    (if count > 0 then
-                                                        "text-green-100"
-
-                                                     else
-                                                        "text-green-300"
-                                                    )
-                                                ]
-                                                [ H.text <| String.fromInt count ++ "x available"
-                                                , if count > 0 then
-                                                    UI.button
-                                                        [ HE.onClick <| AskToRefuelCar fuelKind
-                                                        , HA.class "ml-[1ch]"
-                                                        ]
-                                                        [ H.text "[REFUEL]" ]
-
-                                                  else
-                                                    H.nothing
-                                                ]
-                                            ]
-                                    )
-                            )
-                        ]
-                    ]
-            , [ H.h3
-                    [ HA.class "text-green-300" ]
-                    [ H.text "Defence stats (with the equipped armor)" ]
-              , UI.ul []
-                    [ H.li []
-                        [ H.text "Armor Class: "
-                        , H.span
-                            [ HA.class "text-green-100" ]
-                            [ H.text <| String.fromInt armorClass ]
-                        ]
-                    , H.li []
-                        [ H.text "Damage Threshold: "
-                        , H.span
-                            [ HA.class "text-green-100" ]
-                            [ H.text <| String.fromInt damageThreshold ]
-                        ]
-                    , H.li []
-                        [ H.text "Damage Resistance: "
-                        , H.span
-                            [ HA.class "text-green-100" ]
-                            [ H.text <| String.fromInt damageResistance ]
-                        ]
-                    ]
-              , H.h3
-                    [ HA.class "text-green-300" ]
-                    [ H.text "Attack stats (with the equipped weapon)" ]
-              , UI.ul []
-                    [ H.li []
-                        [ H.text "Min Damage: "
-                        , H.span
-                            [ HA.class "text-green-100" ]
-                            [ H.text <| String.fromInt attackStats.minDamage ]
-                        ]
-                    , H.li []
-                        [ H.text "Max Damage: "
-                        , H.span
-                            [ HA.class "text-green-100" ]
-                            [ H.text <| String.fromInt attackStats.maxDamage ]
-                        ]
-                    ]
-              ]
-            ]
+        , helpView
+        ]
     ]
-
-
-carBatteryChargeString : Int -> String
-carBatteryChargeString promile =
-    String.fromInt (promile // 10)
-        ++ "."
-        ++ String.fromInt (promile |> modBy 10)
-        ++ "%"
-
-
-carBatteryChargeStringShort : Int -> String
-carBatteryChargeStringShort promile =
-    let
-        whole =
-            String.fromInt (promile // 10)
-
-        fraction =
-            modBy 10 promile
-    in
-    if fraction == 0 then
-        whole
-
-    else
-        whole
-            ++ "."
-            ++ String.fromInt fraction
-            ++ "%"
 
 
 messagesView : Posix -> Time.Zone -> PlayerData -> CPlayer -> List (Html FrontendMsg)
@@ -4459,20 +4405,10 @@ fightStrategySyntaxHelpView maybeHoveredItem =
                 FightStrategyHelp.Reference reference ->
                     H.span
                         [ HA.class "text-yellow font-mono"
-                        , HE.onMouseOver <| HoverItem <| HoveredFightStrategyReference reference
+                        , HE.onMouseOver <| HoverItem <| HoveredItem.HoveredFightStrategyReference reference
                         , HE.onMouseOut StopHoveringItem
                         ]
                         [ H.text <| FightStrategyHelp.referenceText reference ]
-
-        hoverInfo =
-            case maybeHoveredItem of
-                Nothing ->
-                    { title = "Hover a [THING] for help"
-                    , description = ""
-                    }
-
-                Just hoveredItem ->
-                    HoveredItem.text hoveredItem
     in
     [ pageTitleView "Fight Strategy syntax help"
     , H.div [ HA.class "flex flex-col gap-4 items-start" ]
@@ -4492,12 +4428,18 @@ fightStrategySyntaxHelpView maybeHoveredItem =
                 , H.pre [ HA.class "font-mono" ]
                     (List.map viewMarkup FightStrategyHelp.help)
                 ]
-            , H.div [ HA.class "flex-1" ]
-                [ H.h3 [ HA.classList [ ( "text-yellow pb-4", maybeHoveredItem /= Nothing ) ] ] [ H.text hoverInfo.title ]
-                , H.pre
-                    [ HA.class "font-sans whitespace-pre-wrap max-w-[60ch]" ]
-                    [ H.text hoverInfo.description ]
-                ]
+            , case maybeHoveredItem of
+                Nothing ->
+                    H.div [ HA.class "flex-1 max-w-[50ch] gap-4" ]
+                        [ H.h3
+                            [ HA.classList
+                                [ ( "text-yellow pb-4", maybeHoveredItem /= Nothing ) ]
+                            ]
+                            [ H.text "Hover a [THING] for help" ]
+                        ]
+
+                Just hoveredItem ->
+                    HoveredItem.render { player = Nothing } hoveredItem
             ]
         ]
     ]

@@ -81,6 +81,7 @@ type Command
     | MoveForward
     | RunAway
     | DoWhatever
+    -- Reload; note we promise in Laser Rifle Ext Cap that it is 2x as effective, we should make sure we do that.
     | SkipTurn
 
 

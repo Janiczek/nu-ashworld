@@ -1,7 +1,7 @@
 module Data.Item.Kind exposing
     ( Kind(..), codec
     , all, allNonempty, allHealing, allHealingNonempty
-    , name, baseValue, types
+    , name, baseValue, types, description
     , usageEffects
     , isHealing
     , healAmount
@@ -10,9 +10,9 @@ module Data.Item.Kind exposing
     , carBatteryChargePromileAmount
     , isArmor
     , armorClass, armorDamageResistance, armorDamageThreshold
-    , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
+    , isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon, isTwoHandedWeapon
     , range, weaponStrengthRequirement
-    , weaponDamageType, weaponDamage, shotsPerBurst, isTwoHandedWeapon
+    , weaponDamageType, weaponDamage, shotsPerBurst
     , usableAmmoForWeapon, isUsableAmmoForWeapon
     )
 
@@ -21,7 +21,7 @@ module Data.Item.Kind exposing
 @docs Kind, codec
 @docs all, allNonempty, allHealing, allHealingNonempty
 
-@docs name, baseValue, types
+@docs name, baseValue, types, description
 @docs usageEffects
 
 
@@ -46,9 +46,9 @@ module Data.Item.Kind exposing
 
 ## Weapons
 
-@docs isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon
+@docs isWeapon, isLongRangeWeapon, isWeaponArmorPenetrating, isAccurateWeapon, isTwoHandedWeapon
 @docs range, weaponStrengthRequirement
-@docs weaponDamageType, weaponDamage, shotsPerBurst, isTwoHandedWeapon
+@docs weaponDamageType, weaponDamage, shotsPerBurst
 @docs usableAmmoForWeapon, isUsableAmmoForWeapon
 
 TODO weight : Kind -> Int
@@ -259,7 +259,6 @@ type Kind
     | Ap5mm
       -- Mm762
     | Mm9
-    | Ball9mm
     | Ap10mm
     | Ap14mm
     | ExplosiveRocket
@@ -360,7 +359,6 @@ all =
     , Fmj223
     , Ap5mm
     , Mm9
-    , Ball9mm
     , Ap10mm
     , Ap14mm
     , ExplosiveRocket
@@ -506,7 +504,6 @@ codec =
         , ( "Fmj223", Fmj223 )
         , ( "Ap5mm", Ap5mm )
         , ( "Mm9", Mm9 )
-        , ( "Ball9mm", Ball9mm )
         , ( "Ap10mm", Ap10mm )
         , ( "Ap14mm", Ap14mm )
         , ( "ExplosiveRocket", ExplosiveRocket )
@@ -551,7 +548,7 @@ usageEffects kind =
 
         HealingPowder ->
             -- TODO temporary perception -1?
-            [ Effect.Heal { min = 8, max = 18 }
+            [ Effect.Heal { min = 6, max = 15 }
             , Effect.RemoveAfterUse
             ]
 
@@ -592,13 +589,12 @@ usageEffects kind =
 
         SuperStimpak ->
             -- TODO lose HP after some time
-            [ Effect.Heal { min = 75, max = 75 }
+            [ Effect.Heal { min = 50, max = 75 }
             , Effect.RemoveAfterUse
             ]
 
         MeatJerky ->
-            -- Different from FO2 that doesn't let you eat this
-            [ Effect.Heal { min = 10, max = 15 }
+            [ Effect.Heal { min = 4, max = 10 }
             , Effect.RemoveAfterUse
             ]
 
@@ -816,9 +812,6 @@ usageEffects kind =
         Mm9 ->
             []
 
-        Ball9mm ->
-            []
-
         Ap10mm ->
             []
 
@@ -873,7 +866,7 @@ baseValue kind =
             10
 
         HealingPowder ->
-            20
+            100
 
         MeatJerky ->
             30
@@ -1102,9 +1095,6 @@ baseValue kind =
             120
 
         Mm9 ->
-            100
-
-        Ball9mm ->
             100
 
         Ap10mm ->
@@ -1402,9 +1392,6 @@ ammoDamageResistanceModifier kind =
         Mm9 ->
             10
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             -25
 
@@ -1478,9 +1465,6 @@ ammoDamageModifier kind =
 
         Mm9 ->
             ( 1, 2 )
-
-        Ball9mm ->
-            ( 1, 1 )
 
         Ap10mm ->
             ( 1, 2 )
@@ -1995,9 +1979,6 @@ ammoArmorClassModifier kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -2288,9 +2269,6 @@ armorClass kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -2635,9 +2613,6 @@ armorDamageThresholdNormal kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -2928,9 +2903,6 @@ armorDamageThresholdExplosion kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -3225,9 +3197,6 @@ armorDamageThresholdElectrical kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -3518,9 +3487,6 @@ armorDamageThresholdEMP kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -3815,9 +3781,6 @@ armorDamageThresholdLaser kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -4108,9 +4071,6 @@ armorDamageThresholdFire kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -4405,9 +4365,6 @@ armorDamageThresholdPlasma kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -4698,9 +4655,6 @@ armorDamageResistanceNormal kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -4995,9 +4949,6 @@ armorDamageResistanceExplosion kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -5288,9 +5239,6 @@ armorDamageResistanceElectrical kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -5585,9 +5533,6 @@ armorDamageResistanceEMP kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -5878,9 +5823,6 @@ armorDamageResistanceLaser kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -6175,9 +6117,6 @@ armorDamageResistanceFire kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -6470,9 +6409,6 @@ armorDamageResistancePlasma kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -6610,7 +6546,7 @@ usableAmmoForWeapon kind =
             []
 
         Mauser9mm ->
-            [ Mm9, Ball9mm ]
+            [ Mm9 ]
 
         Pistol14mm ->
             [ Ap14mm ]
@@ -6771,9 +6707,6 @@ usableAmmoForWeapon kind =
             []
 
         Mm9 ->
-            []
-
-        Ball9mm ->
             []
 
         Ap10mm ->
@@ -7093,9 +7026,6 @@ weaponDamageType kind =
         Mm9 ->
             Nothing
 
-        Ball9mm ->
-            Nothing
-
         Ap10mm ->
             Nothing
 
@@ -7361,9 +7291,6 @@ weaponStrengthRequirement kind =
             1
 
         Mm9 ->
-            1
-
-        Ball9mm ->
             1
 
         Ap10mm ->
@@ -7659,9 +7586,6 @@ isLongRangeWeapon kind =
             False
 
         Mm9 ->
-            False
-
-        Ball9mm ->
             False
 
         Ap10mm ->
@@ -7984,9 +7908,6 @@ isWeaponArmorPenetrating kind =
         Mm9 ->
             False
 
-        Ball9mm ->
-            False
-
         Ap10mm ->
             False
 
@@ -8252,9 +8173,6 @@ burstRange kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -8577,9 +8495,6 @@ isAccurateWeapon kind =
         Mm9 ->
             False
 
-        Ball9mm ->
-            False
-
         Ap10mm ->
             False
 
@@ -8870,9 +8785,6 @@ aimedRange kind =
             0
 
         Mm9 ->
-            0
-
-        Ball9mm ->
             0
 
         Ap10mm ->
@@ -9167,9 +9079,6 @@ unaimedRange kind =
         Mm9 ->
             0
 
-        Ball9mm ->
-            0
-
         Ap10mm ->
             0
 
@@ -9443,7 +9352,7 @@ name kind =
             "Laser Rifle"
 
         LaserRifleExtCap ->
-            "Laser Rifle (Extended Capacity)"
+            "Laser Rifle (Ext.Cap.)"
 
         CattleProd ->
             "Cattle Prod"
@@ -9476,9 +9385,6 @@ name kind =
 
         Mm9 ->
             "9mm"
-
-        Ball9mm ->
-            "9mm Ball"
 
         Ap10mm ->
             "10mm AP"
@@ -9773,9 +9679,6 @@ types kind =
             [ Type.Ammo ]
 
         Mm9 ->
-            [ Type.Ammo ]
-
-        Ball9mm ->
             [ Type.Ammo ]
 
         Ap10mm ->
@@ -10107,9 +10010,6 @@ weaponDamage kind =
         Mm9 ->
             mk 0 0
 
-        Ball9mm ->
-            mk 0 0
-
         Ap10mm ->
             mk 0 0
 
@@ -10141,296 +10041,293 @@ weaponDamage kind =
             mk 0 0
 
 
-shotsPerBurst : Kind -> Int
+shotsPerBurst : Kind -> Maybe Int
 shotsPerBurst kind =
     case kind of
         PowerFist ->
-            0
+            Nothing
 
         MegaPowerFist ->
-            0
+            Nothing
 
         SuperSledge ->
-            0
+            Nothing
 
         GaussPistol ->
-            0
+            Nothing
 
         Smg10mm ->
-            10
+            Just 10
 
         HkP90c ->
-            12
+            Just 12
 
         AssaultRifle ->
-            8
+            Just 8
 
         ExpandedAssaultRifle ->
-            8
+            Just 8
 
         HuntingRifle ->
-            0
+            Nothing
 
         ScopedHuntingRifle ->
-            0
+            Nothing
 
         RedRyderLEBBGun ->
-            0
+            Nothing
 
         SniperRifle ->
-            0
+            Nothing
 
         GaussRifle ->
-            0
+            Nothing
 
         PancorJackhammer ->
-            5
+            Just 5
 
         SawedOffShotgun ->
-            0
+            Nothing
 
         Minigun ->
-            40
+            Just 40
 
         Bozar ->
-            15
+            Just 15
 
         RocketLauncher ->
-            0
+            Nothing
 
         LaserPistol ->
-            0
+            Nothing
 
         GatlingLaser ->
-            10
+            Just 10
 
         LaserRifle ->
-            0
+            Nothing
 
         LaserRifleExtCap ->
-            0
+            Nothing
 
         PlasmaRifle ->
-            0
+            Nothing
 
         TurboPlasmaRifle ->
-            0
+            Nothing
 
         PulseRifle ->
-            0
+            Nothing
 
         FragGrenade ->
-            0
+            Nothing
 
         CattleProd ->
-            0
+            Nothing
 
         SuperCattleProd ->
-            0
+            Nothing
 
         Mauser9mm ->
-            0
+            Nothing
 
         Pistol14mm ->
-            0
+            Nothing
 
         CombatShotgun ->
-            3
+            Just 3
 
         HkCaws ->
-            5
+            Just 5
 
         Shotgun ->
-            0
+            Nothing
 
         Flare ->
-            0
+            Nothing
 
         Pistol223 ->
-            0
+            Nothing
 
         Knife ->
-            0
+            Nothing
 
         Wakizashi ->
-            0
+            Nothing
 
         LittleJesus ->
-            0
+            Nothing
 
         Ripper ->
-            0
+            Nothing
 
         NeedlerPistol ->
-            0
+            Nothing
 
         MagnetoLaserPistol ->
-            0
+            Nothing
 
         PulsePistol ->
-            0
+            Nothing
 
         Beer ->
-            0
+            Nothing
 
         Fruit ->
-            0
+            Nothing
 
         HealingPowder ->
-            0
+            Nothing
 
         Stimpak ->
-            0
+            Nothing
 
         SuperStimpak ->
-            0
+            Nothing
 
         BigBookOfScience ->
-            0
+            Nothing
 
         DeansElectronics ->
-            0
+            Nothing
 
         FirstAidBook ->
-            0
+            Nothing
 
         GunsAndBullets ->
-            0
+            Nothing
 
         ScoutHandbook ->
-            0
+            Nothing
 
         Robes ->
-            0
+            Nothing
 
         LeatherJacket ->
-            0
+            Nothing
 
         LeatherArmor ->
-            0
+            Nothing
 
         MetalArmor ->
-            0
+            Nothing
 
         TeslaArmor ->
-            0
+            Nothing
 
         CombatArmor ->
-            0
+            Nothing
 
         CombatArmorMk2 ->
-            0
+            Nothing
 
         PowerArmor ->
-            0
+            Nothing
 
         BBAmmo ->
-            0
+            Nothing
 
         SmallEnergyCell ->
-            0
+            Nothing
 
         Fmj223 ->
-            0
+            Nothing
 
         ShotgunShell ->
-            0
+            Nothing
 
         Jhp10mm ->
-            0
+            Nothing
 
         Jhp5mm ->
-            0
+            Nothing
 
         MicrofusionCell ->
-            0
+            Nothing
 
         Ec2mm ->
-            0
+            Nothing
 
         Tool ->
-            0
+            Nothing
 
         SuperToolKit ->
-            0
+            Nothing
 
         FuelCellRegulator ->
-            0
+            Nothing
 
         FuelCellController ->
-            0
+            Nothing
 
         LockPicks ->
-            0
+            Nothing
 
         ElectronicLockpick ->
-            0
+            Nothing
 
         AbnormalBrain ->
-            0
+            Nothing
 
         ChimpanzeeBrain ->
-            0
+            Nothing
 
         HumanBrain ->
-            0
+            Nothing
 
         CyberneticBrain ->
-            0
+            Nothing
 
         GECK ->
-            0
+            Nothing
 
         SkynetAim ->
-            0
+            Nothing
 
         MotionSensor ->
-            0
+            Nothing
 
         K9 ->
-            0
+            Nothing
 
         MeatJerky ->
-            0
+            Nothing
 
         Ap5mm ->
-            0
+            Nothing
 
         Mm9 ->
-            0
-
-        Ball9mm ->
-            0
+            Nothing
 
         Ap10mm ->
-            0
+            Nothing
 
         Ap14mm ->
-            0
+            Nothing
 
         ExplosiveRocket ->
-            0
+            Nothing
 
         RocketAp ->
-            0
+            Nothing
 
         HnNeedlerCartridge ->
-            0
+            Nothing
 
         HnApNeedlerCartridge ->
-            0
+            Nothing
 
         TankerFob ->
-            0
+            Nothing
 
         SilverGeckoPelt ->
-            0
+            Nothing
 
         GoldenGeckoPelt ->
-            0
+            Nothing
 
         FireGeckoPelt ->
-            0
+            Nothing
 
 
 isTwoHandedWeapon : Kind -> Bool
@@ -10690,9 +10587,6 @@ isTwoHandedWeapon kind =
             False
 
         Mm9 ->
-            False
-
-        Ball9mm ->
             False
 
         Ap10mm ->
@@ -10984,9 +10878,6 @@ carBatteryChargePromileAmount kind =
         Mm9 ->
             Nothing
 
-        Ball9mm ->
-            Nothing
-
         Ap10mm ->
             Nothing
 
@@ -11016,3 +10907,522 @@ carBatteryChargePromileAmount kind =
 
         FireGeckoPelt ->
             Nothing
+
+
+description : Kind -> String
+description kind =
+    case kind of
+        MicrofusionCell ->
+            """A high-tech energy cell used in advanced energy weapons and other
+machinery. Contains a miniature fusion reactor that provides a substantial power
+output."""
+
+        SmallEnergyCell ->
+            """A compact energy cell used to power smaller energy weapons and
+other machinery."""
+
+        SuperSledge ->
+            """A Super Sledgehammer, manufactured by the Brotherhood of Steel,
+using the finest weapon technology available. Includes a kinetic energy storage
+device to increase knockback."""
+
+        AssaultRifle ->
+            """An AK-112 5mm assault rifle, an old military model that was
+phased out around the time of the Great War. Features both single-shot and burst
+fire modes, using high-velocity 5mm rounds."""
+
+        ExpandedAssaultRifle ->
+            """An AK-112 assault rifle modified with an extended military-grade
+magazine. The expanded ammunition capacity makes it perfect for spray-and-pray
+tactics."""
+
+        HuntingRifle ->
+            """A Colt Rangemaster semi-automatic rifle, in .223 caliber.
+Single-shot only. Favored by hunters and survivalists, offers good accuracy at
+medium to long range."""
+
+        ScopedHuntingRifle ->
+            """A hunting rifle fitted with the Loophole x20 Scope for
+exceptional long-range accuracy.  Nothing's better than seeing that surprised
+look on your target's face - and with this rifle's consistent accuracy from
+first shot to last, you'll see plenty of them, no matter what kind of game
+you're hunting."""
+
+        RedRyderLEBBGun ->
+            """A classic BB gun with the Limited Edition badge. It's a nostalgic
+piece of pre-war Americana."""
+
+        SniperRifle ->
+            """A DKS-501 Sniper Rifle chambered in .223 caliber. An excellent
+long-range projectile weapon featuring match-grade components and a powerful
+scope. Originally designed for .308, this model has been modified to use more
+commonly available ammunition."""
+
+        GaussRifle ->
+            """The M72 rifle is an advanced German-designed weapon that uses
+electromagnetic coils to propel metal projectiles at tremendous speeds. Its
+electromagnetic field system can pierce almost any obstacle, making it
+devastating against armored targets. The rifle's range, accuracy and stopping
+power is almost unparalleled."""
+
+        CombatShotgun ->
+            """A Winchester City-Killer 12 gauge combat shotgun, bullpup
+variant. Features a drum magazine for extended capacity and the DesertWarfare
+environmental sealant modification for exceptional reliability in harsh
+conditions. Provides devastating close-range firepower."""
+
+        HkCaws ->
+            """The CAWS (Close Assault Weapons System) is a bullpup shotgun
+designed for close-range combat. Its compact layout provides excellent handling
+while maintaining barrel length for high-velocity shells."""
+
+        PancorJackhammer ->
+            """The Jackhammer is an automatic shotgun that, despite its name, is
+remarkably easy to control even during full-auto fire. Its bullpup design, with
+the magazine placed behind the trigger, creates excellent balance and
+handling."""
+
+        Shotgun ->
+            """A Winchester Widowmaker double-barreled 12 gauge shotgun with a
+short barrel and mahogany grip. Delivers reliable close-range stopping power and
+remains a common sight in the wasteland."""
+
+        Minigun ->
+            """A Rockwell CZ53 Personal Minigun. A multi-barrelled chaingun
+firing 5mm ammunition at over 60,000 RPM. Devastating in close to medium range
+combat."""
+
+        Bozar ->
+            """The ultimate refinement of the sniper's art. A heavy support
+weapon that combines accuracy with tremendous firepower. Although somewhat
+finicky and prone to jamming if not kept scrupulously clean, the big weapon's
+accuracy more than makes up for its extra maintenance requirements."""
+
+        RocketLauncher ->
+            """A Rockwell BigBazooka rocket launcher with the deluxe 3 lb.
+trigger. A shoulder-mounted weapon capable of launching AP or explosive rockets.
+Highly effective against vehicles and heavily armored targets."""
+
+        GatlingLaser ->
+            """An H&K L30 Gatling Laser, a military prototype weapon from before
+the War. Multiple rotating barrels allow sustained firing without overheating.
+Powered by Micro Fusion Cells, it delivers overwhelming barrages of laser
+fire."""
+
+        LaserRifle ->
+            """A Wattz 2000 Laser Rifle that uses micro fusion cells to generate
+powerful laser beams. Features an extended barrel for increased range and
+excellent accuracy and penetration."""
+
+        LaserRifleExtCap ->
+            """A Wattz 2000 laser rifle with an upgraded recharging system and
+recycling chip installed. The enhanced capacitors and power recycling reduce
+micro fusion cell drain by 50%, allowing for twice as many shots between
+reloads."""
+
+        PlasmaRifle ->
+            """A Winchester Model P94 Plasma Rifle that fires superheated plasma
+bolts down a superconducting barrel. An industrial-grade energy weapon powered
+by Microfusion cells. Extremely effective against armored targets."""
+
+        TurboPlasmaRifle ->
+            """A Winchester Model P94 Plasma Rifle with a hot-wired plasma bolt
+chamber that accelerates the bolt formation process. This modification increases
+the rate of fire while maintaining the weapon's devastating effectiveness
+against armored targets."""
+
+        PulseRifle ->
+            """The YK42B Pulse Rifle, developed by the Yuma Flats Energy
+Consortium, is an advanced electromagnetic pulse weapon. With superior charge
+capacity and range, it is particularly effective against robots and power
+armor."""
+
+        PowerFist ->
+            """A "Big Frigger" power fist from BeatCo that amplifies the user's
+punching power. Considered by many to be the ultimate weapon to use in unarmed
+combat. Others are just scared. Powered by small energy cells."""
+
+        MegaPowerFist ->
+            """A "Big Frigger" power fist from BeatCo with upgraded power servos
+for increased strength. Considered by many to be the ultimate weapon to use in
+unarmed combat. Powered by small energy cells."""
+
+        GaussPistol ->
+            """The PPK12 Gauss Pistol is a German-designed electromagnetic
+weapon that fires metal projectiles at tremendous speed. Praised for its range
+and stopping power, it can punch through almost any armor while maintaining the
+portability of a sidearm."""
+
+        Smg10mm ->
+            """The H&K MP9 submachinegun (10mm variant) is a medium-sized SMG
+capable of single shot and burst fire. Offers good rate of fire and
+controllability in a reliable package."""
+
+        HkP90c ->
+            """The Heckler & Koch P90c was just entering service when the war
+began. Its bullpup layout and compact design provide excellent control, while
+its durable construction delivers reliable high firepower in a rugged, compact
+package."""
+
+        SawedOffShotgun ->
+            """A modified shotgun with its barrel and stock crudely shortened.
+The resulting wide shot pattern from this compact but powerful weapon makes it
+devastating at close range against multiple targets."""
+
+        LaserPistol ->
+            """A Wattz 1000 Laser Pistol that fires concentrated light beams.
+This civilian model has lower wattage than military or police versions, but
+offers a good balance of portability and precision. Powered by small energy
+cells."""
+
+        FragGrenade ->
+            """A generic fragmentation grenade. Contains a small amount of high
+explosives, the container itself forming most of the damaging fragments.
+Explodes on contact. Effective against groups of unarmored targets."""
+
+        CattleProd ->
+            """A Farmer's Best Friend model cattle prod from Wattz Electronics.
+An electrified melee weapon originally designed for livestock control that
+delivers painful electrical shocks. Uses small energy cells for power."""
+
+        SuperCattleProd ->
+            """A Farmer's Best Friend model cattle prod from Wattz Electronics
+that has been upgraded to increase the electrical discharge. The enhanced power
+output can temporarily incapacitate most targets."""
+
+        Mauser9mm ->
+            """A Mauser M/96 in 9x19mm Parabellum. A well-maintained pre-war
+semi-automatic pistol in excellent condition. Known for its exceptional accuracy
+and reliability."""
+
+        Pistol14mm ->
+            """A Sig-Sauer 14mm Auto Pistol. A large, single-shot handgun
+featuring excellent craftsmanship. Delivers tremendous stopping power and is
+effective against armored targets, though it has significant recoil."""
+
+        Flare ->
+            """A flare that creates light for a short period of time. The paper
+is a little worn, but otherwise it is in good condition. Twist the top to
+activate it. Can also be used as an improvised weapon, though it's more useful
+for illumination."""
+
+        Pistol223 ->
+            """A .223 rifle modified and cut down to a pistol size. This
+one-of-a-kind firearm was obviously crafted with exceptional skill and care.
+Combines the portability of a handgun with the stopping power of a rifle
+round."""
+
+        Knife ->
+            """A simple but effective bladed weapon. Useful for both utility
+purposes and close combat."""
+
+        Wakizashi ->
+            """A traditional Japanese short sword. The tip seems to be designed
+to pierce armor. It offers excellent balance and cutting ability in a compact
+package."""
+
+        LittleJesus ->
+            """A wicked looking blade that once belonged to Lil' Jesus Mordino.
+Despite the numerous nicks and cuts along its surface, its edge remains razor
+sharp. The handle is carved with the words "Little Jesus"."""
+
+        Ripper ->
+            """A Ripper™ vibroblade. Powered by a small energy cell, the
+chainblade rips and tears into its target. Capable of inflicting horrific
+injuries."""
+
+        NeedlerPistol ->
+            """A Bringham needler pistol that fires hard-plastic hypodermic
+darts. Likely once used in scientific field studies."""
+
+        MagnetoLaserPistol ->
+            """A Wattz 1000 laser pistol that has been upgraded with a magnetic
+field targeting system that tightens the laser emission, giving this pistol
+extra penetrating power. The magnetic focusing technology provides improved beam
+coherence and damage."""
+
+        PulsePistol ->
+            """The YK32 Pulse Pistol, developed by the Yuma Flats Energy
+Consortium, fires concentrated electrical pulses. While highly effective against
+electronic systems and power armor, its bulky design and inefficient energy
+consumption limited its practical adoption."""
+
+        Beer ->
+            """Some type of home brewed beer."""
+
+        Fruit ->
+            """A strange piece of fruit. No preservatives or food coloring
+added. Provides basic nutrition and hydration."""
+
+        HealingPowder ->
+            """A primitive medical item made from local plants. Less effective
+than pre-war medicine but more readily available."""
+
+        Stimpak ->
+            """A healing chem that provides immediate treatment when injected.
+The chem delivers healing compounds that rapidly close minor wounds and
+accelerate tissue repair. Standard emergency medical treatment in the
+wasteland."""
+
+        SuperStimpak ->
+            """An advanced healing chem that delivers an extremely potent dose
+of healing compounds. Provides much more powerful healing than a standard
+Stimpak, but might have side effects. Best suited for critical situations."""
+
+        BigBookOfScience ->
+            """A set of books containing information about different scientific
+fields, including physics, chemistry, biology and astronomy. The comprehensive
+collection covers both theoretical principles and practical applications, making
+it invaluable for improving scientific knowledge."""
+
+        DeansElectronics ->
+            """A study book on the field of electronics. A note on the cover
+says that it is for the "budding young electrician in everyone!" Contains
+detailed technical manuals covering electronic theory and repair."""
+
+        FirstAidBook ->
+            """A study book on the concepts and practical use of first aid
+skills. Covers emergency treatment and basic healthcare. Valuable for learning
+medical skills."""
+
+        GunsAndBullets ->
+            """A gun rag. A magazine devoted to the practical use of firearms,
+and the occasional biased review. Contains detailed articles about weapons
+maintenance, ammunition reloading, and field testing of both classic and new
+firearms."""
+
+        ScoutHandbook ->
+            """A book on the methods and ideals of Scouting, containing very
+practical information regarding outdoor life. Covers wilderness skills, survival
+techniques, and the principles of preparedness that define the Scout
+movement."""
+
+        Robes ->
+            """Simple cloth garments that provide basic protection from the
+elements. Common among peaceful communities, particularly the Children of the
+Cathedral who wear distinctive purple robes as part of their religious order."""
+
+        LeatherJacket ->
+            """A heavy black leather jacket that provides basic protection while
+remaining comfortable and flexible. The thick leather offers decent durability
+for wasteland travel."""
+
+        LeatherArmor ->
+            """Your basic all leather apparel. Finely crafted from tanned
+brahmin hide. Reinforced leather armor that offers decent protection against
+small arms fire and melee weapons."""
+
+        MetalArmor ->
+            """Polished metal plates, crudely forming a suit of armor. This
+armor offers good protection but is relatively heavy and noisy."""
+
+        TeslaArmor ->
+            """This shining armor provides superior protection against energy
+attacks. The three Tesla Attraction Coil Rods disperse a large percentage of
+directed energy attacks."""
+
+        CombatArmor ->
+            """Advanced pre-war military armor crafted from high-tech defensive
+polymers. This combat armor features substantially improved materials and
+superior ergonomic design compared to standard armor. Offers excellent
+protection while maintaining full mobility. One of the most sought-after pieces
+of personal protection in the wasteland."""
+
+        CombatArmorMk2 ->
+            """A new version of Combat Armor designed for American shock troops
+and special forces.  This high-tech suit offers heavier protection than standard
+combat armor while maintaining mobility. Originally intended to replace Combat
+Armor reinforced, it represents the pinnacle of pre-war personal protection
+technology short of power armor."""
+
+        PowerArmor ->
+            """The pinnacle of pre-war personal protection technology. A
+self-contained suit of advanced technology armor. Powered by a micro-fusion
+reactor, with enough fuel to last a hundred years. Provides exceptional
+protection and strength enhancement."""
+
+        BBAmmo ->
+            """Small metal pellets used in BB guns."""
+
+        Fmj223 ->
+            """Full metal jacket rifle ammunition. These common and affordable
+rounds are exceptionally accurate and can punch through lighter armor
+effectively. While they lack specialized damage effects, their reliability and
+armor penetration make them a practical choice for general combat."""
+
+        ShotgunShell ->
+            """12-gauge shotgun shells containing multiple pellets. Effective at
+close range.  Warning label states: "Not for use by children under the age of
+3.\""""
+
+        Jhp10mm ->
+            """10mm jacketed hollow point ammunition - the most common pistol
+round in the wasteland.  Designed for maximum stopping power against unarmored
+or lightly armored targets. While less effective against heavy armor, its
+widespread availability makes it a practical choice for general self-defense."""
+
+        Jhp5mm ->
+            """A high velocity round designed for assault rifles. This 5.56mm
+round has replaced the original 5mm M134 cartridge in assault rifles. These
+hollow point rounds offer good accuracy and terminal performance against soft
+targets."""
+
+        Ec2mm ->
+            """Designed specifically for use in Gauss weaponry, 2mm
+electromagnetic cartridges come pre-packaged with ferromagnetic projectiles and
+a battery pack to power the accelerator coils which create the electromagnetic
+field."""
+
+        Tool ->
+            """A multi-use tool kit containing pliers, screwdrivers, wrenches
+and other basic implements. Useful for simple repairs and general maintenance
+tasks in the wasteland."""
+
+        SuperToolKit ->
+            """An advanced collection of tools made by Snap-Off, suitable for
+complex mechanical and electronic repairs. This impressive tool set contains
+precision instruments and specialized equipment for working on both pre-war and
+modern technology."""
+
+        FuelCellRegulator ->
+            """A critical component used in power armor and other high-tech
+equipment that regulates power flow from fuel cells. Some car owners installed
+these to double their vehicle's mileage between charges, though most drivers
+didn't bother since power was supposedly cheap and plentiful in pre-war
+times."""
+
+        FuelCellController ->
+            """An advanced electronic device that manages fuel cell operation in
+powered equipment. This chip controls the flow of power into a car's electric
+engines. Many drivers quickly burnt out this chip through frequent rapid
+acceleration. Still a valuable part to have - if you only had a car to install
+it in."""
+
+        LockPicks ->
+            """A set of locksmith tools for bypassing mechanical locks. Includes
+all the necessary picks and tension wrenches to open conventional pin and
+tumbler locks. Essential for any wasteland scavenger."""
+
+        ElectronicLockpick ->
+            """A Wattz Electronics Micromanipulator FingerStuff electronic
+lockpick. A sophisticated device for bypassing electronic locks and security
+systems. More effective than traditional lockpicks on modern locks, it uses
+advanced micromanipulators to interface with electronic security devices."""
+
+        AbnormalBrain ->
+            """A preserved brain exhibiting unusual characteristics, quite
+possibly human. The color doesn't seem quite right and the left hemisphere has
+caved in on itself. Of interest to certain scientific researchers."""
+
+        ChimpanzeeBrain ->
+            """A preserved chimpanzee brain. It's soft and squishy. Used in
+various scientific experiments."""
+
+        HumanBrain ->
+            """A preserved human brain. One that would typically be found in a
+human skull. Valuable for medical research and certain specialized purposes."""
+
+        CyberneticBrain ->
+            """A human brain that has been enhanced by the addition of
+electronic and robotic attachments. Represents the cutting edge of pre-war
+neurotechnology."""
+
+        GECK ->
+            """The Garden of Eden Creation Kit (G.E.C.K.) is a terraforming
+device created by Future-Tec. This advanced survival technology includes seed
+and soil supplements, a cold-fusion power generator, matter-energy replicators,
+atmospheric stabilizers and water purifiers - everything needed to transform an
+irradiated wasteland into habitable land."""
+
+        SkynetAim ->
+            """A sophisticated weapon targeting system that now houses the
+consciousness of Skynet, an ancient military AI. After its robotic body
+catastrophically failed, Skynet transferred itself into this module. Though not
+the mobility it desired, it can now assist you in combat with both enhanced
+targeting capabilities and witty commentary. The AI seems content with this
+compromise."""
+
+        MotionSensor ->
+            """A Wattz Electronics C-U model motion sensor that detects
+biological movement using radar technology. When connected to a Pip-Boy 2000, it
+displays detected entities as red dots on the AutoMap. Though an older model
+only compatible with Pip-Boy 2000 and earlier, it remains an effective tool for
+detecting living threats."""
+
+        K9 ->
+            """A loyal cybernetic canine companion with military-grade
+enhancements. This cyber-dog combines the unwavering devotion of man's best
+friend with advanced combat systems and reinforced armor plating.  After
+repairs, K9's systems are fully operational, making him a formidable ally in
+close-quarters combat.  His enhanced sensory capabilities and titanium-alloy
+fangs make him a valuable asset for both protection and companionship in the
+wasteland."""
+
+        MeatJerky ->
+            """These smoked and dried chunks of beast-flesh remain chewy-licious
+and even somewhat nutritious for years, and years... In short, it's stable
+source of protein that keeps well in wasteland conditions."""
+
+        Ap5mm ->
+            """A high velocity round designed for assault rifles. This 5.56mm
+round has replaced the original 5mm M134 cartridge in assault rifles. These
+armor-piercing rounds offer good accuracy and penetrating power against armored
+targets."""
+
+        Mm9 ->
+            """A collection of ancient 9x19mm rounds preserved in heavy grease
+to protect them from the environment. These standard bullets remain reliable
+despite their age, making them a common sight in the wasteland."""
+
+        Ap10mm ->
+            """10mm armor piercing ammunition - the most common pistol
+round in the wasteland. Designed to penetrate armor plating and defeat
+heavily armored targets. Its widespread availability and armor-piercing
+capabilities make it an effective choice for dealing with armored threats."""
+
+        Ap14mm ->
+            """Large caliber 14mm armor-piercing ammunition. These powerful
+rounds can defeat even the heaviest armor plating. The massive size and
+penetrating power make them effective against robots, power armor, and other
+heavily armored targets."""
+
+        ExplosiveRocket ->
+            """A rocket with a large explosive warhead. Causes significant blast
+damage and devastating area effects. The powerful payload makes it effective
+against groups of enemies and fortified positions."""
+
+        RocketAp ->
+            """A rocket shell with a smaller explosive payload, designed
+specifically to pierce armor plating. The reduced explosive charge allows for a
+more focused penetrating force against heavily armored targets."""
+
+        HnNeedlerCartridge ->
+            """Specialized flechette ammunition for the HN Needler pistol. Each
+cartridge contains hollow metal darts designed to maximize soft tissue damage
+on impact."""
+
+        HnApNeedlerCartridge ->
+            """Armor-piercing needle ammunition. The hardened metal darts are
+designed to penetrate armor while still causing significant tissue trauma."""
+
+        TankerFob ->
+            """A sophisticated electronic key fob used by the Enclave to access
+secure facilities. This particular model was designed for their fuel storage
+installations. The advanced pre-war technology still functions perfectly,
+guaranteed to lower the defenses of the Enclave oil rig."""
+
+        SilverGeckoPelt ->
+            """This is the dried and cured hide of a silver gecko. The metallic
+sheen and natural resistance make it highly sought after for both protective
+gear and fashionable clothing."""
+
+        GoldenGeckoPelt ->
+            """This is the dried and cured hide of a golden gecko that can be
+turned into all sorts of useful and attractive clothing items. The brilliant
+golden color and exceptional durability make it one of the most prized materials
+in the wasteland."""
+
+        FireGeckoPelt ->
+            """This is the dried and cured hide of a fire gecko. Provides high 
+resistance against heat, electricity and other elements. The specialized scales
+make it invaluable for crafting protective gear for hostile environments."""

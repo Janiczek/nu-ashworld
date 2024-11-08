@@ -5,6 +5,7 @@ module Data.Fight.AttackStyle exposing
     , isAimed
     , isUnaimed
     , isUnarmed
+    , label
     , toAimed
     , toString
     )
@@ -223,3 +224,31 @@ isUnarmed style =
 
         ShootBurst ->
             False
+
+
+label : AttackStyle -> String
+label style =
+    case style of
+        UnarmedUnaimed ->
+            "Unarmed"
+
+        UnarmedAimed _ ->
+            "Unarmed aimed"
+
+        MeleeUnaimed ->
+            "Melee"
+
+        MeleeAimed _ ->
+            "Melee aimed"
+
+        Throw ->
+            "Throw"
+
+        ShootSingleUnaimed ->
+            "Shoot"
+
+        ShootSingleAimed _ ->
+            "Shoot aimed"
+
+        ShootBurst ->
+            "Burst"

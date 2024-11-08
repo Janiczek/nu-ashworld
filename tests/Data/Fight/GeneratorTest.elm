@@ -459,6 +459,7 @@ canBurstAttackWithLessThanDesignatedAmmoAmount =
 
                 designatedAmmoAmount =
                     ItemKind.shotsPerBurst weapon
+                        |> Maybe.withDefault 0
 
                 usedAmmoAmount =
                     designatedAmmoAmount - 1
@@ -523,6 +524,7 @@ burstAttackUsesDesignatedAmmoAmount =
 
                 designatedAmmoAmount =
                     ItemKind.shotsPerBurst weapon
+                        |> Maybe.withDefault 0
 
                 ownedAmmoAmount =
                     designatedAmmoAmount * 2

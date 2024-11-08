@@ -1505,71 +1505,76 @@ attack_ who ongoing attackStyle baseApCost =
                             Random.constant { ranCommandSuccessfully = False, nextOngoing = ongoing }
 
                         ( Just ( _, _, availableAmmo ), Just weapon ) ->
-                            let
-                                bulletsUsed : Int
-                                bulletsUsed =
-                                    -- eg. Bozar wants to use 15 bullets, and we have 50 left. Use 15.
-                                    -- eg. Bozar wants to use 15 bullets, but we have 9 left. Use 9.
-                                    min (ItemKind.shotsPerBurst weapon) availableAmmo
+                            case ItemKind.shotsPerBurst weapon of
+                                Nothing -> 
+                                    -- no shotsPerBurst!
+                                    Random.constant { ranCommandSuccessfully = False, nextOngoing = ongoing }
+                                Just shotsPerBurst -> 
+                                    let
+                                        bulletsUsed : Int
+                                        bulletsUsed =
+                                            -- eg. Bozar wants to use 15 bullets, and we have 50 left. Use 15.
+                                            -- eg. Bozar wants to use 15 bullets, but we have 9 left. Use 9.
+                                            min shotsPerBurst availableAmmo
 
-                                oneBullet : Maybe Critical -> Generator (Maybe Int)
-                                oneBullet maybeCritical =
-                                    Random.int 1 100
+                                        oneBullet : Maybe Critical -> Generator (Maybe Int)
+                                        oneBullet maybeCritical =
+                                            Random.int 1 100
+                                                |> Random.andThen
+                                                    (\hitRoll ->
+                                                        let
+                                                            hasHit : Bool
+                                                            hasHit =
+                                                                hitRoll <= chanceToHit_
+                                                        in
+                                                        if hasHit then
+                                                            rollDamage who ongoing attackStyle maybeCritical
+                                                                |> Random.map Just
+
+                                                        else
+                                                            Random.constant Nothing
+                                                    )
+                                    in
+                                    Random.weightedBool (toFloat (criticalChance_ roll) / 100)
+                                        |> Random.andThen criticalEffectCategory
+                                        |> Random.andThen (rollCritical who ongoing attackStyle)
                                         |> Random.andThen
-                                            (\hitRoll ->
-                                                let
-                                                    hasHit : Bool
-                                                    hasHit =
-                                                        hitRoll <= chanceToHit_
-                                                in
-                                                if hasHit then
-                                                    rollDamage who ongoing attackStyle maybeCritical
-                                                        |> Random.map Just
+                                            (\maybeCritical ->
+                                                Random.list bulletsUsed (oneBullet maybeCritical)
+                                                    |> Random.map
+                                                        (\bulletHits ->
+                                                            let
+                                                                damage : Int
+                                                                damage =
+                                                                    bulletHits
+                                                                        |> List.filterMap identity
+                                                                        |> List.sum
 
-                                                else
-                                                    Random.constant Nothing
+                                                                action : Fight.Action
+                                                                action =
+                                                                    Fight.Attack
+                                                                        { damage = damage
+                                                                        , attackStyle = attackStyle
+                                                                        , remainingHp = (opponent_ other ongoing).hp - damage
+                                                                        , critical = maybeCritical |> Maybe.map (\c -> ( c.effects, c.message ))
+                                                                        , apCost = apCost_
+                                                                        }
+                                                            in
+                                                            ongoing
+                                                                |> addLog who action
+                                                                |> subtractAp who action
+                                                                |> useAmmo bulletsUsed
+                                                                |> updateOpponent other (subtractHp damage)
+                                                                |> (case maybeCritical of
+                                                                        Nothing ->
+                                                                            identity
+
+                                                                        Just c ->
+                                                                            updateOpponent other (applyCriticalEffects c.effects)
+                                                                )
+                                                                |> finalizeCommand
+                                                        )
                                             )
-                            in
-                            Random.weightedBool (toFloat (criticalChance_ roll) / 100)
-                                |> Random.andThen criticalEffectCategory
-                                |> Random.andThen (rollCritical who ongoing attackStyle)
-                                |> Random.andThen
-                                    (\maybeCritical ->
-                                        Random.list bulletsUsed (oneBullet maybeCritical)
-                                            |> Random.map
-                                                (\bulletHits ->
-                                                    let
-                                                        damage : Int
-                                                        damage =
-                                                            bulletHits
-                                                                |> List.filterMap identity
-                                                                |> List.sum
-
-                                                        action : Fight.Action
-                                                        action =
-                                                            Fight.Attack
-                                                                { damage = damage
-                                                                , attackStyle = attackStyle
-                                                                , remainingHp = (opponent_ other ongoing).hp - damage
-                                                                , critical = maybeCritical |> Maybe.map (\c -> ( c.effects, c.message ))
-                                                                , apCost = apCost_
-                                                                }
-                                                    in
-                                                    ongoing
-                                                        |> addLog who action
-                                                        |> subtractAp who action
-                                                        |> useAmmo bulletsUsed
-                                                        |> updateOpponent other (subtractHp damage)
-                                                        |> (case maybeCritical of
-                                                                Nothing ->
-                                                                    identity
-
-                                                                Just c ->
-                                                                    updateOpponent other (applyCriticalEffects c.effects)
-                                                           )
-                                                        |> finalizeCommand
-                                                )
-                                    )
             in
             Random.int 1 100
                 |> Random.andThen
