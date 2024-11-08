@@ -1506,10 +1506,11 @@ attack_ who ongoing attackStyle baseApCost =
 
                         ( Just ( _, _, availableAmmo ), Just weapon ) ->
                             case ItemKind.shotsPerBurst weapon of
-                                Nothing -> 
+                                Nothing ->
                                     -- no shotsPerBurst!
                                     Random.constant { ranCommandSuccessfully = False, nextOngoing = ongoing }
-                                Just shotsPerBurst -> 
+
+                                Just shotsPerBurst ->
                                     let
                                         bulletsUsed : Int
                                         bulletsUsed =
@@ -1571,7 +1572,7 @@ attack_ who ongoing attackStyle baseApCost =
 
                                                                         Just c ->
                                                                             updateOpponent other (applyCriticalEffects c.effects)
-                                                                )
+                                                                   )
                                                                 |> finalizeCommand
                                                         )
                                             )
@@ -1692,6 +1693,12 @@ evalValue who state value =
 
         MyAP ->
             state.yourAp
+
+        MyLevel ->
+            state.you.level
+
+        TheirLevel ->
+            state.them.level
 
         MyItemCount itemKind ->
             state.you.items
@@ -2018,9 +2025,13 @@ enemyOpponentGenerator r lastItemId enemyType =
                   , caps = caps_
                   , items = Dict.empty
                   , drops = items
-                  , -- This is used for the named unarmed attacks. Let's skip it
-                    -- for enemies for now. Maybe it will make more sense for people
-                    -- like Lo Pan etc.
+                  , {- Level is used for unarmed attack damage generation and
+                       for "their level". The syntax help screen warns that NPC
+                       "their level" will always be 1.
+
+                       Maybe someday we'll have use for the unarmed attack
+                       damage calculations eg. for Lo Pan etc.
+                    -}
                     level = 1
                   , equippedArmor = EnemyType.equippedArmor enemyType
                   , equippedWeapon = EnemyType.equippedWeapon enemyType

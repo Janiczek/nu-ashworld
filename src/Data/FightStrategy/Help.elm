@@ -22,28 +22,30 @@ help =
   - attack randomly                   - my HP
   - attack ([ATTACK])                 - my max HP
   - heal ([ITEM])                     - my AP
-  - heal with anything                - number of available [ITEM]
-  - move forward                      - number of available healing items
-  - run away                          - number of available ammo
-  - do whatever                       - number of used [ITEM]
-  - skip turn                         - number of used healing items
-                                      - number of used ammo
-                                      - opponent's level
- [CONDITION]                          - chance to hit ([ATTACK])
-   - opponent is player               - range needed ([ATTACK])
-   - opponent is NPC                  - distance
-   - [VALUE] [OPERATOR] [VALUE]       - [NUMBER]
-   - ([CONDITION] or [CONDITION]) 
-   - ([CONDITION] and [CONDITION])
-                                    [ATTACK]             [AIM]
-                                      - unarmed            - head
- [OPERATOR]                           - unarmed, [AIM]     - eyes
-   - <   (less than)                  - melee              - torso
-   - <=  (less than or equal)         - melee, [AIM]       - groin
-   - ==  (equals)                     - throw              - left arm
-   - !=  (doesn't equal)              - shoot              - right arm
-   - >=  (greater than or equal)      - shoot, [AIM]       - left leg
-   - >   (greater than)               - burst              - right leg
+  - heal with anything                - my level
+  - move forward                      - their level
+  - run away                          - number of available [ITEM]
+  - do whatever                       - number of available healing items
+  - skip turn                         - number of available ammo
+                                      - number of used [ITEM]
+                                      - number of used healing items
+[CONDITION]                           - number of used ammo
+  - opponent is player                - chance to hit ([ATTACK])
+  - opponent is NPC                   - range needed ([ATTACK])
+  - [VALUE] [OPERATOR] [VALUE]        - distance
+  - ([CONDITION] or [CONDITION])      - [NUMBER]
+  - ([CONDITION] and [CONDITION])
+
+
+[OPERATOR]                          [ATTACK]             [AIM]
+  - <   (less than)                   - unarmed            - head
+  - <=  (less than or equal)          - unarmed, [AIM]     - eyes
+  - ==  (equals)                      - melee              - torso
+  - !=  (doesn't equal)               - melee, [AIM]       - groin
+  - >=  (greater than or equal)       - throw              - left arm
+  - >   (greater than)                - shoot              - right arm
+                                      - shoot, [AIM]       - left leg
+                                      - burst              - right leg
 """
         |> P.run parser
         |> Result.withDefault [ Text "BUG: couldn't parse the syntax help!" ]
@@ -225,7 +227,12 @@ Example usage:
 - chance to hit (left leg)
 - number of available healing items
 - number of available Stimpak
-- number of used ammo"""
+- number of used ammo
+- my level
+- their level
+
+Note that `their level` will only work on players, for NPCs it will always return 1.
+"""
 
         Operator ->
             """Example usage:

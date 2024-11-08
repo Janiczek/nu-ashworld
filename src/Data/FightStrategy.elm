@@ -61,6 +61,8 @@ type Value
     = MyHP
     | MyMaxHP
     | MyAP
+    | MyLevel
+    | TheirLevel
     | MyItemCount ItemKind.Kind
     | MyHealingItemCount
     | MyAmmoCount
@@ -81,7 +83,7 @@ type Command
     | MoveForward
     | RunAway
     | DoWhatever
-    -- Reload; note we promise in Laser Rifle Ext Cap that it is 2x as effective, we should make sure we do that.
+      -- Reload; note we promise in Laser Rifle Ext Cap that it is 2x as effective, we should make sure we do that.
     | SkipTurn
 
 
@@ -150,7 +152,7 @@ operatorDataCodec =
 valueCodec : Codec Value
 valueCodec =
     Codec.custom
-        (\myHPEncoder myMaxHPEncoder myAPEncoder myItemCountEncoder myHealingItemCountEncoder myAmmoCountEncoder itemsUsedEncoder healingItemsUsedEncoder ammoUsedEncoder chanceToHitEncoder rangeNeededEncoder distanceEncoder numberEncoder value ->
+        (\myHPEncoder myMaxHPEncoder myAPEncoder myItemCountEncoder myHealingItemCountEncoder myAmmoCountEncoder itemsUsedEncoder healingItemsUsedEncoder ammoUsedEncoder chanceToHitEncoder rangeNeededEncoder distanceEncoder numberEncoder myLevelEncoder theirLevelEncoder value ->
             case value of
                 MyHP ->
                     myHPEncoder
@@ -160,6 +162,12 @@ valueCodec =
 
                 MyAP ->
                     myAPEncoder
+
+                MyLevel ->
+                    myLevelEncoder
+
+                TheirLevel ->
+                    theirLevelEncoder
 
                 MyItemCount arg0 ->
                     myItemCountEncoder arg0
@@ -204,6 +212,8 @@ valueCodec =
         |> Codec.variant1 "RangeNeeded" RangeNeeded AttackStyle.codec
         |> Codec.variant0 "Distance" Distance
         |> Codec.variant1 "Number" Number Codec.int
+        |> Codec.variant0 "MyLevel" MyLevel
+        |> Codec.variant0 "TheirLevel" TheirLevel
         |> Codec.buildCustom
 
 
@@ -347,6 +357,12 @@ valueToString value =
 
         MyAP ->
             "my AP"
+
+        MyLevel ->
+            "my level"
+
+        TheirLevel ->
+            "their level"
 
         MyItemCount kind ->
             "number of available "

@@ -31,6 +31,8 @@ value =
             [ [ ( "my HP", "my HP", Just MyHP )
               , ( "my max HP", "my max HP", Just MyMaxHP )
               , ( "my AP", "my AP", Just MyAP )
+              , ( "my level", "my level", Just MyLevel )
+              , ( "their level", "their level", Just TheirLevel )
               , ( "distance", "distance", Just Distance )
               , ( "item count Stimpak", "number of available Stimpak", Just (MyItemCount ItemKind.Stimpak) )
               , ( "item count HealingPowder", "number of available Healing Powder", Just (MyItemCount ItemKind.HealingPowder) )
@@ -143,6 +145,7 @@ condition =
         [ ( "op: my HP < 50", "my HP < 50", Just (Operator { lhs = MyHP, op = LT_, rhs = Number 50 }) )
         , ( "op: my AP >= 3", "my AP >= 3", Just (Operator { lhs = MyAP, op = GTE, rhs = Number 3 }) )
         , ( "op: my HP < my max HP", "my HP < my max HP", Just (Operator { lhs = MyHP, op = LT_, rhs = MyMaxHP }) )
+        , ( "op: my level < their level", "my level < their level", Just (Operator { lhs = MyLevel, op = LT_, rhs = TheirLevel }) )
         , ( "opponent is player", "opponent is player", Just OpponentIsPlayer )
         , ( "opponent is NPC", "opponent is NPC", Just OpponentIsNPC )
         , ( "and"

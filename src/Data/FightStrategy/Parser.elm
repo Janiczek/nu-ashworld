@@ -180,6 +180,8 @@ value =
         [ P.map (\_ -> MyHP) (P.keyword "my HP")
         , P.map (\_ -> MyMaxHP) (P.keyword "my max HP")
         , P.map (\_ -> MyAP) (P.keyword "my AP")
+        , P.map (\_ -> MyLevel) (P.keyword "my level")
+        , P.map (\_ -> TheirLevel) (P.keyword "their level")
         , itemCount
         , itemsUsed
         , chanceToHit
