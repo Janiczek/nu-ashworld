@@ -1750,7 +1750,7 @@ changedCoordsDecoder mouseCoords =
 mapMarkerView : TileCoords -> Html FrontendMsg
 mapMarkerView ( x, y ) =
     H.img
-        [ HA.class "absolute left-0 top-0 z-[2]"
+        [ HA.class "absolute left-0 top-0 z-[2] pointer-events-none"
         , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
         , HA.class "translate-y-[calc(var(--map-cell-size)*(0.54+var(--player-coord-y))-50%)]"
         , cssVars
@@ -1777,7 +1777,7 @@ otherMapMarkersView otherPlayers you =
 otherMapMarkerView : TileCoords -> Html FrontendMsg
 otherMapMarkerView ( x, y ) =
     H.img
-        [ HA.class "absolute left-0 top-0 z-[2] opacity-50"
+        [ HA.class "absolute left-0 top-0 z-[2] pointer-events-none opacity-50"
         , HA.class "translate-x-[calc(var(--map-cell-size)*(0.5+var(--player-coord-x))-50%)]"
         , HA.class "translate-y-[calc(var(--map-cell-size)*(0.54+var(--player-coord-y))-50%)]"
         , cssVars
