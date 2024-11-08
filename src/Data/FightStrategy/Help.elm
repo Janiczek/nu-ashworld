@@ -231,7 +231,7 @@ Example usage:
 - my level
 - their level
 
-Note that `their level` will only work on players, for NPCs it will always return 1.
+Note that **their level** will only work on players, for NPCs it will always return 1.
 """
 
         Operator ->
