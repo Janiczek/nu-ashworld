@@ -791,16 +791,16 @@ generator r =
                     , attackerEquipment =
                         if Perk.rank Perk.Awareness ongoing.target.perks > 0 then
                             Just
-                                { weapon = ongoing.attacker.equippedWeapon
-                                , armor = ongoing.attacker.equippedArmor
+                                { weapon = r.attacker.equippedWeapon
+                                , armor = r.attacker.equippedArmor
                                 }
 
                         else
                             Nothing
                     , targetEquipment =
                         Just
-                            { weapon = ongoing.target.equippedWeapon
-                            , armor = ongoing.target.equippedArmor
+                            { weapon = r.target.equippedWeapon
+                            , armor = r.target.equippedArmor
                             }
                     }
 
@@ -812,14 +812,14 @@ generator r =
                     , result = result
                     , attackerEquipment =
                         Just
-                            { weapon = ongoing.attacker.equippedWeapon
-                            , armor = ongoing.attacker.equippedArmor
+                            { weapon = r.attacker.equippedWeapon
+                            , armor = r.attacker.equippedArmor
                             }
                     , targetEquipment =
                         if Perk.rank Perk.Awareness ongoing.attacker.perks > 0 then
                             Just
-                                { weapon = ongoing.target.equippedWeapon
-                                , armor = ongoing.target.equippedArmor
+                                { weapon = r.target.equippedWeapon
+                                , armor = r.target.equippedArmor
                                 }
 
                         else

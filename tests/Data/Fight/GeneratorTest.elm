@@ -32,6 +32,7 @@ suite =
             , fightEndsIfOnlyMovingForwardAndRunningAway
             , aimedRangedAttackIsLogged
             , skipTurnSkipsTurn
+            , showsOriginalWeaponWithNoUsableAmmo
             ]
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
@@ -386,6 +387,33 @@ skipTurnSkipsTurn =
                 |> List.all (\len -> len == 1)
                 |> Expect.equal True
                 |> Expect.onFail "Expected 'Skip turn' to skip a turn"
+
+
+showsOriginalWeaponWithNoUsableAmmo : Test
+showsOriginalWeaponWithNoUsableAmmo =
+    Test.fuzz
+        (fightFuzzer
+            { attacker =
+                Fuzz.constant
+                    { baseOpponent
+                        | fightStrategy = Command <| Attack AttackStyle.ShootSingleUnaimed
+                        , equippedWeapon = Just ItemKind.RedRyderLEBBGun
+                        , items = Dict.empty
+                    }
+            , target = Fuzz.constant baseOpponent
+            }
+        )
+        "Final log shows original weapon even when there's no usable ammo"
+    <|
+        \fight ->
+            case fight.fightInfoForAttacker.attackerEquipment of
+                Nothing ->
+                    Expect.fail "Expected the attacker equipment to be always Just if we're the attacker"
+
+                Just equipment ->
+                    equipment.weapon
+                        |> Expect.equal (Just ItemKind.RedRyderLEBBGun)
+                        |> Expect.onFail "Expected the final log to show the original weapon even when there's no usable ammo"
 
 
 rangedAttackFailsAtDistance30WithRange7 : Test
