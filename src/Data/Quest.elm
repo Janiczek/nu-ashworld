@@ -2070,12 +2070,16 @@ playerRewards quest =
 
         KlamathGuardTheBrahmin ->
             mk
-                [ CapsReward 300 ]
+                [ CapsReward 300
+                , ItemReward { what = ItemKind.BrassKnuckles, amount = 2 }
+                , SkillUpgrade { skill = Skill.Outdoorsman, percentage = 10 }
+                ]
                 5
 
         KlamathRustleTheBrahmin ->
             mk
                 [ SkillUpgrade { skill = Skill.Sneak, percentage = 10 }
+                , ItemReward { what = ItemKind.SpikedKnuckles, amount = 2 }
                 , CapsReward 200
                 ]
                 5

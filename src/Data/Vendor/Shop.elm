@@ -456,6 +456,7 @@ initialSpec shop =
                     , item 1 ScoutHandbook
                     , item 1 GunsAndBullets
                     , item 1 LeatherJacket
+                    , item 2 BrassKnuckles
                     ]
             }
 
@@ -691,10 +692,8 @@ initialSpec shop =
                       -- item 5 Spear
                       -- item 5 Rock
                       -- item 5 Crowbar
-                      -- item 5 BrassKnuckles
                       -- item 15 ThrowingKnife
                       -- item 5 CombatKnife
-                      -- item 2 SpikedKnuckles
                       -- item 1 SharpenedSpear
                       -- item 1 Dynamite
                       -- item 50 EcMm2
@@ -706,7 +705,9 @@ initialSpec shop =
                       -- item 1 Lockpick
                       -- item 5 Rope
                       -- item 1 TragicTheGarnering
-                      item 1 PancorJackhammer
+                      item 5 BrassKnuckles
+                    , item 2 SpikedKnuckles
+                    , item 1 PancorJackhammer
                     , item 3 Pistol223
                     , item 3 Smg10mm
                     , item 3 HuntingRifle
@@ -740,7 +741,6 @@ initialSpec shop =
                     [ -- item 3 FnFal
                       -- item 3 DesertEagle
                       -- item 1 MagnumRevolver44
-                      -- item 4 SpikedKnuckles
                       -- item 1 BoxingGloves
                       -- item 4 CombatKnife
                       -- item 10 ThrowingKnife
@@ -751,7 +751,8 @@ initialSpec shop =
                       -- item 2 GeigerCounter
                       -- item 1 TragicTheGarnering
                       -- item 4 Rope
-                      item 1 HkCaws
+                      item 4 SpikedKnuckles
+                    , item 1 HkCaws
                     , item 1 CombatShotgun
                     , item 2 HkP90c
                     , item 2 PowerFist
@@ -779,8 +780,7 @@ initialSpec shop =
             { caps = { average = 3500, maxDeviation = 1500 }
             , stock =
                 SeqDict.fromList
-                    [ -- item 3 SpikedKnuckles
-                      -- item 1 Crowbar
+                    [ -- item 1 Crowbar
                       -- item 2 Shiv
                       -- item 2 Wrench
                       -- item 6 Dynamite
@@ -814,7 +814,8 @@ initialSpec shop =
                       -- item 6 ExpandedLockpickSet
                       -- item 1 ElectronicLockpickMk2
                       -- item 7 BoxOfNoodles
-                      item 7 SuperToolKit
+                      item 3 SpikedKnuckles
+                    , item 7 SuperToolKit
                     , item 2 RocketLauncher
                     , item 3 LaserPistol
                     , item 1 Pistol223
@@ -856,7 +857,6 @@ initialSpec shop =
                       -- item 2 PlasmaGrenade
                       -- item 7 ThrowingKnife
                       -- item 10 MolotovCocktail
-                      -- item 7 SpikedKnuckles
                       -- item 3 CombatKnife
                       -- item 3 MagnumRevolver44
                       -- item 1 LightSupportWeapon
@@ -877,7 +877,8 @@ initialSpec shop =
                       -- item 2 CombatLeatherJacket
                       -- item 2 LeatherArmorMk2
                       -- item 3 MetalArmorMk2
-                      item 3 Minigun
+                      item 7 SpikedKnuckles
+                    , item 3 Minigun
                     , item 3 RocketLauncher
                     , item 4 LaserPistol
                     , item 7 FragGrenade
@@ -919,8 +920,7 @@ initialSpec shop =
             { caps = { average = 368, maxDeviation = 68 }
             , stock =
                 SeqDict.fromList
-                    [ -- item 3 SpikedKnuckles
-                      -- item 1 Crowbar
+                    [ -- item 1 Crowbar
                       -- item 2 Shiv
                       -- item 2 Wrench
                       -- item 8 Mentats
@@ -929,7 +929,8 @@ initialSpec shop =
                       -- item 3 JetAntidote
                       -- item 2 FirstAidKit
                       -- item 7 RadAway
-                      item 1 MegaPowerFist
+                      item 3 SpikedKnuckles
+                    , item 1 MegaPowerFist
                     , item 7 SuperStimpak
                     , item 7 Stimpak
                     , item 8 Fruit

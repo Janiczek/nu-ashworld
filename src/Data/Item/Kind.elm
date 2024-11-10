@@ -123,8 +123,8 @@ type Kind
       -------------
       -- UNARMED --
       -------------
-      -- Brass Knuckles
-      -- Spiked Knuckles
+    | BrassKnuckles
+    | SpikedKnuckles
     | PowerFist
     | MegaPowerFist
       -- Rock (also in throwing)
@@ -316,6 +316,8 @@ all =
     , CombatArmor
     , CombatArmorMk2
     , PowerArmor
+    , BrassKnuckles
+    , SpikedKnuckles
     , PowerFist
     , MegaPowerFist
     , CattleProd
@@ -457,6 +459,8 @@ codec =
         , ( "CombatArmor", CombatArmor )
         , ( "CombatArmorMk2", CombatArmorMk2 )
         , ( "PowerArmor", PowerArmor )
+        , ( "BrassKnuckles", BrassKnuckles )
+        , ( "SpikedKnuckles", SpikedKnuckles )
         , ( "PowerFist", PowerFist )
         , ( "MegaPowerFist", MegaPowerFist )
         , ( "CattleProd", CattleProd )
@@ -686,6 +690,12 @@ usageEffects kind =
             []
 
         ExpandedAssaultRifle ->
+            []
+
+        BrassKnuckles ->
+            []
+
+        SpikedKnuckles ->
             []
 
         PancorJackhammer ->
@@ -948,6 +958,12 @@ baseValue kind =
 
         SuperSledge ->
             3750
+
+        BrassKnuckles ->
+            40
+
+        SpikedKnuckles ->
+            250
 
         PowerFist ->
             2200
@@ -1217,6 +1233,12 @@ ammoDamageResistanceModifier kind =
             0
 
         MegaPowerFist ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         CattleProd ->
@@ -1554,6 +1576,12 @@ ammoDamageModifier kind =
         MegaPowerFist ->
             ( 1, 1 )
 
+        BrassKnuckles ->
+            ( 1, 1 )
+
+        SpikedKnuckles ->
+            ( 1, 1 )
+
         CattleProd ->
             ( 1, 1 )
 
@@ -1830,6 +1858,12 @@ ammoArmorClassModifier kind =
         MegaPowerFist ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         SuperSledge ->
             0
 
@@ -2099,6 +2133,12 @@ armorClass kind =
             0
 
         MegaPowerFist ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         SuperSledge ->
@@ -2443,6 +2483,12 @@ armorDamageThresholdNormal kind =
         MegaPowerFist ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         SuperSledge ->
             0
 
@@ -2733,6 +2779,12 @@ armorDamageThresholdExplosion kind =
             0
 
         MegaPowerFist ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         SuperSledge ->
@@ -3027,6 +3079,12 @@ armorDamageThresholdElectrical kind =
         MegaPowerFist ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         SuperSledge ->
             0
 
@@ -3311,6 +3369,12 @@ armorDamageThresholdEMP kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -3605,6 +3669,12 @@ armorDamageThresholdLaser kind =
         ScoutHandbook ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
             0
 
@@ -3895,6 +3965,12 @@ armorDamageThresholdFire kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -4189,6 +4265,12 @@ armorDamageThresholdPlasma kind =
         ScoutHandbook ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
             0
 
@@ -4479,6 +4561,12 @@ armorDamageResistanceNormal kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -4773,6 +4861,12 @@ armorDamageResistanceExplosion kind =
         ScoutHandbook ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
             0
 
@@ -5063,6 +5157,12 @@ armorDamageResistanceElectrical kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -5357,6 +5457,12 @@ armorDamageResistanceEMP kind =
         ScoutHandbook ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
             0
 
@@ -5647,6 +5753,12 @@ armorDamageResistanceLaser kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -5941,6 +6053,12 @@ armorDamageResistanceFire kind =
         ScoutHandbook ->
             0
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
             0
 
@@ -6231,6 +6349,12 @@ armorDamageResistancePlasma kind =
             0
 
         ScoutHandbook ->
+            0
+
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
             0
 
         PowerFist ->
@@ -6530,6 +6654,12 @@ usableAmmoForWeapon kind =
         PowerArmor ->
             []
 
+        BrassKnuckles ->
+            []
+
+        SpikedKnuckles ->
+            []
+
         PowerFist ->
             [ SmallEnergyCell ]
 
@@ -6768,6 +6898,12 @@ usableAmmoForWeapon kind =
 weaponDamageType : Kind -> Maybe DamageType
 weaponDamageType kind =
     case kind of
+        BrassKnuckles ->
+            Just DamageType.NormalDamage
+
+        SpikedKnuckles ->
+            Just DamageType.NormalDamage
+
         PowerFist ->
             Just DamageType.NormalDamage
 
@@ -7060,6 +7196,12 @@ weaponDamageType kind =
 weaponStrengthRequirement : Kind -> Int
 weaponStrengthRequirement kind =
     case kind of
+        BrassKnuckles ->
+            1
+
+        SpikedKnuckles ->
+            1
+
         PowerFist ->
             1
 
@@ -7445,6 +7587,12 @@ isLongRangeWeapon kind =
         PowerArmor ->
             False
 
+        BrassKnuckles ->
+            False
+
+        SpikedKnuckles ->
+            False
+
         PowerFist ->
             False
 
@@ -7685,6 +7833,12 @@ isWeaponArmorPenetrating kind =
             False
 
         Knife ->
+            False
+
+        BrassKnuckles ->
+            False
+
+        SpikedKnuckles ->
             False
 
         ExpandedAssaultRifle ->
@@ -8029,11 +8183,17 @@ burstRange kind =
         SuperSledge ->
             2
 
+        BrassKnuckles ->
+            0
+
+        SpikedKnuckles ->
+            0
+
         PowerFist ->
-            1
+            0
 
         MegaPowerFist ->
-            1
+            0
 
         FragGrenade ->
             15
@@ -8354,6 +8514,12 @@ isAccurateWeapon kind =
         PowerArmor ->
             False
 
+        BrassKnuckles ->
+            False
+
+        SpikedKnuckles ->
+            False
+
         PowerFist ->
             False
 
@@ -8640,6 +8806,12 @@ aimedRange kind =
 
         SuperSledge ->
             2
+
+        BrassKnuckles ->
+            1
+
+        SpikedKnuckles ->
+            1
 
         PowerFist ->
             1
@@ -8932,6 +9104,12 @@ unaimedRange kind =
 
         SuperSledge ->
             2
+
+        BrassKnuckles ->
+            1
+
+        SpikedKnuckles ->
+            1
 
         PowerFist ->
             1
@@ -9240,6 +9418,12 @@ name kind =
         SuperSledge ->
             "Super Sledge"
 
+        BrassKnuckles ->
+            "Brass Knuckles"
+
+        SpikedKnuckles ->
+            "Spiked Knuckles"
+
         PowerFist ->
             "Power Fist"
 
@@ -9535,6 +9719,12 @@ types kind =
         SuperSledge ->
             [ Type.MeleeWeapon ]
 
+        BrassKnuckles ->
+            [ Type.UnarmedWeapon ]
+
+        SpikedKnuckles ->
+            [ Type.UnarmedWeapon ]
+
         PowerFist ->
             [ Type.UnarmedWeapon ]
 
@@ -9752,6 +9942,12 @@ weaponDamage kind =
             { min = min, max = max }
     in
     case kind of
+        BrassKnuckles ->
+            mk 2 5
+
+        SpikedKnuckles ->
+            mk 4 10
+
         PowerFist ->
             mk 12 24
 
@@ -10044,6 +10240,12 @@ weaponDamage kind =
 shotsPerBurst : Kind -> Maybe Int
 shotsPerBurst kind =
     case kind of
+        BrassKnuckles ->
+            Nothing
+
+        SpikedKnuckles ->
+            Nothing
+
         PowerFist ->
             Nothing
 
@@ -10400,6 +10602,12 @@ isTwoHandedWeapon kind =
         PowerFist ->
             False
 
+        BrassKnuckles ->
+            False
+
+        SpikedKnuckles ->
+            False
+
         MegaPowerFist ->
             False
 
@@ -10695,6 +10903,12 @@ carBatteryChargePromileAmount kind =
         PowerFist ->
             Nothing
 
+        BrassKnuckles ->
+            Nothing
+
+        SpikedKnuckles ->
+            Nothing
+
         MegaPowerFist ->
             Nothing
 
@@ -10943,7 +11157,7 @@ medium to long range."""
 
         ScopedHuntingRifle ->
             """A hunting rifle fitted with the Loophole x20 Scope for
-exceptional long-range accuracy.  Nothing's better than seeing that surprised
+exceptional long-range accuracy. Nothing's better than seeing that surprised
 look on your target's face - and with this rifle's consistent accuracy from
 first shot to last, you'll see plenty of them, no matter what kind of game
 you're hunting."""
@@ -11036,6 +11250,17 @@ against armored targets."""
 Consortium, is an advanced electromagnetic pulse weapon. With superior charge
 capacity and range, it is particularly effective against robots and power
 armor."""
+
+        BrassKnuckles ->
+            """Forged from steel, these hardened knuckle grips offer a sturdy
+defense for your hand while unleashing a crushing blow in close combat. A staple
+of the bare-knuckle brawler, they're sure to leave a lasting impression."""
+
+        SpikedKnuckles ->
+            """Taking the classic brass knuckle design to the next level, these
+spiked variants add a menacing twist to the traditional fistfight. The added
+barbs ensure that every punch packs a little extra punch - and a lot more
+pain."""
 
         PowerFist ->
             """A "Big Frigger" power fist from BeatCo that amplifies the user's
@@ -11230,7 +11455,7 @@ of personal protection in the wasteland."""
 
         CombatArmorMk2 ->
             """A new version of Combat Armor designed for American shock troops
-and special forces.  This high-tech suit offers heavier protection than standard
+and special forces. This high-tech suit offers heavier protection than standard
 combat armor while maintaining mobility. Originally intended to replace Combat
 Armor reinforced, it represents the pinnacle of pre-war personal protection
 technology short of power armor."""
@@ -11252,12 +11477,12 @@ armor penetration make them a practical choice for general combat."""
 
         ShotgunShell ->
             """12-gauge shotgun shells containing multiple pellets. Effective at
-close range.  Warning label states: "Not for use by children under the age of
+close range. Warning label states: "Not for use by children under the age of
 3.\""""
 
         Jhp10mm ->
             """10mm jacketed hollow point ammunition - the most common pistol
-round in the wasteland.  Designed for maximum stopping power against unarmored
+round in the wasteland. Designed for maximum stopping power against unarmored
 or lightly armored targets. While less effective against heavy armor, its
 widespread availability makes it a practical choice for general self-defense."""
 
@@ -11352,9 +11577,9 @@ detecting living threats."""
         K9 ->
             """A loyal cybernetic canine companion with military-grade
 enhancements. This cyber-dog combines the unwavering devotion of man's best
-friend with advanced combat systems and reinforced armor plating.  After
+friend with advanced combat systems and reinforced armor plating. After
 repairs, K9's systems are fully operational, making him a formidable ally in
-close-quarters combat.  His enhanced sensory capabilities and titanium-alloy
+close-quarters combat. His enhanced sensory capabilities and titanium-alloy
 fangs make him a valuable asset for both protection and companionship in the
 wasteland."""
 

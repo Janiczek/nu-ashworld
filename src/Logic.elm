@@ -859,9 +859,10 @@ adjustChanceToHitForBurst :
     -> { chanceToHitEach : Int }
 adjustChanceToHitForBurst { ammoUsedInBurst, chanceToHitAtLeastOnce } =
     case ammoUsedInBurst of
-        Nothing -> { chanceToHitEach = 0 }
-        Just ammoUsed ->
+        Nothing ->
+            { chanceToHitEach = 0 }
 
+        Just ammoUsed ->
             let
                 chanceToHitAtLeastOnce_ =
                     toFloat chanceToHitAtLeastOnce / 100
@@ -1924,6 +1925,12 @@ attackStyleAndApCost kind =
 
         ItemKind.GatlingLaser ->
             [ ( ShootBurst, 6 ) ]
+
+        ItemKind.BrassKnuckles ->
+            unarmedAttackStyleAndApCost 3
+
+        ItemKind.SpikedKnuckles ->
+            unarmedAttackStyleAndApCost 3
 
         ItemKind.TurboPlasmaRifle ->
             shootAttackStyleAndApCost 5
