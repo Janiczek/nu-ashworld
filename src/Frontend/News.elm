@@ -30,27 +30,10 @@ characters you create, as the game will sometimes need to get reset as I work on
 stuff. It's really close to release though, so keep an eye out for the
 announcement!
 
-Current TODOs:
+I'll also be very glad for any reported bugs / game feedback you leave on the
+game [Discord](https://discord.gg/SxymXxvehS)!
 
-- fight strategy: AP cost of action
-- fight view: say how much AP it cost and how much you have left.
-
-Next up: 
-
-- quests UX + test them end-to-end
-- end of game
-
-Later: 
-
-- tooltips around edge of screen - floating-ui.js?
-- music in the bg (opt-in)
-- Steam webview wrapper
-- guest mode - no login required, Ladder fights, quests and marketplace disabled, but you can wander (PvM fights) and use shops
-- Car part quests - always get the part if progressing/if paid reqs, even if not enough ticks given for a player reward?
-
-Bugs found:
-
-- admin view - last 10 ToBackend messages - show per world! not globally
+See the current TODOs in the [Trello](https://trello.com/b/WevjfFrt/nuashworld). 
 
 ~janiczek
 """
