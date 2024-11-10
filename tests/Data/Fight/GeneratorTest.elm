@@ -12,6 +12,7 @@ import Data.Special as Special
 import Dict
 import Expect
 import Fuzz exposing (Fuzzer)
+import List.Extra
 import Random
 import SeqDict
 import SeqSet
@@ -30,6 +31,7 @@ suite =
             , fightEndsIfOnlyMovingForward
             , fightEndsIfOnlyMovingForwardAndRunningAway
             , aimedRangedAttackIsLogged
+            , skipTurnSkipsTurn
             ]
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
@@ -357,6 +359,33 @@ aimedRangedAttackIsLogged =
                 |> List.any (\( _, action ) -> Fight.attackStyle action == Just (AttackStyle.ShootSingleAimed AimedShot.Eyes))
                 |> Expect.equal True
                 |> Expect.onFail "Expected the aimed ranged attack to be logged"
+
+
+skipTurnSkipsTurn : Test
+skipTurnSkipsTurn =
+    Test.fuzz
+        (fightFuzzer
+            { attacker = Fuzz.constant { baseOpponent | fightStrategy = Command SkipTurn }
+            , target = Fuzz.constant baseOpponent
+            }
+        )
+        "Command 'Skip turn' skips the turn"
+    <|
+        \fight ->
+            fight.fightInfoForAttacker.log
+                |> List.Extra.groupWhile (\( _, action1 ) ( _, action2 ) -> Fight.isSkipTurn action1 && Fight.isSkipTurn action2)
+                |> List.filterMap
+                    (\( ( _, x ), xs ) ->
+                        case x of
+                            Fight.SkipTurn _ ->
+                                Just (List.length xs + 1)
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.all (\len -> len == 1)
+                |> Expect.equal True
+                |> Expect.onFail "Expected 'Skip turn' to skip a turn"
 
 
 rangedAttackFailsAtDistance30WithRange7 : Test

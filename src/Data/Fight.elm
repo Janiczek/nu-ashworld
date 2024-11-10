@@ -15,6 +15,7 @@ module Data.Fight exposing
     , isNPC
     , isOpponentLivingCreature
     , isPlayer
+    , isSkipTurn
     , opponentName
     , opponentXp
     , theOther
@@ -133,7 +134,7 @@ type Action
         , healedHp : Int
         , newHp : Int
         }
-    | SkipTurn
+    | SkipTurn { apCost : Int }
     | KnockedOut
     | StandUp { apCost : Int }
     | FailToDoAnything CommandRejectionReason
@@ -211,8 +212,8 @@ actionCodec =
                 Heal arg0 ->
                     healEncoder arg0
 
-                SkipTurn ->
-                    skipTurnEncoder
+                SkipTurn arg0 ->
+                    skipTurnEncoder arg0
 
                 KnockedOut ->
                     knockedOutEncoder
@@ -289,7 +290,12 @@ actionCodec =
                 |> Codec.field "newHp" .newHp Codec.int
                 |> Codec.buildObject
             )
-        |> Codec.variant0 "SkipTurn" SkipTurn
+        |> Codec.variant1 "SkipTurn"
+            SkipTurn
+            (Codec.object (\apCost -> { apCost = apCost })
+                |> Codec.field "apCost" .apCost Codec.int
+                |> Codec.buildObject
+            )
         |> Codec.variant0 "KnockedOut" KnockedOut
         |> Codec.variant1
             "StandUp"
@@ -438,7 +444,7 @@ attackDamage action =
         StandUp _ ->
             0
 
-        SkipTurn ->
+        SkipTurn _ ->
             0
 
         FailToDoAnything _ ->
@@ -472,7 +478,7 @@ attackStyle action =
         StandUp _ ->
             Nothing
 
-        SkipTurn ->
+        SkipTurn _ ->
             Nothing
 
         FailToDoAnything _ ->
@@ -517,3 +523,13 @@ isOpponentLivingCreature opponent =
 
         Player _ ->
             True
+
+
+isSkipTurn : Action -> Bool
+isSkipTurn action =
+    case action of
+        SkipTurn _ ->
+            True
+
+        _ ->
+            False

@@ -515,7 +515,7 @@ view perceptionLevel fight yourName =
                                                                     ""
                                                                )
 
-                                                Fight.SkipTurn ->
+                                                Fight.SkipTurn _ ->
                                                     H.text <|
                                                         names_.subject.verbPresent "skip"
                                                             ++ " a turn."

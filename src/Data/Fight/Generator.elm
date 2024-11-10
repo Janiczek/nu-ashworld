@@ -129,11 +129,11 @@ apCost action =
         Fight.RunAway { hexes } ->
             hexes
 
-        Fight.Attack r_ ->
-            r_.apCost
+        Fight.Attack r ->
+            r.apCost
 
-        Fight.Miss r_ ->
-            r_.apCost
+        Fight.Miss r ->
+            r.apCost
 
         Fight.Heal _ ->
             Logic.healApCost
@@ -141,11 +141,11 @@ apCost action =
         Fight.KnockedOut ->
             0
 
-        Fight.StandUp r_ ->
-            r_.apCost
+        Fight.StandUp r ->
+            r.apCost
 
-        Fight.SkipTurn ->
-            0
+        Fight.SkipTurn r ->
+            r.apCost
 
         Fight.FailToDoAnything _ ->
             0
@@ -1196,8 +1196,13 @@ runAway who ongoing =
 
 skipTurn : Who -> OngoingFight -> Generator { ranCommandSuccessfully : Bool, nextOngoing : OngoingFight }
 skipTurn who ongoing =
+    let
+        action =
+            Fight.SkipTurn { apCost = opponentAp who ongoing }
+    in
     ongoing
-        |> addLog who Fight.SkipTurn
+        |> addLog who action
+        |> subtractAp who action
         |> finalizeCommand
         |> Random.constant
 
