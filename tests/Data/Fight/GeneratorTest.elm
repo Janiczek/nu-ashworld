@@ -1,11 +1,13 @@
 module Data.Fight.GeneratorTest exposing (suite)
 
 import Data.Fight as Fight exposing (Opponent)
+import Data.Fight.AimedShot as AimedShot
 import Data.Fight.AttackStyle as AttackStyle exposing (AttackStyle)
 import Data.Fight.Generator as FightGen exposing (Fight, OngoingFight)
 import Data.Fight.OpponentType as OpponentType
 import Data.FightStrategy as FightStrategy exposing (..)
 import Data.Item.Kind as ItemKind
+import Data.Skill as Skill
 import Data.Special as Special
 import Dict
 import Expect
@@ -27,6 +29,7 @@ suite =
             , fightEndsIfOnlyRunningAway
             , fightEndsIfOnlyMovingForward
             , fightEndsIfOnlyMovingForwardAndRunningAway
+            , aimedRangedAttackIsLogged
             ]
         , Test.describe "attack_"
             [ meleeAttackSucceedsAtDistance2WithRange2
@@ -324,6 +327,36 @@ rangedAttackSucceedsAtDistance15WithRange30 =
             result.ranCommandSuccessfully
                 |> Expect.equal True
                 |> Expect.onFail "Expected the attack to succeed"
+
+
+aimedRangedAttackIsLogged : Test
+aimedRangedAttackIsLogged =
+    Test.fuzz
+        (fightFuzzer
+            { attacker =
+                Fuzz.constant
+                    { baseOpponent
+                        | equippedWeapon = Just ItemKind.RedRyderLEBBGun
+                        , fightStrategy = Command <| Attack <| AttackStyle.ShootSingleAimed AimedShot.Eyes
+                        , special = Special.fromList (List.repeat 7 10) |> Maybe.withDefault Special.init
+                        , addedSkillPercentages = SeqDict.singleton Skill.SmallGuns 300
+                        , items =
+                            Dict.singleton 1
+                                { id = 1
+                                , kind = ItemKind.BBAmmo
+                                , count = 1
+                                }
+                    }
+            , target = Fuzz.constant baseOpponent
+            }
+        )
+        "Aimed ranged attack is logged"
+    <|
+        \fight ->
+            fight.fightInfoForAttacker.log
+                |> List.any (\( _, action ) -> Fight.attackStyle action == Just (AttackStyle.ShootSingleAimed AimedShot.Eyes))
+                |> Expect.equal True
+                |> Expect.onFail "Expected the aimed ranged attack to be logged"
 
 
 rangedAttackFailsAtDistance30WithRange7 : Test

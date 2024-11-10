@@ -4782,7 +4782,7 @@ fightView maybeFight _ player =
                         }
             in
             [ pageTitleView "Fight"
-            , H.div [ HA.class "flex flex-col gap-4 items-start" ]
+            , H.div [ HA.class "flex flex-col gap-4 items-start max-w-[80ch]" ]
                 [ H.div []
                     [ H.text <|
                         "Attacker: "
