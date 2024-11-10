@@ -250,10 +250,10 @@ summary message =
                     "You attacked " ++ r.target ++ " but nobody was able to kill the other"
 
         YouCompletedAQuest r ->
-            "You completed the quest: " ++ Quest.title r.quest
+            "You completed: " ++ Quest.title r.quest
 
         OthersCompletedAQuest r ->
-            "Others completed the quest: " ++ Quest.title r.quest
+            "Others completed: " ++ Quest.title r.quest
 
 
 content : List (Attribute msg) -> PerceptionLevel -> Message -> Html msg
@@ -311,13 +311,15 @@ Your current level is """
             [ "You completed the quest **{QUEST}**!"
                 |> String.replace "{QUEST}" (Quest.title r.quest)
                 |> Just
-            , Just (Quest.completionText r.quest)
+            , Just ("_" ++ Quest.completionText r.quest ++ "_")
             , Just ("You earned " ++ String.fromInt r.xpReward ++ " XP.")
             , Maybe.map
                 (\rewards ->
-                    String.join "\n"
+                    String.join "\n\n"
                         [ "Your rewards:"
-                        , String.join "\n" (List.map Quest.playerRewardTitle rewards)
+                        , rewards
+                            |> List.map (\rew -> " - " ++ Quest.playerRewardTitle rew)
+                            |> String.join "\n"
                         ]
                 )
                 r.playerReward
@@ -326,9 +328,11 @@ Your current level is """
 
               else
                 Just
-                    (String.join "\n"
+                    (String.join "\n\n"
                         [ "Global rewards:"
-                        , String.join "\n" (List.map Quest.globalRewardTitle r.globalRewards)
+                        , r.globalRewards
+                            |> List.map (\rew -> " - " ++ Quest.globalRewardTitle rew)
+                            |> String.join "\n"
                         ]
                     )
             ]
@@ -340,7 +344,7 @@ Your current level is """
             [ "Others completed the quest **{QUEST}** without your participation."
                 |> String.replace "{QUEST}" (Quest.title r.quest)
                 |> Just
-            , Just (Quest.completionText r.quest)
+            , Just ("_" ++ Quest.completionText r.quest ++ "_")
             , if List.isEmpty r.globalRewards then
                 Nothing
 
@@ -403,6 +407,7 @@ markdownRenderer =
                     ]
                     children
         , strong = \children -> H.span [ HA.class "text-yellow" ] children
+        , emphasis = \children -> H.span [ HA.class "text-green-300" ] children
         , unorderedList =
             \list ->
                 list
@@ -410,7 +415,7 @@ markdownRenderer =
                         (\(Markdown.Block.ListItem _ children) ->
                             H.li [] children
                         )
-                    |> UI.ul [ HA.class "flex flex-col gap-4" ]
+                    |> UI.ul [ HA.class "flex flex-col" ]
         , codeSpan =
             \text ->
                 H.span

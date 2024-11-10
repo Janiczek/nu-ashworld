@@ -4334,7 +4334,7 @@ messagesView currentTime zone _ player =
                                   else
                                     H.td [] []
                                 , H.td
-                                    [ HA.title summary ]
+                                    [ HA.class "max-w-[60ch] overflow-x-hidden text-ellipsis whitespace-nowrap" ]
                                     [ H.text summary ]
                                 , H.td
                                     [ HA.title <| Message.fullDate zone message ]
