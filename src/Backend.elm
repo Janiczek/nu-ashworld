@@ -97,6 +97,7 @@ init =
       , lastTenToBackendMsgs = Queue.empty
       , randomSeed = Random.initialSeed 0
       , playerDataCache = Dict.empty
+      , isInMaintenance = False
       }
     , Task.perform FirstTick Time.now
     )
@@ -306,7 +307,11 @@ update msg model =
                     getWorlds model
             in
             ( model
-            , Lamdera.sendToFrontend clientId <| CurrentWorlds worlds
+            , Lamdera.sendToFrontend clientId <|
+                CurrentWorlds
+                    { worlds = worlds
+                    , isInMaintenance = model.isInMaintenance
+                    }
             )
 
         Disconnected _ clientId ->
@@ -1095,14 +1100,22 @@ updateFromFrontend sessionId clientId msg model =
                     getWorlds model
             in
             ( model
-            , Lamdera.sendToFrontend clientId <| CurrentWorlds worlds
+            , Lamdera.sendToFrontend clientId <|
+                CurrentWorlds
+                    { worlds = worlds
+                    , isInMaintenance = model.isInMaintenance
+                    }
             )
 
         RefreshPlease ->
             let
                 loggedOut () =
                     ( model
-                    , Lamdera.sendToFrontend clientId <| CurrentWorlds <| getWorlds model
+                    , Lamdera.sendToFrontend clientId <|
+                        CurrentWorlds
+                            { worlds = getWorlds model
+                            , isInMaintenance = model.isInMaintenance
+                            }
                     )
             in
             if isAdmin sessionId clientId model then
@@ -1255,6 +1268,15 @@ updateAdmin clientId msg model =
                     newModel
                         |> Cmd.with (refreshAdminData newModel)
                         |> Cmd.andThen (refreshPlayersOnWorld r.world)
+
+        SwitchMaintenance r ->
+            ( { model
+                | isInMaintenance = r.now
+                , playerDataCache = Dict.empty
+                , loggedInPlayers = BiDict.empty
+              }
+            , Lamdera.broadcast <| MaintenanceModeChanged r
+            )
 
 
 refreshPlayersOnWorld : World.Name -> Model -> ( Model, Cmd BackendMsg )

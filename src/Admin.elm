@@ -39,6 +39,7 @@ backendModelCodec randomSeed =
             (Queue.codec (Codec.triple Codec.string Codec.string toBackendMsgCodec))
         |> Codec.field "randomSeed" .randomSeed (Codec.succeed randomSeed)
         |> Codec.field "playerDataCache" .playerDataCache (Dict.ExtraExtra.codec Codec.string Codec.int)
+        |> Codec.field "isInMaintenance" .isInMaintenance Codec.bool
         |> Codec.buildObject
 
 
@@ -173,7 +174,7 @@ toBackendMsgCodec =
 adminToBackendCodec : Codec AdminToBackend
 adminToBackendCodec =
     Codec.custom
-        (\exportJsonEncoder importJsonEncoder createNewWorldEncoder changeWorldSpeedEncoder value ->
+        (\exportJsonEncoder importJsonEncoder createNewWorldEncoder changeWorldSpeedEncoder switchMaintenanceEncoder value ->
             case value of
                 ExportJson ->
                     exportJsonEncoder
@@ -186,6 +187,9 @@ adminToBackendCodec =
 
                 ChangeWorldSpeed arg0 ->
                     changeWorldSpeedEncoder arg0
+
+                SwitchMaintenance arg0 ->
+                    switchMaintenanceEncoder arg0
         )
         |> Codec.variant0 "ExportJson" ExportJson
         |> Codec.variant1 "ImportJson" ImportJson Codec.string
@@ -196,6 +200,13 @@ adminToBackendCodec =
             (Codec.object (\world fast -> { world = world, fast = fast })
                 |> Codec.field "world" .world Codec.string
                 |> Codec.field "fast" .fast Codec.bool
+                |> Codec.buildObject
+            )
+        |> Codec.variant1
+            "SwitchMaintenance"
+            SwitchMaintenance
+            (Codec.object (\now -> { now = now })
+                |> Codec.field "now" .now Codec.bool
                 |> Codec.buildObject
             )
         |> Codec.buildCustom

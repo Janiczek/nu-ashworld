@@ -136,6 +136,7 @@ init url key =
       , loginForm = Auth.init
       , worlds = Nothing
       , worldData = worldData
+      , isInMaintenance = False
 
       -- mostly player frontend state
       , newChar = NewChar.init
@@ -652,6 +653,11 @@ update msg ({ loginForm } as model) =
             , Lamdera.sendToBackend <| AdminToBackend <| ChangeWorldSpeed r
             )
 
+        AskToSwitchMaintenance r ->
+            ( model
+            , Lamdera.sendToBackend <| AdminToBackend <| SwitchMaintenance r
+            )
+
 
 resetBarter : Model -> ( Model, Cmd FrontendMsg )
 resetBarter model =
@@ -793,15 +799,53 @@ updateFromBackend msg model =
             }
                 |> update (GoToRoute (Route.loggedOut model.route))
 
-        CurrentWorlds worlds ->
+        CurrentWorlds { worlds, isInMaintenance } ->
             ( { model
                 | worlds = Just worlds
                 , loginForm =
                     model.loginForm
                         |> Auth.selectDefaultWorld worlds
+                , isInMaintenance = isInMaintenance
               }
             , Cmd.none
             )
+
+        MaintenanceModeChanged { now } ->
+            let
+                default () =
+                    let
+                        auth =
+                            model.loginForm
+
+                        newAuth =
+                            { auth | name = "" }
+                                |> Auth.setPlaintextPassword ""
+                    in
+                    ( { model
+                        | isInMaintenance = now
+                        , worldData = NotLoggedIn
+                        , loginForm = newAuth
+                        , route = Route.News
+                      }
+                    , Cmd.none
+                    )
+            in
+            case model.worldData of
+                IsAdmin _ ->
+                    ( { model | isInMaintenance = now }
+                    , Cmd.none
+                    )
+
+                NotLoggedIn ->
+                    ( { model | isInMaintenance = now }
+                    , Cmd.none
+                    )
+
+                IsPlayer _ ->
+                    default ()
+
+                IsPlayerSigningUp ->
+                    default ()
 
         CurrentOtherPlayers otherPlayers ->
             ( { model
@@ -943,7 +987,7 @@ view model =
                 IsAdmin _ ->
                     [ alertMessageView model.alertMessage
                     , H.div [ HA.class "flex flex-col gap-4" ]
-                        [ adminLinksView model.route
+                        [ adminLinksView model
                         , commonLinksView model.route
                         ]
                     ]
@@ -973,17 +1017,46 @@ view model =
                         , commonLinksView model.route
                         ]
                     ]
+
+        default () =
+            if Route.isStandalone model.route then
+                contentView model
+                    :: preload model
+
+            else
+                appView { leftNav = leftNav } model
+                    :: preload model
     in
     { title = "NuAshworld " ++ Version.version
     , body =
-        if Route.isStandalone model.route then
-            contentView model
-                :: preload model
+        if model.isInMaintenance then
+            case model.worldData of
+                IsAdmin _ ->
+                    default ()
+
+                NotLoggedIn ->
+                    default ()
+
+                IsPlayer _ ->
+                    [ maintenanceView ]
+
+                IsPlayerSigningUp ->
+                    [ maintenanceView ]
 
         else
-            appView { leftNav = leftNav } model
-                :: preload model
+            default ()
     }
+
+
+maintenanceView : Html FrontendMsg
+maintenanceView =
+    H.div
+        [ HA.class "pt-8 px-10 pb-10 flex items-center justify-center min-h-screen min-w-screen" ]
+        [ H.div [ HA.class "flex flex-col gap-4" ]
+            [ H.span [ HA.class "text-lg" ] [ H.text "Under maintenance" ]
+            , H.span [] [ H.text "NuAshworld is under maintenance right now. Please wait a few minutes, this page will update automatically." ]
+            ]
+        ]
 
 
 preload : Model -> List (Html FrontendMsg)
@@ -1035,6 +1108,8 @@ leftNavView leftNav model =
     in
     H.div [ HA.class "bg-green-800 min-w-[28ch] max-w-[28ch] px-6 pb-10 pt-[26px] flex flex-col gap-10 items-center max-h-screen overflow-hidden fixed z-[2] left-0 top-0 bottom-0" ]
         [ logoView model
+        , H.viewIf model.isInMaintenance <|
+            H.div [ HA.class "text-yellow" ] [ H.text "Under maintenance" ]
         , H.div [ HA.class "flex flex-col items-center gap-6" ]
             (leftNav tickFrequency)
         ]
@@ -1082,7 +1157,11 @@ contentView model =
     in
     H.div
         [ HA.class "pt-8 px-10 pb-10 flex flex-col items-start min-h-screen"
-        , HA.class "min-w-[calc(100vw_-_28ch)]"
+        , if isStandaloneRoute then
+            HA.class "min-w-screen"
+
+          else
+            HA.class "min-w-[calc(100vw_-_28ch)]"
         , HA.classList [ ( "ml-[28ch]", not isStandaloneRoute ) ]
         ]
         (case ( model.route, model.worldData ) of
@@ -5448,15 +5527,28 @@ loggedInLinksView p currentRoute =
         |> H.div []
 
 
-adminLinksView : Route -> Html FrontendMsg
-adminLinksView currentRoute =
+adminLinksView : Model -> Html FrontendMsg
+adminLinksView model =
     [ LinkMsg { label = "Refresh", msg = Refresh, tooltip = Nothing, disabled = False }
     , LinkIn { label = "Worlds", route = AdminRoute AdminWorldsList, highlight = HNormal }
+    , LinkMsg
+        { label =
+            "Maint "
+                ++ (if model.isInMaintenance then
+                        "Off"
+
+                    else
+                        "On"
+                   )
+        , msg = AskToSwitchMaintenance { now = not model.isInMaintenance }
+        , tooltip = Nothing
+        , disabled = False
+        }
     , LinkMsg { label = "Import", msg = ImportButtonClicked, tooltip = Nothing, disabled = False }
     , LinkMsg { label = "Export", msg = AskForExport, tooltip = Nothing, disabled = False }
     , LinkMsg { label = "Logout", msg = Logout, tooltip = Nothing, disabled = False }
     ]
-        |> List.map (linkView currentRoute)
+        |> List.map (linkView model.route)
         |> H.div []
 
 

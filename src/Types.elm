@@ -49,6 +49,7 @@ type alias FrontendModel =
     , loginForm : Auth Plaintext
     , worlds : Maybe (List WorldInfo)
     , worldData : WorldData
+    , isInMaintenance : Bool
 
     -- player frontend state:
     , alertMessage : Maybe String
@@ -84,6 +85,7 @@ type alias BackendModel =
     , -- We don't want to send the same data to players over and over when
       -- Tick-ing. This lets us skip that work.
       playerDataCache : Dict ClientId Int
+    , isInMaintenance : Bool
     }
 
 
@@ -149,6 +151,7 @@ type FrontendMsg
     | HoveredGuideNavLink
     | AskToRefuelCar ItemKind.Kind
     | AskToChangeWorldSpeed { world : World.Name, fast : Bool }
+    | AskToSwitchMaintenance { now : Bool }
 
 
 type BarterMsg
@@ -205,6 +208,7 @@ type AdminToBackend
     | ImportJson String
     | CreateNewWorld String Bool
     | ChangeWorldSpeed { world : World.Name, fast : Bool }
+    | SwitchMaintenance { now : Bool }
 
 
 type BackendMsg
@@ -226,10 +230,11 @@ type alias PlayerData_ =
 type ToFrontend
     = CurrentPlayer PlayerData
     | CurrentOtherPlayers (List COtherPlayer)
-    | CurrentWorlds (List WorldInfo)
+    | CurrentWorlds { worlds : List WorldInfo, isInMaintenance : Bool }
     | CurrentAdmin AdminData
     | CurrentAdminLoggedInPlayers (Dict World.Name (List PlayerName))
     | CurrentAdminLastTenToBackendMsgs (List ( PlayerName, World.Name, ToBackend ))
+    | MaintenanceModeChanged { now : Bool }
     | YoureLoggedOut (List WorldInfo)
     | YourFightResult ( Fight.Info, PlayerData )
     | YoureLoggedInSigningUp
