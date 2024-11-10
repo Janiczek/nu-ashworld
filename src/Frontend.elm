@@ -1168,10 +1168,10 @@ contentView model =
             ( AdminRoute subroute, IsAdmin data ) ->
                 case subroute of
                     AdminWorldsList ->
-                        adminWorldsListView model.adminNewWorldName model.adminNewWorldFast data
+                        adminWorldsListView model data
 
                     AdminWorldActivity worldName ->
-                        adminWorldActivityView model.lastTenToBackendMsgs worldName data
+                        adminWorldActivityView worldName data
 
                     AdminWorldHiscores worldName ->
                         adminWorldHiscoresView worldName data
@@ -5577,9 +5577,59 @@ commonLinksView currentRoute =
         |> H.div []
 
 
-adminWorldsListView : String -> Bool -> AdminData -> List (Html FrontendMsg)
-adminWorldsListView newWorldName newWorldFast data =
+adminWorldsListView : Model -> AdminData -> List (Html FrontendMsg)
+adminWorldsListView model data =
+    let
+        onlineCount =
+            data.loggedInPlayers
+                |> Dict.values
+                |> List.concat
+                |> List.length
+    in
     [ pageTitleView "Admin :: Worlds"
+    , H.div []
+        [ H.text <| "Online: " ++ String.fromInt onlineCount
+        ]
+        |> UI.withMaybeTooltip
+            (if onlineCount == 0 then
+                Nothing
+
+             else
+                data.loggedInPlayers
+                    |> Dict.toList
+                    |> List.map
+                        (\( worldName, playerNames ) ->
+                            (worldName
+                                :: (playerNames |> List.map (\p -> " - " ++ p))
+                            )
+                                |> String.join "\n"
+                        )
+                    |> String.join "\n\n"
+                    |> Just
+            )
+    , H.h3 [] [ H.text "Last 10 messages" ]
+    , H.table []
+        (H.thead []
+            [ H.tr []
+                [ H.th [] [ H.text "World" ]
+                , H.th [] [ H.text "Player" ]
+                , H.th [] [ H.text "Msg" ]
+                ]
+            ]
+            :: List.map
+                (\( playerName, msgWorldName, msg ) ->
+                    H.tr []
+                        [ H.td [] [ H.text msgWorldName ]
+                        , H.td [] [ H.text playerName ]
+                        , H.td []
+                            [ msg
+                                |> Codec.encodeToString 0 Admin.toBackendMsgCodec
+                                |> H.text
+                            ]
+                        ]
+                )
+                model.lastTenToBackendMsgs
+        )
     , H.div []
         [ H.table []
             [ H.thead []
@@ -5612,25 +5662,25 @@ adminWorldsListView newWorldName newWorldFast data =
         [ UI.input
             [ HE.onInput SetAdminNewWorldName
             , HA.placeholder "New world name"
-            , HA.value newWorldName
+            , HA.value model.adminNewWorldName
             ]
             []
         , UI.checkbox
-            { isOn = newWorldFast
+            { isOn = model.adminNewWorldFast
             , label = "Fast?"
             , toggle = SetAdminNewWorldFast
             }
         , UI.button
             [ HE.onClick AskToCreateNewWorld
-            , HA.disabled (Dict.member newWorldName data.worlds)
+            , HA.disabled (Dict.member model.adminNewWorldName data.worlds)
             ]
             [ H.text "[Create]" ]
         ]
     ]
 
 
-adminWorldActivityView : List ( PlayerName, World.Name, ToBackend ) -> World.Name -> AdminData -> List (Html FrontendMsg)
-adminWorldActivityView lastTenToBackendMsgs worldName data =
+adminWorldActivityView : World.Name -> AdminData -> List (Html FrontendMsg)
+adminWorldActivityView worldName data =
     case Dict.get worldName data.worlds of
         Nothing ->
             contentUnavailableView <|
@@ -5640,29 +5690,6 @@ adminWorldActivityView lastTenToBackendMsgs worldName data =
 
         Just _ ->
             [ pageTitleView <| "Admin :: World: " ++ worldName ++ " - Activity"
-            , H.h3 [] [ H.text "Last 10 messages" ]
-            , H.table []
-                (H.thead []
-                    [ H.tr []
-                        [ H.th [] [ H.text "World" ]
-                        , H.th [] [ H.text "Player" ]
-                        , H.th [] [ H.text "Msg" ]
-                        ]
-                    ]
-                    :: List.map
-                        (\( playerName, msgWorldName, msg ) ->
-                            H.tr []
-                                [ H.td [] [ H.text msgWorldName ]
-                                , H.td [] [ H.text playerName ]
-                                , H.td []
-                                    [ msg
-                                        |> Codec.encodeToString 0 Admin.toBackendMsgCodec
-                                        |> H.text
-                                    ]
-                                ]
-                        )
-                        lastTenToBackendMsgs
-                )
             , adminMapView worldName data
             ]
 
